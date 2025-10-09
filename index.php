@@ -256,18 +256,6 @@
             }
             .card { padding: 20px; }
         }
-        .approved-log {
-            color: green;
-            font-family: 'Inter', sans-serif;
-            font-weight: bold;
-            font-style: italic;
-        }
-        .declined-log {
-            color: red;
-            font-family: 'Inter', sans-serif;
-            font-weight: bold;
-            font-style: italic;
-        }
     </style>
 </head>
 <body>
@@ -364,60 +352,19 @@
             const MAX_CONCURRENT = 4;
             let abortController = null;
 
-            // Luhn Algorithm for card number validation
-            function isValidLuhn(number) {
-                let sum = 0;
-                let isEven = false;
-                for (let i = number.length - 1; i >= 0; i--) {
-                    let digit = parseInt(number.charAt(i));
-                    if (isEven) {
-                        digit *= 2;
-                        if (digit > 9) digit -= 9;
-                    }
-                    sum += digit;
-                    isEven = !isEven;
-                }
-                return sum % 10 === 0;
-            }
-
-            // Validate card details
-            function validateCard(line) {
-                const regex = /^(\d{13,19})\|(\d{2})\|(\d{2}|\d{4})\|(\d{3,4})$/;
-                if (!regex.test(line)) return false;
-
-                const [, number, month, year, cvv] = line.match(regex);
-                const currentYear = new Date().getFullYear();
-                const yearNum = parseInt(year);
-                const monthNum = parseInt(month);
-
-                // Validate card number with Luhn
-                if (!isValidLuhn(number)) return false;
-
-                // Validate month (01-12)
-                if (monthNum < 1 || monthNum > 12) return false;
-
-                // Validate year (current year or future)
-                const fullYear = year.length === 2 ? parseInt(`20${year}`) : yearNum;
-                if (fullYear < currentYear || fullYear > currentYear + 10) return false;
-
-                // Validate CVV length
-                if (cvv.length < 3 || cvv.length > 4) return false;
-
-                return { number, month, year, cvv };
-            }
-
             // Card validation and counter
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
-                const validCards = lines.filter(line => validateCard(line));
+                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
-                // Reset counters on new input
-                $('.carregadas').text('0');
-                $('.approved').text('0');
-                $('.reprovadas').text('0');
-                $('.processing').text('0');
-                $('#lista_approved').empty();
-                $('#lista_declined').empty();
+                
+                // Reset counters automatically when new cards are pasted
+                if ($(this).val().trim()) {
+                    $('.carregadas').text('0');
+                    $('.approved').text('0');
+                    $('.reprovadas').text('0');
+                    $('.processing').text('0');
+                }
             });
 
             // UI Functions
@@ -431,10 +378,7 @@
 
             function copyToClipboard(selector, title) {
                 const text = $(selector).text();
-                if (!text) {
-                    Swal.fire('Nothing to copy!', 'No cards in this section', 'warning');
-                    return;
-                }
+                if (!text) return;
                 
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -478,16 +422,16 @@
             async function processCard(cardData, index) {
                 return new Promise((resolve) => {
                     // Normalize year to 4 digits
-                    let normalizedYear = cardData.year;
+                    let normalizedYear = cardData.exp_year;
                     if (normalizedYear.length === 2) {
                         normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
                     }
 
                     const formData = new FormData();
                     formData.append('card[number]', cardData.number);
-                    formData.append('card[exp_month]', cardData.month);
+                    formData.append('card[exp_month]', cardData.exp_month);
                     formData.append('card[exp_year]', normalizedYear);
-                    formData.append('card[cvc]', cardData.cvv);
+                    formData.append('card[cvc]', cardData.cvc);
 
                     $.ajax({
                         url: $('#gate').val(),
@@ -497,22 +441,20 @@
                         contentType: false,
                         timeout: 30000,
                         success: function(response) {
-                            const displayCard = `${cardData.number}|${cardData.month}|${cardData.year}|${cardData.cvv}`;
                             resolve({ 
                                 success: true, 
-                                response: `APPROVED ${displayCard} [${response.message || 'Success'}]`,
+                                response, 
                                 card: cardData,
-                                displayCard
+                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
                             });
                         },
                         error: function(xhr) {
-                            const errorMsg = xhr.responseJSON?.error || xhr.responseText || 'Request failed';
-                            const displayCard = `${cardData.number}|${cardData.month}|${cardData.year}|${cardData.cvv}`;
+                            const errorMsg = xhr.responseText || 'Request failed';
                             resolve({ 
                                 success: false, 
-                                response: `DECLINED ${displayCard} [${errorMsg}]`,
+                                response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
                                 card: cardData,
-                                displayCard
+                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
                             });
                         }
                     });
@@ -524,11 +466,15 @@
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
                 const validCards = lines
-                    .map(line => validateCard(line.trim()))
-                    .filter(card => card !== false);
+                    .map(line => line.trim())
+                    .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+                    .map(line => {
+                        const [number, exp_month, exp_year, cvc] = line.split('|');
+                        return { number, exp_month, exp_year, cvc };
+                    });
 
                 if (validCards.length === 0) {
-                    Swal.fire('No valid cards!', 'Please check your card format (card|MM|YY or YYYY|CVV)', 'error');
+                    Swal.fire('No valid cards!', 'Please check your card format', 'error');
                     return;
                 }
 
@@ -540,19 +486,17 @@
                 isProcessing = true;
                 activeRequests = 0;
                 $('.carregadas').text(validCards.length);
-                $('.processing').text(0);
+                $('.approved').text('0');
+                $('.reprovadas').text('0');
+                $('.processing').text('0');
                 $('#startBtn').prop('disabled', true);
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
-                $('#lista_approved').empty();
-                $('#lista_declined').empty();
 
                 const results = [];
                 let completed = 0;
 
                 for (let i = 0; i < validCards.length; i++) {
-                    if (!isProcessing) break;
-
                     while (activeRequests >= MAX_CONCURRENT) {
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
@@ -565,12 +509,12 @@
                         completed++;
                         activeRequests--;
 
-                        // Update UI
-                        if (result.success) {
-                            $('#lista_approved').append(`<span class="approved-log">${result.response}</span><br>`);
+                        // Update UI with colored text
+                        if (result.response.includes('APPROVED')) {
+                            $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
                             $('.approved').text(parseInt($('.approved').text()) + 1);
                         } else {
-                            $('#lista_declined').append(`<span class="declined-log">${result.response}</span><br>`);
+                            $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
                             $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                         }
 
