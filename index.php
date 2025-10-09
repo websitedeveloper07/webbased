@@ -308,8 +308,8 @@
                     <div class="value reprovadas">0</div>
                 </div>
                 <div class="stat-item" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
-                    <div class="label">Processing</div>
-                    <div class="value processing">0</div>
+                    <div class="label">Checked</div>
+                    <div class="value checked">0 / 0</div>
                 </div>
             </div>
         </div>
@@ -349,8 +349,9 @@
         $(document).ready(function() {
             let isProcessing = false;
             let activeRequests = 0;
-            const MAX_CONCURRENT = 4;
+            const MAX_CONCURRENT = 3;
             let abortControllers = [];
+            let totalCards = 0;
 
             // Card validation and counter
             $('#cards').on('input', function() {
@@ -363,7 +364,7 @@
                     $('.carregadas').text('0');
                     $('.approved').text('0');
                     $('.reprovadas').text('0');
-                    $('.processing').text('0');
+                    $('.checked').text('0 / 0');
                 }
             });
 
@@ -440,7 +441,7 @@
                         processData: false,
                         contentType: false,
                         timeout: 30000,
-                        signal: controller.signal, // Attach AbortController signal
+                        signal: controller.signal,
                         success: function(response) {
                             resolve({ 
                                 success: true, 
@@ -451,7 +452,7 @@
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
-                                resolve(null); // Ignore aborted requests
+                                resolve(null);
                             } else {
                                 const errorMsg = xhr.responseText || 'Request failed';
                                 resolve({ 
@@ -468,7 +469,7 @@
 
             // Main processing function with concurrency control
             async function processCards() {
-                if (isProcessing) return; // Prevent multiple starts
+                if (isProcessing) return;
 
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
@@ -493,10 +494,11 @@
                 isProcessing = true;
                 activeRequests = 0;
                 abortControllers = [];
-                $('.carregadas').text(validCards.length);
+                totalCards = validCards.length;
+                $('.carregadas').text(totalCards);
                 $('.approved').text('0');
                 $('.reprovadas').text('0');
-                $('.processing').text('0');
+                $('.checked').text(`0 / ${totalCards}`);
                 $('#startBtn').prop('disabled', true);
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
@@ -509,16 +511,14 @@
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
 
-                    if (!isProcessing) break; // Exit if stopped
+                    if (!isProcessing) break;
 
                     activeRequests++;
-                    $('.processing').text(activeRequests);
-
                     const controller = new AbortController();
                     abortControllers.push(controller);
 
                     processCard(validCards[i], i, controller).then(result => {
-                        if (result === null) return; // Skip aborted requests
+                        if (result === null) return;
 
                         results.push(result);
                         completed++;
@@ -533,7 +533,7 @@
                             $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                         }
 
-                        $('.processing').text(activeRequests);
+                        $('.checked').text(`${completed} / ${totalCards}`);
 
                         if (completed === validCards.length || !isProcessing) {
                             finishProcessing();
@@ -562,11 +562,10 @@
                 if (!isProcessing) return;
 
                 isProcessing = false;
-                // Abort all active requests
                 abortControllers.forEach(controller => controller.abort());
                 abortControllers = [];
                 activeRequests = 0;
-                $('.processing').text('0');
+                $('.checked').text(`${parseInt($('.approved').text()) + parseInt($('.reprovadas').text())} / ${totalCards}`);
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
