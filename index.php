@@ -350,7 +350,7 @@
             let isProcessing = false;
             let activeRequests = 0;
             const MAX_CONCURRENT = 4;
-            let abortController = null;
+            let abortControllers = [];
 
             // Card validation and counter
             $('#cards').on('input', function() {
@@ -419,7 +419,7 @@
             });
 
             // Process single card
-            async function processCard(cardData, index) {
+            async function processCard(cardData, index, controller) {
                 return new Promise((resolve) => {
                     // Normalize year to 4 digits
                     let normalizedYear = cardData.exp_year;
@@ -440,6 +440,7 @@
                         processData: false,
                         contentType: false,
                         timeout: 30000,
+                        signal: controller.signal, // Attach AbortController signal
                         success: function(response) {
                             resolve({ 
                                 success: true, 
@@ -449,13 +450,17 @@
                             });
                         },
                         error: function(xhr) {
-                            const errorMsg = xhr.responseText || 'Request failed';
-                            resolve({ 
-                                success: false, 
-                                response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
-                                card: cardData,
-                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
-                            });
+                            if (xhr.statusText === 'abort') {
+                                resolve(null); // Ignore aborted requests
+                            } else {
+                                const errorMsg = xhr.responseText || 'Request failed';
+                                resolve({ 
+                                    success: false, 
+                                    response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
+                                    card: cardData,
+                                    displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
+                                });
+                            }
                         }
                     });
                 });
@@ -463,6 +468,8 @@
 
             // Main processing function with concurrency control
             async function processCards() {
+                if (isProcessing) return; // Prevent multiple starts
+
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
                 const validCards = lines
@@ -485,6 +492,7 @@
 
                 isProcessing = true;
                 activeRequests = 0;
+                abortControllers = [];
                 $('.carregadas').text(validCards.length);
                 $('.approved').text('0');
                 $('.reprovadas').text('0');
@@ -496,15 +504,22 @@
                 const results = [];
                 let completed = 0;
 
-                for (let i = 0; i < validCards.length; i++) {
-                    while (activeRequests >= MAX_CONCURRENT) {
+                for (let i = 0; i < validCards.length && isProcessing; i++) {
+                    while (activeRequests >= MAX_CONCURRENT && isProcessing) {
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
+
+                    if (!isProcessing) break; // Exit if stopped
 
                     activeRequests++;
                     $('.processing').text(activeRequests);
 
-                    processCard(validCards[i], i).then(result => {
+                    const controller = new AbortController();
+                    abortControllers.push(controller);
+
+                    processCard(validCards[i], i, controller).then(result => {
+                        if (result === null) return; // Skip aborted requests
+
                         results.push(result);
                         completed++;
                         activeRequests--;
@@ -519,17 +534,8 @@
                         }
 
                         $('.processing').text(activeRequests);
-                        
-                        // Progress update
-                        Swal.fire({
-                            title: `Processing: ${completed}/${validCards.length}`,
-                            toast: true,
-                            position: 'top-end',
-                            timer: 1000,
-                            showConfirmButton: false
-                        });
 
-                        if (completed === validCards.length) {
+                        if (completed === validCards.length || !isProcessing) {
                             finishProcessing();
                         }
                     });
@@ -538,6 +544,8 @@
 
             function finishProcessing() {
                 isProcessing = false;
+                activeRequests = 0;
+                abortControllers = [];
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
@@ -551,7 +559,14 @@
             $('#startBtn').click(processCards);
 
             $('#stopBtn').click(() => {
+                if (!isProcessing) return;
+
                 isProcessing = false;
+                // Abort all active requests
+                abortControllers.forEach(controller => controller.abort());
+                abortControllers = [];
+                activeRequests = 0;
+                $('.processing').text('0');
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
