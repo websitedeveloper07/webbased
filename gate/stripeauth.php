@@ -18,9 +18,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $api_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Reduced timeout
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; consider enabling in production with proper SSL
 
     // Execute request
     $response = curl_exec($ch);
@@ -119,4 +119,3 @@ if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
 
 // Check single card
 echo checkCard($card_number, $exp_month, $exp_year, $cvc);
-?>
