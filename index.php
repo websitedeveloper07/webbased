@@ -239,6 +239,13 @@
             font-size: 14px;
             transition: all 0.2s;
         }
+        .action-btn {
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: white; /* Ensure text/icon color is white for visibility */
+        }
         .eye-btn { background: #6c757d; }
         .eye-btn:hover { background: #5a6268; }
         .copy-btn { background: var(--color-success); }
@@ -375,6 +382,7 @@
             let isProcessing = false;
             let activeRequests = 0;
             const MAX_CONCURRENT = 4;
+            const BATCH_DELAY = 500; // 500ms delay between batches
 
             // Card validation and counter
             $('#cards').on('input', function() {
@@ -506,38 +514,40 @@
                 $('#loader').show();
                 $('#cards').val('');
 
-                // Processing loop
+                // Processing loop with batch delay
                 const promises = [];
-                for (let i = 0; i < validCards.length && isProcessing; i++) {
-                    const cardData = validCards[i];
-
-                    while (activeRequests >= MAX_CONCURRENT && isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                    }
-                    if (!isProcessing) break;
-
-                    activeRequests++;
-                    $('.processing').text(activeRequests);
-                    
-                    const processPromise = processCard(cardData).then(result => {
-                        activeRequests--;
-                        completed++;
-                        
-                        const logTarget = result.success ? $('#lista_approved pre') : $('#lista_declined pre');
-                        logTarget.append(result.response + '\n');
-                        
-                        if (result.success) {
-                            $('.approved').text(parseInt($('.approved').text()) + 1);
-                        } else {
-                            $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
-                        }
-
+                for (let i = 0; i < validCards.length && isProcessing; i += MAX_CONCURRENT) {
+                    const batch = validCards.slice(i, i + MAX_CONCURRENT);
+                    const batchPromises = batch.map(cardData => {
+                        activeRequests++;
                         $('.processing').text(activeRequests);
-                        $('#startBtn').html(`<i class="fas fa-sync-alt fa-spin"></i> RUNNING (${completed}/${validCards.length})`);
                         
-                        return result;
+                        return processCard(cardData).then(result => {
+                            activeRequests--;
+                            completed++;
+                            
+                            const logTarget = result.success ? $('#lista_approved pre') : $('#lista_declined pre');
+                            logTarget.append(result.response + '\n');
+                            
+                            if (result.success) {
+                                $('.approved').text(parseInt($('.approved').text()) + 1);
+                            } else {
+                                $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
+                            }
+
+                            $('.processing').text(activeRequests);
+                            $('#startBtn').html(`<i class="fas fa-sync-alt fa-spin"></i> RUNNING (${completed}/${validCards.length})`);
+                            
+                            return result;
+                        });
                     });
-                    promises.push(processPromise);
+                    promises.push(...batchPromises);
+                    
+                    // Wait for batch to complete and add delay
+                    await Promise.all(batchPromises);
+                    if (isProcessing && i + MAX_CONCURRENT < validCards.length) {
+                        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+                    }
                 }
 
                 await Promise.allSettled(promises);
