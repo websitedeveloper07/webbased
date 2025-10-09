@@ -9,13 +9,12 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* --- Color Variables (Refined) --- */
         :root {
-            --color-primary: #5c62ec; /* Adjusted slightly */
-            --color-secondary: #8c56e3; /* Adjusted slightly */
-            --color-success: #1cdb7f; /* Brighter Green */
-            --color-danger: #ff5e69; /* Punchier Red */
-            --color-warning: #ffb740; /* Golden Yellow */
+            --color-primary: #5c62ec;
+            --color-secondary: #8c56e3;
+            --color-success: #1cdb7f;
+            --color-danger: #ff5e69;
+            --color-warning: #ffb740;
             --color-text-dark: #333;
             --color-text-label: #555;
             --color-card-bg: rgba(255, 255, 255, 0.95);
@@ -29,7 +28,6 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            /* Original Live Animating Background */
             background: linear-gradient(-45deg, var(--color-primary) 0%, var(--color-secondary) 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
@@ -53,7 +51,7 @@
             box-shadow: 0 15px 30px var(--color-card-shadow);
             padding: 25px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3); /* Enhanced glass border */
+            border: 1px solid rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
         .card:hover {
@@ -66,7 +64,7 @@
         }
         .header h1 {
             font-size: 2.5rem;
-            font-weight: 800; /* Made header bolder */
+            font-weight: 800;
             margin: 0;
             text-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
         }
@@ -91,13 +89,13 @@
         .form-control:focus {
             outline: none;
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(92, 98, 236, 0.15); /* More prominent focus shadow */
+            box-shadow: 0 0 0 3px rgba(92, 98, 236, 0.15);
         }
         .form-control::placeholder {
             color: #999;
         }
         .btn {
-            padding: 14px 28px; /* Slightly larger buttons */
+            padding: 14px 28px;
             border: none;
             border-radius: 10px;
             font-weight: 700;
@@ -139,7 +137,6 @@
             gap: 15px;
         }
         
-        /* --- Stats Grid --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -157,7 +154,6 @@
         .stat-item:hover {
             transform: translateY(-3px);
         }
-        /* Adjusted Status Item Colors */
         .stat-total { background: linear-gradient(135deg, #4facfe, #00f2fe); }
         .stat-approved { background: linear-gradient(135deg, var(--color-success), #17bf6b); }
         .stat-declined { background: linear-gradient(135deg, var(--color-danger), #dc3545); }
@@ -174,7 +170,6 @@
             font-weight: 800;
         }
         
-        /* --- Results Section --- */
         .results-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
@@ -191,7 +186,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
-            background: #f8f9fa; /* Lighter header background */
+            background: #f8f9fa;
             border-bottom: 1px solid #dee2e6;
         }
         .result-title {
@@ -203,11 +198,10 @@
             align-items: center;
             gap: 10px;
         }
-        /* --- Log Content FIX: Using PRE for proper log format --- */
         .result-content {
             max-height: 350px;
             overflow-y: auto;
-            padding: 0; 
+            padding: 0;
             background: #ffffff;
             font-size: 14px;
             line-height: 1.6;
@@ -215,7 +209,7 @@
         .result-content pre {
             margin: 0;
             padding: 20px;
-            white-space: pre-wrap; /* Preserve formatting but wrap lines */
+            white-space: pre-wrap;
             word-wrap: break-word;
             font-family: 'Courier New', monospace;
         }
@@ -238,13 +232,7 @@
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.2s;
-        }
-        .action-btn {
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.2s;
-            color: white; /* Ensure text/icon color is white for visibility */
+            color: white;
         }
         .eye-btn { background: #6c757d; }
         .eye-btn:hover { background: #5a6268; }
@@ -253,7 +241,6 @@
         .trash-btn { background: var(--color-danger); }
         .trash-btn:hover { background: #c82333; }
         
-        /* Utility Colors */
         .text-success { color: var(--color-success); }
         .text-danger { color: var(--color-danger); }
         
@@ -382,7 +369,8 @@
             let isProcessing = false;
             let activeRequests = 0;
             const MAX_CONCURRENT = 4;
-            const BATCH_DELAY = 500; // 500ms delay between batches
+            const BATCH_DELAY = 1000; // Increased to 1000ms to slow down requests
+            const MAX_RETRIES = 2; // Max retries for failed requests
 
             // Card validation and counter
             $('#cards').on('input', function() {
@@ -441,8 +429,8 @@
                 });
             });
 
-            // Process single card
-            async function processCard(cardData) {
+            // Process single card with retry logic
+            async function processCard(cardData, attempt = 1) {
                 return new Promise((resolve) => {
                     const fullCard = `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`;
                     const gateway = $('#gate').val();
@@ -468,11 +456,32 @@
                             });
                         },
                         error: function(xhr, status, error) {
-                            resolve({
-                                response: `DECLINED [API Error: ${status} - ${error}] ${fullCard}`,
-                                success: false,
-                                card: cardData
-                            });
+                            let errorMsg = `DECLINED [API Error: ${status} - ${error}] ${fullCard}`;
+                            if (xhr.responseText) {
+                                try {
+                                    const errorData = JSON.parse(xhr.responseText);
+                                    if (errorData.response && errorData.status) {
+                                        errorMsg = `DECLINED [${errorData.response}] ${fullCard}`;
+                                    } else {
+                                        errorMsg = `DECLINED [Invalid API response: ${xhr.responseText.substring(0, 100)}] ${fullCard}`;
+                                    }
+                                } catch (e) {
+                                    errorMsg = `DECLINED [API Error: ${status} - ${xhr.responseText.substring(0, 100)}] ${fullCard}`;
+                                }
+                            }
+
+                            // Retry logic
+                            if (attempt < MAX_RETRIES && errorMsg.includes('Failed to extract nonce')) {
+                                setTimeout(() => {
+                                    processCard(cardData, attempt + 1).then(resolve);
+                                }, BATCH_DELAY);
+                            } else {
+                                resolve({
+                                    response: errorMsg,
+                                    success: false,
+                                    card: cardData
+                                });
+                            }
                         }
                     });
                 });
