@@ -256,6 +256,18 @@
             }
             .card { padding: 20px; }
         }
+        .approved-log {
+            color: green;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            font-style: italic;
+        }
+        .declined-log {
+            color: red;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -357,6 +369,11 @@
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
+                // Reset counters on new input
+                $('.carregadas').text('0');
+                $('.approved').text('0');
+                $('.reprovadas').text('0');
+                $('.processing').text('0');
             });
 
             // UI Functions
@@ -382,7 +399,7 @@
                 Swal.fire({
                     title: `Copied ${title}!`,
                     icon: 'success',
-                    toast: true,
+                    toast: true;
                     position: 'top-end',
                     timer: 2000
                 });
@@ -429,8 +446,8 @@
                         url: $('#gate').val(),
                         method: 'POST',
                         data: formData,
-                        processData: false,
-                        contentType: false,
+                        processData: false;
+                        contentType: false;
                         timeout: 30000,
                         success: function(response) {
                             resolve({ 
@@ -501,10 +518,10 @@
 
                         // Update UI
                         if (result.response.includes('APPROVED')) {
-                            $('#lista_approved').append(`${result.response}<br>`);
+                            $('#lista_approved').append(`<span class="approved-log">${result.response}</span><br>`);
                             $('.approved').text(parseInt($('.approved').text()) + 1);
                         } else {
-                            $('#lista_declined').append(`${result.response}<br>`);
+                            $('#lista_declined').append(`<span class="declined-log">${result.response}</span><br>`);
                             $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                         }
 
