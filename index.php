@@ -302,7 +302,7 @@
             <div class="form-group">
                 <label for="gate">SELECT GATEWAY PROTOCOL</label>
                 <select id="gate" class="form-control">
-                    <option value="gate/stripeauth.php">STRIPE AUTH ✅</option>
+                    <option value="/gatestripeauth.php">STRIPE AUTH ✅</option>
                     <option value="gate/paypal.php" disabled>PAYPAL (Coming Soon)</option>
                     <option value="gate/razorpay.php" disabled>RAZORPAY (Coming Soon)</option>
                     <option value="gate/shopify.php" disabled>SHOPIFY (Coming Soon)</option>
@@ -376,10 +376,9 @@
             let activeRequests = 0;
             const MAX_CONCURRENT = 4;
 
-            // Card validation and counter FIX: Updated Regex
+            // Card validation and counter
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
-                // FIX: Regex now explicitly supports 2 or 4 digits for the year
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} VALID CARDS DETECTED (max 1000)`);
             });
@@ -394,10 +393,9 @@
             }
 
             function copyToClipboard(selector, title) {
-                // FIX: Target the <pre> tag's content
-                const text = $(selector).find('pre').text(); 
+                const text = $(selector).find('pre').text();
                 if (!text.trim()) {
-                     Swal.fire({title: `NO ${title.toUpperCase()} DATA!`, icon: 'info', toast: true, position: 'top-end', timer: 2000});
+                    Swal.fire({title: `NO ${title.toUpperCase()} DATA!`, icon: 'info', toast: true, position: 'top-end', timer: 2000});
                     return;
                 }
                 
@@ -428,37 +426,47 @@
                     confirmButtonColor: 'var(--color-danger)',
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // FIX: Target the <pre> tag inside the list
-                        $('#lista_declined pre').empty(); 
+                        $('#lista_declined pre').empty();
                         $('.reprovadas').text('0');
                         Swal.fire({title: 'LOG CLEARED!', icon: 'success', toast: true, position: 'top-end', timer: 2000});
                     }
                 });
             });
 
-            // Process single card (Simulated)
+            // Process single card
             async function processCard(cardData) {
                 return new Promise((resolve) => {
-                    const isApproved = Math.random() > 0.6; // 40% chance of "approval"
                     const fullCard = `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`;
-                    
-                    setTimeout(() => {
-                        if (isApproved) {
-                            resolve({ 
-                                response: `[APPROVED - $2.00] ${fullCard} - STATUS: SUCCESS. CODE: 200`,
-                                success: true,
-                                card: cardData 
+                    const gateway = $('#gate').val();
+
+                    $.ajax({
+                        url: gateway,
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            card: {
+                                number: cardData.number,
+                                exp_month: cardData.exp_month,
+                                exp_year: cardData.exp_year,
+                                cvc: cardData.cvc
+                            }
+                        }),
+                        success: function(response) {
+                            const isApproved = response.toUpperCase().startsWith('APPROVED');
+                            resolve({
+                                response: response,
+                                success: isApproved,
+                                card: cardData
                             });
-                        } else {
-                            const errorCodes = ['[DECLINED: INSUF FUNDS]', '[DEAD: EXPIRED CARD]', '[STATUS: CARD ERROR]', '[DECLINED: DO NOT HONOR]'];
-                            const errorMsg = errorCodes[Math.floor(Math.random() * errorCodes.length)];
-                            resolve({ 
-                                response: `${errorMsg} ${fullCard}`,
+                        },
+                        error: function(xhr, status, error) {
+                            resolve({
+                                response: `DECLINED [API Error: ${status} - ${error}] ${fullCard}`,
                                 success: false,
-                                card: cardData 
+                                card: cardData
                             });
                         }
-                    }, 500 + Math.random() * 800); // Simulate network latency
+                    });
                 });
             }
 
@@ -469,13 +477,11 @@
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
                 
-                // Card parsing (uses updated regex from input validation)
                 const validCards = lines
                     .map(line => line.trim())
                     .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                     .map(line => {
                         const [number, exp_month, exp_year, cvc] = line.split('|');
-                        // Ensure 2-digit years are converted to 4-digits for proper processing simulation (optional but good practice)
                         let year = exp_year.length === 2 ? `20${exp_year}` : exp_year;
                         return { number, exp_month, exp_year: year, cvc };
                     });
@@ -498,13 +504,11 @@
                 $('#startBtn').prop('disabled', true).html('<i class="fas fa-sync-alt fa-spin"></i> RUNNING...');
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
-                $('#cards').val(''); // Clear input after start
+                $('#cards').val('');
 
-                
                 // Processing loop
                 const promises = [];
                 for (let i = 0; i < validCards.length && isProcessing; i++) {
-                    
                     const cardData = validCards[i];
 
                     while (activeRequests >= MAX_CONCURRENT && isProcessing) {
@@ -519,11 +523,9 @@
                         activeRequests--;
                         completed++;
                         
-                        // FIX: Append to <pre> tag with newline
                         const logTarget = result.success ? $('#lista_approved pre') : $('#lista_declined pre');
                         logTarget.append(result.response + '\n');
                         
-                        // Update counters
                         if (result.success) {
                             $('.approved').text(parseInt($('.approved').text()) + 1);
                         } else {
@@ -533,7 +535,7 @@
                         $('.processing').text(activeRequests);
                         $('#startBtn').html(`<i class="fas fa-sync-alt fa-spin"></i> RUNNING (${completed}/${validCards.length})`);
                         
-                        return result; 
+                        return result;
                     });
                     promises.push(processPromise);
                 }
@@ -555,9 +557,9 @@
                 $('#loader').hide();
                 
                 if (parseInt(totalCards) > 0) {
-                     Swal.fire({
-                        title: 'FLOW COMPLETE', 
-                        text: `Processing finished. ${approvedCount} Hits detected out of ${totalCards}.`, 
+                    Swal.fire({
+                        title: 'FLOW COMPLETE',
+                        text: `Processing finished. ${approvedCount} Hits detected out of ${totalCards}.`,
                         icon: 'success'
                     });
                 }
