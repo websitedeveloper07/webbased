@@ -261,8 +261,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-credit-card"></i> CardX Check</h1>
-            <p>Multi-Gateway Card Validator</p>
+            <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
+            <p>Multi-Gateway Card Checker</p>
         </div>
 
         <!-- Input Section -->
@@ -300,11 +300,11 @@
                     <div class="value carregadas">0</div>
                 </div>
                 <div class="stat-item" style="background: linear-gradient(135deg, #28a745, #20c997);">
-                    <div class="label">Approved</div>
+                    <div class="label">HIT|Approved</div>
                     <div class="value approved">0</div>
                 </div>
                 <div class="stat-item" style="background: linear-gradient(135deg, #dc3545, #c82333);">
-                    <div class="label">Declined</div>
+                    <div class="label">DEAD|Declined</div>
                     <div class="value reprovadas">0</div>
                 </div>
                 <div class="stat-item" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
@@ -342,7 +342,7 @@
     </div>
 
     <footer>
-        <p><strong>© 2025 CardX Check - Multi-Gateway Validator</strong></p>
+        <p><strong>© 2025 Card X CheckHK - Multi-Gateway CHECKER</strong></p>
     </footer>
 
     <script>
