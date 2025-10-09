@@ -21,7 +21,7 @@ $amt = isset($_POST['amount']) ? (float)$_POST['amount'] : 1; // Default to $1
 $chr = $amt * 100; // Convert to cents
 $payment_method = isset($_POST['payment_method']) ? $_POST['payment_method'] : '';
 $lista = isset($_POST['lista']) ? $_POST['lista'] : ''; // For display only
-$sk = getenv('STRIPE_SECRET_KEY') ?: 'sk_test_51HZEkqIDN5m54fYYB0C6DWtfP8Y6WrQqAnJRXgN5BRlgPA3hAas7un3iwJYleEWwbyrWKb1W7RPPaqYVuMWQYeVA00OB8421uE'; // Use env variable
+$sk = getenv('STRIPE_SECRET_KEY') ?: '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'; // Use env variable
 
 // Setup logging
 $log_file = '/tmp/debug.log';
