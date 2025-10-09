@@ -349,7 +349,8 @@
         $(document).ready(function() {
             let isProcessing = false;
             let activeRequests = 0;
-            const MAX_CONCURRENT = 3;
+            const MAX_CONCURRENT = 1; // One batch at a time to ensure 3 cards in parallel
+            const BATCH_SIZE = 3; // Up to 3 cards per batch
             let abortControllers = [];
             let totalCards = 0;
 
@@ -359,7 +360,6 @@
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
                 
-                // Reset counters automatically when new cards are pasted
                 if ($(this).val().trim()) {
                     $('.carregadas').text('0');
                     $('.approved').text('0');
@@ -419,20 +419,20 @@
                 });
             });
 
-            // Process single card
-            async function processCard(cardData, index, controller) {
+            // Process a batch of up to 3 cards
+            async function processBatch(batchCards, controller) {
                 return new Promise((resolve) => {
-                    // Normalize year to 4 digits
-                    let normalizedYear = cardData.exp_year;
-                    if (normalizedYear.length === 2) {
-                        normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
-                    }
-
                     const formData = new FormData();
-                    formData.append('card[number]', cardData.number);
-                    formData.append('card[exp_month]', cardData.exp_month);
-                    formData.append('card[exp_year]', normalizedYear);
-                    formData.append('card[cvc]', cardData.cvc);
+                    batchCards.forEach((card, index) => {
+                        let normalizedYear = card.exp_year;
+                        if (normalizedYear.length === 2) {
+                            normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                        }
+                        formData.append(`cards[${index}][number]`, card.number);
+                        formData.append(`cards[${index}][exp_month]`, card.exp_month);
+                        formData.append(`cards[${index}][exp_year]`, normalizedYear);
+                        formData.append(`cards[${index}][cvc]`, card.cvc);
+                    });
 
                     $.ajax({
                         url: $('#gate').val(),
@@ -440,34 +440,35 @@
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 30000,
+                        timeout: 15000,
                         signal: controller.signal,
                         success: function(response) {
-                            resolve({ 
-                                success: true, 
-                                response, 
-                                card: cardData,
-                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
-                            });
+                            const results = response.trim().split('\n').filter(line => line.trim()).map((line, i) => ({
+                                success: line.includes('APPROVED'),
+                                response: line,
+                                card: batchCards[i] || { number: 'Unknown', exp_month: '', exp_year: '', cvc: '' },
+                                displayCard: batchCards[i] ? `${batchCards[i].number}|${batchCards[i].exp_month}|${batchCards[i].exp_year}|${batchCards[i].cvc}` : 'Unknown'
+                            }));
+                            resolve(results);
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
                                 resolve(null);
                             } else {
-                                const errorMsg = xhr.responseText || 'Request failed';
-                                resolve({ 
-                                    success: false, 
-                                    response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
-                                    card: cardData,
-                                    displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
-                                });
+                                const results = batchCards.map(card => ({
+                                    success: false,
+                                    response: `DECLINED [${xhr.responseText || 'Request failed'}] ${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`,
+                                    card: card,
+                                    displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
+                                }));
+                                resolve(results);
                             }
                         }
                     });
                 });
             }
 
-            // Main processing function with concurrency control
+            // Main processing function
             async function processCards() {
                 if (isProcessing) return;
 
@@ -506,9 +507,15 @@
                 const results = [];
                 let completed = 0;
 
-                for (let i = 0; i < validCards.length && isProcessing; i++) {
+                // Split cards into batches of up to BATCH_SIZE
+                const batches = [];
+                for (let i = 0; i < validCards.length; i += BATCH_SIZE) {
+                    batches.push(validCards.slice(i, i + BATCH_SIZE));
+                }
+
+                for (let i = 0; i < batches.length && isProcessing; i++) {
                     while (activeRequests >= MAX_CONCURRENT && isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        await new Promise(resolve => setTimeout(resolve, 20)); // Minimal delay
                     }
 
                     if (!isProcessing) break;
@@ -517,25 +524,26 @@
                     const controller = new AbortController();
                     abortControllers.push(controller);
 
-                    processCard(validCards[i], i, controller).then(result => {
-                        if (result === null) return;
+                    processBatch(batches[i], controller).then(batchResults => {
+                        if (batchResults === null) return;
 
-                        results.push(result);
-                        completed++;
+                        results.push(...batchResults);
+                        completed += batchResults.length;
                         activeRequests--;
 
-                        // Update UI with colored text
-                        if (result.response.includes('APPROVED')) {
-                            $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
-                            $('.approved').text(parseInt($('.approved').text()) + 1);
-                        } else {
-                            $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
-                            $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
-                        }
+                        batchResults.forEach(result => {
+                            if (result.response.includes('APPROVED')) {
+                                $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.approved').text(parseInt($('.approved').text()) + 1);
+                            } else {
+                                $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
+                            }
+                        });
 
                         $('.checked').text(`${completed} / ${totalCards}`);
 
-                        if (completed === validCards.length || !isProcessing) {
+                        if (completed >= totalCards || !isProcessing) {
                             finishProcessing();
                         }
                     });
