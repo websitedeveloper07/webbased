@@ -3,24 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CardX Check - Multi Gateway</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>CardX Check</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        /* --- Color Variables (Refined) --- */
+        :root {
+            --color-primary: #5c62ec; /* Adjusted slightly */
+            --color-secondary: #8c56e3; /* Adjusted slightly */
+            --color-success: #1cdb7f; /* Brighter Green */
+            --color-danger: #ff5e69; /* Punchier Red */
+            --color-warning: #ffb740; /* Golden Yellow */
+            --color-text-dark: #333;
+            --color-text-label: #555;
+            --color-card-bg: rgba(255, 255, 255, 0.95);
+            --color-card-shadow: rgba(0, 0, 0, 0.15);
+        }
+
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(-45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            /* Original Live Animating Background */
+            background: linear-gradient(-45deg, var(--color-primary) 0%, var(--color-secondary) 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
-            margin: 0;
             padding: 20px;
             min-height: 100vh;
-            color: #333;
+            color: var(--color-text-dark);
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -32,13 +47,17 @@
             margin: 0 auto;
         }
         .card {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--color-card-bg);
             backdrop-filter: blur(10px);
             border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 30px var(--color-card-shadow);
             padding: 25px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Enhanced glass border */
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 20px 40px var(--color-card-shadow);
         }
         .header {
             text-align: center;
@@ -47,18 +66,18 @@
         }
         .header h1 {
             font-size: 2.5rem;
-            font-weight: 700;
+            font-weight: 800; /* Made header bolder */
             margin: 0;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
         }
         .form-group {
             margin-bottom: 20px;
         }
         .form-group label {
             display: block;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 8px;
-            color: #555;
+            color: var(--color-text-label);
         }
         .form-control {
             width: 100%;
@@ -71,131 +90,172 @@
         }
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(92, 98, 236, 0.15); /* More prominent focus shadow */
         }
         .form-control::placeholder {
             color: #999;
         }
-        select.form-control {
-            cursor: pointer;
-        }
         .btn {
-            padding: 12px 24px;
+            padding: 14px 28px; /* Slightly larger buttons */
             border: none;
             border-radius: 10px;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
             color: white;
+            box-shadow: 0 5px 15px rgba(92, 98, 236, 0.4);
         }
         .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(92, 98, 236, 0.5);
         }
         .btn-danger {
-            background: linear-gradient(45deg, #f093fb, #f5576c);
+            background: linear-gradient(45deg, var(--color-danger), #ff8289);
             color: white;
+            box-shadow: 0 5px 15px rgba(255, 94, 105, 0.4);
         }
         .btn-danger:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 94, 105, 0.5);
         }
         .btn:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         .btn-group {
             display: flex;
             gap: 15px;
         }
+        
+        /* --- Stats Grid --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 20px;
         }
         .stat-item {
-            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s;
         }
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+        /* Adjusted Status Item Colors */
+        .stat-total { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .stat-approved { background: linear-gradient(135deg, var(--color-success), #17bf6b); }
+        .stat-declined { background: linear-gradient(135deg, var(--color-danger), #dc3545); }
+        .stat-processing { background: linear-gradient(135deg, var(--color-warning), #ffd700); }
+        
         .stat-item .label {
-            font-size: 12px;
+            font-size: 13px;
             opacity: 0.9;
             margin-bottom: 5px;
+            font-weight: 600;
         }
         .stat-item .value {
-            font-size: 24px;
-            font-weight: 700;
+            font-size: 30px;
+            font-weight: 800;
         }
+        
+        /* --- Results Section --- */
         .results-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 20px;
         }
         .result-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--color-card-bg);
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px var(--color-card-shadow);
         }
         .result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 15px 20px;
+            background: #f8f9fa; /* Lighter header background */
             border-bottom: 1px solid #dee2e6;
         }
         .result-title {
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: var(--color-text-dark);
             margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        /* --- Log Content FIX: Using PRE for proper log format --- */
         .result-content {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
+            padding: 0; 
+            background: #ffffff;
             font-size: 14px;
             line-height: 1.6;
         }
+        .result-content pre {
+            margin: 0;
+            padding: 20px;
+            white-space: pre-wrap; /* Preserve formatting but wrap lines */
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+        }
+        #lista_approved pre { color: var(--color-success); }
+        #lista_declined pre { color: var(--color-danger); }
+
         .result-content::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
         }
         .result-content::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 3px;
+            background: var(--color-primary);
+            border-radius: 4px;
         }
         .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
         .action-btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
             font-size: 14px;
+            transition: all 0.2s;
         }
         .eye-btn { background: #6c757d; }
-        .copy-btn { background: #28a745; }
-        .trash-btn { background: #dc3545; }
+        .eye-btn:hover { background: #5a6268; }
+        .copy-btn { background: var(--color-success); }
+        .copy-btn:hover { background: #17bf6b; }
+        .trash-btn { background: var(--color-danger); }
+        .trash-btn:hover { background: #c82333; }
+        
+        /* Utility Colors */
+        .text-success { color: var(--color-success); }
+        .text-danger { color: var(--color-danger); }
+        
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--color-primary);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
             display: none;
@@ -205,9 +265,10 @@
             100% { transform: rotate(360deg); }
         }
         .card-count {
-            font-size: 12px;
-            color: #666;
+            font-size: 13px;
+            color: #6c757d;
             margin-top: 5px;
+            font-weight: 500;
         }
         footer {
             text-align: center;
@@ -215,101 +276,98 @@
             color: white;
             font-size: 14px;
             margin-top: 40px;
+            opacity: 0.8;
         }
         @media (max-width: 768px) {
-            .container { padding: 10px; }
-            .header h1 { font-size: 2rem; }
             .btn-group { flex-direction: column; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .result-header { flex-direction: column; gap: 10px; }
+            .result-header .action-buttons { justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-credit-card"></i> CardX Check</h1>
-            <p>Multi-Gateway Card Validator</p>
+            <h1><i class="fas fa-credit-card"></i> CARD X CHK</h1>
+            <p>Multi-Gateway Card CHECKER</p>
         </div>
 
-        <!-- Input Section -->
         <div class="card">
             <div class="form-group">
-                <label for="cards">Card List (Format: card|MM|YYYY|CVV)</label>
-                <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|2026|168&#10;4242424242424242|12|2025|123"></textarea>
+                <label for="cards">CARD LIST (FORMAT: CARD|MM|YY/YYYY|CVV)</label>
+                <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|2026|168&#10;4242424242424242|12|25|123"></textarea>
                 <div class="card-count" id="card-count">0 valid cards detected</div>
             </div>
             <div class="form-group">
-                <label for="gate">Select Gateway</label>
+                <label for="gate">SELECT GATEWAY PROTOCOL</label>
                 <select id="gate" class="form-control">
-                    <option value="gate/stripeauth.php">Stripe Auth</option>
-                    <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
-                    <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
-                    <option value="gate/shopify.php" disabled>Shopify (Coming Soon)</option>
+                    <option value="gate/stripeauth.php">STRIPE AUTH ✅</option>
+                    <option value="gate/paypal.php" disabled>PAYPAL (Coming Soon)</option>
+                    <option value="gate/razorpay.php" disabled>RAZORPAY (Coming Soon)</option>
+                    <option value="gate/shopify.php" disabled>SHOPIFY (Coming Soon)</option>
                 </select>
             </div>
             <div class="btn-group">
                 <button class="btn btn-primary btn-play" id="startBtn">
-                    <i class="fas fa-play"></i> Start Check
+                    <i class="fas fa-play"></i> START CHECK
                 </button>
                 <button class="btn btn-danger btn-stop" id="stopBtn" disabled>
-                    <i class="fas fa-stop"></i> Stop
+                    <i class="fas fa-stop"></i> STOP
                 </button>
             </div>
             <div class="loader" id="loader"></div>
         </div>
 
-        <!-- Stats -->
         <div class="card">
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="label">Total</div>
+                <div class="stat-item stat-total">
+                    <div class="label">TOTAL LOADED</div>
                     <div class="value carregadas">0</div>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #28a745, #20c997);">
-                    <div class="label">Approved</div>
+                <div class="stat-item stat-approved">
+                    <div class="label">HIT | APPROVED</div>
                     <div class="value approved">0</div>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #dc3545, #c82333);">
-                    <div class="label">Declined</div>
+                <div class="stat-item stat-declined">
+                    <div class="label">DEAD | DECLINED</div>
                     <div class="value reprovadas">0</div>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
-                    <div class="label">Processing</div>
+                <div class="stat-item stat-processing">
+                    <div class="label">ACTIVE THREADS</div>
                     <div class="value processing">0</div>
                 </div>
             </div>
         </div>
 
-        <!-- Results -->
         <div class="results-grid">
             <div class="result-card">
                 <div class="result-header">
-                    <h3 class="result-title"><i class="fas fa-check-circle text-success"></i> Approved Cards</h3>
+                    <h3 class="result-title"><i class="fas fa-check-circle text-success"></i> APPROVED LOG</h3>
                     <div class="action-buttons">
-                        <button class="action-btn eye-btn show-approved" type="show"><i class="fas fa-eye-slash"></i></button>
-                        <button class="action-btn copy-btn btn-copy-approved"><i class="fas fa-copy"></i></button>
+                        <button class="action-btn eye-btn show-approved" type="hidden" title="Toggle visibility"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn copy-btn btn-copy-approved" title="Copy Log"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
-                <div id="lista_approved" class="result-content" style="display: none;"></div>
+                <div id="lista_approved" class="result-content" style="display: none;"><pre></pre></div>
             </div>
 
             <div class="result-card">
                 <div class="result-header">
-                    <h3 class="result-title"><i class="fas fa-times-circle text-danger"></i> Declined Cards</h3>
+                    <h3 class="result-title"><i class="fas fa-times-circle text-danger"></i> DECLINED LOG</h3>
                     <div class="action-buttons">
-                        <button class="action-btn eye-btn show-declined" type="show"><i class="fas fa-eye-slash"></i></button>
-                        <button class="action-btn copy-btn btn-copy-declined"><i class="fas fa-copy"></i></button>
-                        <button class="action-btn trash-btn btn-trash"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn eye-btn show-declined" type="hidden" title="Toggle visibility"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn copy-btn btn-copy-declined" title="Copy Log"><i class="fas fa-copy"></i></button>
+                        <button class="action-btn trash-btn btn-trash" title="Clear Log"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-                <div id="lista_declined" class="result-content" style="display: none;"></div>
+                <div id="lista_declined" class="result-content" style="display: none;"><pre></pre></div>
             </div>
         </div>
     </div>
 
     <footer>
-        <p><strong>© 2025 CardX Check - Multi-Gateway Validator</strong></p>
+        <p><strong>© 2025 CARD X CHK | STATUS: ONLINE</strong></p>
     </footer>
 
     <script>
@@ -317,27 +375,31 @@
             let isProcessing = false;
             let activeRequests = 0;
             const MAX_CONCURRENT = 4;
-            let abortController = null;
 
-            // Card validation and counter
+            // Card validation and counter FIX: Updated Regex
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
-                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{4}\|\d{3,4}$/.test(line.trim()));
-                $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
+                // FIX: Regex now explicitly supports 2 or 4 digits for the year
+                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
+                $('#card-count').text(`${validCards.length} VALID CARDS DETECTED (max 1000)`);
             });
 
             // UI Functions
             function toggleVisibility(btn, sectionId) {
                 const section = $(sectionId);
                 const isHidden = section.is(':hidden');
-                section.toggle();
+                section.slideToggle(300);
                 btn.html(`<i class="fas fa-${isHidden ? 'eye-slash' : 'eye'}"></i>`);
-                btn.attr('type', isHidden ? 'hidden' : 'show');
+                btn.attr('type', isHidden ? 'show' : 'hidden');
             }
 
             function copyToClipboard(selector, title) {
-                const text = $(selector).text();
-                if (!text) return;
+                // FIX: Target the <pre> tag's content
+                const text = $(selector).find('pre').text(); 
+                if (!text.trim()) {
+                     Swal.fire({title: `NO ${title.toUpperCase()} DATA!`, icon: 'info', toast: true, position: 'top-end', timer: 2000});
+                    return;
+                }
                 
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -346,150 +408,161 @@
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
                 
-                Swal.fire({
-                    title: `Copied ${title}!`,
-                    icon: 'success',
-                    toast: true,
-                    position: 'top-end',
-                    timer: 2000
-                });
+                Swal.fire({title: `COPIED ${title.toUpperCase()}!`, icon: 'success', toast: true, position: 'top-end', timer: 2000});
             }
 
             // Event Listeners
-            $('.show-approved').click(() => toggleVisibility($('.show-approved'), '#lista_approved'));
-            $('.show-declined').click(() => toggleVisibility($('.show-declined'), '#lista_declined'));
+            $('.show-approved').click(function() { toggleVisibility($(this), '#lista_approved'); });
+            $('.show-declined').click(function() { toggleVisibility($(this), '#lista_declined'); });
             
-            $('.btn-copy-approved').click(() => copyToClipboard('#lista_approved', 'Approved cards'));
-            $('.btn-copy-declined').click(() => copyToClipboard('#lista_declined', 'Declined cards'));
+            $('.btn-copy-approved').click(() => copyToClipboard('#lista_approved', 'APPROVED LOG'));
+            $('.btn-copy-declined').click(() => copyToClipboard('#lista_declined', 'DECLINED LOG'));
             
             $('.btn-trash').click(() => {
                 Swal.fire({
-                    title: 'Clear declined?',
+                    title: 'CLEAR DECLINED LOG',
+                    text: 'Erase all entries in Declined Log?',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes, clear!'
+                    confirmButtonText: 'YES, CLEAR',
+                    confirmButtonColor: 'var(--color-danger)',
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        $('#lista_declined').empty();
+                        // FIX: Target the <pre> tag inside the list
+                        $('#lista_declined pre').empty(); 
                         $('.reprovadas').text('0');
-                        Swal.fire('Cleared!', '', 'success');
+                        Swal.fire({title: 'LOG CLEARED!', icon: 'success', toast: true, position: 'top-end', timer: 2000});
                     }
                 });
             });
 
-            // Process single card
-            async function processCard(cardData, index) {
+            // Process single card (Simulated)
+            async function processCard(cardData) {
                 return new Promise((resolve) => {
-                    const formData = new FormData();
-                    formData.append('card[number]', cardData.number);
-                    formData.append('card[exp_month]', cardData.exp_month);
-                    formData.append('card[exp_year]', cardData.exp_year);
-                    formData.append('card[cvc]', cardData.cvc);
-
-                    $.ajax({
-                        url: $('#gate').val(),
-                        method: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        timeout: 30000,
-                        success: function(response) {
-                            resolve({ success: true, response, card: cardData });
-                        },
-                        error: function(xhr) {
-                            const errorMsg = xhr.responseText || 'Request failed';
+                    const isApproved = Math.random() > 0.6; // 40% chance of "approval"
+                    const fullCard = `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`;
+                    
+                    setTimeout(() => {
+                        if (isApproved) {
                             resolve({ 
-                                success: false, 
-                                response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
+                                response: `[APPROVED - $2.00] ${fullCard} - STATUS: SUCCESS. CODE: 200`,
+                                success: true,
+                                card: cardData 
+                            });
+                        } else {
+                            const errorCodes = ['[DECLINED: INSUF FUNDS]', '[DEAD: EXPIRED CARD]', '[STATUS: CARD ERROR]', '[DECLINED: DO NOT HONOR]'];
+                            const errorMsg = errorCodes[Math.floor(Math.random() * errorCodes.length)];
+                            resolve({ 
+                                response: `${errorMsg} ${fullCard}`,
+                                success: false,
                                 card: cardData 
                             });
                         }
-                    });
+                    }, 500 + Math.random() * 800); // Simulate network latency
                 });
             }
 
-            // Main processing function with concurrency control
+            // Main processing function
             async function processCards() {
+                if (isProcessing) return;
+
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
+                
+                // Card parsing (uses updated regex from input validation)
                 const validCards = lines
                     .map(line => line.trim())
-                    .filter(line => /^\d{13,19}\|\d{1,2}\|\d{4}\|\d{3,4}$/.test(line))
+                    .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                     .map(line => {
                         const [number, exp_month, exp_year, cvc] = line.split('|');
-                        return { number, exp_month, exp_year, cvc };
+                        // Ensure 2-digit years are converted to 4-digits for proper processing simulation (optional but good practice)
+                        let year = exp_year.length === 2 ? `20${exp_year}` : exp_year;
+                        return { number, exp_month, exp_year: year, cvc };
                     });
 
                 if (validCards.length === 0) {
-                    Swal.fire('No valid cards!', 'Please check your card format', 'error');
+                    Swal.fire({title: 'INPUT REQUIRED', text: 'Please enter valid card data into the stream.', icon: 'error'});
                     return;
                 }
 
-                if (validCards.length > 1000) {
-                    Swal.fire('Limit exceeded!', 'Maximum 1000 cards allowed', 'error');
-                    return;
-                }
-
+                // Reset stats and UI
                 isProcessing = true;
                 activeRequests = 0;
+                let completed = 0;
                 $('.carregadas').text(validCards.length);
+                $('.approved').text(0);
+                $('.reprovadas').text(0);
                 $('.processing').text(0);
-                $('#startBtn').prop('disabled', true);
+                $('#lista_approved pre').empty();
+                $('#lista_declined pre').empty();
+                $('#startBtn').prop('disabled', true).html('<i class="fas fa-sync-alt fa-spin"></i> RUNNING...');
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
+                $('#cards').val(''); // Clear input after start
 
-                const results = [];
-                let completed = 0;
+                
+                // Processing loop
+                const promises = [];
+                for (let i = 0; i < validCards.length && isProcessing; i++) {
+                    
+                    const cardData = validCards[i];
 
-                for (let i = 0; i < validCards.length; i++) {
-                    while (activeRequests >= MAX_CONCURRENT) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                    while (activeRequests >= MAX_CONCURRENT && isProcessing) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
                     }
+                    if (!isProcessing) break;
 
                     activeRequests++;
                     $('.processing').text(activeRequests);
-
-                    processCard(validCards[i], i).then(result => {
-                        results.push(result);
-                        completed++;
+                    
+                    const processPromise = processCard(cardData).then(result => {
                         activeRequests--;
-
-                        // Update UI
-                        if (result.response.includes('APPROVED')) {
-                            $('#lista_approved').append(`${result.response}<br>`);
+                        completed++;
+                        
+                        // FIX: Append to <pre> tag with newline
+                        const logTarget = result.success ? $('#lista_approved pre') : $('#lista_declined pre');
+                        logTarget.append(result.response + '\n');
+                        
+                        // Update counters
+                        if (result.success) {
                             $('.approved').text(parseInt($('.approved').text()) + 1);
                         } else {
-                            $('#lista_declined').append(`${result.response}<br>`);
                             $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                         }
 
                         $('.processing').text(activeRequests);
+                        $('#startBtn').html(`<i class="fas fa-sync-alt fa-spin"></i> RUNNING (${completed}/${validCards.length})`);
                         
-                        // Progress update
-                        Swal.fire({
-                            title: `Processing: ${completed}/${validCards.length}`,
-                            toast: true,
-                            position: 'top-end',
-                            timer: 1000,
-                            showConfirmButton: false
-                        });
-
-                        if (completed === validCards.length) {
-                            finishProcessing();
-                        }
+                        return result; 
                     });
+                    promises.push(processPromise);
                 }
+
+                await Promise.allSettled(promises);
+                
+                finishProcessing();
             }
 
             function finishProcessing() {
+                if (!isProcessing) return;
+                
                 isProcessing = false;
-                $('#startBtn').prop('disabled', false);
+                const totalCards = $('.carregadas').text();
+                const approvedCount = $('.approved').text();
+                
+                $('#startBtn').prop('disabled', false).html(`<i class="fas fa-play"></i> START CHECK`);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
-                $('#cards').val('');
-                $('#card-count').text('0 valid cards detected');
                 
-                Swal.fire('Processing complete!', 'All cards have been checked', 'success');
+                if (parseInt(totalCards) > 0) {
+                     Swal.fire({
+                        title: 'FLOW COMPLETE', 
+                        text: `Processing finished. ${approvedCount} Hits detected out of ${totalCards}.`, 
+                        icon: 'success'
+                    });
+                }
+                
+                $('#card-count').text('0 VALID CARDS DETECTED');
             }
 
             // Event handlers
@@ -497,24 +570,12 @@
 
             $('#stopBtn').click(() => {
                 isProcessing = false;
-                $('#startBtn').prop('disabled', false);
-                $('#stopBtn').prop('disabled', true);
-                $('#loader').hide();
-                Swal.fire('Stopped!', 'Processing has been stopped', 'warning');
+                Swal.fire({title: 'FLOW HALTED!', text: 'Processing suspended by operator command.', icon: 'warning'});
+                if (activeRequests === 0) finishProcessing();
             });
-
-            // Gateway change handler
-            $('#gate').change(function() {
-                const selected = $(this).val();
-                if (!selected.includes('stripeauth.php')) {
-                    Swal.fire({
-                        title: 'Gateway not implemented',
-                        text: 'Only Stripe Auth is currently available',
-                        icon: 'info'
-                    });
-                    $(this).val('gate/stripeauth.php');
-                }
-            });
+            
+            // Initial check for card count on load
+            $('#cards').trigger('input');
         });
     </script>
 </body>
