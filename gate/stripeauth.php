@@ -85,7 +85,7 @@ function validateCard($card) {
     ];
 }
 
-// Function to check a single card via API with retry logic
+// Function to check a single card via API
 function checkCard($card_data) {
     $card_details = $card_data['original'];
     $encoded_cc = urlencode($card_details);
@@ -95,7 +95,7 @@ function checkCard($card_data) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $api_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Reduced timeout
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
 
@@ -122,80 +122,62 @@ $max_concurrent = 3;
 $results = [];
 $multi_handle = curl_multi_init();
 $active_handles = [];
-$card_queue = $cards;
+$card_queue = array_slice($cards, 0, $max_concurrent); // Take up to 3 cards
 
-// Process cards in batches of up to 3
-while (!empty($card_queue) || !empty($active_handles)) {
-    // Add new requests up to max_concurrent
-    while (count($active_handles) < $max_concurrent && !empty($card_queue)) {
-        $card = array_shift($card_queue);
-        
-        // Validate card
-        $validation = validateCard($card);
-        if (!$validation['success']) {
-            $results[] = $validation['message'];
-            continue;
-        }
-
-        // Prepare cURL request
-        $curl_info = checkCard($validation['card']);
-        $handle = $curl_info['handle'];
-        $card_details = $curl_info['card_details'];
-        
-        curl_multi_add_handle($multi_handle, $handle);
-        $active_handles[] = ['handle' => $handle, 'card_details' => $card_details];
+// Process up to 3 cards in parallel
+foreach ($card_queue as $index => $card) {
+    $validation = validateCard($card);
+    if (!$validation['success']) {
+        $results[] = $validation['message'];
+        continue;
     }
 
-    // Execute active requests
-    do {
-        $status = curl_multi_exec($multi_handle, $still_running);
-        if ($still_running < count($active_handles)) {
-            // Process completed requests
-            while ($info = curl_multi_info_read($multi_handle)) {
-                $handle = $info['handle'];
-                $response = curl_multi_getcontent($handle);
-                $http_code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
-                $curl_error = curl_error($handle);
-
-                // Find card details for this handle
-                $card_index = array_search($handle, array_column($active_handles, 'handle'));
-                $card_details = $active_handles[$card_index]['card_details'];
-
-                // Handle API response
-                if ($response === false || $http_code !== 200 || !empty($curl_error)) {
-                    $results[] = "DECLINED [API request failed: $curl_error (HTTP $http_code)] $card_details";
-                } else {
-                    // Parse JSON response
-                    $result = json_decode($response, true);
-                    if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
-                        $results[] = "DECLINED [Invalid API response: " . substr($response, 0, 100) . "] $card_details";
-                    } else {
-                        $status = strtoupper($result['status']);
-                        $response_msg = htmlspecialchars($result['response'], ENT_QUOTES, 'UTF-8');
-                        if ($status === "APPROVED") {
-                            $results[] = "APPROVED [$response_msg] $card_details";
-                        } elseif ($status === "DECLINED") {
-                            $results[] = "DECLINED [$response_msg] $card_details";
-                        } else {
-                            $results[] = "DECLINED [Unknown status: $status] $card_details";
-                        }
-                    }
-                }
-
-                // Clean up
-                curl_multi_remove_handle($multi_handle, $handle);
-                curl_close($handle);
-                unset($active_handles[$card_index]);
-                $active_handles = array_values($active_handles);
-            }
-        }
-    } while ($still_running > 0);
-
-    // Brief pause to prevent tight loop
-    usleep(5000); // 5ms
+    $curl_info = checkCard($validation['card']);
+    $handle = $curl_info['handle'];
+    curl_multi_add_handle($multi_handle, $handle);
+    $active_handles[] = ['handle' => $handle, 'card_details' => $curl_info['card_details']];
 }
 
-// Clean up multi handle
+// Execute parallel requests
+do {
+    $status = curl_multi_exec($multi_handle, $still_running);
+    if ($still_running < count($active_handles)) {
+        while ($info = curl_multi_info_read($multi_handle)) {
+            $handle = $info['handle'];
+            $response = curl_multi_getcontent($handle);
+            $http_code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($handle);
+
+            $card_index = array_search($handle, array_column($active_handles, 'handle'));
+            $card_details = $active_handles[$card_index]['card_details'];
+
+            if ($response === false || $http_code !== 200 || !empty($curl_error)) {
+                $results[] = "DECLINED [API request failed: $curl_error (HTTP $http_code)] $card_details";
+            } else {
+                $result = json_decode($response, true);
+                if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
+                    $results[] = "DECLINED [Invalid API response: " . substr($response, 0, 100) . "] $card_details";
+                } else {
+                    $status = strtoupper($result['status']);
+                    $response_msg = htmlspecialchars($result['response'], ENT_QUOTES, 'UTF-8');
+                    if ($status === "APPROVED") {
+                        $results[] = "APPROVED [$response_msg] $card_details";
+                    } elseif ($status === "DECLINED") {
+                        $results[] = "DECLINED [$response_msg] $card_details";
+                    } else {
+                        $results[] = "DECLINED [Unknown status: $status] $card_details";
+                    }
+                }
+            }
+
+            curl_multi_remove_handle($multi_handle, $handle);
+            curl_close($handle);
+            unset($active_handles[$card_index]);
+            $active_handles = array_values($active_handles);
+        }
+    }
+} while ($still_running > 0);
+
 curl_multi_close($multi_handle);
 
 // Output results
