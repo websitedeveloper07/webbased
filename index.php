@@ -18,7 +18,7 @@
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
             margin: 0;
-            padding: 20px;
+            padding: 30px;
             min-height: 100vh;
             color: #333;
         }
@@ -28,43 +28,53 @@
             100% { background-position: 0% 50%; }
         }
         .container {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
+            padding: 0 15px;
         }
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
         }
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 700;
             margin: 0;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        }
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
         }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         .form-group label {
             display: block;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #555;
+            margin-bottom: 10px;
+            color: #444;
         }
         .form-control {
             width: 100%;
-            padding: 12px 15px;
+            padding: 14px 18px;
             border: 2px solid #e1e5e9;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             transition: all 0.3s ease;
             background: white;
@@ -72,7 +82,7 @@
         .form-control:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
         }
         .form-control::placeholder {
             color: #999;
@@ -81,9 +91,9 @@
             cursor: pointer;
         }
         .btn {
-            padding: 12px 24px;
+            padding: 14px 30px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             font-size: 16px;
             cursor: pointer;
@@ -96,16 +106,16 @@
             color: white;
         }
         .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
         }
         .btn-danger {
             background: linear-gradient(45deg, #f093fb, #f5576c);
             color: white;
         }
         .btn-danger:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(245, 87, 108, 0.4);
         }
         .btn:disabled {
             opacity: 0.6;
@@ -113,45 +123,55 @@
         }
         .btn-group {
             display: flex;
-            gap: 15px;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
         .stat-item {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stat-item:hover {
+            transform: translateY(-3px);
         }
         .stat-item .label {
-            font-size: 12px;
+            font-size: 14px;
             opacity: 0.9;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         .stat-item .value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
         }
         .results-grid {
             display: grid;
-            gap: 20px;
+            gap: 30px;
         }
         .result-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
         }
         .result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 25px;
             background: linear-gradient(135deg, #f8f9fa, #e9ecef);
             border-bottom: 1px solid #dee2e6;
         }
@@ -161,43 +181,47 @@
             margin: 0;
         }
         .result-content {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
-            padding: 20px;
+            padding: 25px;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 15px;
+            line-height: 1.7;
         }
         .result-content::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
         }
         .result-content::-webkit-scrollbar-thumb {
             background: #667eea;
-            border-radius: 3px;
+            border-radius: 4px;
         }
         .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         .action-btn {
-            padding: 8px 12px;
+            padding: 10px 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             color: white;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 15px;
+            transition: transform 0.3s ease;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
         }
         .eye-btn { background: #6c757d; }
         .copy-btn { background: #28a745; }
         .trash-btn { background: #dc3545; }
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 30px auto;
             display: none;
         }
         @keyframes spin {
@@ -205,23 +229,32 @@
             100% { transform: rotate(360deg); }
         }
         .card-count {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
         }
         footer {
             text-align: center;
-            padding: 20px;
+            padding: 30px;
             color: white;
-            font-size: 14px;
-            margin-top: 40px;
+            font-size: 15px;
+            margin-top: 50px;
         }
         @media (max-width: 768px) {
-            .container { padding: 10px; }
-            .header h1 { font-size: 2rem; }
-            .btn-group { flex-direction: column; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .result-header { flex-direction: column; gap: 10px; }
+            .container { padding: 15px; }
+            .header h1 { font-size: 2.2rem; }
+            .header p { font-size: 1rem; }
+            .btn-group { 
+                flex-direction: column;
+                align-items: center;
+            }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .result-header { 
+                flex-direction: column; 
+                gap: 15px; 
+                align-items: flex-start;
+            }
+            .card { padding: 20px; }
         }
     </style>
 </head>
@@ -235,8 +268,8 @@
         <!-- Input Section -->
         <div class="card">
             <div class="form-group">
-                <label for="cards">Card List (Format: card|MM|YYYY|CVV)</label>
-                <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|2026|168&#10;4242424242424242|12|2025|123"></textarea>
+                <label for="cards">Card List (Format: card|MM|YY or YYYY|CVV)</label>
+                <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
                 <div class="card-count" id="card-count">0 valid cards detected</div>
             </div>
             <div class="form-group">
@@ -322,7 +355,7 @@
             // Card validation and counter
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
-                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{4}\|\d{3,4}$/.test(line.trim()));
+                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
             });
 
@@ -380,10 +413,16 @@
             // Process single card
             async function processCard(cardData, index) {
                 return new Promise((resolve) => {
+                    // Normalize year to 4 digits
+                    let normalizedYear = cardData.exp_year;
+                    if (normalizedYear.length === 2) {
+                        normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                    }
+
                     const formData = new FormData();
                     formData.append('card[number]', cardData.number);
                     formData.append('card[exp_month]', cardData.exp_month);
-                    formData.append('card[exp_year]', cardData.exp_year);
+                    formData.append('card[exp_year]', normalizedYear);
                     formData.append('card[cvc]', cardData.cvc);
 
                     $.ajax({
@@ -394,14 +433,20 @@
                         contentType: false,
                         timeout: 30000,
                         success: function(response) {
-                            resolve({ success: true, response, card: cardData });
+                            resolve({ 
+                                success: true, 
+                                response, 
+                                card: cardData,
+                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
+                            });
                         },
                         error: function(xhr) {
                             const errorMsg = xhr.responseText || 'Request failed';
                             resolve({ 
                                 success: false, 
                                 response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
-                                card: cardData 
+                                card: cardData,
+                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
                             });
                         }
                     });
@@ -414,7 +459,7 @@
                 const lines = cardText.split('\n').filter(line => line.trim());
                 const validCards = lines
                     .map(line => line.trim())
-                    .filter(line => /^\d{13,19}\|\d{1,2}\|\d{4}\|\d{3,4}$/.test(line))
+                    .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                     .map(line => {
                         const [number, exp_month, exp_year, cvc] = line.split('|');
                         return { number, exp_month, exp_year, cvc };
