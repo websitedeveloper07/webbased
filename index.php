@@ -444,7 +444,7 @@
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 12000, // Reduced for faster failure detection
+                        timeout: 55000, // 55s to accommodate 50s backend timeout
                         signal: controller.signal,
                         success: function(response) {
                             console.log(`Success for ${card.displayCard}: ${response}`); // Debug
@@ -463,7 +463,7 @@
                                 console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`); // Debug
                                 setTimeout(() => {
                                     processCard(card, controller, retryCount + 1).then(resolve);
-                                }, 500);
+                                }, 1000); // 1s delay for retry
                             } else {
                                 const errorMsg = xhr.responseText ? xhr.responseText.substring(0, 100) : 'Request failed';
                                 console.error(`Failed card ${card.displayCard}: ${xhr.statusText} (HTTP ${xhr.status}) - ${errorMsg}`); // Debug
@@ -534,7 +534,7 @@
                         abortControllers.push(controller);
 
                         // Stagger requests to avoid overwhelming the API
-                        await new Promise(resolve => setTimeout(resolve, requestIndex * 100));
+                        await new Promise(resolve => setTimeout(resolve, requestIndex * 200));
                         requestIndex++;
 
                         processCard(card, controller).then(result => {
