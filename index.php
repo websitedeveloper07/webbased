@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CardX Check - Multi Gateway</title>
+    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Multi Gateway</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -14,9 +14,9 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(-45deg, #ff8a80, #f06292, #4fc3f7, #80deea);
+            background: linear-gradient(-45deg, #0288d1, #4fc3f7, #f06292, #bbdefb);
             background-size: 400% 400%;
-            animation: gradientShift 12s ease infinite;
+            animation: gradientShift 10s ease infinite;
             margin: 0;
             padding: 20px;
             min-height: 100vh;
@@ -35,18 +35,35 @@
         }
         .particle {
             position: absolute;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            animation: float 20s infinite linear;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 10px solid rgba(255, 255, 255, 0.7);
+            animation: floatDiagonal 15s infinite linear;
         }
-        @keyframes float {
-            0% { transform: translateY(100vh) scale(1); opacity: 0.8; }
-            100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+        @keyframes floatDiagonal {
+            0% {
+                transform: translate(0, 100vh) rotate(45deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(100vw, -100vh) rotate(45deg);
+                opacity: 0;
+            }
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+        @keyframes slideOutLeft {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-100%); opacity: 0; }
+        }
+        @keyframes slideInRight {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
         }
         .container {
             max-width: 1000px;
@@ -76,7 +93,7 @@
             border-radius: 12px;
         }
         .title-box {
-            background: linear-gradient(45deg, #4fc3f7, #80deea);
+            background: linear-gradient(45deg, #ff6f00, #ffca28);
             padding: 15px 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -100,10 +117,29 @@
             font-size: 1.6rem;
             padding: 10px;
             transition: transform 0.2s ease;
-            z-index: 1002;
+            z-index: 1008;
         }
         .menu-toggle:hover {
             transform: scale(1.1);
+        }
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #ff8a80, #f06292);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            z-index: 1008;
+        }
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         .sidebar {
             position: fixed;
@@ -111,11 +147,11 @@
             right: -300px;
             width: 300px;
             height: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, rgba(227, 242, 253, 0.95), rgba(187, 222, 251, 0.95));
             backdrop-filter: blur(8px);
             box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
             transition: right 0.3s ease;
-            z-index: 1003;
+            z-index: 1009;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -123,6 +159,7 @@
         }
         .sidebar.show {
             right: 0;
+            animation: slideInRight 0.3s ease forwards;
         }
         .sidebar-item {
             padding: 15px;
@@ -137,11 +174,11 @@
             transition: background 0.2s ease;
         }
         .sidebar-item:hover {
-            background: rgba(79, 195, 247, 0.1);
+            background: rgba(79, 195, 247, 0.2);
             color: #f06292;
         }
         .sidebar-item.active {
-            background: rgba(79, 195, 247, 0.2);
+            background: rgba(79, 195, 247, 0.3);
             color: #f06292;
         }
         .form-group {
@@ -258,13 +295,24 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, rgba(227, 242, 253, 0.95), rgba(187, 222, 251, 0.95));
             backdrop-filter: blur(8px);
             z-index: 999;
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+            transform: translateX(100%);
+        }
+        .result-column.show {
+            transform: translateX(0);
+            animation: slideInRight 0.5s ease forwards;
+        }
+        .result-column.slide-out {
+            animation: slideOutLeft 0.5s ease forwards;
+        }
+        .container.slide-in {
+            animation: slideInRight 0.5s ease forwards;
         }
         .result-header {
             display: flex;
@@ -351,6 +399,8 @@
             align-items: center;
             min-height: 100vh;
             background: inherit;
+            position: relative;
+            overflow: hidden;
         }
         .login-card {
             background: rgba(255, 255, 255, 0.92);
@@ -361,6 +411,7 @@
             width: 100%;
             max-width: 360px;
             text-align: center;
+            z-index: 1;
         }
         .login-card h2 {
             font-size: 1.8rem;
@@ -388,6 +439,7 @@
             .sidebar { width: 250px; }
             .result-column { padding: 10px; }
             .result-content { max-height: 70vh; }
+            .back-btn { padding: 8px 16px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -432,7 +484,7 @@
         <!-- Input Section -->
         <div class="card" id="inputSection">
             <div class="form-group">
-                <label for="cards">Card List (Format: card|MM|YY or YYYY|CVV)</label>
+                <label for="cards">Insert the cards here</label>
                 <textarea id="cards" class="form-control" rows="7" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
                 <div class="card-count" id="card-count">0 valid cards detected</div>
             </div>
@@ -442,7 +494,6 @@
                     <option value="gate/stripeauth.php">Stripe Auth</option>
                     <option value="gate/paypal1$.php">PayPal 1$</option>
                     <option value="gate/shopify1$.php">Shopify 1$</option>
-                    <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
                     <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
                 </select>
             </div>
@@ -465,19 +516,19 @@
                     <div class="value carregadas">0</div>
                 </div>
                 <div class="stat-item charged">
-                    <div class="label">Charged</div>
+                    <div class="label">HIT|CHARGED</div>
                     <div class="value charged">0</div>
                 </div>
                 <div class="stat-item approved">
-                    <div class="label">Approved</div>
+                    <div class="label">LIVE|APPROVED</div>
                     <div class="value approved">0</div>
                 </div>
                 <div class="stat-item declined">
-                    <div class="label">Declined</div>
+                    <div class="label">DEAD|DECLINED</div>
                     <div class="value reprovadas">0</div>
                 </div>
                 <div class="stat-item checked">
-                    <div class="label">Checked</div>
+                    <div class="label">CHECKED</div>
                     <div class="value checked">0 / 0</div>
                 </div>
             </div>
@@ -488,12 +539,12 @@
     <div class="result-column hidden" id="resultColumn">
         <div class="header">
             <div class="title-box">
-                <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
-                <p>Multi-Gateway Card Checker</p>
+                <h1><i class="fas fa-credit-card"></i>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h1>
+                <p>𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</p>
             </div>
-            <div class="menu-toggle" id="resultMenuToggle">
-                <i class="fas fa-ellipsis-v"></i>
-            </div>
+            <button class="back-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
         </div>
         <div class="result-header">
             <h3 class="result-title" id="resultTitle"><i class="fas fa-bolt" style="color: #ffca28;"></i> Charged Cards</h3>
@@ -526,19 +577,17 @@
             let declinedCards = JSON.parse(sessionStorage.getItem(`declinedCards-${sessionId}`) || '[]');
             let currentView = 'checkerhub';
 
-            // Particle Animation
+            // Particle Animation for both login and main pages
             function createParticles() {
                 const particlesContainer = $('#particles');
                 for (let i = 0; i < 50; i++) {
                     const particle = $('<div class="particle"></div>');
                     const size = Math.random() * 6 + 2;
                     particle.css({
-                        width: size + 'px',
-                        height: size + 'px',
                         left: Math.random() * 100 + '%',
                         animationDuration: Math.random() * 10 + 10 + 's',
                         animationDelay: Math.random() * 5 + 's',
-                        background: ['#ffca28', '#ff8a80', '#4fc3f7'][Math.floor(Math.random() * 3)]
+                        borderBottomColor: ['#0288d1', '#4fc3f7', '#f06292'][Math.floor(Math.random() * 3)]
                     });
                     particlesContainer.append(particle);
                 }
@@ -600,26 +649,50 @@
                 }
             });
 
-            // Sidebar toggle
+            // Sidebar toggle with swipe animation
             function toggleSidebar(e) {
-                e.stopPropagation();
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                console.log(`Toggling sidebar in view: ${currentView}, Target: menuToggle`);
                 $('#sidebar').toggleClass('show');
+                console.log(`Sidebar state: ${$('#sidebar').hasClass('show') ? 'Open' : 'Closed'}`);
             }
 
-            $('#menuToggle, #resultMenuToggle').click(toggleSidebar);
+            $('#menuToggle').click(function(e) {
+                console.log('Click detected on menuToggle');
+                toggleSidebar(e);
+            });
 
-            $(document).click(function(e) {
-                if (!$(e.target).closest('#menuToggle, #resultMenuToggle, #sidebar').length) {
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#menuToggle, #sidebar').length && $('#sidebar').hasClass('show')) {
+                    console.log('Closing sidebar due to outside click');
                     $('#sidebar').removeClass('show');
                 }
             });
 
-            // View switching
+            $('#sidebar').click(function(e) {
+                e.stopPropagation();
+                console.log('Click inside sidebar, preventing close');
+            });
+
+            // Back button with swipe animation
+            $('#backBtn').click(function(e) {
+                e.preventDefault();
+                console.log('Click detected on backBtn, switching to checkerhub with animation');
+                $('#resultColumn').addClass('slide-out');
+                $('#checkerContainer').removeClass('hidden').addClass('slide-in');
+                setTimeout(() => {
+                    $('#resultColumn').removeClass('slide-out').addClass('hidden');
+                    $('#checkerContainer').removeClass('slide-in');
+                    $('#footer').removeClass('hidden');
+                    console.log('Animation complete, switched to checkerhub');
+                    switchView('checkerhub');
+                }, 500);
+            });
+
+            // View switching with swipe animation
             function switchView(view) {
-                if (currentView === view) {
-                    $('#sidebar').removeClass('show');
-                    return;
-                }
+                console.log(`Switching to view: ${view}`);
                 currentView = view;
                 $('.sidebar-item').removeClass('active');
                 $(`.sidebar-item[data-view="${view}"]`).addClass('active');
@@ -628,10 +701,11 @@
                 if (view === 'checkerhub') {
                     $('#checkerContainer').removeClass('hidden');
                     $('#footer').removeClass('hidden');
-                    $('#resultColumn').addClass('hidden');
+                    $('#resultColumn').removeClass('show').addClass('hidden');
                 } else {
                     $('#checkerContainer').addClass('hidden');
                     $('#footer').addClass('hidden');
+                    $('#resultColumn').removeClass('hidden').addClass('show');
                     renderResult();
                 }
             }
@@ -658,13 +732,12 @@
                         $('#resultContent').append(`<span style="color: ${config.color}; font-family: 'Inter', sans-serif;">${item}</span><br>`);
                     });
                 }
-                $('#resultColumn').removeClass('hidden');
+                $('#resultColumn').removeClass('hidden').addClass('show');
                 $('#checkerContainer').addClass('hidden');
                 $('#footer').addClass('hidden');
                 $('#clearResult').toggle(config.clearable);
             }
 
-            // UI Functions
             $('#copyResult').click(function() {
                 const viewConfig = {
                     charged: { title: 'Charged cards', data: chargedCards },
@@ -724,7 +797,6 @@
                 });
             });
 
-            // Process a single card with retry
             async function processCard(card, controller, retryCount = 0) {
                 if (!isProcessing) {
                     console.log(`Skipping card ${card.displayCard} due to stop`);
@@ -786,7 +858,6 @@
                 });
             }
 
-            // Main processing function
             async function processCards() {
                 if (isProcessing) {
                     console.warn('Processing already in progress');
@@ -926,7 +997,6 @@
                 }
             }
 
-            // Event handlers
             $('#startBtn').click(() => {
                 console.log('Start Check clicked');
                 processCards();
