@@ -240,6 +240,38 @@
             font-size: 15px;
             margin-top: 50px;
         }
+        /* Login Panel Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: inherit;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-card h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .header h1 { font-size: 2.2rem; }
@@ -255,11 +287,29 @@
                 align-items: flex-start;
             }
             .card { padding: 20px; }
+            .login-card { padding: 20px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Panel -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <h2><i class="fas fa-lock"></i> CardX Check Login</h2>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter username" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password">
+            </div>
+            <button class="btn btn-primary login-btn" id="loginBtn">Login</button>
+        </div>
+    </div>
+
+    <!-- Main Checker UI -->
+    <div class="container hidden" id="checkerContainer">
         <div class="header">
             <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
             <p>Multi-Gateway Card Checker</p>
@@ -342,18 +392,53 @@
         </div>
     </div>
 
-    <footer>
+    <footer class="hidden" id="footer">
         <p><strong>© 2025 Card X CheckHK - Multi-Gateway CHECKER</strong></p>
     </footer>
 
     <script>
         $(document).ready(function() {
             let isProcessing = false;
+            let isStopping = false;
             let activeRequests = 0;
+            let cardQueue = [];
             const MAX_CONCURRENT = 3; // 3 concurrent POST requests
             const MAX_RETRIES = 1; // Retry once on failure
             let abortControllers = [];
             let totalCards = 0;
+
+            // Login Logic
+            const validUsername = 'admin';
+            const validPassword = 'password123';
+
+            function showCheckerUI() {
+                $('#loginContainer').addClass('hidden');
+                $('#checkerContainer').removeClass('hidden');
+                $('#footer').removeClass('hidden');
+            }
+
+            $('#loginBtn').click(function() {
+                const username = $('#username').val().trim();
+                const password = $('#password').val().trim();
+
+                if (username === validUsername && password === validPassword) {
+                    showCheckerUI();
+                } else {
+                    Swal.fire({
+                        title: 'Login Failed',
+                        text: 'Invalid username or password',
+                        icon: 'error',
+                        confirmButtonText: 'Try Again'
+                    });
+                }
+            });
+
+            // Allow Enter key to trigger login
+            $('#username, #password').keypress(function(e) {
+                if (e.which === 13) {
+                    $('#loginBtn').click();
+                }
+            });
 
             // Card validation and counter
             $('#cards').on('input', function() {
@@ -425,6 +510,11 @@
 
             // Process a single card with retry
             async function processCard(card, controller, retryCount = 0) {
+                if (!isProcessing) {
+                    console.log(`Skipping card ${card.displayCard} due to stop`); // Debug
+                    return null;
+                }
+
                 return new Promise((resolve) => {
                     const formData = new FormData();
                     let normalizedYear = card.exp_year;
@@ -459,7 +549,7 @@
                             if (xhr.statusText === 'abort') {
                                 console.log(`Aborted card ${card.displayCard}`); // Debug
                                 resolve(null);
-                            } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES) {
+                            } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
                                 console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`); // Debug
                                 setTimeout(() => {
                                     processCard(card, controller, retryCount + 1).then(resolve);
@@ -509,8 +599,10 @@
                 }
 
                 isProcessing = true;
+                isStopping = false;
                 activeRequests = 0;
                 abortControllers = [];
+                cardQueue = [...validCards];
                 totalCards = validCards.length;
                 $('.carregadas').text(totalCards);
                 $('.approved').text('0');
@@ -523,12 +615,12 @@
 
                 const results = [];
                 let completed = 0;
-                const cardQueue = [...validCards];
                 let requestIndex = 0;
 
                 while (cardQueue.length > 0 && isProcessing) {
                     while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                         const card = cardQueue.shift();
+                        if (!card) break; // Ensure no processing after queue clear
                         activeRequests++;
                         const controller = new AbortController();
                         abortControllers.push(controller);
@@ -568,7 +660,9 @@
 
             function finishProcessing() {
                 isProcessing = false;
+                isStopping = false;
                 activeRequests = 0;
+                cardQueue = [];
                 abortControllers = [];
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
@@ -587,12 +681,14 @@
             });
 
             $('#stopBtn').click(() => {
-                if (!isProcessing) {
-                    console.warn('Stop clicked but not processing'); // Debug
+                if (!isProcessing || isStopping) {
+                    console.warn('Stop clicked but not processing or already stopping'); // Debug
                     return;
                 }
 
                 isProcessing = false;
+                isStopping = true;
+                cardQueue = []; // Clear queue to prevent new requests
                 abortControllers.forEach(controller => controller.abort());
                 abortControllers = [];
                 activeRequests = 0;
@@ -600,7 +696,12 @@
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
-                Swal.fire('Stopped!', 'Processing has been stopped', 'warning');
+                Swal.fire({
+                    title: 'Stopped!',
+                    text: 'Processing has been stopped',
+                    icon: 'warning',
+                    allowOutsideClick: false
+                });
                 console.log('Processing stopped'); // Debug
             });
 
