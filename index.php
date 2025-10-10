@@ -587,7 +587,7 @@
         </div>
     </div>
 
-    <footer style="text-align: center; padding: 10px; color: var(--color-text-muted); font-size: 12px; position: fixed; bottom: 0; width: 100%; z-index: 1; background: rgba(10, 10, 30, 0.95);">
+    <footer style="text-align: center; padding: 10px; color: var(--color-text-muted); font-size: 12px; background: rgba(10, 10, 30, 0.95);">
         <p><strong>© 2025 CardX CHK - Multi-Gateway Checker</strong></p>
         <p style="font-style: italic; color: var(--color-yellow);">The New ERA Begins</p>
     </footer>
@@ -638,6 +638,7 @@
             let approvedCards = [];
             let chargedCards = [];
             let declinedCards = [];
+            let currentView = 'process';
 
             const LOG_MAP = {
                 'approved': { title: 'Approved Cards Logs', data: approvedCards, countClass: '.approved', logClass: 'log-success', clearable: true },
@@ -674,10 +675,15 @@
 
             function switchView(viewId) {
                 $('.view-section').addClass('hidden');
-                $('#view-' + viewId).removeClass('hidden');
+                if (viewId === 'process') {
+                    $('#view-process').removeClass('hidden');
+                } else {
+                    $('#view-log').removeClass('hidden');
+                    renderLog(viewId);
+                }
                 $('.nav-item').removeClass('active');
                 $(`.nav-item[data-view="${viewId}"]`).addClass('active');
-                if (viewId !== 'process') renderLog(viewId);
+                currentView = viewId;
             }
 
             $('#cards').on('input', function() {
@@ -946,7 +952,6 @@
                 }
             });
 
-            let currentView = 'process';
             switchView('process');
         });
 
