@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Multi Gateway</title>
+    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - 𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -11,6 +11,7 @@
     <style>
         * {
             box-sizing: border-box;
+            user-select: none; /* Prevent text selection for non-card elements */
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -150,7 +151,7 @@
             background: linear-gradient(135deg, rgba(227, 242, 253, 0.95), rgba(187, 222, 251, 0.95));
             backdrop-filter: blur(8px);
             box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
-            transition: right 0.3s ease;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother easing */
             z-index: 1009;
             padding: 20px;
             display: flex;
@@ -159,7 +160,7 @@
         }
         .sidebar.show {
             right: 0;
-            animation: slideInRight 0.3s ease forwards;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Smoother animation */
         }
         .sidebar-item {
             padding: 15px;
@@ -198,6 +199,7 @@
             font-size: 15px;
             transition: all 0.2s ease;
             background: white;
+            user-select: text; /* Allow text selection for input fields */
         }
         .form-control:focus {
             outline: none;
@@ -302,16 +304,17 @@
             flex-direction: column;
             gap: 20px;
             transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother easing */
         }
         .result-column.show {
             transform: translateX(0);
-            animation: slideInRight 0.5s ease forwards;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Smoother animation */
         }
         .result-column.slide-out {
-            animation: slideOutLeft 0.5s ease forwards;
+            animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
         .container.slide-in {
-            animation: slideInRight 0.5s ease forwards;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
         .result-header {
             display: flex;
@@ -340,6 +343,7 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            user-select: text; /* Allow text selection for result content */
         }
         .result-content::-webkit-scrollbar {
             width: 6px;
@@ -449,7 +453,7 @@
     <!-- Login Panel -->
     <div class="login-container" id="loginContainer">
         <div class="login-card">
-            <h2><i class="fas fa-lock"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 </h2>
+            <h2><i class="fas fa-lock"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" class="form-control" placeholder="Enter username" autocomplete="off">
@@ -579,7 +583,7 @@
             // Particle Animation for both login and main pages
             function createParticles() {
                 const particlesContainer = $('#particles');
-                for (let i = 0; i < 50; i++) {
+                for (let i = 0; i < 30; i++) { // Reduced particles for performance
                     const particle = $('<div class="particle"></div>');
                     particle.css({
                         left: Math.random() * 100 + '%',
@@ -593,8 +597,8 @@
             createParticles();
 
             // Login Logic
-            const validUsername = 'admin';
-            const validPassword = 'password123';
+            const validUsername = 'user';
+            const validPassword = 'user';
 
             function showCheckerUI() {
                 $('#loginContainer').addClass('hidden');
@@ -630,6 +634,20 @@
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
+                if (validCards.length > 0) {
+                    $('.carregadas').text('0');
+                    $('.charged').text('0');
+                    $('.approved').text('0');
+                    $('.reprovadas').text('0');
+                    $('.checked').text('0 / 0');
+                    chargedCards = [];
+                    approvedCards = [];
+                    declinedCards = [];
+                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                    $('#resultColumn').addClass('hidden');
+                }
             });
 
             // Sidebar toggle with swipe animation
@@ -669,7 +687,7 @@
                     $('#footer').removeClass('hidden');
                     console.log('Animation complete, switched to checkerhub');
                     switchView('checkerhub');
-                }, 500);
+                }, 300); // Match animation duration
             });
 
             // View switching with swipe animation
@@ -705,13 +723,13 @@
                 };
                 if (!viewConfig[currentView]) return;
                 const config = viewConfig[currentView];
-                $('#resultTitle').html(`<i class="fas ${config.icon}" style="color: ${config.color};"></i> ${config.title}`);
+                $('#resultTitle').html(`<i class="fas ${config.icon}" style="color: ${config.color}"></i> ${config.title}`);
                 $('#resultContent').empty();
                 if (config.data.length === 0) {
                     $('#resultContent').append('<span style="color: #555;">No cards yet</span>');
                 } else {
                     config.data.forEach(item => {
-                        $('#resultContent').append(`<span style="color: ${config.color}; font-family: 'Inter', sans-serif;">${item}</span><br>`);
+                        $('#resultContent').append(`<div class="card-data" style="color: ${config.color}; font-family: 'Inter', sans-serif;">${item}</div>`);
                     });
                 }
                 $('#resultColumn').removeClass('hidden').addClass('show');
