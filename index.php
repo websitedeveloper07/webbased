@@ -467,8 +467,8 @@
     <div class="container hidden" id="checkerContainer">
         <div class="header" id="header">
             <div class="title-box">
-                <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
-                <p>Multi-Gateway Card Checker</p>
+                <h1><i class="fas fa-credit-card"></i>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h1>
+                <p>𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</p>
             </div>
             <div class="menu-toggle" id="menuToggle">
                 <i class="fas fa-ellipsis-v"></i>
