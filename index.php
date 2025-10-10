@@ -136,7 +136,7 @@
             z-index: 10;
             top: 0;
             right: 0;
-            background: transparent; /* Transparent background */
+            background: rgba(10, 10, 30, 0.95); /* Darker, opaque background */
             overflow-x: hidden;
             transition: width 0.4s ease;
             padding-top: 60px;
