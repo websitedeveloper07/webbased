@@ -136,7 +136,7 @@
             z-index: 10;
             top: 0;
             right: 0;
-            background: rgba(10, 10, 30, 0.95); /* Darker, opaque background */
+            background: rgba(10, 10, 30, 0.95);
             overflow-x: hidden;
             transition: width 0.4s ease;
             padding-top: 60px;
@@ -184,10 +184,10 @@
             background: transparent;
         }
         .nav-label.core-functions {
-            color: var(--color-primary); /* Hot Pink for Core Functions */
+            color: var(--color-primary);
         }
         .nav-label.results-logs {
-            color: var(--color-text-muted); /* Muted gray for Results Logs */
+            color: var(--color-text-muted);
         }
         .main-content {
             grid-column: 1 / 2;
@@ -430,6 +430,36 @@
             background: var(--color-neon);
             border-radius: var(--border-radius);
         }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .log-table th,
+        .log-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(30, 144, 255, 0.2);
+        }
+        .log-table th {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-neon);
+            text-shadow: var(--neon-glow-flowing);
+            text-transform: uppercase;
+        }
+        .log-table td {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+        .log-table .no-cards {
+            color: var(--color-text-muted);
+            text-align: center;
+        }
+        .log-success { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
+        .log-charged { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
+        .log-danger { color: var(--color-danger); text-shadow: 0 0 5px var(--color-danger); }
         .action-btn {
             background: rgba(10, 10, 30, 0.7);
             color: var(--color-text-light);
@@ -457,9 +487,6 @@
             background: rgba(155, 48, 255, 0.2);
             box-shadow: 0 0 15px rgba(30, 144, 255, 0.5);
         }
-        .log-success { color: #00ff7f; text-shadow: 0 0 10px #00ff7f; }
-        .log-charged { color: #00ff7f; text-shadow: 0 0 10px #00ff7f; }
-        .log-danger { color: #ffffff; text-shadow: 0 0 5px #ffffff; }
         .view-section.hidden { display: none; }
         @media (max-width: 900px) {
             .input-controls-grid {
@@ -485,6 +512,7 @@
             .stat-item .value { font-size: 1.5rem; }
             .btn { padding: 10px; font-size: 13px; }
             .form-control { font-size: 12px; }
+            .log-table th, .log-table td { font-size: 11px; padding: 6px; }
         }
     </style>
 </head>
@@ -581,7 +609,7 @@
                             <button class="action-btn" id="clearLogBtn"><i class="fas fa-trash-alt"></i> Clear</button>
                         </div>
                     </div>
-                    <div id="dynamic-log-content" class="log-content">Select a log from the menu...</div>
+                    <div id="dynamic-log-content" class="log-content"></div>
                 </div>
             </div>
         </div>
@@ -659,17 +687,43 @@
 
                 $('#dynamic-log-title').text(config.title);
                 $('#dynamic-log-content').empty();
-                
+
+                const table = $('<table class="log-table">');
+                table.append(`
+                    <thead>
+                        <tr>
+                            <th>Card Number</th>
+                            <th>Expiry</th>
+                            <th>CVV</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                `);
+
                 if (config.data.length === 0) {
-                    $('#dynamic-log-content').html(`<span style="color: var(--color-text-muted);">No entries yet.</span>`);
+                    table.find('tbody').append(`
+                        <tr>
+                            <td colspan="4" class="no-cards">No cards yet</td>
+                        </tr>
+                    `);
                 } else {
-                    const table = $('<table style="width: 100%; border-collapse: collapse;">');
                     config.data.forEach(item => {
-                        const row = $('<tr><td style="padding: 8px; border-bottom: 1px solid rgba(30, 144, 255, 0.2); color: ' + (viewId === 'declined' ? '#ffffff' : '#00ff7f') + '; text-shadow: 0 0 5px ' + (viewId === 'declined' ? '#ffffff' : '#00ff7f') + ';">' + item + '</td></tr>');
-                        table.append(row);
+                        const [number, exp_month, exp_year, cvc, status] = item.split('|');
+                        const row = $(`
+                            <tr>
+                                <td>${number}</td>
+                                <td>${exp_month}/${exp_year}</td>
+                                <td>${cvc}</td>
+                                <td class="${config.logClass}">${status}</td>
+                            </tr>
+                        `);
+                        table.find('tbody').append(row);
                     });
-                    $('#dynamic-log-content').append(table);
                 }
+
+                $('#dynamic-log-content').append(table);
                 $('#clearLogBtn').toggle(config.clearable);
             }
 
@@ -765,10 +819,11 @@
                         signal: controller.signal
                     });
 
+                    const status = response.includes('CHARGED') ? 'CHARGED' : response.includes('APPROVED') ? 'APPROVED' : 'DECLINED';
                     return {
-                        isCharged: response.includes('CHARGED'),
-                        isApproved: response.includes('APPROVED') && !response.includes('CHARGED'),
-                        response: response.trim(),
+                        isCharged: status === 'CHARGED',
+                        isApproved: status === 'APPROVED',
+                        response: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}|${status}`,
                         displayCard: card.displayCard
                     };
                 } catch (xhr) {
@@ -780,7 +835,7 @@
                     return {
                         isCharged: false,
                         isApproved: false,
-                        response: `DECLINED [${xhr.statusText || 'Error'}] ${card.displayCard}`,
+                        response: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}|DECLINED [${xhr.statusText || 'Error'}]`,
                         displayCard: card.displayCard
                     };
                 }
