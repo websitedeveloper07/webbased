@@ -534,11 +534,11 @@
         <div id="mySidebar" class="sidebar">
             <span class="closebtn" onclick="closeNav()">&times;</span>
             <div class="nav-label core-functions">Core Functions</div>
-            <div class="nav-item active" data-view="process" onclick="switchView('process'); closeNav()"><i class="fas fa-play-circle"></i> Checker Hub</div>
+            <div class="nav-item active" data-view="process"><i class="fas fa-play-circle"></i> Checker Hub</div>
             <div class="nav-label results-logs">Results Logs</div>
-            <div class="nav-item" data-view="charged" onclick="switchView('charged'); closeNav()"><i class="fas fa-bolt"></i> Charged (<span class="charged">0</span>)</div>
-            <div class="nav-item" data-view="approved" onclick="switchView('approved'); closeNav()"><i class="fas fa-check-circle"></i> Approved (<span class="approved">0</span>)</div>
-            <div class="nav-item" data-view="declined" onclick="switchView('declined'); closeNav()"><i class="fas fa-times-circle"></i> Declined (<span class="reprovadas">0</span>)</div>
+            <div class="nav-item" data-view="charged"><i class="fas fa-bolt"></i> Charged (<span class="charged">0</span>)</div>
+            <div class="nav-item" data-view="approved"><i class="fas fa-check-circle"></i> Approved (<span class="approved">0</span>)</div>
+            <div class="nav-item" data-view="declined"><i class="fas fa-times-circle"></i> Declined (<span class="reprovadas">0</span>)</div>
         </div>
 
         <!-- Main Content -->
@@ -737,19 +737,35 @@
             function switchView(viewId) {
                 console.log('Switching to view:', viewId);
                 $('.view-section').addClass('hidden');
-                const targetView = $('#view-' + viewId);
-                if (targetView.length) {
-                    targetView.removeClass('hidden');
+                if (viewId === 'process') {
+                    $('#view-process').removeClass('hidden');
                 } else {
-                    console.error('View not found:', viewId);
+                    $('#view-log').removeClass('hidden');
+                    renderLog(viewId);
                 }
                 $('.nav-item').removeClass('active');
                 $(`.nav-item[data-view="${viewId}"]`).addClass('active');
-                if (viewId !== 'process') {
-                    renderLog(viewId);
-                }
                 currentView = viewId;
             }
+
+            function openNav() {
+                console.log('Opening sidebar');
+                document.getElementById("mySidebar").style.width = "250px";
+            }
+
+            function closeNav() {
+                console.log('Closing sidebar');
+                document.getElementById("mySidebar").style.width = "0";
+            }
+
+            // Handle sidebar navigation clicks
+            $(document).on('click', '.nav-item', function() {
+                const viewId = $(this).data('view');
+                if (viewId) {
+                    switchView(viewId);
+                    closeNav();
+                }
+            });
 
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
@@ -1020,16 +1036,6 @@
 
             switchView('process');
         });
-
-        function openNav() {
-            console.log('Opening sidebar');
-            document.getElementById("mySidebar").style.width = "250px";
-        }
-
-        function closeNav() {
-            console.log('Closing sidebar');
-            document.getElementById("mySidebar").style.width = "0";
-        }
     </script>
 </body>
 </html>
