@@ -557,7 +557,7 @@
     </div>
 
     <footer class="hidden" id="footer">
-        <p><strong>© 2025 Card X CheckHK - Multi-Gateway CHECKER</strong></p>
+        <p><strong>© SINCE 2025 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - All rights reserverd</strong></p>
     </footer>
 
     <script>
