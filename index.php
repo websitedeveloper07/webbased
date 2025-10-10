@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -448,6 +448,7 @@
             color: var(--color-neon);
             text-shadow: var(--neon-glow-flowing);
             text-transform: uppercase;
+            width: 25%;
         }
         .log-table td {
             font-family: 'Consolas', monospace;
@@ -692,10 +693,10 @@
                 table.append(`
                     <thead>
                         <tr>
-                            <th>Card Number</th>
-                            <th>Expiry</th>
-                            <th>CVV</th>
-                            <th>Status</th>
+                            <th style="width: 40%;">Card Number</th>
+                            <th style="width: 20%;">Expiry</th>
+                            <th style="width: 15%;">CVV</th>
+                            <th style="width: 25%;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -729,14 +730,12 @@
 
             function switchView(viewId) {
                 $('.view-section').addClass('hidden');
-                if (viewId === 'process') {
-                    $('#view-process').removeClass('hidden');
-                } else {
-                    $('#view-log').removeClass('hidden');
-                    renderLog(viewId);
-                }
+                $('#view-' + viewId).removeClass('hidden');
                 $('.nav-item').removeClass('active');
                 $(`.nav-item[data-view="${viewId}"]`).addClass('active');
+                if (viewId !== 'process') {
+                    renderLog(viewId);
+                }
                 currentView = viewId;
             }
 
