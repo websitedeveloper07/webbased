@@ -268,8 +268,7 @@
             background: linear-gradient(135deg, #1976d2, #42a5f5);
         }
         .stat-item.charged {
-            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath fill="%23ff4500" d="M12 2C7.58 2 4 5.58 4 10c0 2.21.89 4.22 2.34 5.66l-1.42 1.42C4.34 16.34 4 15.36 4 14.5c0-1.38.56-2.63 1.46-3.54C3.56 9.06 2 6.72 2 4c0-2.21.89-4.22 2.34-5.66l1.42 1.42C5.36 1.64 6.34 2 7.5 2c1.38 0 2.63.56 3.54 1.46C12.94 5.36 14.5 7.72 14.5 10c0 1.38-.56 2.63-1.46 3.54l1.42 1.42C15.64 13.86 16 12.36 16 10.5c0-4.42-3.58-8-8-8zm7.66 15.66l-1.42-1.42C18.64 18.36 17.66 19 16.5 19c-1.38 0-2.63-.56-3.54-1.46C11.06 15.64 9.5 13.28 9.5 10.5c0-1.38.56-2.63 1.46-3.54l-1.42-1.42C8.36 6.64 8 8.14 8 10.5c0 4.42 3.58 8 8 8z"/%3E%3C/svg%3E') no-repeat center, linear-gradient(135deg, #ff4500, #ffb300);
-            background-size: 30px, cover;
+            background: linear-gradient(135deg, #ff4500, #ffb300);
         }
         .stat-item.approved {
             background: linear-gradient(135deg, #2e7d32, #4caf50);
@@ -450,7 +449,7 @@
     <!-- Login Panel -->
     <div class="login-container" id="loginContainer">
         <div class="login-card">
-            <h2><i class="fas fa-lock"></i> CardX Check Login</h2>
+            <h2><i class="fas fa-lock"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 </h2>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" class="form-control" placeholder="Enter username" autocomplete="off">
@@ -471,7 +470,7 @@
                 <p>𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</p>
             </div>
             <div class="menu-toggle" id="menuToggle">
-                <i class="fas fa-ellipsis-v"></i>
+                <i class="fas fa-bars"></i>
             </div>
         </div>
         <div class="sidebar" id="sidebar">
@@ -557,7 +556,7 @@
     </div>
 
     <footer class="hidden" id="footer">
-        <p><strong>© SINCE 2025 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - All rights reserverd</strong></p>
+        <p><strong>© SINCE 2025 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - All rights reserved</strong></p>
     </footer>
 
     <script>
@@ -582,7 +581,6 @@
                 const particlesContainer = $('#particles');
                 for (let i = 0; i < 50; i++) {
                     const particle = $('<div class="particle"></div>');
-                    const size = Math.random() * 6 + 2;
                     particle.css({
                         left: Math.random() * 100 + '%',
                         animationDuration: Math.random() * 10 + 10 + 's',
@@ -632,28 +630,12 @@
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
-
-                if ($(this).val().trim()) {
-                    $('.carregadas').text('0');
-                    $('.charged').text('0');
-                    $('.approved').text('0');
-                    $('.reprovadas').text('0');
-                    $('.checked').text('0 / 0');
-                    chargedCards = [];
-                    approvedCards = [];
-                    declinedCards = [];
-                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                    $('#resultColumn').addClass('hidden');
-                }
             });
 
             // Sidebar toggle with swipe animation
             function toggleSidebar(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                console.log(`Toggling sidebar in view: ${currentView}, Target: menuToggle`);
                 $('#sidebar').toggleClass('show');
                 console.log(`Sidebar state: ${$('#sidebar').hasClass('show') ? 'Open' : 'Closed'}`);
             }
@@ -987,7 +969,7 @@
                 $('#card-count').text('0 valid cards detected');
                 Swal.fire({
                     title: 'Processing complete!',
-                    text: 'All cards have been checked',
+                    text: 'All cards have been checked. See the results by clicking the 3 lines in the corner.',
                     icon: 'success',
                     confirmButtonColor: '#f06292'
                 });
