@@ -277,6 +277,7 @@
                 <select id="gate" class="form-control">
                     <option value="gate/stripeauth.php">Stripe Auth</option>
                     <option value="gate/paypal1$.php">PayPal 1$</option>
+                    <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
                     <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
                     <option value="gate/shopify.php" disabled>Shopify (Coming Soon)</option>
                 </select>
@@ -379,7 +380,10 @@
 
             function copyToClipboard(selector, title) {
                 const text = $(selector).text();
-                if (!text) return;
+                if (!text) {
+                    Swal.fire('Nothing to copy!', `${title} list is empty`, 'info');
+                    return;
+                }
                 
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -432,37 +436,42 @@
                     formData.append('card[exp_year]', normalizedYear);
                     formData.append('card[cvc]', card.cvc);
 
+                    console.log(`Sending card ${card.displayCard} to ${$('#gate').val()}`); // Debug
+
                     $.ajax({
                         url: $('#gate').val(),
                         method: 'POST',
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 18000, // Slightly longer than backend timeout
+                        timeout: 12000, // Reduced for faster failure detection
                         signal: controller.signal,
                         success: function(response) {
+                            console.log(`Success for ${card.displayCard}: ${response}`); // Debug
                             resolve({
                                 success: response.includes('APPROVED'),
                                 response: response.trim(),
                                 card: card,
-                                displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
+                                displayCard: card.displayCard
                             });
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
+                                console.log(`Aborted card ${card.displayCard}`); // Debug
                                 resolve(null);
                             } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES) {
-                                console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`);
+                                console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`); // Debug
                                 setTimeout(() => {
                                     processCard(card, controller, retryCount + 1).then(resolve);
                                 }, 500);
                             } else {
-                                console.error(`Failed card ${card.displayCard}: ${xhr.statusText} (${xhr.status}) - ${xhr.responseText}`);
+                                const errorMsg = xhr.responseText ? xhr.responseText.substring(0, 100) : 'Request failed';
+                                console.error(`Failed card ${card.displayCard}: ${xhr.statusText} (HTTP ${xhr.status}) - ${errorMsg}`); // Debug
                                 resolve({
                                     success: false,
-                                    response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`,
+                                    response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.displayCard}`,
                                     card: card,
-                                    displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
+                                    displayCard: card.displayCard
                                 });
                             }
                         }
@@ -470,9 +479,12 @@
                 });
             }
 
-            // Main processing function with 3 concurrent requests
+            // Main processing function with 3 concurrent requests and staggered delays
             async function processCards() {
-                if (isProcessing) return;
+                if (isProcessing) {
+                    console.warn('Processing already in progress'); // Debug
+                    return;
+                }
 
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
@@ -481,16 +493,18 @@
                     .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                     .map(line => {
                         const [number, exp_month, exp_year, cvc] = line.split('|');
-                        return { number, exp_month, exp_year, cvc, displayCard: `${number}|${card.exp_month}|${card.exp_year}|${card.cvc}` };
+                        return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
                     });
 
                 if (validCards.length === 0) {
                     Swal.fire('No valid cards!', 'Please check your card format', 'error');
+                    console.error('No valid cards provided'); // Debug
                     return;
                 }
 
                 if (validCards.length > 1000) {
                     Swal.fire('Limit exceeded!', 'Maximum 1000 cards allowed', 'error');
+                    console.error('Card limit exceeded'); // Debug
                     return;
                 }
 
@@ -505,10 +519,12 @@
                 $('#startBtn').prop('disabled', true);
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
+                console.log(`Starting processing for ${totalCards} cards`); // Debug
 
                 const results = [];
                 let completed = 0;
                 const cardQueue = [...validCards];
+                let requestIndex = 0;
 
                 while (cardQueue.length > 0 && isProcessing) {
                     while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
@@ -516,6 +532,10 @@
                         activeRequests++;
                         const controller = new AbortController();
                         abortControllers.push(controller);
+
+                        // Stagger requests to avoid overwhelming the API
+                        await new Promise(resolve => setTimeout(resolve, requestIndex * 100));
+                        requestIndex++;
 
                         processCard(card, controller).then(result => {
                             if (result === null) return;
@@ -533,6 +553,7 @@
                             }
 
                             $('.checked').text(`${completed} / ${totalCards}`);
+                            console.log(`Completed ${completed}/${totalCards}: ${result.response}`); // Debug
 
                             if (completed >= totalCards || !isProcessing) {
                                 finishProcessing();
@@ -556,13 +577,20 @@
                 $('#card-count').text('0 valid cards detected');
                 
                 Swal.fire('Processing complete!', 'All cards have been checked', 'success');
+                console.log('Processing completed'); // Debug
             }
 
             // Event handlers
-            $('#startBtn').click(processCards);
+            $('#startBtn').click(() => {
+                console.log('Start Check clicked'); // Debug
+                processCards();
+            });
 
             $('#stopBtn').click(() => {
-                if (!isProcessing) return;
+                if (!isProcessing) {
+                    console.warn('Stop clicked but not processing'); // Debug
+                    return;
+                }
 
                 isProcessing = false;
                 abortControllers.forEach(controller => controller.abort());
@@ -573,11 +601,13 @@
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
                 Swal.fire('Stopped!', 'Processing has been stopped', 'warning');
+                console.log('Processing stopped'); // Debug
             });
 
             // Gateway change handler
             $('#gate').change(function() {
                 const selected = $(this).val();
+                console.log(`Gateway changed to: ${selected}`); // Debug
                 if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php')) {
                     Swal.fire({
                         title: 'Gateway not implemented',
@@ -585,6 +615,7 @@
                         icon: 'info'
                     });
                     $(this).val('gate/stripeauth.php');
+                    console.log('Reverted to stripeauth.php'); // Debug
                 }
             });
         });
