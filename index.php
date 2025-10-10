@@ -3,363 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Beast Mode Multi-Gateway</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>CardX Check - Multi Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* BASE & THEME */
-        :root {
-            --color-dark-bg: #121212;
-            --color-card-bg: rgba(30, 30, 30, 0.95);
-            --color-text-light: #e0e0e0;
-            --color-text-muted: #999;
-            --color-primary: #8a2be2; /* BlueViolet */
-            --color-primary-dark: #6a1b9a;
-            --color-secondary: #00bcd4; /* Cyan */
-            --color-success: #4caf50;
-            --color-danger: #f44336;
-            --border-radius: 12px;
-            --shadow-elevation: 0 8px 25px rgba(0, 0, 0, 0.5);
-            --shadow-inset: inset 0 0 10px rgba(0, 0, 0, 0.3);
-        }
         * {
             box-sizing: border-box;
         }
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--color-dark-bg);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #141e30, #243b55);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
             margin: 0;
-            padding: 0;
+            padding: 30px;
             min-height: 100vh;
-            color: var(--color-text-light);
+            color: #e0e0e0;
             overflow-x: hidden;
             position: relative;
         }
-
-        /* LIVE ANIMATION EFFECT (Rain/Particles) */
-        .background-animation {
-            position: fixed;
+        body::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            background: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 20px);
+            pointer-events: none;
+            z-index: -2;
+            animation: textureFlow 10s linear infinite;
+        }
+        @keyframes textureFlow {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20px); }
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* Rain Effect */
+        .rain {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
             z-index: -1;
-            opacity: 0.2;
+            pointer-events: none;
         }
         .drop {
             position: absolute;
-            background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
-            border-radius: 50%;
-            animation: rain ease-in-out infinite;
+            bottom: 100%;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3));
+            animation: fall linear infinite;
         }
-        @keyframes rain {
-            0% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(100vh) scale(1.2); opacity: 0.5; }
+        @keyframes fall {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
         }
-
-        /* UTILITY */
-        .hidden { display: none !important; }
-
-        /* LAYOUT & CONTAINERS */
         .container {
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 40px 15px;
-            z-index: 10;
+            padding: 0 15px;
             position: relative;
+            z-index: 1;
         }
         .card {
-            background: var(--color-card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-elevation);
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3), 0 0 40px rgba(118, 75, 162, 0.2);
+            padding: 35px;
+            margin-bottom: 35px;
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
         }
         .card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-elevation), 0 0 20px var(--color-primary-dark);
+            transform: translateY(-8px);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.5), 0 0 60px rgba(118, 75, 162, 0.4);
         }
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            color: #ffffff;
+            margin-bottom: 45px;
+            text-shadow: 0 0 15px rgba(102, 126, 234, 0.7);
         }
         .header h1 {
             font-size: 3rem;
             font-weight: 800;
             margin: 0;
-            color: var(--color-secondary);
-            text-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
+            animation: neonGlow 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes neonGlow {
+            from { text-shadow: 0 0 10px #fff, 0 0 20px #667eea, 0 0 30px #764ba2; }
+            to { text-shadow: 0 0 20px #fff, 0 0 30px #667eea, 0 0 40px #764ba2; }
         }
         .header p {
-            font-size: 1.1rem;
-            opacity: 0.7;
-            margin-top: 5px;
+            font-size: 1.3rem;
+            opacity: 0.85;
         }
-
-        /* FORM ELEMENTS */
-        .form-group { margin-bottom: 20px; }
+        .form-group {
+            margin-bottom: 30px;
+        }
         .form-group label {
             display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--color-text-light);
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #cccccc;
+            text-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
         }
         .form-control {
             width: 100%;
-            padding: 14px 18px;
-            border: 1px solid var(--color-primary);
-            border-radius: var(--border-radius);
+            padding: 16px 20px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
             font-size: 16px;
-            color: var(--color-text-light);
-            background: rgba(40, 40, 40, 0.8);
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-inset);
+            transition: all 0.4s ease;
+            background: rgba(30, 30, 40, 0.7);
+            color: #e0e0e0;
         }
         .form-control:focus {
             outline: none;
-            border-color: var(--color-secondary);
-            box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+            border-color: #667eea;
+            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.25);
         }
-        .form-control::placeholder { color: var(--color-text-muted); }
-
-        /* BUTTONS */
-        .btn {
-            padding: 14px 30px;
-            border: none;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            font-size: 16px;
+        .form-control::placeholder {
+            color: #888888;
+        }
+        select.form-control {
             cursor: pointer;
-            transition: all 0.3s ease;
+        }
+        .btn {
+            padding: 16px 35px;
+            border: none;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.4s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1.2px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
         }
         .btn-primary {
-            background: linear-gradient(45deg, var(--color-primary), var(--color-primary-dark));
-            color: white;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: #ffffff;
         }
         .btn-primary:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(138, 43, 226, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
         }
         .btn-danger {
-            background: linear-gradient(45deg, var(--color-danger), #b71c1c);
-            color: white;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: #ffffff;
         }
         .btn-danger:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(244, 67, 54, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(245, 87, 108, 0.5);
         }
         .btn:disabled {
-            opacity: 0.5;
+            opacity: 0.65;
             cursor: not-allowed;
-            box-shadow: none;
         }
         .btn-group {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
+            gap: 25px;
+            margin-top: 35px;
         }
-
-        /* STATS SECTION - CHANGED TO HORIZONTAL LAYOUT WITHOUT INDIVIDUAL BOXES */
-        .stats-section {
-            display: flex;
-            justify-content: space-between;
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: var(--border-radius);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 35px;
         }
         .stat-item {
-            flex: 1;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+        }
+        .stat-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(102, 126, 234, 0.5);
         }
         .stat-item .label {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-bottom: 8px;
-            font-weight: 500;
+            font-size: 15px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
         }
         .stat-item .value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            line-height: 1;
+            font-size: 32px;
+            font-weight: 800;
+            animation: pulse 2s infinite;
         }
-        /* Specific Stat Colors */
-        .stat-item:nth-child(2) .value { color: var(--color-success); }
-        .stat-item:nth-child(3) .value { color: var(--color-danger); }
-        .stat-item:nth-child(4) .value { color: var(--color-secondary); }
-
-        /* RESULTS AREA - IMPROVED LAYOUT WITH SIDE-BY-SIDE ON LARGER SCREENS */
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 30px;
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #ffffff;
+            text-shadow: 0 0 15px #667eea, 0 0 25px #764ba2;
+            animation: neonGlow 1.5s ease-in-out infinite alternate;
         }
         .result-card {
-            background: var(--color-card-bg);
-            border-radius: var(--border-radius);
+            background: rgba(20, 20, 30, 0.85);
+            border-radius: 25px;
             overflow: hidden;
-            box-shadow: var(--shadow-elevation);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transition: transform 0.4s ease;
+            border: 1px solid rgba(102, 126, 234, 0.4);
+        }
+        .result-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
         }
         .result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 25px;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-bottom: 1px solid rgba(102, 126, 234, 0.3);
         }
         .result-title {
-            font-weight: 600;
-            color: var(--color-text-light);
+            font-weight: 700;
+            color: #ffffff;
             margin: 0;
-            font-size: 1.2rem;
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
         }
         .result-content {
-            max-height: 350px;
+            max-height: 400px;
             overflow-y: auto;
-            padding: 25px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            background-color: rgba(0, 0, 0, 0.1);
-            color: var(--color-text-light);
+            padding: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #e0e0e0;
         }
-        .result-content::-webkit-scrollbar { width: 8px; }
+        .result-content::-webkit-scrollbar {
+            width: 10px;
+        }
         .result-content::-webkit-scrollbar-thumb {
-            background: var(--color-primary);
-            border-radius: 4px;
+            background: #667eea;
+            border-radius: 5px;
         }
-
-        /* ACTIONS */
-        .action-buttons { display: flex; gap: 10px; }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
         .action-btn {
-            padding: 8px 12px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 8px;
-            color: white;
+            border-radius: 10px;
+            color: #ffffff;
             cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s ease;
+            font-size: 16px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
         }
-        .eye-btn { background: #607d8b; } /* Blue Grey */
-        .copy-btn { background: var(--color-success); }
-        .trash-btn { background: var(--color-danger); }
-        .action-btn:hover { opacity: 0.8; }
-
-        /* LOADER */
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        .eye-btn { background: linear-gradient(45deg, #6c757d, #495057); }
+        .copy-btn { background: linear-gradient(45deg, #28a745, #218838); }
+        .trash-btn { background: linear-gradient(45deg, #dc3545, #c82333); }
         .loader {
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid var(--color-secondary);
+            border: 5px solid rgba(102, 126, 234, 0.3);
+            border-top: 5px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 30px auto;
+            width: 50px;
+            height: 50px;
+            animation: spin 1.2s linear infinite;
+            margin: 35px auto;
             display: none;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* LOGIN PANEL - IMPROVED CENTERING AND SPACING */
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: inherit;
+        .card-count {
+            font-size: 15px;
+            color: #bbbbbb;
+            margin-top: 12px;
         }
-        .login-card {
-            background: var(--color-card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: var(--shadow-elevation);
-            padding: 50px;
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-        }
-        .login-card h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--color-secondary);
-            margin-bottom: 30px;
-            text-shadow: 0 3px 10px rgba(0, 188, 212, 0.3);
-        }
-        .login-btn {
-            width: 100%;
-            padding: 15px;
-            margin-top: 25px;
-        }
-
-        /* FOOTER */
         footer {
             text-align: center;
-            padding: 30px;
-            color: var(--color-text-muted);
-            font-size: 14px;
-            margin-top: 50px;
+            padding: 35px;
+            color: #cccccc;
+            font-size: 16px;
+            margin-top: 60px;
+            border-top: 1px solid rgba(102, 126, 234, 0.3);
         }
-
-        /* MEDIA QUERIES - IMPROVED RESPONSIVENESS */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 10;
+            top: 0;
+            right: 0;
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(10px);
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 70px;
+            box-shadow: -15px 0 30px rgba(0, 0, 0, 0.5);
+            border-left: 1px solid rgba(102, 126, 234, 0.4);
+        }
+        .sidebar a {
+            padding: 15px 10px 15px 40px;
+            text-decoration: none;
+            font-size: 22px;
+            color: #dddddd;
+            display: block;
+            transition: 0.4s;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        .sidebar a:hover {
+            color: #ffffff;
+            background: rgba(102, 126, 234, 0.2);
+            text-shadow: 0 0 10px #667eea;
+        }
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 30px;
+            font-size: 40px;
+            margin-left: 60px;
+            color: #bbbbbb;
+        }
+        .openbtn {
+            font-size: 28px;
+            cursor: pointer;
+            color: #ffffff;
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            z-index: 2;
+            transition: color 0.4s ease, transform 0.4s ease;
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+        .openbtn:hover {
+            color: #667eea;
+            transform: rotate(90deg);
+        }
+        .hidden {
+            display: none;
+        }
         @media (max-width: 768px) {
-            .container { padding: 20px 15px; }
+            .container { padding: 20px; }
             .header h1 { font-size: 2.5rem; }
-            .stat-item .value { font-size: 1.8rem; }
-            .btn-group { flex-direction: column; gap: 10px; }
-            .btn { width: 100%; }
-            .result-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .stats-section { flex-direction: column; gap: 15px; }
-            .login-card { padding: 40px; }
+            .header p { font-size: 1.1rem; }
+            .btn-group { flex-direction: column; gap: 15px; }
+            .stats-container { grid-template-columns: 1fr; }
+            .result-header { flex-direction: column; gap: 20px; align-items: flex-start; }
+            .card { padding: 25px; }
+            .sidebar a { font-size: 20px; padding-left: 30px; }
         }
     </style>
 </head>
 <body>
+    <!-- Rain Effect -->
+    <div class="rain"></div>
 
-    <div class="background-animation" id="backgroundAnimation"></div>
-
-    <div class="login-container" id="loginContainer">
-        <div class="login-card">
-            <h2><i class="fas fa-lock"></i> System Access</h2>
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Enter username" autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter password">
-            </div>
-            <button class="btn btn-primary login-btn" id="loginBtn">ACCESS</button>
-        </div>
+    <!-- Hamburger Menu -->
+    <div class="openbtn" onclick="openNav()"><i class="fas fa-ellipsis-v"></i></div>
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="#" onclick="showSection('checker')">Checker</a>
+        <a href="#" onclick="showSection('charged')">Charged Cards (<span class="charged">0</span>)</a>
+        <a href="#" onclick="showSection('approved')">Approved Cards (<span class="approved">0</span>)</a>
+        <a href="#" onclick="showSection('declined')">Declined Cards (<span class="reprovadas">0</span>)</a>
     </div>
 
-    <div class="container hidden" id="checkerContainer">
+    <!-- Main Checker UI -->
+    <div class="container section" id="checkerContainer">
         <div class="header">
-            <h1><i class="fas fa-credit-card"></i> CARD X CHK</h1>
-            <p>High-Throughput Multi-Gateway Processing</p>
+            <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
+            <p>Multi-Gateway Card Checker</p>
         </div>
 
-        <div class="card" id="control-card">
+        <!-- Input Section -->
+        <div class="card">
             <div class="form-group">
-                <label for="cards">Card List <span style="font-weight: 300;">(Format: card|MM|YY or YYYY|CVV)</span></label>
+                <label for="cards">Card List (Format: card|MM|YY or YYYY|CVV)</label>
                 <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
-                <div class="card-count" style="font-size: 14px; color: var(--color-text-muted); margin-top: 10px;" id="card-count">0 valid cards detected</div>
+                <div class="card-count" id="card-count">0 valid cards detected</div>
             </div>
             <div class="form-group">
                 <label for="gate">Select Gateway</label>
@@ -376,219 +422,193 @@
                     <i class="fas fa-play"></i> Start Check
                 </button>
                 <button class="btn btn-danger btn-stop" id="stopBtn" disabled>
-                    <i class="fas fa-stop"></i> Stop Processing
+                    <i class="fas fa-stop"></i> Stop
                 </button>
             </div>
             <div class="loader" id="loader"></div>
         </div>
 
-        <div class="stats-section">
+        <!-- Stats -->
+        <div class="stats-container">
             <div class="stat-item">
-                <div class="label">Total Loaded</div>
+                <div class="label">Total</div>
                 <div class="value carregadas">0</div>
             </div>
-            <div class="stat-item">
-                <div class="label">Approved (HIT)</div>
+            <div class="stat-item" style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.3), rgba(32, 201, 151, 0.3));">
+                <div class="label">Charged</div>
+                <div class="value charged">0</div>
+            </div>
+            <div class="stat-item" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.3), rgba(32, 201, 151, 0.3));">
+                <div class="label">Approved</div>
                 <div class="value approved">0</div>
             </div>
-            <div class="stat-item">
-                <div class="label">Declined (DEAD)</div>
+            <div class="stat-item" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.3), rgba(200, 35, 51, 0.3));">
+                <div class="label">Declined</div>
                 <div class="value reprovadas">0</div>
             </div>
-            <div class="stat-item">
-                <div class="label">Checked Progress</div>
+            <div class="stat-item" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(253, 126, 20, 0.3));">
+                <div class="label">Checked</div>
                 <div class="value checked">0 / 0</div>
-            </div>
-        </div>
-
-        <div class="results-grid">
-            <div class="result-card">
-                <div class="result-header">
-                    <h3 class="result-title"><i class="fas fa-check-circle" style="color: var(--color-success);"></i> Approved Cards</h3>
-                    <div class="action-buttons">
-                        <button class="action-btn eye-btn show-approved" type="show" title="Toggle visibility"><i class="fas fa-eye-slash"></i></button>
-                        <button class="action-btn copy-btn btn-copy-approved" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
-                    </div>
-                </div>
-                <div id="lista_approved" class="result-content" style="display: none;"></div>
-            </div>
-
-            <div class="result-card">
-                <div class="result-header">
-                    <h3 class="result-title"><i class="fas fa-times-circle" style="color: var(--color-danger);"></i> Declined Cards</h3>
-                    <div class="action-buttons">
-                        <button class="action-btn eye-btn show-declined" type="show" title="Toggle visibility"><i class="fas fa-eye-slash"></i></button>
-                        <button class="action-btn copy-btn btn-copy-declined" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
-                        <button class="action-btn trash-btn btn-trash" title="Clear declined list"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-                <div id="lista_declined" class="result-content" style="display: none;"></div>
             </div>
         </div>
     </div>
 
-    <footer class="hidden" id="footer">
-        <p><strong>© 2025 Card X CHK - Beast Mode Multi-Gateway CHECKER</strong></p>
+    <!-- Charged Logs -->
+    <div class="container section hidden" id="chargedContainer">
+        <h2 class="section-title">CHARGED CARDS LOGS</h2>
+        <div class="result-card">
+            <div class="result-header">
+                <h3 class="result-title"><i class="fas fa-check-circle" style="color: #17a2b8;"></i> Charged Cards</h3>
+                <div class="action-buttons">
+                    <button class="action-btn eye-btn show-charged" type="show"><i class="fas fa-eye-slash"></i></button>
+                    <button class="action-btn copy-btn btn-copy-charged"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+            <div id="lista_charged" class="result-content" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Approved Logs -->
+    <div class="container section hidden" id="approvedContainer">
+        <h2 class="section-title">APPROVED CARDS LOGS</h2>
+        <div class="result-card">
+            <div class="result-header">
+                <h3 class="result-title"><i class="fas fa-check-circle" style="color: #28a745;"></i> Approved Cards</h3>
+                <div class="action-buttons">
+                    <button class="action-btn eye-btn show-approved" type="show"><i class="fas fa-eye-slash"></i></button>
+                    <button class="action-btn copy-btn btn-copy-approved"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+            <div id="lista_approved" class="result-content" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Declined Logs -->
+    <div class="container section hidden" id="declinedContainer">
+        <h2 class="section-title">DECLINED CARDS LOGS</h2>
+        <div class="result-card">
+            <div class="result-header">
+                <h3 class="result-title"><i class="fas fa-times-circle" style="color: #dc3545;"></i> Declined Cards</h3>
+                <div class="action-buttons">
+                    <button class="action-btn eye-btn show-declined" type="show"><i class="fas fa-eye-slash"></i></button>
+                    <button class="action-btn copy-btn btn-copy-declined"><i class="fas fa-copy"></i></button>
+                    <button class="action-btn trash-btn btn-trash-declined"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div id="lista_declined" class="result-content" style="display: none;"></div>
+        </div>
+    </div>
+
+    <footer id="footer">
+        <p><strong>© 2025 Card X Check - Multi-Gateway CHECKER</strong></p>
     </footer>
 
     <script>
         $(document).ready(function() {
-            // --- UI Setup: Background Animation ---
-            const rainContainer = $('#backgroundAnimation');
-            const numDrops = 50;
-
-            for (let i = 0; i < numDrops; i++) {
-                const drop = $('<div></div>').addClass('drop').css({
+            // Create rain drops
+            const rain = $('.rain');
+            for (let i = 0; i < 100; i++) {
+                const drop = $('<div class="drop"></div>');
+                drop.css({
                     left: `${Math.random() * 100}%`,
-                    width: `${Math.random() * 2 + 1}px`,
-                    height: `${Math.random() * 50 + 20}px`,
-                    animationDelay: `-${Math.random() * 10}s`,
-                    animationDuration: `${Math.random() * 8 + 7}s`
+                    animationDuration: `${Math.random() * 1 + 0.5}s`,
+                    animationDelay: `${Math.random() * 2}s`,
+                    height: `${Math.random() * 50 + 50}px`
                 });
-                rainContainer.append(drop);
+                rain.append(drop);
             }
 
-            // --- Core Checker Logic Variables (UNCHANGED) ---
             let isProcessing = false;
             let isStopping = false;
             let activeRequests = 0;
             let cardQueue = [];
-            const MAX_CONCURRENT = 3; // 3 concurrent POST requests (UNCHANGED)
-            const MAX_RETRIES = 1; // Retry once on failure (UNCHANGED)
+            const MAX_CONCURRENT = 3;
+            const MAX_RETRIES = 1;
             let abortControllers = [];
             let totalCards = 0;
-
-            // --- Login Logic (UPDATED CREDENTIALS) ---
-            const validUsername = '123456';
-            const validPassword = '123456';
-
-            function showCheckerUI() {
-                $('#loginContainer').addClass('hidden');
-                $('#checkerContainer').removeClass('hidden');
-                $('#footer').removeClass('hidden');
-            }
-
-            $('#loginBtn').click(function() {
-                const username = $('#username').val().trim();
-                const password = $('#password').val().trim();
-
-                if (username === validUsername && password === validPassword) {
-                    showCheckerUI();
-                } else {
-                    Swal.fire({
-                        title: 'ACCESS DENIED',
-                        text: 'Invalid credentials. Try again.',
-                        icon: 'error',
-                        confirmButtonText: 'Understood'
-                    });
-                }
-            });
-
-            // Allow Enter key to trigger login
-            $('#username, #password').keypress(function(e) {
-                if (e.which === 13) {
-                    $('#loginBtn').click();
-                }
-            });
 
             // Card validation and counter
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
-                // Card regex logic (UNCHANGED)
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
                 
-                // Clear stats on new input
                 if ($(this).val().trim()) {
                     $('.carregadas').text('0');
+                    $('.charged').text('0');
                     $('.approved').text('0');
                     $('.reprovadas').text('0');
                     $('.checked').text('0 / 0');
                 }
             });
 
-            // --- UI Functions ---
+            // UI Functions
             function toggleVisibility(btn, sectionId) {
                 const section = $(sectionId);
                 const isHidden = section.is(':hidden');
-                section.slideToggle(200);
+                section.toggle();
                 btn.html(`<i class="fas fa-${isHidden ? 'eye-slash' : 'eye'}"></i>`);
                 btn.attr('type', isHidden ? 'hidden' : 'show');
             }
 
             function copyToClipboard(selector, title) {
-                const text = $(selector).text().trim();
+                const text = $(selector).text();
                 if (!text) {
-                    Swal.fire('No Data', `${title} list is empty`, 'info');
+                    Swal.fire('Nothing to copy!', `${title} list is empty`, 'info');
                     return;
                 }
                 
                 const textarea = document.createElement('textarea');
-                textarea.value = text.replace(/<br>/g, '\n'); // Replace HTML breaks with newlines
+                textarea.value = text;
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
                 
                 Swal.fire({
-                    title: `COPIED!`,
-                    text: `${title} copied to clipboard.`,
+                    title: `Copied ${title}!`,
                     icon: 'success',
                     toast: true,
                     position: 'top-end',
-                    timer: 2500,
-                    showConfirmButton: false
+                    timer: 2000
                 });
             }
 
-            // Event Listeners for UI buttons
+            // Event Listeners for Logs
+            $('.show-charged').click(() => toggleVisibility($('.show-charged'), '#lista_charged'));
+            $('.btn-copy-charged').click(() => copyToClipboard('#lista_charged', 'Charged cards'));
+
             $('.show-approved').click(() => toggleVisibility($('.show-approved'), '#lista_approved'));
+            $('.btn-copy-approved').click(() => copyToClipboard('#lista_approved', 'Approved cards'));
+            
             $('.show-declined').click(() => toggleVisibility($('.show-declined'), '#lista_declined'));
+            $('.btn-copy-declined').click(() => copyToClipboard('#lista_declined', 'Declined cards'));
             
-            $('.btn-copy-approved').click(() => copyToClipboard('#lista_approved', 'Approved Cards'));
-            $('.btn-copy-declined').click(() => copyToClipboard('#lista_declined', 'Declined Cards'));
-            
-            $('.btn-trash').click(() => {
+            $('.btn-trash-declined').click(() => {
                 Swal.fire({
-                    title: 'Clear Declined Log?',
+                    title: 'Clear declined?',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: var('--color-danger'),
-                    confirmButtonText: 'Yes, CLEAR IT'
+                    confirmButtonText: 'Yes, clear!'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $('#lista_declined').empty();
                         $('.reprovadas').text('0');
-                        Swal.fire('Cleared!', 'Declined log wiped.', 'success');
+                        Swal.fire('Cleared!', '', 'success');
                     }
                 });
             });
 
-            // Gateway change handler (UNCHANGED LOGIC)
-            $('#gate').change(function() {
-                const selected = $(this).val();
-                if ($(this).find(':selected').is(':disabled')) {
-                    Swal.fire({
-                        title: 'Gateway Unavailable',
-                        text: 'This gateway is marked as "Coming Soon" and cannot be selected.',
-                        icon: 'info'
-                    });
-                    $(this).val('gate/stripeauth.php'); // Revert to a default working gateway
-                }
-            });
-
-            // --- Card Processing Core (UNCHANGED LOGIC) ---
-            
-            // Process a single card with retry (UNCHANGED LOGIC)
+            // Process a single card with retry
             async function processCard(card, controller, retryCount = 0) {
                 if (!isProcessing) {
+                    console.log(`Skipping card ${card.displayCard} due to stop`);
                     return null;
                 }
 
                 return new Promise((resolve) => {
                     const formData = new FormData();
                     let normalizedYear = card.exp_year;
-                    // Year normalization logic (UNCHANGED)
                     if (normalizedYear.length === 2) {
                         normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
                     }
@@ -597,15 +617,18 @@
                     formData.append('card[exp_year]', normalizedYear);
                     formData.append('card[cvc]', card.cvc);
 
+                    console.log(`Sending card ${card.displayCard} to ${$('#gate').val()}`);
+
                     $.ajax({
                         url: $('#gate').val(),
                         method: 'POST',
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 55000, // 55s to accommodate 50s backend timeout (UNCHANGED)
+                        timeout: 55000,
                         signal: controller.signal,
                         success: function(response) {
+                            console.log(`Success for ${card.displayCard}: ${response}`);
                             resolve({
                                 success: response.includes('APPROVED'),
                                 response: response.trim(),
@@ -615,14 +638,16 @@
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
+                                console.log(`Aborted card ${card.displayCard}`);
                                 resolve(null);
                             } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                                // Retry logic (UNCHANGED)
+                                console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`);
                                 setTimeout(() => {
                                     processCard(card, controller, retryCount + 1).then(resolve);
-                                }, 1000); // 1s delay for retry
+                                }, 1000);
                             } else {
                                 const errorMsg = xhr.responseText ? xhr.responseText.substring(0, 100) : 'Request failed';
+                                console.error(`Failed card ${card.displayCard}: ${xhr.statusText} (HTTP ${xhr.status}) - ${errorMsg}`);
                                 resolve({
                                     success: false,
                                     response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.displayCard}`,
@@ -635,9 +660,12 @@
                 });
             }
 
-            // Main processing function with 3 concurrent requests and staggered delays (UNCHANGED LOGIC)
+            // Main processing function
             async function processCards() {
-                if (isProcessing) return;
+                if (isProcessing) {
+                    console.warn('Processing already in progress');
+                    return;
+                }
 
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
@@ -650,65 +678,71 @@
                     });
 
                 if (validCards.length === 0) {
-                    Swal.fire('No Valid Cards', 'Please ensure cards are in the correct format: card|MM|YY|CVV', 'error');
+                    Swal.fire('No valid cards!', 'Please check your card format', 'error');
+                    console.error('No valid cards provided');
                     return;
                 }
 
                 if (validCards.length > 1000) {
-                    Swal.fire('Limit Exceeded', 'Maximum 1000 cards allowed per batch.', 'warning');
+                    Swal.fire('Limit exceeded!', 'Maximum 1000 cards allowed', 'error');
+                    console.error('Card limit exceeded');
                     return;
                 }
 
-                // Reset state
                 isProcessing = true;
                 isStopping = false;
                 activeRequests = 0;
                 abortControllers = [];
                 cardQueue = [...validCards];
                 totalCards = validCards.length;
-                
-                // UI updates
                 $('.carregadas').text(totalCards);
+                $('.charged').text('0');
                 $('.approved').text('0');
                 $('.reprovadas').text('0');
                 $('.checked').text(`0 / ${totalCards}`);
                 $('#startBtn').prop('disabled', true);
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
-                $('#lista_approved').empty();
-                $('#lista_declined').empty();
+                console.log(`Starting processing for ${totalCards} cards`);
 
+                const results = [];
                 let completed = 0;
                 let requestIndex = 0;
 
                 while (cardQueue.length > 0 && isProcessing) {
                     while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                         const card = cardQueue.shift();
-                        if (!card) break; 
+                        if (!card) break;
                         activeRequests++;
                         const controller = new AbortController();
                         abortControllers.push(controller);
 
-                        // Stagger requests logic (UNCHANGED)
                         await new Promise(resolve => setTimeout(resolve, requestIndex * 200));
                         requestIndex++;
 
                         processCard(card, controller).then(result => {
                             if (result === null) return;
 
+                            results.push(result);
                             completed++;
                             activeRequests--;
 
-                            // Update results and stats (UNCHANGED logic for result handling)
-                            if (result.response.includes('APPROVED')) {
-                                $('#lista_approved').append(`<span style="color: var(--color-success);">${result.response}</span><br>`);
-                                $('.approved').text(parseInt($('.approved').text()) + 1);
+                            if (result.success) {
+                                const gate = $('#gate').val();
+                                if (gate.includes('paypal1$')) {
+                                    $('#lista_charged').append(`<span style="color: #17a2b8; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                    $('.charged').text(parseInt($('.charged').text()) + 1);
+                                } else {
+                                    $('#lista_approved').append(`<span style="color: #28a745; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                    $('.approved').text(parseInt($('.approved').text()) + 1);
+                                }
                             } else {
-                                $('#lista_declined').append(`<span style="color: var(--color-danger);">${result.response}</span><br>`);
+                                $('#lista_declined').append(`<span style="color: #dc3545; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
                                 $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                             }
 
                             $('.checked').text(`${completed} / ${totalCards}`);
+                            console.log(`Completed ${completed}/${totalCards}: ${result.response}`);
 
                             if (completed >= totalCards || !isProcessing) {
                                 finishProcessing();
@@ -716,7 +750,7 @@
                         });
                     }
                     if (isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 5)); 
+                        await new Promise(resolve => setTimeout(resolve, 5));
                     }
                 }
             }
@@ -733,37 +767,75 @@
                 $('#cards').val('');
                 $('#card-count').text('0 valid cards detected');
                 
-                Swal.fire('PROCESSING FINISHED', 'All queued cards have been checked.', 'success');
+                Swal.fire({
+                    title: 'Processing complete!',
+                    text: 'All cards have been checked. View logs by clicking the 3 dots menu.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+                console.log('Processing completed');
             }
 
-            // --- Button Handlers (UNCHANGED LOGIC) ---
-            $('#startBtn').click(processCards);
+            // Event handlers
+            $('#startBtn').click(() => {
+                console.log('Start Check clicked');
+                processCards();
+            });
 
             $('#stopBtn').click(() => {
-                if (!isProcessing || isStopping) return;
+                if (!isProcessing || isStopping) {
+                    console.warn('Stop clicked but not processing or already stopping');
+                    return;
+                }
 
                 isProcessing = false;
                 isStopping = true;
-                cardQueue = []; // Clear queue
+                cardQueue = [];
                 abortControllers.forEach(controller => controller.abort());
                 abortControllers = [];
                 activeRequests = 0;
-                
-                // Update final checked count
-                $('.checked').text(`${parseInt($('.approved').text()) + parseInt($('.reprovadas').text())} / ${totalCards}`);
-                
+                $('.checked').text(`${parseInt($('.charged').text()) + parseInt($('.approved').text()) + parseInt($('.reprovadas').text())} / ${totalCards}`);
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
-
                 Swal.fire({
-                    title: 'STOPPED!',
-                    text: 'Processing manually halted.',
+                    title: 'Stopped!',
+                    text: 'Processing has been stopped. View logs by clicking the 3 dots menu.',
                     icon: 'warning',
                     allowOutsideClick: false
                 });
+                console.log('Processing stopped');
+            });
+
+            // Gateway change handler
+            $('#gate').change(function() {
+                const selected = $(this).val();
+                console.log(`Gateway changed to: ${selected}`);
+                if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php')) {
+                    Swal.fire({
+                        title: 'Gateway not implemented',
+                        text: 'Only Stripe Auth and PayPal 1$ are currently available',
+                        icon: 'info'
+                    });
+                    $(this).val('gate/stripeauth.php');
+                    console.log('Reverted to stripeauth.php');
+                }
             });
         });
+
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "280px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+        }
+
+        function showSection(section) {
+            $('.section').addClass('hidden');
+            $('#' + section + 'Container').removeClass('hidden');
+            closeNav();
+        }
     </script>
 </body>
 </html>
