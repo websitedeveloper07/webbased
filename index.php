@@ -208,6 +208,7 @@
             position: relative;
             overflow: hidden;
             box-shadow: var(--neon-glow-flowing);
+            transition: all 0.3s ease;
         }
         .card-panel::before {
             content: '';
@@ -437,6 +438,7 @@
             margin-bottom: 15px;
             padding: 10px;
             border-bottom: 1px solid rgba(30, 144, 255, 0.2);
+            transition: all 0.3s ease;
         }
         .log-card {
             color: var(--color-text-light);
@@ -451,6 +453,9 @@
             color: var(--color-text-muted);
             white-space: pre-wrap;
         }
+        .log-success { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
+        .log-charged { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
+        .log-danger { color: var(--color-danger); text-shadow: 0 0 5px var(--color-danger); }
         .action-btn {
             background: rgba(10, 10, 30, 0.7);
             color: var(--color-text-light);
@@ -506,6 +511,8 @@
             .form-control { font-size: 12px; }
             .sidebar { width: 100vw; }
             .log-entry { padding: 8px; }
+            .log-content { font-size: 11px; }
+            .log-response { font-size: 10px; }
         }
     </style>
 </head>
@@ -598,7 +605,7 @@
                     <div class="log-header">
                         <h3 class="log-title" id="dynamic-log-title">Log Output</h3>
                         <div>
-                            <button class="action-btn" id="copyLogBtn"><i class="fas fa-copy"></i> Copy</button>
+                            <button class="action-btn" id="copyLogBtn"><i class="fas fa-copy"></i> Copy All</button>
                             <button class="action-btn" id="clearLogBtn"><i class="fas fa-trash-alt"></i> Clear</button>
                         </div>
                     </div>
@@ -685,12 +692,14 @@
                     $('#dynamic-log-content').append('<div class="log-entry" style="color: var(--color-text-muted); text-align: center;">No cards yet</div>');
                 } else {
                     config.data.forEach(item => {
-                        const [cardPipe, status, response] = item.split('|STATUS:');
+                        const [cardPipe, rest] = item.split('|STATUS:');
+                        const [status, ...responseParts] = rest.split('|');
+                        const response = responseParts.join('|');
                         const entry = $(`
                             <div class="log-entry">
                                 <div class="log-card">${cardPipe}</div>
                                 <div class="log-status ${config.logClass}">${status}</div>
-                                <div class="log-response">${response || ''}</div>
+                                <div class="log-response">${response}</div>
                             </div>
                         `);
                         $('#dynamic-log-content').append(entry);
@@ -727,6 +736,7 @@
                 if (viewId) {
                     switchView(viewId);
                 }
+                document.getElementById("mySidebar").style.width = "0";
             });
 
             $('#cards').on('input', function() {
@@ -744,14 +754,37 @@
             });
 
             $('#copyLogBtn').click(function() {
-                Swal.fire({
-                    title: 'Copying Disabled',
-                    text: 'Copying logs is not allowed.',
-                    icon: 'warning',
-                    background: '#2a2a4a',
-                    color: 'var(--color-text-light)',
-                    timer: 2000,
-                    showConfirmButton: false
+                const viewId = $('.nav-item.active').data('view');
+                const config = LOG_MAP[viewId];
+                if (!config) return;
+
+                let copyText = '';
+                config.data.forEach(item => {
+                    const [cardPipe, rest] = item.split('|STATUS:');
+                    const [status, ...responseParts] = rest.split('|');
+                    const response = responseParts.join('|');
+                    copyText += `${cardPipe}\n${status}\n${response}\n\n`;
+                });
+
+                navigator.clipboard.writeText(copyText).then(() => {
+                    Swal.fire({
+                        title: 'Copied!',
+                        text: 'Logs copied to clipboard.',
+                        icon: 'success',
+                        background: '#2a2a4a',
+                        color: 'var(--color-text-light)',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    Swal.fire({
+                        title: 'Copy Failed',
+                        text: 'Unable to copy logs.',
+                        icon: 'error',
+                        background: '#2a2a4a',
+                        color: 'var(--color-text-light)'
+                    });
                 });
             });
 
