@@ -276,7 +276,7 @@
                 <label for="gate">Select Gateway</label>
                 <select id="gate" class="form-control">
                     <option value="gate/stripeauth.php">Stripe Auth</option>
-                    <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
+                    <option value="gate/paypal1$.php">PayPal 1$</option>
                     <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
                     <option value="gate/shopify.php" disabled>Shopify (Coming Soon)</option>
                 </select>
@@ -349,7 +349,8 @@
         $(document).ready(function() {
             let isProcessing = false;
             let activeRequests = 0;
-            const MAX_CONCURRENT = 3;
+            const MAX_CONCURRENT = 3; // 3 concurrent POST requests
+            const MAX_RETRIES = 1; // Retry once on failure
             let abortControllers = [];
             let totalCards = 0;
 
@@ -359,7 +360,6 @@
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
                 
-                // Reset counters automatically when new cards are pasted
                 if ($(this).val().trim()) {
                     $('.carregadas').text('0');
                     $('.approved').text('0');
@@ -419,20 +419,18 @@
                 });
             });
 
-            // Process single card
-            async function processCard(cardData, index, controller) {
+            // Process a single card with retry
+            async function processCard(card, controller, retryCount = 0) {
                 return new Promise((resolve) => {
-                    // Normalize year to 4 digits
-                    let normalizedYear = cardData.exp_year;
+                    const formData = new FormData();
+                    let normalizedYear = card.exp_year;
                     if (normalizedYear.length === 2) {
                         normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
                     }
-
-                    const formData = new FormData();
-                    formData.append('card[number]', cardData.number);
-                    formData.append('card[exp_month]', cardData.exp_month);
+                    formData.append('card[number]', card.number);
+                    formData.append('card[exp_month]', card.exp_month);
                     formData.append('card[exp_year]', normalizedYear);
-                    formData.append('card[cvc]', cardData.cvc);
+                    formData.append('card[cvc]', card.cvc);
 
                     $.ajax({
                         url: $('#gate').val(),
@@ -440,26 +438,31 @@
                         data: formData,
                         processData: false,
                         contentType: false,
-                        timeout: 30000,
+                        timeout: 18000, // Slightly longer than backend timeout
                         signal: controller.signal,
                         success: function(response) {
-                            resolve({ 
-                                success: true, 
-                                response, 
-                                card: cardData,
-                                displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
+                            resolve({
+                                success: response.includes('APPROVED'),
+                                response: response.trim(),
+                                card: card,
+                                displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
                             });
                         },
                         error: function(xhr) {
                             if (xhr.statusText === 'abort') {
                                 resolve(null);
+                            } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES) {
+                                console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`);
+                                setTimeout(() => {
+                                    processCard(card, controller, retryCount + 1).then(resolve);
+                                }, 500);
                             } else {
-                                const errorMsg = xhr.responseText || 'Request failed';
-                                resolve({ 
-                                    success: false, 
-                                    response: `DECLINED [${errorMsg}] ${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`,
-                                    card: cardData,
-                                    displayCard: `${cardData.number}|${cardData.exp_month}|${cardData.exp_year}|${cardData.cvc}`
+                                console.error(`Failed card ${card.displayCard}: ${xhr.statusText} (${xhr.status}) - ${xhr.responseText}`);
+                                resolve({
+                                    success: false,
+                                    response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`,
+                                    card: card,
+                                    displayCard: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}`
                                 });
                             }
                         }
@@ -467,7 +470,7 @@
                 });
             }
 
-            // Main processing function with concurrency control
+            // Main processing function with 3 concurrent requests
             async function processCards() {
                 if (isProcessing) return;
 
@@ -478,7 +481,7 @@
                     .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                     .map(line => {
                         const [number, exp_month, exp_year, cvc] = line.split('|');
-                        return { number, exp_month, exp_year, cvc };
+                        return { number, exp_month, exp_year, cvc, displayCard: `${number}|${card.exp_month}|${card.exp_year}|${card.cvc}` };
                     });
 
                 if (validCards.length === 0) {
@@ -505,40 +508,40 @@
 
                 const results = [];
                 let completed = 0;
+                const cardQueue = [...validCards];
 
-                for (let i = 0; i < validCards.length && isProcessing; i++) {
-                    while (activeRequests >= MAX_CONCURRENT && isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                while (cardQueue.length > 0 && isProcessing) {
+                    while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                        const card = cardQueue.shift();
+                        activeRequests++;
+                        const controller = new AbortController();
+                        abortControllers.push(controller);
+
+                        processCard(card, controller).then(result => {
+                            if (result === null) return;
+
+                            results.push(result);
+                            completed++;
+                            activeRequests--;
+
+                            if (result.response.includes('APPROVED')) {
+                                $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.approved').text(parseInt($('.approved').text()) + 1);
+                            } else {
+                                $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
+                            }
+
+                            $('.checked').text(`${completed} / ${totalCards}`);
+
+                            if (completed >= totalCards || !isProcessing) {
+                                finishProcessing();
+                            }
+                        });
                     }
-
-                    if (!isProcessing) break;
-
-                    activeRequests++;
-                    const controller = new AbortController();
-                    abortControllers.push(controller);
-
-                    processCard(validCards[i], i, controller).then(result => {
-                        if (result === null) return;
-
-                        results.push(result);
-                        completed++;
-                        activeRequests--;
-
-                        // Update UI with colored text
-                        if (result.response.includes('APPROVED')) {
-                            $('#lista_approved').append(`<span style="color: green; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
-                            $('.approved').text(parseInt($('.approved').text()) + 1);
-                        } else {
-                            $('#lista_declined').append(`<span style="color: red; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
-                            $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
-                        }
-
-                        $('.checked').text(`${completed} / ${totalCards}`);
-
-                        if (completed === validCards.length || !isProcessing) {
-                            finishProcessing();
-                        }
-                    });
+                    if (isProcessing) {
+                        await new Promise(resolve => setTimeout(resolve, 5)); // Minimal delay
+                    }
                 }
             }
 
@@ -575,10 +578,10 @@
             // Gateway change handler
             $('#gate').change(function() {
                 const selected = $(this).val();
-                if (!selected.includes('stripeauth.php')) {
+                if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php')) {
                     Swal.fire({
                         title: 'Gateway not implemented',
-                        text: 'Only Stripe Auth is currently available',
+                        text: 'Only Stripe Auth and PayPal 1$ are currently available',
                         icon: 'info'
                     });
                     $(this).val('gate/stripeauth.php');
