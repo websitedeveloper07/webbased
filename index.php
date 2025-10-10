@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -489,6 +489,7 @@
             box-shadow: 0 0 15px rgba(30, 144, 255, 0.5);
         }
         .view-section.hidden { display: none; }
+        .view-section { display: block; }
         @media (max-width: 900px) {
             .input-controls-grid {
                 grid-template-columns: 1fr;
@@ -683,8 +684,12 @@
             }
 
             function renderLog(viewId) {
+                console.log('Rendering log for view:', viewId);
                 const config = LOG_MAP[viewId];
-                if (!config) return;
+                if (!config) {
+                    console.error('Invalid viewId:', viewId);
+                    return;
+                }
 
                 $('#dynamic-log-title').text(config.title);
                 $('#dynamic-log-content').empty();
@@ -729,8 +734,14 @@
             }
 
             function switchView(viewId) {
+                console.log('Switching to view:', viewId);
                 $('.view-section').addClass('hidden');
-                $('#view-' + viewId).removeClass('hidden');
+                const targetView = $('#view-' + viewId);
+                if (targetView.length) {
+                    targetView.removeClass('hidden');
+                } else {
+                    console.error('View not found:', viewId);
+                }
                 $('.nav-item').removeClass('active');
                 $(`.nav-item[data-view="${viewId}"]`).addClass('active');
                 if (viewId !== 'process') {
@@ -1010,10 +1021,12 @@
         });
 
         function openNav() {
+            console.log('Opening sidebar');
             document.getElementById("mySidebar").style.width = "250px";
         }
 
         function closeNav() {
+            console.log('Closing sidebar');
             document.getElementById("mySidebar").style.width = "0";
         }
     </script>
