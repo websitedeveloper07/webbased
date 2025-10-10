@@ -14,13 +14,34 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(-45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            background: linear-gradient(-45deg, #ff8a80, #f06292, #4fc3f7, #80deea);
             background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            animation: gradientShift 12s ease infinite;
             margin: 0;
             padding: 20px;
             min-height: 100vh;
             color: #333;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -28,18 +49,19 @@
             100% { background-position: 0% 50%; }
         }
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 0 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
             padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
             transition: transform 0.2s ease;
         }
         .card:hover {
@@ -49,69 +71,78 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
         }
-        .header h1 {
-            font-size: 2.2rem;
+        .title-box {
+            background: linear-gradient(45deg, #4fc3f7, #80deea);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .title-box h1 {
+            font-size: 2rem;
             font-weight: 700;
             color: white;
             margin: 0;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
-        .header p {
-            font-size: 1rem;
+        .title-box p {
+            font-size: 0.95rem;
             color: white;
-            opacity: 0.8;
+            opacity: 0.85;
             margin: 5px 0 0;
         }
         .menu-toggle {
-            position: relative;
             cursor: pointer;
-            color: #ffc107;
-            font-size: 1.5rem;
+            color: #ffca28;
+            font-size: 1.6rem;
             padding: 10px;
             transition: transform 0.2s ease;
+            z-index: 1002;
         }
         .menu-toggle:hover {
             transform: scale(1.1);
         }
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            min-width: 180px;
-            display: none;
-            z-index: 1000;
-            animation: slideIn 0.2s ease-out;
+            backdrop-filter: blur(8px);
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1003;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        .dropdown-menu.show {
-            display: block;
+        .sidebar.show {
+            right: 0;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .dropdown-item {
-            padding: 12px 20px;
-            font-size: 0.95rem;
+        .sidebar-item {
+            padding: 15px;
+            font-size: 1rem;
             font-weight: 500;
             color: #333;
             cursor: pointer;
-            transition: background 0.2s ease;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             gap: 10px;
+            transition: background 0.2s ease;
         }
-        .dropdown-item:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+        .sidebar-item:hover {
+            background: rgba(79, 195, 247, 0.1);
+            color: #f06292;
+        }
+        .sidebar-item.active {
+            background: rgba(79, 195, 247, 0.2);
+            color: #f06292;
         }
         .form-group {
             margin-bottom: 20px;
@@ -133,19 +164,14 @@
         }
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #f06292;
+            box-shadow: 0 0 0 3px rgba(240, 98, 146, 0.1);
         }
         .form-control::placeholder {
             color: #999;
         }
         select.form-control {
             cursor: pointer;
-        }
-        .input-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
         }
         .btn {
             padding: 12px 25px;
@@ -159,20 +185,20 @@
             letter-spacing: 1px;
         }
         .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, #2e7d32, #4caf50);
             color: white;
         }
         .btn-primary:hover:not(:disabled) {
             transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 16px rgba(46, 125, 50, 0.3);
         }
         .btn-danger {
-            background: linear-gradient(45deg, #f093fb, #f5576c);
+            background: linear-gradient(45deg, #ff8a80, #f06292);
             color: white;
         }
         .btn-danger:hover:not(:disabled) {
             transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(245, 87, 108, 0.3);
+            box-shadow: 0 8px 16px rgba(255, 138, 128, 0.3);
         }
         .btn:disabled {
             opacity: 0.6;
@@ -186,12 +212,12 @@
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
         .stat-item {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #f06292, #4fc3f7);
             color: white;
             padding: 15px;
             border-radius: 10px;
@@ -201,8 +227,21 @@
         .stat-item:hover {
             transform: scale(1.03);
         }
+        .stat-item.total {
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
+        }
         .stat-item.charged {
-            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath fill="%23ff4500" d="M12 2C7.58 2 4 5.58 4 10c0 2.21.89 4.22 2.34 5.66l-1.42 1.42C4.34 16.34 4 15.36 4 14.5c0-1.38.56-2.63 1.46-3.54C3.56 9.06 2 6.72 2 4c0-2.21.89-4.22 2.34-5.66l1.42 1.42C5.36 1.64 6.34 2 7.5 2c1.38 0 2.63.56 3.54 1.46C12.94 5.36 14.5 7.72 14.5 10c0 1.38-.56 2.63-1.46 3.54l1.42 1.42C15.64 13.86 16 12.36 16 10.5c0-4.42-3.58-8-8-8zm7.66 15.66l-1.42-1.42C18.64 18.36 17.66 19 16.5 19c-1.38 0-2.63-.56-3.54-1.46C11.06 15.64 9.5 13.28 9.5 10.5c0-1.38.56-2.63 1.46-3.54l-1.42-1.42C8.36 6.64 8 8.14 8 10.5c0 4.42 3.58 8 8 8z"/%3E%3C/svg%3E') no-repeat center, linear-gradient(135deg, #ff4500, #ffb300);
+            background-size: 30px, cover;
+        }
+        .stat-item.approved {
+            background: linear-gradient(135deg, #2e7d32, #4caf50);
+        }
+        .stat-item.declined {
+            background: linear-gradient(135deg, #d32f2f, #ef5350);
+        }
+        .stat-item.checked {
+            background: linear-gradient(135deg, #7b1fa2, #ab47bc);
         }
         .stat-item .label {
             font-size: 13px;
@@ -210,26 +249,30 @@
             margin-bottom: 6px;
         }
         .stat-item .value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
         }
-        .result-card {
+        .result-column {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
-        }
-        .result-card:hover {
-            transform: scale(1.02);
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
         .result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 15px 20px;
             background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-bottom: 1px solid #dee2e6;
+            border-radius: 10px;
         }
         .result-title {
             font-weight: 600;
@@ -240,18 +283,22 @@
             gap: 8px;
         }
         .result-content {
-            max-height: 400px;
+            flex: 1;
+            max-height: 80vh;
             overflow-y: auto;
             padding: 20px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
             line-height: 1.6;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
         .result-content::-webkit-scrollbar {
             width: 6px;
         }
         .result-content::-webkit-scrollbar-thumb {
-            background: #667eea;
+            background: #f06292;
             border-radius: 3px;
         }
         .action-buttons {
@@ -270,12 +317,11 @@
         .action-btn:hover {
             transform: scale(1.1);
         }
-        .eye-btn { background: #6c757d; }
-        .copy-btn { background: #28a745; }
-        .trash-btn { background: #dc3545; }
+        .copy-btn { background: #2e7d32; }
+        .trash-btn { background: #d32f2f; }
         .loader {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #f06292;
             border-radius: 50%;
             width: 36px;
             height: 36px;
@@ -297,7 +343,7 @@
             padding: 20px;
             color: white;
             font-size: 14px;
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .login-container {
             display: flex;
@@ -307,10 +353,10 @@
             background: inherit;
         }
         .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
             padding: 30px;
             width: 100%;
             max-width: 360px;
@@ -332,20 +378,23 @@
         }
         @media (max-width: 768px) {
             .container { padding: 10px; }
-            .header { flex-direction: column; align-items: flex-start; }
-            .header h1 { font-size: 1.8rem; }
-            .header p { font-size: 0.9rem; }
-            .input-grid { grid-template-columns: 1fr; }
-            .btn-group { flex-direction: column; align-items: center; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .title-box h1 { font-size: 1.7rem; }
+            .title-box p { font-size: 0.9rem; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
             .result-header { flex-direction: column; gap: 10px; align-items: flex-start; }
             .card { padding: 15px; }
             .login-card { padding: 20px; }
-            .dropdown-menu { min-width: 160px; }
+            .sidebar { width: 250px; }
+            .result-column { padding: 10px; }
+            .result-content { max-height: 70vh; }
         }
     </style>
 </head>
 <body>
+    <!-- Particle Animation -->
+    <div class="particles" id="particles"></div>
+
     <!-- Login Panel -->
     <div class="login-container" id="loginContainer">
         <div class="login-card">
@@ -364,55 +413,54 @@
 
     <!-- Main Checker UI -->
     <div class="container hidden" id="checkerContainer">
-        <div class="header">
-            <div>
+        <div class="header" id="header">
+            <div class="title-box">
                 <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
                 <p>Multi-Gateway Card Checker</p>
             </div>
             <div class="menu-toggle" id="menuToggle">
                 <i class="fas fa-ellipsis-v"></i>
-                <div class="dropdown-menu" id="dropdownMenu">
-                    <div class="dropdown-item" data-view="charged"><i class="fas fa-bolt" style="color: #ffc107;"></i> Charged Cards</div>
-                    <div class="dropdown-item" data-view="approved"><i class="fas fa-check-circle" style="color: #28a745;"></i> Approved Cards</div>
-                    <div class="dropdown-item" data-view="declined"><i class="fas fa-times-circle" style="color: #dc3545;"></i> Declined Cards</div>
-                </div>
             </div>
+        </div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-item active" data-view="checkerhub"><i class="fas fa-home" style="color: #4fc3f7;"></i> CheckerHub</div>
+            <div class="sidebar-item" data-view="charged"><i class="fas fa-bolt" style="color: #ffca28;"></i> Charged Cards</div>
+            <div class="sidebar-item" data-view="approved"><i class="fas fa-check-circle" style="color: #2e7d32;"></i> Approved Cards</div>
+            <div class="sidebar-item" data-view="declined"><i class="fas fa-times-circle" style="color: #d32f2f;"></i> Declined Cards</div>
         </div>
 
         <!-- Input Section -->
-        <div class="card">
-            <div class="input-grid">
-                <div class="form-group">
-                    <label for="cards">Card List (Format: card|MM|YY or YYYY|CVV)</label>
-                    <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
-                    <div class="card-count" id="card-count">0 valid cards detected</div>
-                </div>
-                <div class="form-group">
-                    <label for="gate">Select Gateway</label>
-                    <select id="gate" class="form-control">
-                        <option value="gate/stripeauth.php">Stripe Auth</option>
-                        <option value="gate/paypal1$.php">PayPal 1$</option>
-                        <option value="gate/shopify1$.php">Shopify 1$</option>
-                        <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
-                        <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
-                    </select>
-                    <div class="btn-group">
-                        <button class="btn btn-primary btn-play" id="startBtn">
-                            <i class="fas fa-play"></i> Start Check
-                        </button>
-                        <button class="btn btn-danger btn-stop" id="stopBtn" disabled>
-                            <i class="fas fa-stop"></i> Stop
-                        </button>
-                    </div>
-                    <div class="loader" id="loader"></div>
-                </div>
+        <div class="card" id="inputSection">
+            <div class="form-group">
+                <label for="cards">Card List (Format: card|MM|YY or YYYY|CVV)</label>
+                <textarea id="cards" class="form-control" rows="7" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
+                <div class="card-count" id="card-count">0 valid cards detected</div>
             </div>
+            <div class="form-group">
+                <label for="gate">Select Gateway</label>
+                <select id="gate" class="form-control">
+                    <option value="gate/stripeauth.php">Stripe Auth</option>
+                    <option value="gate/paypal1$.php">PayPal 1$</option>
+                    <option value="gate/shopify1$.php">Shopify 1$</option>
+                    <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
+                    <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary btn-play" id="startBtn">
+                    <i class="fas fa-play"></i> Start Check
+                </button>
+                <button class="btn btn-danger btn-stop" id="stopBtn" disabled>
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+            <div class="loader" id="loader"></div>
         </div>
 
         <!-- Stats -->
-        <div class="card">
+        <div class="card" id="statsSection">
             <div class="stats-grid">
-                <div class="stat-item">
+                <div class="stat-item total">
                     <div class="label">Total</div>
                     <div class="value carregadas">0</div>
                 </div>
@@ -420,33 +468,41 @@
                     <div class="label">Charged</div>
                     <div class="value charged">0</div>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <div class="stat-item approved">
                     <div class="label">Approved</div>
                     <div class="value approved">0</div>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <div class="stat-item declined">
                     <div class="label">Declined</div>
                     <div class="value reprovadas">0</div>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+                <div class="stat-item checked">
                     <div class="label">Checked</div>
                     <div class="value checked">0 / 0</div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Results -->
-        <div class="result-card">
-            <div class="result-header">
-                <h3 class="result-title" id="resultTitle"><i class="fas fa-bolt" style="color: #ffc107;"></i> Charged Cards</h3>
-                <div class="action-buttons">
-                    <button class="action-btn eye-btn" id="toggleResult" type="show"><i class="fas fa-eye-slash"></i></button>
-                    <button class="action-btn copy-btn" id="copyResult"><i class="fas fa-copy"></i></button>
-                    <button class="action-btn trash-btn" id="clearResult"><i class="fas fa-trash"></i></button>
-                </div>
+    <!-- Results -->
+    <div class="result-column hidden" id="resultColumn">
+        <div class="header">
+            <div class="title-box">
+                <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
+                <p>Multi-Gateway Card Checker</p>
             </div>
-            <div id="resultContent" class="result-content" style="display: none;"></div>
+            <div class="menu-toggle" id="resultMenuToggle">
+                <i class="fas fa-ellipsis-v"></i>
+            </div>
         </div>
+        <div class="result-header">
+            <h3 class="result-title" id="resultTitle"><i class="fas fa-bolt" style="color: #ffca28;"></i> Charged Cards</h3>
+            <div class="action-buttons">
+                <button class="action-btn copy-btn" id="copyResult"><i class="fas fa-copy"></i></button>
+                <button class="action-btn trash-btn" id="clearResult"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+        <div id="resultContent" class="result-content"></div>
     </div>
 
     <footer class="hidden" id="footer">
@@ -455,6 +511,8 @@
 
     <script>
         $(document).ready(function() {
+            // Session-based storage for user isolation
+            const sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             let isProcessing = false;
             let isStopping = false;
             let activeRequests = 0;
@@ -463,10 +521,29 @@
             const MAX_RETRIES = 1;
             let abortControllers = [];
             let totalCards = 0;
-            let chargedCards = [];
-            let approvedCards = [];
-            let declinedCards = [];
-            let currentView = 'charged';
+            let chargedCards = JSON.parse(sessionStorage.getItem(`chargedCards-${sessionId}`) || '[]');
+            let approvedCards = JSON.parse(sessionStorage.getItem(`approvedCards-${sessionId}`) || '[]');
+            let declinedCards = JSON.parse(sessionStorage.getItem(`declinedCards-${sessionId}`) || '[]');
+            let currentView = 'checkerhub';
+
+            // Particle Animation
+            function createParticles() {
+                const particlesContainer = $('#particles');
+                for (let i = 0; i < 50; i++) {
+                    const particle = $('<div class="particle"></div>');
+                    const size = Math.random() * 6 + 2;
+                    particle.css({
+                        width: size + 'px',
+                        height: size + 'px',
+                        left: Math.random() * 100 + '%',
+                        animationDuration: Math.random() * 10 + 10 + 's',
+                        animationDelay: Math.random() * 5 + 's',
+                        background: ['#ffca28', '#ff8a80', '#4fc3f7'][Math.floor(Math.random() * 3)]
+                    });
+                    particlesContainer.append(particle);
+                }
+            }
+            createParticles();
 
             // Login Logic
             const validUsername = 'admin';
@@ -476,6 +553,7 @@
                 $('#loginContainer').addClass('hidden');
                 $('#checkerContainer').removeClass('hidden');
                 $('#footer').removeClass('hidden');
+                $('#resultColumn').addClass('hidden');
             }
 
             $('#loginBtn').click(function() {
@@ -489,8 +567,7 @@
                         title: 'Login Failed',
                         text: 'Invalid username or password',
                         icon: 'error',
-                        confirmButtonText: 'Try Again',
-                        confirmButtonColor: '#667eea'
+                        confirmButtonColor: '#f06292'
                     });
                 }
             });
@@ -506,7 +583,7 @@
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
-                
+
                 if ($(this).val().trim()) {
                     $('.carregadas').text('0');
                     $('.charged').text('0');
@@ -516,38 +593,61 @@
                     chargedCards = [];
                     approvedCards = [];
                     declinedCards = [];
-                    renderResult();
+                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                    $('#resultColumn').addClass('hidden');
                 }
             });
 
-            // Three-dot menu toggle
-            $('#menuToggle').click(function(e) {
+            // Sidebar toggle
+            function toggleSidebar(e) {
                 e.stopPropagation();
-                $('#dropdownMenu').toggleClass('show');
-            });
+                $('#sidebar').toggleClass('show');
+            }
+
+            $('#menuToggle, #resultMenuToggle').click(toggleSidebar);
 
             $(document).click(function(e) {
-                if (!$(e.target).closest('#menuToggle, #dropdownMenu').length) {
-                    $('#dropdownMenu').removeClass('show');
+                if (!$(e.target).closest('#menuToggle, #resultMenuToggle, #sidebar').length) {
+                    $('#sidebar').removeClass('show');
                 }
             });
 
             // View switching
-            $('.dropdown-item').click(function() {
-                const view = $(this).data('view');
+            function switchView(view) {
+                if (currentView === view) {
+                    $('#sidebar').removeClass('show');
+                    return;
+                }
                 currentView = view;
-                $('.dropdown-item').removeClass('active');
-                $(this).addClass('active');
-                $('#dropdownMenu').removeClass('show');
-                renderResult();
+                $('.sidebar-item').removeClass('active');
+                $(`.sidebar-item[data-view="${view}"]`).addClass('active');
+                $('#sidebar').removeClass('show');
+
+                if (view === 'checkerhub') {
+                    $('#checkerContainer').removeClass('hidden');
+                    $('#footer').removeClass('hidden');
+                    $('#resultColumn').addClass('hidden');
+                } else {
+                    $('#checkerContainer').addClass('hidden');
+                    $('#footer').addClass('hidden');
+                    renderResult();
+                }
+            }
+
+            $('.sidebar-item').click(function() {
+                const view = $(this).data('view');
+                switchView(view);
             });
 
             function renderResult() {
                 const viewConfig = {
-                    charged: { title: 'Charged Cards', icon: 'fa-bolt', color: '#ffc107', data: chargedCards, clearable: true },
-                    approved: { title: 'Approved Cards', icon: 'fa-check-circle', color: '#28a745', data: approvedCards, clearable: false },
-                    declined: { title: 'Declined Cards', icon: 'fa-times-circle', color: '#dc3545', data: declinedCards, clearable: true }
+                    charged: { title: 'Charged Cards', icon: 'fa-bolt', color: '#ffca28', data: chargedCards, clearable: true },
+                    approved: { title: 'Approved Cards', icon: 'fa-check-circle', color: '#2e7d32', data: approvedCards, clearable: false },
+                    declined: { title: 'Declined Cards', icon: 'fa-times-circle', color: '#d32f2f', data: declinedCards, clearable: true }
                 };
+                if (!viewConfig[currentView]) return;
                 const config = viewConfig[currentView];
                 $('#resultTitle').html(`<i class="fas ${config.icon}" style="color: ${config.color};"></i> ${config.title}`);
                 $('#resultContent').empty();
@@ -558,19 +658,13 @@
                         $('#resultContent').append(`<span style="color: ${config.color}; font-family: 'Inter', sans-serif;">${item}</span><br>`);
                     });
                 }
+                $('#resultColumn').removeClass('hidden');
+                $('#checkerContainer').addClass('hidden');
+                $('#footer').addClass('hidden');
                 $('#clearResult').toggle(config.clearable);
-                const isHidden = $('#resultContent').is(':hidden');
-                $('#toggleResult').html(`<i class="fas fa-${isHidden ? 'eye-slash' : 'eye'}"></i>`);
             }
 
             // UI Functions
-            $('#toggleResult').click(function() {
-                const isHidden = $('#resultContent').is(':hidden');
-                $('#resultContent').toggle();
-                $(this).html(`<i class="fas fa-${isHidden ? 'eye-slash' : 'eye'}"></i>`);
-                $(this).attr('type', isHidden ? 'hidden' : 'show');
-            });
-
             $('#copyResult').click(function() {
                 const viewConfig = {
                     charged: { title: 'Charged cards', data: chargedCards },
@@ -578,13 +672,14 @@
                     declined: { title: 'Declined cards', data: declinedCards }
                 };
                 const config = viewConfig[currentView];
+                if (!config) return;
                 const text = config.data.join('\n');
                 if (!text) {
                     Swal.fire({
                         title: 'Nothing to copy!',
                         text: `${config.title} list is empty`,
                         icon: 'info',
-                        confirmButtonColor: '#667eea'
+                        confirmButtonColor: '#f06292'
                     });
                     return;
                 }
@@ -616,13 +711,14 @@
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, clear!',
-                    confirmButtonColor: '#dc3545'
+                    confirmButtonColor: '#d32f2f'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         config.data.length = 0;
+                        sessionStorage.setItem(`${currentView}Cards-${sessionId}`, JSON.stringify(config.data));
                         $(config.counter).text('0');
-                        renderResult();
                         $('.checked').text(`${chargedCards.length + approvedCards.length + declinedCards.length} / ${totalCards}`);
+                        renderResult();
                         Swal.fire('Cleared!', '', 'success');
                     }
                 });
@@ -694,6 +790,12 @@
             async function processCards() {
                 if (isProcessing) {
                     console.warn('Processing already in progress');
+                    Swal.fire({
+                        title: 'Processing in progress',
+                        text: 'Please wait until current process completes',
+                        icon: 'warning',
+                        confirmButtonColor: '#f06292'
+                    });
                     return;
                 }
 
@@ -712,7 +814,7 @@
                         title: 'No valid cards!',
                         text: 'Please check your card format',
                         icon: 'error',
-                        confirmButtonColor: '#667eea'
+                        confirmButtonColor: '#f06292'
                     });
                     console.error('No valid cards provided');
                     return;
@@ -723,7 +825,7 @@
                         title: 'Limit exceeded!',
                         text: 'Maximum 1000 cards allowed',
                         icon: 'error',
-                        confirmButtonColor: '#667eea'
+                        confirmButtonColor: '#f06292'
                     });
                     console.error('Card limit exceeded');
                     return;
@@ -738,6 +840,9 @@
                 chargedCards = [];
                 approvedCards = [];
                 declinedCards = [];
+                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                 $('.carregadas').text(totalCards);
                 $('.charged').text('0');
                 $('.approved').text('0');
@@ -747,7 +852,7 @@
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
                 console.log(`Starting processing for ${totalCards} cards`);
-                renderResult();
+                $('#resultColumn').addClass('hidden');
 
                 let requestIndex = 0;
 
@@ -768,12 +873,15 @@
                             activeRequests--;
                             if (result.status === 'CHARGED') {
                                 chargedCards.push(result.response);
+                                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
                                 $('.charged').text(chargedCards.length);
                             } else if (result.status === 'APPROVED') {
                                 approvedCards.push(result.response);
+                                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                                 $('.approved').text(approvedCards.length);
                             } else {
                                 declinedCards.push(result.response);
+                                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                                 $('.reprovadas').text(declinedCards.length);
                             }
 
@@ -810,10 +918,12 @@
                     title: 'Processing complete!',
                     text: 'All cards have been checked',
                     icon: 'success',
-                    confirmButtonColor: '#667eea'
+                    confirmButtonColor: '#f06292'
                 });
                 console.log('Processing completed');
-                renderResult();
+                if (currentView !== 'checkerhub') {
+                    renderResult();
+                }
             }
 
             // Event handlers
@@ -842,11 +952,13 @@
                     title: 'Stopped!',
                     text: 'Processing has been stopped',
                     icon: 'warning',
-                    confirmButtonColor: '#667eea',
+                    confirmButtonColor: '#f06292',
                     allowOutsideClick: false
                 });
                 console.log('Processing stopped');
-                renderResult();
+                if (currentView !== 'checkerhub') {
+                    renderResult();
+                }
             });
 
             $('#gate').change(function() {
@@ -857,15 +969,12 @@
                         title: 'Gateway not implemented',
                         text: 'Only Stripe Auth, PayPal 1$, and Shopify 1$ are currently available',
                         icon: 'info',
-                        confirmButtonColor: '#667eea'
+                        confirmButtonColor: '#f06292'
                     });
                     $(this).val('gate/stripeauth.php');
                     console.log('Reverted to stripeauth.php');
                 }
             });
-
-            // Initialize
-            renderResult();
         });
     </script>
 </body>
