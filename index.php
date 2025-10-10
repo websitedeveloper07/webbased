@@ -3,748 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card X CHK - WEB</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>CardX Check - Multi Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root {
-            --color-dark-bg: #0a001f; /* Dark purple-tinted background */
-            --color-card-bg: rgba(15, 15, 40, 0.9);
-            --color-text-light: #e0e0ff;
-            --color-text-muted: #7a7aaf;
-            --color-primary: #ff69b4; /* Hot Pink */
-            --color-secondary: #9b30ff; /* Vivid Purple */
-            --color-blue: #1e90ff; /* Blue */
-            --color-neon: #00ffff; /* Neon Cyan */
-            --color-yellow: #ffff00; /* Yellow */
-            --color-success: #00ff7f; /* Bright Green */
-            --color-danger: #dc143c; /* Red */
-            --neon-glow-flowing: 0 0 6px #1e90ff, 0 0 12px rgba(30, 144, 255, 0.3), 0 0 18px rgba(30, 144, 255, 0.2);
-            --neon-glow-purple: 0 0 6px #9b30ff, 0 0 12px rgba(155, 48, 255, 0.3), 0 0 18px rgba(155, 48, 255, 0.2);
-            --border-radius: 24px; /* Highly rounded corners */
+        * {
+            box-sizing: border-box;
         }
-        * { box-sizing: border-box; }
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--color-dark-bg);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
             margin: 0;
-            padding: 0;
+            padding: 30px;
             min-height: 100vh;
-            color: var(--color-text-light);
-            overflow-y: auto;
-            position: relative;
-            user-select: none; /* Prevent text selection */
+            color: #333;
         }
-        /* Enhanced Background Animation */
-        #arrow-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-        }
-        .arrow {
-            position: absolute;
-            font-size: calc(12px + 6px * var(--random-size));
-            text-shadow: var(--neon-glow-flowing);
-            animation: flowArrow linear infinite;
-            opacity: calc(0.4 + 0.4 * var(--random-opacity));
-        }
-        @keyframes flowArrow {
-            0% { transform: translate(-50vw, -50vh) rotate(45deg); }
-            100% { transform: translate(50vw, 50vh) rotate(45deg); }
-        }
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr;
-            min-height: calc(100vh - 80px);
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header {
-            grid-column: 1 / 2;
-            background: rgba(10, 10, 30, 0.95);
-            padding: 15px 30px;
-            box-shadow: var(--neon-glow-flowing);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            border-radius: 0 0 var(--border-radius) var(--border-radius);
-        }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-blue), var(--color-neon), var(--color-blue));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
-        }
-        @keyframes neonBorder {
+        @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        .header h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
-            color: var(--color-neon);
-            text-shadow: 0 0 6px var(--color-neon);
-            margin: 0;
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 15px;
         }
-        .openbtn {
-            font-size: 22px;
-            cursor: pointer;
-            color: var(--color-neon);
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            transition: all 0.3s ease;
-            text-shadow: var(--neon-glow-purple);
-            background: rgba(10, 10, 30, 0.7);
-            padding: 5px 10px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--neon-glow-purple);
+        .card {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .openbtn::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-secondary), var(--color-primary), var(--color-secondary));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
         }
-        .openbtn:hover {
-            color: var(--color-yellow);
-        }
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 10;
-            top: 0;
-            right: 0;
-            background: rgba(10, 10, 30, 0.95);
-            overflow-x: hidden;
-            transition: width 0.4s ease;
-            padding-top: 60px;
-        }
-        .sidebar .closebtn {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 34px;
-            color: var(--color-text-muted);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .sidebar .closebtn:hover {
-            color: var(--color-secondary);
-        }
-        .nav-item {
-            padding: 14px 25px;
-            font-size: 14px;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--color-text-light);
-            display: flex;
-            align-items: center;
-            border-radius: var(--border-radius);
-        }
-        .nav-item i { margin-right: 12px; }
-        .nav-item:hover {
-            background: rgba(155, 48, 255, 0.15);
-            color: var(--color-neon);
-            text-shadow: var(--neon-glow-flowing);
-        }
-        .nav-item.active {
-            background: rgba(255, 105, 180, 0.2);
-            color: var(--color-primary);
-            text-shadow: var(--neon-glow-flowing);
-        }
-        .nav-label {
-            padding: 12px 25px;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 1.2px;
-            background: transparent;
-        }
-        .nav-label.core-functions {
-            color: var(--color-primary);
-        }
-        .nav-label.results-logs {
-            color: var(--color-text-muted);
-        }
-        .main-content {
-            grid-column: 1 / 2;
-            grid-row: 2 / 3;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            padding-bottom: 80px;
-        }
-        .card-panel {
-            background: var(--color-card-bg);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--neon-glow-flowing);
-            transition: all 0.3s ease;
-        }
-        .card-panel::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-blue), var(--color-neon), var(--color-blue));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
-        }
-        .input-controls-grid {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 40px;
+        .header {
+            text-align: center;
+            color: white;
             margin-bottom: 40px;
         }
-        .status-bar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 20px;
-            padding: 12px;
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
         }
-        .stat-item {
-            background: rgba(10, 10, 30, 0.9);
-            padding: 16px;
-            border-radius: var(--border-radius);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--neon-glow-flowing);
-            min-height: 100px;
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
         }
-        .stat-item::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-blue), var(--color-neon), var(--color-blue));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
+        .form-group {
+            margin-bottom: 25px;
         }
-        .stat-item .icon {
-            font-size: 1.5rem;
-            color: var(--color-text-muted);
-            margin-bottom: 8px;
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #444;
         }
-        .stat-item .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--color-text-muted);
-            margin-bottom: 6px;
-            letter-spacing: 1.2px;
-        }
-        .stat-item .value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: var(--color-blue);
-        }
-        .stat-item:nth-child(2) .value { color: var(--color-success); text-shadow: 0 0 6px var(--color-success); }
-        .stat-item:nth-child(3) .value { color: var(--color-primary); text-shadow: 0 0 6px var(--color-primary); }
-        .stat-item:nth-child(4) .value { color: var(--color-danger); text-shadow: 0 0 6px var(--color-danger); }
-        .stat-item:nth-child(5) .value { color: var(--color-yellow); text-shadow: 0 0 6px var(--color-yellow); }
         .form-control {
-            background: rgba(10, 10, 30, 0.7);
-            border-radius: var(--border-radius);
-            color: var(--color-text-light);
-            padding: 12px;
-            font-size: 13px;
-            font-weight: 400;
-            transition: all 0.3s;
-            resize: none;
             width: 100%;
-            box-shadow: var(--neon-glow-flowing);
+            padding: 14px 18px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
         }
         .form-control:focus {
-            box-shadow: 0 0 15px rgba(30, 144, 255, 0.5);
             outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
         }
-        #cards {
-            min-height: 220px;
-            position: relative;
+        .form-control::placeholder {
+            color: #999;
         }
-        #cards::before, #gate::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-blue), var(--color-neon), var(--color-blue));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
+        select.form-control {
+            cursor: pointer;
         }
-        label {
-            font-size: 13px;
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 12px;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--color-neon);
-            text-shadow: var(--neon-glow-flowing);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .card-count {
-            font-size: 12px;
-            color: var(--color-text-muted);
-            margin-top: 8px;
-            font-weight: 400;
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(245, 87, 108, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         .btn-group {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
         }
-        .btn {
-            padding: 12px;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+        .stat-item .label {
             font-size: 14px;
-            font-weight: 600;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            position: relative;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .stat-item .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .stat-item.charged {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+        .results-grid {
+            display: grid;
+            gap: 30px;
+        }
+        .result-card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
             overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
         }
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
+        .result-card:hover {
+            transform: translateY(-5px);
         }
-        .btn:hover::before { left: 100%; }
-        .btn-primary {
-            background: linear-gradient(45deg, var(--color-primary), var(--color-blue));
-            color: var(--color-dark-bg);
-            box-shadow: var(--neon-glow-flowing);
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid #dee2e6;
         }
-        .btn-primary:hover:not(:disabled) {
-            box-shadow: 0 0 15px rgba(30, 144, 255, 0.5);
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            margin: 0;
         }
-        .btn-danger {
-            background: linear-gradient(45deg, var(--color-danger), #8b0000);
-            color: var(--color-text-light);
-            box-shadow: 0 0 8px rgba(220, 20, 60, 0.5);
+        .result-content {
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.7;
         }
-        .btn-danger:hover:not(:disabled) {
-            box-shadow: 0 0 12px rgba(220, 20, 60, 0.7);
+        .result-content::-webkit-scrollbar {
+            width: 8px;
         }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            box-shadow: none;
+        .result-content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
         }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .action-btn {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+            transition: transform 0.3s ease;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+        .eye-btn { background: #6c757d; }
+        .copy-btn { background: #28a745; }
+        .trash-btn { background: #dc3545; }
         .loader {
-            border: 4px solid rgba(30, 144, 255, 0.3);
-            border-top: 4px solid var(--color-blue);
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 15px auto;
+            margin: 30px auto;
             display: none;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .log-viewer-container {
-            flex-grow: 1;
-            min-height: 300px;
+        .card-count {
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
         }
-        .log-header {
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: white;
+            font-size: 15px;
+            margin-top: 50px;
+        }
+        .login-container {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            padding-bottom: 15px;
-            box-shadow: var(--neon-glow-flowing);
-            margin-bottom: 15px;
+            min-height: 100vh;
+            background: inherit;
         }
-        .log-header::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-blue), var(--color-neon), var(--color-blue));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
+        .login-card {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
         }
-        .log-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.3rem;
+        .login-card h2 {
+            font-size: 2rem;
             font-weight: 700;
-            color: var(--color-primary);
-            text-shadow: var(--neon-glow-flowing);
+            color: #333;
+            margin-bottom: 20px;
         }
-        .log-content {
-            font-family: 'Consolas', monospace;
-            font-size: 12px;
-            font-weight: 400;
-            color: var(--color-text-light);
-            white-space: pre-wrap;
-            max-height: 450px;
-            overflow-y: auto;
-            overflow-x: auto;
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
         }
-        .log-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        .log-content::-webkit-scrollbar-thumb {
-            background: var(--color-neon);
-            border-radius: var(--border-radius);
-        }
-        .log-entry {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-bottom: 1px solid rgba(30, 144, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-        .log-card {
-            color: var(--color-text-light);
-            font-weight: bold;
-        }
-        .log-status {
-            margin-top: 5px;
-        }
-        .log-response {
-            margin-top: 5px;
-            font-size: 11px;
-            color: var(--color-text-muted);
-            white-space: pre-wrap;
-        }
-        .log-success { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
-        .log-charged { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
-        .log-danger { color: var(--color-danger); text-shadow: 0 0 5px var(--color-danger); }
-        .action-btn {
-            background: rgba(10, 10, 30, 0.7);
-            color: var(--color-text-light);
-            padding: 8px 12px;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 13px;
-            font-weight: 600;
-            box-shadow: var(--neon-glow-flowing);
-        }
-        .action-btn::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--color-blue), var(--color-neon), var(--color-blue));
-            z-index: -1;
-            filter: blur(4px);
-            animation: neonBorder 2s ease infinite;
-        }
-        .action-btn:hover {
-            background: rgba(155, 48, 255, 0.2);
-            box-shadow: 0 0 15px rgba(30, 144, 255, 0.5);
-        }
-        .view-section.hidden { display: none; }
-        .view-section { display: block; }
-        @media (max-width: 900px) {
-            .input-controls-grid {
-                grid-template-columns: 1fr;
-                margin-bottom: 30px;
-            }
-            .control-panel { max-width: 100%; }
+        .hidden {
+            display: none;
         }
         @media (max-width: 768px) {
-            .header h1 { font-size: 1.6rem; }
-            .main-content { padding: 15px; }
-            .status-bar {
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                gap: 10px;
+            .container { padding: 15px; }
+            .header h1 { font-size: 2.2rem; }
+            .header p { font-size: 1rem; }
+            .btn-group { 
+                flex-direction: column;
+                align-items: center;
             }
-            .stat-item { padding: 10px; min-height: 80px; }
-            .stat-item .value { font-size: 1.8rem; }
-            .sidebar { width: 250px; }
-        }
-        @media (max-width: 480px) {
-            .header h1 { font-size: 1.3rem; }
-            .openbtn { font-size: 20px; }
-            .stat-item .value { font-size: 1.5rem; }
-            .btn { padding: 10px; font-size: 13px; }
-            .form-control { font-size: 12px; }
-            .sidebar { width: 100vw; }
-            .log-entry { padding: 8px; }
-            .log-content { font-size: 11px; }
-            .log-response { font-size: 10px; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .result-header { 
+                flex-direction: column; 
+                gap: 15px; 
+                align-items: flex-start;
+            }
+            .card { padding: 20px; }
+            .login-card { padding: 20px; }
         }
     </style>
 </head>
-<body oncontextmenu="return false;">
-    <!-- Enhanced Background Animation -->
-    <div id="arrow-animation"></div>
+<body>
+    <!-- Login Panel -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <h2><i class="fas fa-lock"></i> CardX Check Login</h2>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter username" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password">
+            </div>
+            <button class="btn btn-primary login-btn" id="loginBtn">Login</button>
+        </div>
+    </div>
 
-    <div class="dashboard-container">
-        <!-- Header -->
+    <!-- Main Checker UI -->
+    <div class="container hidden" id="checkerContainer">
         <div class="header">
-            <h1><i class="fas fa-credit-card"></i> CardX CHK</h1>
-            <div class="openbtn"><i class="fas fa-ellipsis-v"></i></div>
+            <h1><i class="fas fa-credit-card"></i> Card X CHK</h1>
+            <p>Multi-Gateway Card Checker</p>
         </div>
 
-        <!-- Sidebar Menu -->
-        <div id="mySidebar" class="sidebar">
-            <span class="closebtn">&times;</span>
-            <div class="nav-label core-functions">Core Functions</div>
-            <div class="nav-item active" data-view="process"><i class="fas fa-play-circle"></i> Checker Hub</div>
-            <div class="nav-label results-logs">Results Logs</div>
-            <div class="nav-item" data-view="charged"><i class="fas fa-bolt"></i> Charged (<span class="charged">0</span>)</div>
-            <div class="nav-item" data-view="approved"><i class="fas fa-check-circle"></i> Approved (<span class="approved">0</span>)</div>
-            <div class="nav-item" data-view="declined"><i class="fas fa-times-circle"></i> Declined (<span class="reprovadas">0</span>)</div>
+        <!-- Input Section -->
+        <div class="card">
+            <div class="form-group">
+                <label for="cards">Card List (Format: card|MM|YY or YYYY|CVV)</label>
+                <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
+                <div class="card-count" id="card-count">0 valid cards detected</div>
+            </div>
+            <div class="form-group">
+                <label for="gate">Select Gateway</label>
+                <select id="gate" class="form-control">
+                    <option value="gate/stripeauth.php">Stripe Auth</option>
+                    <option value="gate/paypal1$.php">PayPal 1$</option>
+                    <option value="gate/shopify1$.php">Shopify 1$</option>
+                    <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
+                    <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary btn-play" id="startBtn">
+                    <i class="fas fa-play"></i> Start Check
+                </button>
+                <button class="btn btn-danger btn-stop" id="stopBtn" disabled>
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+            <div class="loader" id="loader"></div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Process View -->
-            <div id="view-process" class="view-section">
-                <div class="input-controls-grid">
-                    <!-- Input Panel -->
-                    <div class="card-panel input-panel">
-                        <label for="cards"><i class="fas fa-keyboard"></i> Card List (card|MM|YY or YYYY|CVV)</label>
-                        <textarea id="cards" class="form-control" rows="6" placeholder="4147768578745265|04|26|168&#10;4242424242424242|12|2025|123"></textarea>
-                        <div class="card-count" id="card-count">0 valid cards detected</div>
-                    </div>
-                    <!-- Control Panel -->
-                    <div class="card-panel control-panel">
-                        <div class="form-group">
-                            <label for="gate"><i class="fas fa-network-wired"></i> Select Gateway</label>
-                            <select id="gate" class="form-control">
-                                <option value="gate/stripeauth.php">Stripe Auth</option>
-                                <option value="gate/paypal1$.php">PayPal 1$</option>
-                                <option value="gate/paypal.php" disabled>PayPal (Coming Soon)</option>
-                                <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
-                                <option value="gate/shopify.php" disabled>Shopify (Coming Soon)</option>
-                            </select>
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn btn-primary btn-play" id="startBtn"><i class="fas fa-play"></i> Start Check</button>
-                            <button class="btn btn-danger btn-stop" id="stopBtn" disabled><i class="fas fa-stop"></i> Stop</button>
-                        </div>
-                        <div class="loader" id="loader"></div>
-                    </div>
+        <!-- Stats -->
+        <div class="card">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="label">Total</div>
+                    <div class="value carregadas">0</div>
                 </div>
-
-                <!-- Status Bar -->
-                <div class="status-bar card-panel">
-                    <div class="stat-item">
-                        <div class="icon"><i class="fas fa-list"></i></div>
-                        <div class="label">Total</div>
-                        <div class="value carregadas">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="icon"><i class="fas fa-bolt"></i></div>
-                        <div class="label">Charged</div>
-                        <div class="value charged">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="icon"><i class="fas fa-check-circle"></i></div>
-                        <div class="label">Approved</div>
-                        <div class="value approved">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="icon"><i class="fas fa-times-circle"></i></div>
-                        <div class="label">Declined</div>
-                        <div class="value reprovadas">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="icon"><i class="fas fa-tasks"></i></div>
-                        <div class="label">Checked</div>
-                        <div class="value checked">0 / 0</div>
-                    </div>
+                <div class="stat-item charged">
+                    <div class="label">Charged</div>
+                    <div class="value charged">0</div>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                    <div class="label">Approved</div>
+                    <div class="value approved">0</div>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                    <div class="label">Declined</div>
+                    <div class="value reprovadas">0</div>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+                    <div class="label">Checked</div>
+                    <div class="value checked">0 / 0</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Log Viewer -->
-            <div id="view-log" class="view-section hidden">
-                <div class="card-panel log-viewer-container">
-                    <div class="log-header">
-                        <h3 class="log-title" id="dynamic-log-title">Log Output</h3>
-                        <div>
-                            <button class="action-btn" id="copyLogBtn"><i class="fas fa-copy"></i> Copy All</button>
-                            <button class="action-btn" id="clearLogBtn"><i class="fas fa-trash-alt"></i> Clear</button>
-                        </div>
+        <!-- Results -->
+        <div class="results-grid">
+            <div class="result-card">
+                <div class="result-header">
+                    <h3 class="result-title"><i class="fas fa-bolt" style="color: #ffc107;"></i> Charged Cards</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn eye-btn show-charged" type="show"><i class="fas fa-eye-slash"></i></button>
+                        <button class="action-btn copy-btn btn-copy-charged"><i class="fas fa-copy"></i></button>
+                        <button class="action-btn trash-btn btn-trash-charged"><i class="fas fa-trash"></i></button>
                     </div>
-                    <div id="dynamic-log-content" class="log-content"></div>
                 </div>
+                <div id="lista_charged" class="result-content" style="display: none;"></div>
+            </div>
+            <div class="result-card">
+                <div class="result-header">
+                    <h3 class="result-title"><i class="fas fa-check-circle" style="color: #28a745;"></i> Approved Cards</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn eye-btn show-approved" type="show"><i class="fas fa-eye-slash"></i></button>
+                        <button class="action-btn copy-btn btn-copy-approved"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <div id="lista_approved" class="result-content" style="display: none;"></div>
+            </div>
+            <div class="result-card">
+                <div class="result-header">
+                    <h3 class="result-title"><i class="fas fa-times-circle" style="color: #dc3545;"></i> Declined Cards</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn eye-btn show-declined" type="show"><i class="fas fa-eye-slash"></i></button>
+                        <button class="action-btn copy-btn btn-copy-declined"><i class="fas fa-copy"></i></button>
+                        <button class="action-btn trash-btn btn-trash-declined"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div id="lista_declined" class="result-content" style="display: none;"></div>
             </div>
         </div>
     </div>
 
-    <footer style="text-align: center; padding: 10px; color: var(--color-text-muted); font-size: 12px; background: rgba(10, 10, 30, 0.95);">
-        <p><strong>© 2025 CardX CHK - Multi-Gateway Checker</strong></p>
-        <p style="font-style: italic; color: var(--color-yellow);">The New ERA Begins</p>
+    <footer class="hidden" id="footer">
+        <p><strong>© 2025 Card X CheckHK - Multi-Gateway CHECKER</strong></p>
     </footer>
 
     <script>
-        // Prevent Copying
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Copying Disabled',
-                    text: 'Copying is not allowed on this page.',
-                    icon: 'warning',
-                    background: '#2a2a4a',
-                    color: 'var(--color-text-light)',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-        });
-
-        // Enhanced Background Animation
-        const arrowContainer = document.getElementById('arrow-animation');
-        for (let i = 0; i < 50; i++) {
-            const arrow = document.createElement('div');
-            arrow.className = 'arrow';
-            const arrowTypes = ['>', '→', '⇒', '➤'];
-            arrow.innerHTML = arrowTypes[Math.floor(Math.random() * arrowTypes.length)];
-            arrow.style.left = `${Math.random() * 100}%`;
-            arrow.style.top = `${Math.random() * 100}%`;
-            arrow.style.animationDuration = `${Math.random() * 9 + 3}s`;
-            arrow.style.animationDelay = `${Math.random() * 6}s`;
-            arrow.style.color = ['#ff69b4', '#9b30ff', '#1e90ff', '#00ff7f', '#dc143c', '#00ffff', '#ffff00'][Math.floor(Math.random() * 7)];
-            arrow.style.setProperty('--random-size', Math.random());
-            arrow.style.setProperty('--random-opacity', Math.random());
-            arrowContainer.appendChild(arrow);
-        }
-
         $(document).ready(function() {
             let isProcessing = false;
             let isStopping = false;
             let activeRequests = 0;
             let cardQueue = [];
-            let totalCards = 0;
             const MAX_CONCURRENT = 3;
             const MAX_RETRIES = 1;
             let abortControllers = [];
-            let approvedCards = [];
-            let chargedCards = [];
-            let declinedCards = [];
-            let currentView = 'process';
+            let totalCards = 0;
 
-            const LOG_MAP = {
-                'approved': { title: 'Approved Cards Logs', data: approvedCards, countClass: '.approved', logClass: 'log-success', clearable: true },
-                'charged': { title: 'Charged Cards Logs', data: chargedCards, countClass: '.charged', logClass: 'log-charged', clearable: true },
-                'declined': { title: 'Declined Cards Logs', data: declinedCards, countClass: '.reprovadas', logClass: 'log-danger', clearable: true }
-            };
+            // Login Logic
+            const validUsername = 'admin';
+            const validPassword = 'password123';
 
-            function updateAllCounts() {
-                $('.approved').text(approvedCards.length);
-                $('.charged').text(chargedCards.length);
-                $('.reprovadas').text(declinedCards.length);
-                $('.checked').text(`${approvedCards.length + chargedCards.length + declinedCards.length} / ${totalCards}`);
+            function showCheckerUI() {
+                $('#loginContainer').addClass('hidden');
+                $('#checkerContainer').removeClass('hidden');
+                $('#footer').removeClass('hidden');
             }
 
-            function renderLog(viewId) {
-                const config = LOG_MAP[viewId];
-                if (!config) return;
+            $('#loginBtn').click(function() {
+                const username = $('#username').val().trim();
+                const password = $('#password').val().trim();
 
-                $('#dynamic-log-title').text(config.title);
-                $('#dynamic-log-content').empty();
-
-                if (config.data.length === 0) {
-                    $('#dynamic-log-content').append('<div class="log-entry" style="color: var(--color-text-muted); text-align: center;">No cards yet</div>');
+                if (username === validUsername && password === validPassword) {
+                    showCheckerUI();
                 } else {
-                    config.data.forEach(item => {
-                        const [cardPipe, rest] = item.split('|STATUS:');
-                        const [status, ...responseParts] = rest.split('|');
-                        const response = responseParts.join('|');
-                        const entry = $(`
-                            <div class="log-entry">
-                                <div class="log-card">${cardPipe}</div>
-                                <div class="log-status ${config.logClass}">${status}</div>
-                                <div class="log-response">${response}</div>
-                            </div>
-                        `);
-                        $('#dynamic-log-content').append(entry);
+                    Swal.fire({
+                        title: 'Login Failed',
+                        text: 'Invalid username or password',
+                        icon: 'error',
+                        confirmButtonText: 'Try Again'
                     });
                 }
-                $('#clearLogBtn').toggle(config.clearable);
-            }
+            });
 
-            function switchView(viewId) {
-                $('.view-section').addClass('hidden');
-                if (viewId === 'process') {
-                    $('#view-process').removeClass('hidden');
-                } else {
-                    $('#view-log').removeClass('hidden');
-                    renderLog(viewId);
+            $('#username, #password').keypress(function(e) {
+                if (e.which === 13) {
+                    $('#loginBtn').click();
                 }
-                $('.nav-item').removeClass('active');
-                $(`.nav-item[data-view="${viewId}"]`).addClass('active');
-                currentView = viewId;
-            }
-
-            // Handle sidebar open/close
-            $('.openbtn').on('click', function() {
-                document.getElementById("mySidebar").style.width = "250px";
             });
 
-            $('.closebtn').on('click', function() {
-                document.getElementById("mySidebar").style.width = "0";
-            });
-
-            // Handle sidebar navigation clicks
-            $(document).on('click', '.nav-item', function() {
-                const viewId = $(this).data('view');
-                if (viewId) {
-                    switchView(viewId);
-                }
-                document.getElementById("mySidebar").style.width = "0";
-            });
-
+            // Card validation and counter
             $('#cards').on('input', function() {
                 const lines = $(this).val().trim().split('\n').filter(line => line.trim());
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
                 $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
                 
-                if (!isProcessing) {
+                if ($(this).val().trim()) {
                     $('.carregadas').text('0');
                     $('.charged').text('0');
                     $('.approved').text('0');
@@ -753,74 +470,84 @@
                 }
             });
 
-            $('#copyLogBtn').click(function() {
-                const viewId = $('.nav-item.active').data('view');
-                const config = LOG_MAP[viewId];
-                if (!config) return;
+            // UI Functions
+            function toggleVisibility(btn, sectionId) {
+                const section = $(sectionId);
+                const isHidden = section.is(':hidden');
+                section.toggle();
+                btn.html(`<i class="fas fa-${isHidden ? 'eye-slash' : 'eye'}"></i>`);
+                btn.attr('type', isHidden ? 'hidden' : 'show');
+            }
 
-                let copyText = '';
-                config.data.forEach(item => {
-                    const [cardPipe, rest] = item.split('|STATUS:');
-                    const [status, ...responseParts] = rest.split('|');
-                    const response = responseParts.join('|');
-                    copyText += `${cardPipe}\n${status}\n${response}\n\n`;
-                });
-
-                navigator.clipboard.writeText(copyText).then(() => {
-                    Swal.fire({
-                        title: 'Copied!',
-                        text: 'Logs copied to clipboard.',
-                        icon: 'success',
-                        background: '#2a2a4a',
-                        color: 'var(--color-text-light)',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                    Swal.fire({
-                        title: 'Copy Failed',
-                        text: 'Unable to copy logs.',
-                        icon: 'error',
-                        background: '#2a2a4a',
-                        color: 'var(--color-text-light)'
-                    });
-                });
-            });
-
-            $('#clearLogBtn').click(function() {
-                const viewId = $('.nav-item.active').data('view');
-                const config = LOG_MAP[viewId];
-                if (!config || !config.clearable) return;
-
+            function copyToClipboard(selector, title) {
+                const text = $(selector).text();
+                if (!text) {
+                    Swal.fire('Nothing to copy!', `${title} list is empty`, 'info');
+                    return;
+                }
+                
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
                 Swal.fire({
-                    title: `Clear ${config.title}?`,
+                    title: `Copied ${title}!`,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 2000
+                });
+            }
+
+            // Event Listeners
+            $('.show-charged').click(() => toggleVisibility($('.show-charged'), '#lista_charged'));
+            $('.show-approved').click(() => toggleVisibility($('.show-approved'), '#lista_approved'));
+            $('.show-declined').click(() => toggleVisibility($('.show-declined'), '#lista_declined'));
+            
+            $('.btn-copy-charged').click(() => copyToClipboard('#lista_charged', 'Charged cards'));
+            $('.btn-copy-approved').click(() => copyToClipboard('#lista_approved', 'Approved cards'));
+            $('.btn-copy-declined').click(() => copyToClipboard('#lista_declined', 'Declined cards'));
+            
+            $('.btn-trash-charged').click(() => {
+                Swal.fire({
+                    title: 'Clear charged?',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: 'var(--color-danger)',
-                    confirmButtonText: 'Yes, clear!',
-                    background: '#2a2a4a',
-                    color: 'var(--color-text-light)'
+                    confirmButtonText: 'Yes, clear!'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        config.data.length = 0;
-                        renderLog(viewId);
-                        updateAllCounts();
-                        Swal.fire({
-                            title: 'Cleared!',
-                            text: '',
-                            icon: 'success',
-                            background: '#2a2a4a',
-                            color: 'var(--color-text-light)'
-                        });
+                        $('#lista_charged').empty();
+                        $('.charged').text('0');
+                        Swal.fire('Cleared!', '', 'success');
+                    }
+                });
+            });
+            $('.btn-trash-declined').click(() => {
+                Swal.fire({
+                    title: 'Clear declined?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, clear!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#lista_declined').empty();
+                        $('.reprovadas').text('0');
+                        Swal.fire('Cleared!', '', 'success');
                     }
                 });
             });
 
+            // Process a single card with retry
             async function processCard(card, controller, retryCount = 0) {
-                if (!isProcessing) return null;
+                if (!isProcessing) {
+                    console.log(`Skipping card ${card.displayCard} due to stop`);
+                    return null;
+                }
 
-                try {
+                return new Promise((resolve) => {
                     const formData = new FormData();
                     let normalizedYear = card.exp_year;
                     if (normalizedYear.length === 2) {
@@ -831,43 +558,56 @@
                     formData.append('card[exp_year]', normalizedYear);
                     formData.append('card[cvc]', card.cvc);
 
-                    const response = await $.ajax({
+                    console.log(`Sending card ${card.displayCard} to ${$('#gate').val()}`);
+
+                    $.ajax({
                         url: $('#gate').val(),
                         method: 'POST',
                         data: formData,
                         processData: false,
                         contentType: false,
                         timeout: 55000,
-                        signal: controller.signal
+                        signal: controller.signal,
+                        success: function(response) {
+                            console.log(`Success for ${card.displayCard}: ${response}`);
+                            const status = response.includes('CHARGED') ? 'CHARGED' : response.includes('APPROVED') ? 'APPROVED' : 'DECLINED';
+                            resolve({
+                                status: status,
+                                response: response.trim(),
+                                card: card,
+                                displayCard: card.displayCard
+                            });
+                        },
+                        error: function(xhr) {
+                            if (xhr.statusText === 'abort') {
+                                console.log(`Aborted card ${card.displayCard}`);
+                                resolve(null);
+                            } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                                console.warn(`Retrying card ${card.displayCard} (Attempt ${retryCount + 2}) due to error: ${xhr.statusText} (${xhr.status})`);
+                                setTimeout(() => {
+                                    processCard(card, controller, retryCount + 1).then(resolve);
+                                }, 1000);
+                            } else {
+                                const errorMsg = xhr.responseText ? xhr.responseText.substring(0, 100) : 'Request failed';
+                                console.error(`Failed card ${card.displayCard}: ${xhr.statusText} (HTTP ${xhr.status}) - ${errorMsg}`);
+                                resolve({
+                                    status: 'DECLINED',
+                                    response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.displayCard}`,
+                                    card: card,
+                                    displayCard: card.displayCard
+                                });
+                            }
+                        }
                     });
-
-                    const status = response.includes('CHARGED') ? 'CHARGED' : response.includes('APPROVED') ? 'APPROVED' : 'DECLINED';
-                    const logEntry = `${card.displayCard}|STATUS:${status}|${response.trim()}`;
-                    return {
-                        isCharged: status === 'CHARGED',
-                        isApproved: status === 'APPROVED',
-                        response: logEntry,
-                        displayCard: card.displayCard
-                    };
-                } catch (xhr) {
-                    if (xhr.statusText === 'abort') return null;
-                    if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        return processCard(card, controller, retryCount + 1);
-                    }
-                    const errorMsg = xhr.responseText || xhr.statusText || 'Error';
-                    const logEntry = `${card.displayCard}|STATUS:DECLINED|${errorMsg}`;
-                    return {
-                        isCharged: false,
-                        isApproved: false,
-                        response: logEntry,
-                        displayCard: card.displayCard
-                    };
-                }
+                });
             }
 
+            // Main processing function
             async function processCards() {
-                if (isProcessing) return;
+                if (isProcessing) {
+                    console.warn('Processing already in progress');
+                    return;
+                }
 
                 const cardText = $('#cards').val().trim();
                 const lines = cardText.split('\n').filter(line => line.trim());
@@ -876,27 +616,18 @@
                     .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                     .map(line => {
                         const [number, exp_month, exp_year, cvc] = line.split('|');
-                        return { number, exp_month, exp_year, cvc, displayCard: line };
+                        return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
                     });
 
                 if (validCards.length === 0) {
-                    Swal.fire({
-                        title: 'No Valid Cards',
-                        text: 'Check format: card|MM|YY or YYYY|CVV',
-                        icon: 'error',
-                        background: '#2a2a4a',
-                        color: 'var(--color-text-light)'
-                    });
+                    Swal.fire('No valid cards!', 'Please check your card format', 'error');
+                    console.error('No valid cards provided');
                     return;
                 }
+
                 if (validCards.length > 1000) {
-                    Swal.fire({
-                        title: 'Limit Exceeded',
-                        text: 'Maximum 1000 cards allowed',
-                        icon: 'warning',
-                        background: '#2a2a4a',
-                        color: 'var(--color-text-light)'
-                    });
+                    Swal.fire('Limit exceeded!', 'Maximum 1000 cards allowed', 'error');
+                    console.error('Card limit exceeded');
                     return;
                 }
 
@@ -906,22 +637,24 @@
                 abortControllers = [];
                 cardQueue = [...validCards];
                 totalCards = validCards.length;
-                approvedCards.length = 0;
-                chargedCards.length = 0;
-                declinedCards.length = 0;
-
                 $('.carregadas').text(totalCards);
+                $('.charged').text('0');
+                $('.approved').text('0');
+                $('.reprovadas').text('0');
+                $('.checked').text(`0 / ${totalCards}`);
                 $('#startBtn').prop('disabled', true);
                 $('#stopBtn').prop('disabled', false);
                 $('#loader').show();
-                switchView('process');
-                updateAllCounts();
+                console.log(`Starting processing for ${totalCards} cards`);
 
+                const results = [];
+                let completed = 0;
                 let requestIndex = 0;
 
                 while (cardQueue.length > 0 && isProcessing) {
                     while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                         const card = cardQueue.shift();
+                        if (!card) break;
                         activeRequests++;
                         const controller = new AbortController();
                         abortControllers.push(controller);
@@ -930,32 +663,34 @@
                         requestIndex++;
 
                         processCard(card, controller).then(result => {
-                            if (result === null || !isProcessing) return;
+                            if (result === null) return;
 
+                            results.push(result);
+                            completed++;
                             activeRequests--;
 
-                            if (result.isCharged) {
-                                chargedCards.push(result.response);
-                            } else if (result.isApproved) {
-                                approvedCards.push(result.response);
+                            if (result.status === 'CHARGED') {
+                                $('#lista_charged').append(`<span style="color: #ffc107; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.charged').text(parseInt($('.charged').text()) + 1);
+                            } else if (result.status === 'APPROVED') {
+                                $('#lista_approved').append(`<span style="color: #28a745; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.approved').text(parseInt($('.approved').text()) + 1);
                             } else {
-                                declinedCards.push(result.response);
+                                $('#lista_declined').append(`<span style="color: #dc3545; font-family: 'Inter', sans-serif;">${result.response}</span><br>`);
+                                $('.reprovadas').text(parseInt($('.reprovadas').text()) + 1);
                             }
 
-                            updateAllCounts();
+                            $('.checked').text(`${completed} / ${totalCards}`);
+                            console.log(`Completed ${completed}/${totalCards}: ${result.response}`);
 
-                            if (currentView !== 'process') renderLog(currentView);
-
-                            const completed = approvedCards.length + chargedCards.length + declinedCards.length;
-                            if (completed >= totalCards || !isProcessing) finishProcessing();
-                        }).catch(err => {
-                            console.error('Processing error:', err);
-                            activeRequests--;
-                            updateAllCounts();
-                            if (cardQueue.length === 0 && activeRequests === 0) finishProcessing();
+                            if (completed >= totalCards || !isProcessing) {
+                                finishProcessing();
+                            }
                         });
                     }
-                    if (isProcessing) await new Promise(resolve => setTimeout(resolve, 5));
+                    if (isProcessing) {
+                        await new Promise(resolve => setTimeout(resolve, 5));
+                    }
                 }
             }
 
@@ -970,33 +705,22 @@
                 $('#loader').hide();
                 $('#cards').val('');
                 $('#card-count').text('0 valid cards detected');
-                updateAllCounts();
-
-                Swal.fire({
-                    title: 'Processing Complete',
-                    text: 'All cards checked. View logs via menu.',
-                    icon: 'success',
-                    background: '#2a2a4a',
-                    color: 'var(--color-text-light)'
-                });
+                
+                Swal.fire('Processing complete!', 'All cards have been checked', 'success');
+                console.log('Processing completed');
             }
 
-            $('#startBtn').click(function() {
-                if ($('#gate').val() === '') {
-                    Swal.fire({
-                        title: 'No Gateway Selected',
-                        text: 'Please select a valid gateway.',
-                        icon: 'error',
-                        background: '#2a2a4a',
-                        color: 'var(--color-text-light)'
-                    });
-                    return;
-                }
+            // Event handlers
+            $('#startBtn').click(() => {
+                console.log('Start Check clicked');
                 processCards();
             });
 
             $('#stopBtn').click(() => {
-                if (!isProcessing || isStopping) return;
+                if (!isProcessing || isStopping) {
+                    console.warn('Stop clicked but not processing or already stopping');
+                    return;
+                }
 
                 isProcessing = false;
                 isStopping = true;
@@ -1004,35 +728,32 @@
                 abortControllers.forEach(controller => controller.abort());
                 abortControllers = [];
                 activeRequests = 0;
-                updateAllCounts();
+                $('.checked').text(`${parseInt($('.charged').text()) + parseInt($('.approved').text()) + parseInt($('.reprovadas').text())} / ${totalCards}`);
                 $('#startBtn').prop('disabled', false);
                 $('#stopBtn').prop('disabled', true);
                 $('#loader').hide();
-
                 Swal.fire({
-                    title: 'Stopped',
-                    text: 'Processing halted.',
+                    title: 'Stopped!',
+                    text: 'Processing has been stopped',
                     icon: 'warning',
-                    background: '#2a2a4a',
-                    color: 'var(--color-text-light)'
+                    allowOutsideClick: false
                 });
+                console.log('Processing stopped');
             });
 
             $('#gate').change(function() {
                 const selected = $(this).val();
-                if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php')) {
+                console.log(`Gateway changed to: ${selected}`);
+                if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php') && !selected.includes('shopify1$.php')) {
                     Swal.fire({
-                        title: 'Gateway Not Available',
-                        text: 'Only Stripe Auth and PayPal 1$ available',
-                        icon: 'info',
-                        background: '#2a2a4a',
-                        color: 'var(--color-text-light)'
+                        title: 'Gateway not implemented',
+                        text: 'Only Stripe Auth, PayPal 1$, and Shopify 1$ are currently available',
+                        icon: 'info'
                     });
                     $(this).val('gate/stripeauth.php');
+                    console.log('Reverted to stripeauth.php');
                 }
             });
-
-            switchView('process');
         });
     </script>
 </body>
