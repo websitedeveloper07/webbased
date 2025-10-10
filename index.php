@@ -170,21 +170,20 @@
             margin-top: 30px;
         }
 
-        /* STATS GRID */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        /* STATS SECTION - CHANGED TO HORIZONTAL LAYOUT WITHOUT INDIVIDUAL BOXES */
+        .stats-section {
+            display: flex;
+            justify-content: space-between;
             gap: 20px;
             margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .stat-item {
-            background: var(--color-primary-dark);
-            color: white;
-            padding: 20px;
-            border-radius: var(--border-radius);
+            flex: 1;
             text-align: center;
-            transition: transform 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
         .stat-item .label {
             font-size: 14px;
@@ -198,14 +197,14 @@
             line-height: 1;
         }
         /* Specific Stat Colors */
-        .stat-item:nth-child(2) { background: linear-gradient(135deg, var(--color-success), #1b5e20); }
-        .stat-item:nth-child(3) { background: linear-gradient(135deg, var(--color-danger), #b71c1c); }
-        .stat-item:nth-child(4) { background: linear-gradient(135deg, var(--color-secondary), #00838f); }
+        .stat-item:nth-child(2) .value { color: var(--color-success); }
+        .stat-item:nth-child(3) .value { color: var(--color-danger); }
+        .stat-item:nth-child(4) .value { color: var(--color-secondary); }
 
-        /* RESULTS AREA */
+        /* RESULTS AREA - IMPROVED LAYOUT WITH SIDE-BY-SIDE ON LARGER SCREENS */
         .results-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 30px;
         }
         .result-card {
@@ -278,7 +277,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* LOGIN PANEL */
+        /* LOGIN PANEL - IMPROVED CENTERING AND SPACING */
         .login-container {
             display: flex;
             justify-content: center;
@@ -291,22 +290,22 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: var(--shadow-elevation);
-            padding: 40px;
+            padding: 50px;
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             text-align: center;
         }
         .login-card h2 {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 700;
             color: var(--color-secondary);
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             text-shadow: 0 3px 10px rgba(0, 188, 212, 0.3);
         }
         .login-btn {
             width: 100%;
             padding: 15px;
-            margin-top: 20px;
+            margin-top: 25px;
         }
 
         /* FOOTER */
@@ -318,7 +317,7 @@
             margin-top: 50px;
         }
 
-        /* MEDIA QUERIES */
+        /* MEDIA QUERIES - IMPROVED RESPONSIVENESS */
         @media (max-width: 768px) {
             .container { padding: 20px 15px; }
             .header h1 { font-size: 2.5rem; }
@@ -326,6 +325,8 @@
             .btn-group { flex-direction: column; gap: 10px; }
             .btn { width: 100%; }
             .result-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .stats-section { flex-direction: column; gap: 15px; }
+            .login-card { padding: 40px; }
         }
     </style>
 </head>
@@ -381,24 +382,22 @@
             <div class="loader" id="loader"></div>
         </div>
 
-        <div class="card">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="label">Total Loaded</div>
-                    <div class="value carregadas">0</div>
-                </div>
-                <div class="stat-item">
-                    <div class="label">Approved (HIT)</div>
-                    <div class="value approved">0</div>
-                </div>
-                <div class="stat-item">
-                    <div class="label">Declined (DEAD)</div>
-                    <div class="value reprovadas">0</div>
-                </div>
-                <div class="stat-item">
-                    <div class="label">Checked Progress</div>
-                    <div class="value checked">0 / 0</div>
-                </div>
+        <div class="stats-section">
+            <div class="stat-item">
+                <div class="label">Total Loaded</div>
+                <div class="value carregadas">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">Approved (HIT)</div>
+                <div class="value approved">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">Declined (DEAD)</div>
+                <div class="value reprovadas">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">Checked Progress</div>
+                <div class="value checked">0 / 0</div>
             </div>
         </div>
 
@@ -459,9 +458,9 @@
             let abortControllers = [];
             let totalCards = 0;
 
-            // --- Login Logic (UNCHANGED) ---
-            const validUsername = 'admin'; // (UNCHANGED)
-            const validPassword = 'password123'; // (UNCHANGED)
+            // --- Login Logic (UPDATED CREDENTIALS) ---
+            const validUsername = '123456';
+            const validPassword = '123456';
 
             function showCheckerUI() {
                 $('#loginContainer').addClass('hidden');
