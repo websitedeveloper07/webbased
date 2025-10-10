@@ -433,37 +433,24 @@
             background: var(--color-neon);
             border-radius: var(--border-radius);
         }
-        .log-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        .log-table th,
-        .log-table td {
-            padding: 8px;
-            text-align: left;
+        .log-entry {
+            margin-bottom: 15px;
+            padding: 10px;
             border-bottom: 1px solid rgba(30, 144, 255, 0.2);
         }
-        .log-table th {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--color-neon);
-            text-shadow: var(--neon-glow-flowing);
-            text-transform: uppercase;
-            width: 25%;
+        .log-card {
+            color: var(--color-text-light);
+            font-weight: bold;
         }
-        .log-table td {
-            font-family: 'Consolas', monospace;
-            font-size: 12px;
+        .log-status {
+            margin-top: 5px;
         }
-        .log-table .no-cards {
+        .log-response {
+            margin-top: 5px;
+            font-size: 11px;
             color: var(--color-text-muted);
-            text-align: center;
+            white-space: pre-wrap;
         }
-        .log-success { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
-        .log-charged { color: var(--color-success); text-shadow: 0 0 5px var(--color-success); }
-        .log-danger { color: var(--color-danger); text-shadow: 0 0 5px var(--color-danger); }
         .action-btn {
             background: rgba(10, 10, 30, 0.7);
             color: var(--color-text-light);
@@ -517,8 +504,8 @@
             .stat-item .value { font-size: 1.5rem; }
             .btn { padding: 10px; font-size: 13px; }
             .form-control { font-size: 12px; }
-            .log-table th, .log-table td { font-size: 11px; padding: 6px; }
             .sidebar { width: 100vw; }
+            .log-entry { padding: 8px; }
         }
     </style>
 </head>
@@ -694,42 +681,21 @@
                 $('#dynamic-log-title').text(config.title);
                 $('#dynamic-log-content').empty();
 
-                const table = $('<table class="log-table">');
-                table.append(`
-                    <thead>
-                        <tr>
-                            <th style="width: 40%;">Card Number</th>
-                            <th style="width: 20%;">Expiry</th>
-                            <th style="width: 15%;">CVV</th>
-                            <th style="width: 25%;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                `);
-
                 if (config.data.length === 0) {
-                    table.find('tbody').append(`
-                        <tr>
-                            <td colspan="4" class="no-cards">No cards yet</td>
-                        </tr>
-                    `);
+                    $('#dynamic-log-content').append('<div class="log-entry" style="color: var(--color-text-muted); text-align: center;">No cards yet</div>');
                 } else {
                     config.data.forEach(item => {
-                        const [number, exp_month, exp_year, cvc, status] = item.split('|');
-                        const row = $(`
-                            <tr>
-                                <td>${number}</td>
-                                <td>${exp_month}/${exp_year}</td>
-                                <td>${cvc}</td>
-                                <td class="${config.logClass}">${status}</td>
-                            </tr>
+                        const [cardPipe, status, response] = item.split('|STATUS:');
+                        const entry = $(`
+                            <div class="log-entry">
+                                <div class="log-card">${cardPipe}</div>
+                                <div class="log-status ${config.logClass}">${status}</div>
+                                <div class="log-response">${response || ''}</div>
+                            </div>
                         `);
-                        table.find('tbody').append(row);
+                        $('#dynamic-log-content').append(entry);
                     });
                 }
-
-                $('#dynamic-log-content').append(table);
                 $('#clearLogBtn').toggle(config.clearable);
             }
 
@@ -756,11 +722,10 @@
             });
 
             // Handle sidebar navigation clicks
-            $('.nav-item').on('click', function() {
+            $(document).on('click', '.nav-item', function() {
                 const viewId = $(this).data('view');
                 if (viewId) {
                     switchView(viewId);
-                    document.getElementById("mySidebar").style.width = "0";
                 }
             });
 
@@ -844,10 +809,11 @@
                     });
 
                     const status = response.includes('CHARGED') ? 'CHARGED' : response.includes('APPROVED') ? 'APPROVED' : 'DECLINED';
+                    const logEntry = `${card.displayCard}|STATUS:${status}|${response.trim()}`;
                     return {
                         isCharged: status === 'CHARGED',
                         isApproved: status === 'APPROVED',
-                        response: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}|${status}`,
+                        response: logEntry,
                         displayCard: card.displayCard
                     };
                 } catch (xhr) {
@@ -856,10 +822,12 @@
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         return processCard(card, controller, retryCount + 1);
                     }
+                    const errorMsg = xhr.responseText || xhr.statusText || 'Error';
+                    const logEntry = `${card.displayCard}|STATUS:DECLINED|${errorMsg}`;
                     return {
                         isCharged: false,
                         isApproved: false,
-                        response: `${card.number}|${card.exp_month}|${card.exp_year}|${card.cvc}|DECLINED [${xhr.statusText || 'Error'}]`,
+                        response: logEntry,
                         displayCard: card.displayCard
                     };
                 }
