@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,6 +63,8 @@
             grid-template-columns: 1fr;
             grid-template-rows: auto 1fr;
             min-height: calc(100vh - 80px);
+            max-width: 1200px;
+            margin: 0 auto;
         }
         .header {
             grid-column: 1 / 2;
@@ -423,6 +424,7 @@
             white-space: pre-wrap;
             max-height: 450px;
             overflow-y: auto;
+            overflow-x: auto;
         }
         .log-content::-webkit-scrollbar {
             width: 8px;
@@ -516,6 +518,7 @@
             .btn { padding: 10px; font-size: 13px; }
             .form-control { font-size: 12px; }
             .log-table th, .log-table td { font-size: 11px; padding: 6px; }
+            .sidebar { width: 100vw; }
         }
     </style>
 </head>
@@ -527,12 +530,12 @@
         <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-credit-card"></i> CardX CHK</h1>
-            <div class="openbtn" onclick="openNav()"><i class="fas fa-ellipsis-v"></i></div>
+            <div class="openbtn"><i class="fas fa-ellipsis-v"></i></div>
         </div>
 
         <!-- Sidebar Menu -->
         <div id="mySidebar" class="sidebar">
-            <span class="closebtn" onclick="closeNav()">&times;</span>
+            <span class="closebtn">&times;</span>
             <div class="nav-label core-functions">Core Functions</div>
             <div class="nav-item active" data-view="process"><i class="fas fa-play-circle"></i> Checker Hub</div>
             <div class="nav-label results-logs">Results Logs</div>
@@ -685,12 +688,8 @@
             }
 
             function renderLog(viewId) {
-                console.log('Rendering log for view:', viewId);
                 const config = LOG_MAP[viewId];
-                if (!config) {
-                    console.error('Invalid viewId:', viewId);
-                    return;
-                }
+                if (!config) return;
 
                 $('#dynamic-log-title').text(config.title);
                 $('#dynamic-log-content').empty();
@@ -735,7 +734,6 @@
             }
 
             function switchView(viewId) {
-                console.log('Switching to view:', viewId);
                 $('.view-section').addClass('hidden');
                 if (viewId === 'process') {
                     $('#view-process').removeClass('hidden');
@@ -748,22 +746,21 @@
                 currentView = viewId;
             }
 
-            function openNav() {
-                console.log('Opening sidebar');
+            // Handle sidebar open/close
+            $('.openbtn').on('click', function() {
                 document.getElementById("mySidebar").style.width = "250px";
-            }
+            });
 
-            function closeNav() {
-                console.log('Closing sidebar');
+            $('.closebtn').on('click', function() {
                 document.getElementById("mySidebar").style.width = "0";
-            }
+            });
 
             // Handle sidebar navigation clicks
-            $(document).on('click', '.nav-item', function() {
+            $('.nav-item').on('click', function() {
                 const viewId = $(this).data('view');
                 if (viewId) {
                     switchView(viewId);
-                    closeNav();
+                    document.getElementById("mySidebar").style.width = "0";
                 }
             });
 
