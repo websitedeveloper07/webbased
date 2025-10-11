@@ -188,28 +188,6 @@ if (isset($_SESSION['user'])) {
             50% { background-position: 100% 100%; }
             100% { background-position: 0% 0%; }
         }
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .particle {
-            position: absolute;
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            color: rgba(255, 255, 255, 0.9);
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(171, 71, 188, 0.7);
-            animation: floatDiagonal 12s infinite linear;
-            white-space: nowrap;
-        }
-        @keyframes floatDiagonal {
-            0% { transform: translate(-50vw, 100vh) rotate(-45deg); opacity: 0.8; }
-            100% { transform: translate(150vw, -50vh) rotate(-45deg); opacity: 0; }
-        }
         .login-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -277,30 +255,68 @@ if (isset($_SESSION['user'])) {
     </style>
 </head>
 <body>
-    <div class="particles" id="particles"></div>
+    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></canvas>
     <div class="login-card">
         <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
         <p>Unlock the power of card checking</p>
-        <iframe src="https://oauth.telegram.org/embed/CARDXCHK_LOGBOT?origin=https%3A%2F%2Fcardxchk.onrender.com&return_to=https%3A%2F%2Fcardxchk.onrender.com%2Flogin.php&size=large" width="100%" height="50" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden;" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="clipboard-read; clipboard-write"></iframe>
+        <iframe src="https://oauth.telegram.org/embed/CARDXCHK_LOGBOT?origin=https%3A%2F%2Fcardxchk.onrender.com&return_to=https%3A%2F%2Fcardxchk.onrender.com%2Flogin.php&size=large" width="100%" height="50" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden;" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" allow="clipboard-read; clipboard-write; popups"></iframe>
     </div>
     <script>
-        function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            const diagonalCount = 10;
-            for (let i = 0; i < diagonalCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.textContent = 'Card ✘ CHK';
-                particle.style.left = `${i * (100 / (diagonalCount - 1))}%`;
-                particle.style.top = `${i * (100 / (diagonalCount - 1))}%`;
-                particle.style.animationDuration = `${12 + i * 2}s`;
-                particle.style.animationDelay = `${i * 0.5}s`;
-                particle.style.fontSize = `${1.5 - i * 0.1}rem`;
-                particle.style.color = ['#ab47bc', '#6a1b9a', '#4a148c'][i % 3];
-                particlesContainer.appendChild(particle);
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        const particleCount = 20;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 20 + 10;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.color = ['#ab47bc', '#6a1b9a', '#4a148c'][Math.floor(Math.random() * 3)];
+                this.text = 'Card ✘ CHK';
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX;
+                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY;
+            }
+            draw() {
+                ctx.font = `${this.size}px Inter`;
+                ctx.fillStyle = this.color;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.text, this.x, this.y);
             }
         }
-        createParticles();
+
+        function init() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const iframe = document.querySelector('iframe[src*="oauth.telegram.org"]');
             if (!iframe) {
@@ -313,16 +329,23 @@ if (isset($_SESSION['user'])) {
                     confirmButtonColor: '#ab47bc'
                 });
             } else {
-                iframe.onload = () => console.log('Telegram OAuth iframe loaded');
+                iframe.onload = () => {
+                    console.log('Telegram OAuth iframe loaded');
+                    iframe.style.pointerEvents = 'auto'; // Ensure clickable
+                };
                 iframe.onerror = () => {
                     console.error('Telegram OAuth iframe failed to load');
                     error_log('Telegram OAuth iframe load error');
                     Swal.fire({
                         title: 'Load Error',
-                        text: 'Telegram OAuth iframe failed to load. Try refreshing the page.',
+                        text: 'Telegram OAuth iframe failed to load. Try refreshing the page or check Render CSP settings.',
                         icon: 'error',
                         confirmButtonColor: '#ab47bc'
                     });
+                    // Fallback: Reload iframe
+                    setTimeout(() => {
+                        iframe.src = iframe.src; // Reload
+                    }, 1000);
                 };
             }
         });
