@@ -30,16 +30,12 @@ try {
     $user = $dbUrl['user'];
     $pass = $dbUrl['pass'];
 
-    // Prioritize non-SSL (matches psql command), fallback to SSL
     try {
         $pdo = new PDO(
             "pgsql:host=$host;port=$port;dbname=$dbname",
             $user,
             $pass,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
         );
         error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
     } catch (PDOException $e) {
@@ -48,51 +44,34 @@ try {
             "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
             $user,
             $pass,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
         );
         error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
     }
 
-    // Create users table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            telegram_id BIGINT UNIQUE,
-            name VARCHAR(255),
-            auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    ");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
     error_log("Users table ready");
 } catch (Exception $e) {
     error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
     die("Database connection failed. Please try again later.");
 }
 
-// Generate CSRF token
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Verify Telegram Bot Token
 if (empty($telegramBotToken)) {
     error_log("TELEGRAM_BOT_TOKEN not set");
     die("Configuration error: Telegram bot token missing");
 }
 
-// Function to verify Telegram OAuth data
 function verifyTelegramData($data, $botToken) {
     $checkHash = $data['hash'] ?? '';
     unset($data['hash']);
     ksort($data);
     $dataCheckString = '';
     foreach ($data as $key => $value) {
-        if ($value !== '') {
-            $dataCheckString .= "$key=$value\n";
-        }
+        if ($value !== '') $dataCheckString .= "$key=$value\n";
     }
     $dataCheckString = rtrim($dataCheckString, "\n");
     $secretKey = hash('sha256', $botToken, true);
@@ -100,7 +79,6 @@ function verifyTelegramData($data, $botToken) {
     return hash_equals($hash, $checkHash);
 }
 
-// Function to check Telegram access revocation
 function checkTelegramAccess($telegramId, $botToken) {
     $url = "https://api.telegram.org/bot$botToken/getChat?chat_id=$telegramId";
     $ch = curl_init($url);
@@ -118,7 +96,6 @@ function checkTelegramAccess($telegramId, $botToken) {
     return isset($result['ok']) && $result['ok'] === true;
 }
 
-// Handle logout
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
@@ -127,20 +104,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit;
 }
 
-// Handle Telegram OAuth callback
 if (isset($_GET['telegram_auth'])) {
-    $telegramData = [
-        'id' => $_GET['id'] ?? '',
-        'first_name' => $_GET['first_name'] ?? '',
-        'auth_date' => $_GET['auth_date'] ?? '',
-        'hash' => $_GET['hash'] ?? ''
-    ];
-
+    $telegramData = ['id' => $_GET['id'] ?? '', 'first_name' => $_GET['first_name'] ?? '', 'auth_date' => $_GET['auth_date'] ?? '', 'hash' => $_GET['hash'] ?? ''];
     error_log("Received Telegram OAuth data: " . json_encode($telegramData));
     if (verifyTelegramData($telegramData, $telegramBotToken)) {
         $telegramId = $telegramData['id'];
         if (checkTelegramAccess($telegramId, $telegramBotToken)) {
-            // Check if user exists or create new
             $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
             $stmt->execute([$telegramId]);
             if ($stmt->rowCount() === 0) {
@@ -150,18 +119,11 @@ if (isset($_GET['telegram_auth'])) {
             } else {
                 error_log("User found: telegram_id=$telegramId");
             }
-
-            // Set session
-            $_SESSION['user'] = [
-                'telegram_id' => $telegramId,
-                'name' => $telegramData['first_name'],
-                'auth_provider' => 'telegram'
-            ];
+            $_SESSION['user'] = ['telegram_id' => $telegramId, 'name' => $telegramData['first_name'], 'auth_provider' => 'telegram'];
             $sessionId = bin2hex(random_bytes(16));
             setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
             $_SESSION['session_id'] = $sessionId;
             error_log("Session set for user: telegram_id=$telegramId");
-
             header('Location: index.php');
             exit;
         } else {
@@ -174,7 +136,6 @@ if (isset($_GET['telegram_auth'])) {
     }
 }
 
-// Check persistent session
 if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
     if ($_COOKIE['session_id'] === ($_SESSION['session_id'] ?? '')) {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
@@ -186,11 +147,7 @@ if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
                 session_unset();
                 setcookie('session_id', '', time() - 3600, '/', '', true, true);
             } else {
-                $_SESSION['user'] = [
-                    'telegram_id' => $user['telegram_id'],
-                    'name' => $user['name'],
-                    'auth_provider' => $user['auth_provider']
-                ];
+                $_SESSION['user'] = ['telegram_id' => $user['telegram_id'], 'name' => $user['name'], 'auth_provider' => $user['auth_provider']];
                 header('Location: index.php');
                 exit;
             }
@@ -198,7 +155,6 @@ if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
     }
 }
 
-// Redirect if already logged in
 if (isset($_SESSION['user'])) {
     header('Location: index.php');
     exit;
@@ -213,7 +169,7 @@ if (isset($_SESSION['user'])) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="@CARDXCHK_LOGBOT" data-size="large" data-onauth="onTelegramAuth(user)"></script>
+    <script async src="https://telegram.org/js/telegram-widget.js" data-telegram-login="@CARDXCHK_LOGBOT" data-size="large" data-onauth="onTelegramAuth(user)" onload="console.log('Telegram widget loaded')" onerror="console.error('Telegram widget failed to load')"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -248,14 +204,8 @@ if (isset($_SESSION['user'])) {
             animation: floatDiagonal 15s infinite linear;
         }
         @keyframes floatDiagonal {
-            0% {
-                transform: translate(0, 100vh) rotate(45deg);
-                opacity: 0.8;
-            }
-            100% {
-                transform: translate(100vw, -100vh) rotate(45deg);
-                opacity: 0;
-            }
+            0% { transform: translate(0, 100vh) rotate(45deg); opacity: 0.8; }
+            100% { transform: translate(100vw, -100vh) rotate(45deg); opacity: 0; }
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -274,9 +224,7 @@ if (isset($_SESSION['user'])) {
             transform: translateY(0);
             transition: transform 0.3s ease;
         }
-        .login-card:hover {
-            transform: translateY(-5px);
-        }
+        .login-card:hover { transform: translateY(-5px); }
         .login-card h2 {
             font-size: 2rem;
             font-weight: 700;
@@ -309,43 +257,26 @@ if (isset($_SESSION['user'])) {
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
         }
-        .telegram-icon {
-            font-size: 1.5rem;
-        }
-        .telegram-login-CARDXCHK_LOGBOT {
-            display: none; /* Hide the default Telegram widget button */
-        }
+        .telegram-icon { font-size: 1.5rem; }
+        .telegram-login-CARDXCHK_LOGBOT { display: none; }
         @media (max-width: 768px) {
-            .login-card {
-                max-width: 90%;
-                padding: 20px;
-            }
-            .login-card h2 {
-                font-size: 1.7rem;
-            }
-            .btn-telegram {
-                font-size: 1rem;
-                padding: 12px;
-            }
+            .login-card { max-width: 90%; padding: 20px; }
+            .login-card h2 { font-size: 1.7rem; }
+            .btn-telegram { font-size: 1rem; padding: 12px; }
         }
     </style>
 </head>
 <body>
-    <!-- Particle Animation -->
     <div class="particles" id="particles"></div>
-
-    <!-- Login Card -->
     <div class="login-card">
         <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
         <p>Sign in to start checking cards</p>
         <button class="btn-telegram" onclick="document.querySelector('.telegram-login-CARDXCHK_LOGBOT').click()">
             <i class="fab fa-telegram-plane telegram-icon"></i> Continue with Telegram
         </button>
-        <div class="telegram-login-CARDXCHK_LOGBOT"></div> <!-- Telegram Widget Container -->
+        <div class="telegram-login-CARDXCHK_LOGBOT"></div>
     </div>
-
     <script>
-        // Particle Animation with "Card ✘ CHK" text
         function createParticles() {
             const particlesContainer = document.getElementById('particles');
             const texts = ['Card ✘ CHK', 'Card CHK', '✘ CHK'];
@@ -361,20 +292,18 @@ if (isset($_SESSION['user'])) {
             }
         }
         createParticles();
-
-        // Telegram OAuth Callback
         function onTelegramAuth(user) {
             const url = `login.php?telegram_auth=1&id=${user.id}&first_name=${encodeURIComponent(user.first_name)}&auth_date=${user.auth_date}&hash=${user.hash}`;
             window.location.href = url;
         }
-
-        // Error Handling for Telegram Widget
         document.addEventListener('DOMContentLoaded', () => {
             const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
             if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
+                console.error('Telegram widget not loaded');
+                error_log('Telegram widget not loaded in DOM');
                 Swal.fire({
                     title: 'Configuration Error',
-                    text: 'Telegram Login Widget not loaded. Please check the bot configuration.',
+                    text: 'Telegram Login Widget failed to load. Check bot settings or network.',
                     icon: 'error',
                     confirmButtonColor: '#f06292'
                 });
