@@ -1,4 +1,5 @@
 <?php
+ob_start();
 session_start();
 
 // Hardcoded credentials
@@ -75,7 +76,7 @@ function verifyTelegramData($data, $botToken) {
     $secretKey = hash('sha256', $botToken, true);
     $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
     $result = hash_equals($hash, $checkHash);
-    error_log("Telegram data verification: " . ($result ? "Success" : "Failed") . " for data: " . json_encode($data));
+    error_log("Telegram data verification: " . ($result ? "Success" : "Failed") . " | Data: " . json_encode($data) . " | Calculated Hash: $hash | Provided Hash: $checkHash");
     return $result;
 }
 
@@ -83,6 +84,7 @@ function checkTelegramAccess($telegramId, $botToken) {
     $url = "https://api.telegram.org/bot$botToken/getChat?chat_id=$telegramId";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Add timeout to prevent hanging
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     $response = curl_exec($ch);
     $curl_error = curl_error($ch);
@@ -94,7 +96,7 @@ function checkTelegramAccess($telegramId, $botToken) {
     }
     $result = json_decode($response, true);
     $success = isset($result['ok']) && $result['ok'] === true;
-    error_log("Telegram access check: " . ($success ? "Success" : "Failed") . " for chat_id $telegramId");
+    error_log("Telegram access check: " . ($success ? "Success" : "Failed") . " | Response: " . json_encode($result));
     return $success;
 }
 
@@ -127,11 +129,17 @@ if (isset($_GET['telegram_auth'])) {
                 error_log("User found: telegram_id=$telegramId");
             }
             $_SESSION['user'] = ['telegram_id' => $telegramId, 'name' => $telegramData['first_name'], 'auth_provider' => 'telegram'];
+            if (isset($_SESSION['user'])) {
+                error_log("Session successfully set for user: telegram_id=$telegramId");
+            } else {
+                error_log("Failed to set session for user: telegram_id=$telegramId");
+            }
             $sessionId = bin2hex(random_bytes(16));
             setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
             $_SESSION['session_id'] = $sessionId;
-            error_log("Session set for user: telegram_id=$telegramId, redirecting to index.php");
+            error_log("Redirecting to index.php for user: telegram_id=$telegramId");
             header('Location: index.php');
+            ob_end_flush();
             exit;
         } else {
             error_log("Telegram access revoked for ID: $telegramId");
@@ -177,7 +185,7 @@ if (isset($_SESSION['user'])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" href="/assets/branding/cardxchk-mark.png">
+    <link rel="icon" href="/assets/branding/cardxchk-mark.png" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.06);
@@ -209,7 +217,7 @@ if (isset($_SESSION['user'])) {
         <div class="w-full max-w-xl space-y-6">
             <div class="flex flex-col items-center text-center">
                 <div class="w-16 h-16 rounded-2xl bg-gray-100/60 border border-gray-200/50 grid place-items-center shadow-lg">
-                    <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl">
+                    <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
                 </div>
                 <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-gray-800">Card X Chk: Secure Sign-in</h1>
             </div>
@@ -242,7 +250,7 @@ if (isset($_SESSION['user'])) {
             </div>
             <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
                 <span>Powered by</span>
-                <img src="/assets/branding/cardxchk-badge.png" alt="Card X Chk" class="h-5">
+                <!-- Removed cardxchk-badge.png as requested -->
             </div>
         </div>
     </main>
