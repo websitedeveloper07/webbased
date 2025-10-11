@@ -74,18 +74,25 @@ if (!isset($_SESSION['csrf_token'])) {
 // -------------------------------
 // HELPER FUNCTIONS
 // -------------------------------
-function verifyTelegramData($data, $botToken) {
-    $checkHash = $data['hash'] ?? '';
-    unset($data['hash']);
-    ksort($data);
-    $dataCheckString = '';
-    foreach ($data as $key => $value) {
-        $dataCheckString .= "$key=$value\n";
+function verifyTelegramData($auth_data, $botToken) {
+    if (!isset($auth_data['hash'])) return false;
+
+    $check_hash = $auth_data['hash'];
+    unset($auth_data['hash']);
+
+    $data_check_arr = [];
+    foreach ($auth_data as $key => $value) {
+        $data_check_arr[] = $key . '=' . $value;
     }
-    $dataCheckString = rtrim($dataCheckString, "\n");
-    $secretKey = hash('sha256', $botToken, true);
-    $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
-    return hash_equals($hash, $checkHash);
+    sort($data_check_arr);
+    $data_check_string = implode("\n", $data_check_arr);
+
+    $secret_key = hash('sha256', $botToken, true);
+    $hash = hash_hmac('sha256', $data_check_string, $secret_key);
+
+    if (!hash_equals($hash, $check_hash)) return false;
+    if ((time() - $auth_data['auth_date']) > 86400) return false; // Expired (24h)
+    return true;
 }
 
 function checkTelegramAccess($telegramId, $botToken) {
@@ -142,7 +149,6 @@ if (isset($_GET['telegram_auth']) && isset($_GET['id']) && isset($_GET['hash']))
             $_SESSION['session_id'] = $sessionId;
             setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
 
-            // Redirect safely (handles iframe)
             echo '<script>
                 if (window.top !== window.self) {
                     window.top.location.href = "' . $baseUrl . '/index.php";
