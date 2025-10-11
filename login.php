@@ -169,7 +169,6 @@ if (isset($_SESSION['user'])) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script async src="https://telegram.org/js/telegram-widget.js" data-telegram-login="CARDXCHK_LOGBOT" data-size="large" data-onauth="onTelegramAuth(user)" onload="console.log('Telegram widget loaded')" onerror="console.error('Telegram widget failed to load')"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -268,61 +267,12 @@ if (isset($_SESSION['user'])) {
             position: relative;
             z-index: 1;
         }
-        .btn-telegram {
-            background: linear-gradient(45deg, #6a1b9a, #ab47bc);
-            color: white;
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
-            cursor: pointer;
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-        }
-        .btn-telegram::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-            z-index: -1;
-        }
-        .btn-telegram:hover::before {
-            width: 300%;
-            height: 300%;
-        }
-        .btn-telegram:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(171, 71, 188, 0.7), 0 0 40px rgba(106, 27, 154, 0.5);
-        }
-        .telegram-icon {
-            font-size: 1.8rem;
-            color: #00e676;
-            text-shadow: 0 0 10px rgba(0, 230, 118, 0.7);
-        }
-        .telegram-login-CARDXCHK_LOGBOT {
-            display: none;
-        }
         @media (max-width: 768px) {
             .login-card {
                 max-width: 90%;
                 padding: 25px;
             }
             .login-card h2 { font-size: 2rem; }
-            .btn-telegram { font-size: 1.1rem; padding: 14px; }
         }
     </style>
 </head>
@@ -331,10 +281,7 @@ if (isset($_SESSION['user'])) {
     <div class="login-card">
         <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
         <p>Unlock the power of card checking</p>
-        <button class="btn-telegram" onclick="setTimeout(() => { const widget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT'); if (widget) { widget.click(); console.log('Widget clicked'); } else { console.error('Widget not found'); error_log('Telegram widget not found in DOM'); } }, 500)">
-            <i class="fab fa-telegram-plane telegram-icon"></i> Sign in with Telegram
-        </button>
-        <div class="telegram-login-CARDXCHK_LOGBOT"></div>
+        <iframe src="https://oauth.telegram.org/embed/CARDXCHK_LOGBOT?origin=https%3A%2F%2Fcardxchk.onrender.com&return_to=https%3A%2F%2Fcardxchk.onrender.com%2Flogin.php&size=large" width="100%" height="50" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden;"></iframe>
     </div>
     <script>
         function createParticles() {
@@ -354,18 +301,14 @@ if (isset($_SESSION['user'])) {
             }
         }
         createParticles();
-        function onTelegramAuth(user) {
-            const url = `login.php?telegram_auth=1&id=${user.id}&first_name=${encodeURIComponent(user.first_name)}&auth_date=${user.auth_date}&hash=${user.hash}`;
-            window.location.href = url;
-        }
         document.addEventListener('DOMContentLoaded', () => {
-            const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
-            if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
-                console.error('Telegram widget not loaded');
-                error_log('Telegram widget not loaded in DOM');
+            const telegramWidget = document.querySelector('iframe[src*="oauth.telegram.org"]');
+            if (!telegramWidget) {
+                console.error('Telegram OAuth iframe not loaded');
+                error_log('Telegram OAuth iframe not loaded in DOM');
                 Swal.fire({
                     title: 'Configuration Error',
-                    text: 'Telegram Login Widget failed to load. Check bot settings or network.',
+                    text: 'Telegram OAuth iframe failed to load. Check network or URL.',
                     icon: 'error',
                     confirmButtonColor: '#ab47bc'
                 });
