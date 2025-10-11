@@ -2,16 +2,12 @@
 ob_start();
 session_start();
 
-// Set custom session save path to avoid Render default issues
-session_save_path(__DIR__ . '/sessions');
-if (!is_dir(session_save_path())) {
-    mkdir(session_save_path(), 0777, true);
-}
+// Set CSP header to allow Telegram widget and dependencies
+header("Content-Security-Policy: default-src 'self'; script-src 'self' https://telegram.org https://cdn.jsdelivr.net; frame-src https://oauth.telegram.org; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.telegram.org; img-src 'self' data: https:;");
 
-// Hardcoded credentials
+// Hardcoded credentials (replace with your actual values or use .env)
 $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
-$baseUrl = 'https://cardxchk.onrender.com';
 
 // Load .env fallback (optional)
 $envFile = __DIR__ . '/.env';
@@ -22,11 +18,10 @@ if (file_exists($envFile)) {
         list($key, $value) = explode('=', $line, 2);
         if (trim($key) === 'DATABASE_URL') $databaseUrl = trim($value);
         if (trim($key) === 'TELEGRAM_BOT_TOKEN') $telegramBotToken = trim($value);
-        if (trim($key) === 'BASE_URL') $baseUrl = trim($value);
     }
 }
 
-// Database connection
+// Database connection (non-fatal)
 try {
     $dbUrlString = str_replace('postgresql://', 'pgsql://', $databaseUrl);
     $dbUrl = parse_url($dbUrlString);
@@ -46,25 +41,17 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
     );
     error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
-} catch (PDOException $e) {
-    error_log("Non-SSL connection failed: " . $e->getMessage() . " | Attempting SSL");
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
-        $user,
-        $pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-    );
-    error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+    error_log("Users table ready");
 } catch (Exception $e) {
     error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
-    die("Database connection failed. Please try again later.");
+    // Continue without DB
 }
 
-$pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-error_log("Users table ready");
-
+// Generate CSRF token
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    error_log("CSRF token generated: " . $_SESSION['csrf_token']);
 }
 
 if (empty($telegramBotToken)) {
@@ -84,6 +71,11 @@ function verifyTelegramData($data, $botToken) {
     $secretKey = hash('sha256', $botToken, true);
     $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
     $result = hash_equals($hash, $checkHash);
+    $authDate = (int)($data['auth_date'] ?? 0);
+    if ($result && (time() - $authDate > 86400)) {
+        error_log("Auth date too old: $authDate");
+        $result = false;
+    }
     error_log("Telegram data verification: " . ($result ? "Success" : "Failed") . " | Data: " . json_encode($data) . " | Calculated Hash: $hash | Provided Hash: $checkHash");
     return $result;
 }
@@ -111,43 +103,36 @@ function checkTelegramAccess($telegramId, $botToken) {
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
-    setcookie('session_id', '', time() - 3600, '/', '', true, true);
-    header('Location: ' . $baseUrl . '/login.php');
+    header('Location: https://cardxchk.onrender.com/login.php');
+    ob_end_flush();
     exit;
 }
 
 if (isset($_GET['telegram_auth'])) {
+    error_log("Received Telegram OAuth data: " . json_encode($_GET));
     $telegramData = [
         'id' => $_GET['id'] ?? '',
         'first_name' => $_GET['first_name'] ?? '',
         'auth_date' => $_GET['auth_date'] ?? '',
         'hash' => $_GET['hash'] ?? ''
     ];
-    error_log("Received Telegram OAuth data: " . json_encode($_GET)); // Debug full GET params
     if (verifyTelegramData($telegramData, $telegramBotToken)) {
         $telegramId = $telegramData['id'];
         if (checkTelegramAccess($telegramId, $telegramBotToken)) {
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
-            $stmt->execute([$telegramId]);
-            if ($stmt->rowCount() === 0) {
-                $stmt = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
-                $stmt->execute([$telegramId, $telegramData['first_name']]);
-                error_log("New user created: telegram_id=$telegramId, name={$telegramData['first_name']}");
-            } else {
-                error_log("User found: telegram_id=$telegramId");
+            if (isset($pdo)) {
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
+                $stmt->execute([$telegramId]);
+                if ($stmt->rowCount() === 0) {
+                    $stmt = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
+                    $stmt->execute([$telegramId, $telegramData['first_name']]);
+                    error_log("New user created: telegram_id=$telegramId, name={$telegramData['first_name']}");
+                } else {
+                    error_log("User found: telegram_id=$telegramId");
+                }
             }
             $_SESSION['user'] = ['telegram_id' => $telegramId, 'name' => $telegramData['first_name'], 'auth_provider' => 'telegram'];
-            if (isset($_SESSION['user'])) {
-                error_log("Session successfully set for user: telegram_id=$telegramId");
-            } else {
-                error_log("Failed to set session for user: telegram_id=$telegramId");
-            }
-            $sessionId = bin2hex(random_bytes(16));
-            setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
-            $_SESSION['session_id'] = $sessionId;
-            error_log("Attempting redirect to index.php for user: telegram_id=$telegramId");
-            header('Location: ' . $baseUrl . '/index.php'); // Full URL redirect
-            echo '<script>window.location.href = "' . $baseUrl . '/index.php";</script>'; // JS fallback
+            error_log("Session set for user: " . json_encode($_SESSION['user']));
+            header('Location: https://cardxchk.onrender.com/index.php');
             ob_end_flush();
             exit;
         } else {
@@ -160,27 +145,10 @@ if (isset($_GET['telegram_auth'])) {
     }
 }
 
-if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
-    if ($_COOKIE['session_id'] === ($_SESSION['session_id'] ?? '')) {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
-        $stmt->execute([$_SESSION['user']['telegram_id'] ?? '']);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user) {
-            if ($user['auth_provider'] === 'telegram' && !checkTelegramAccess($user['telegram_id'], $telegramBotToken)) {
-                error_log("Session invalidated: Telegram access revoked for ID: {$user['telegram_id']}");
-                session_unset();
-                setcookie('session_id', '', time() - 3600, '/', '', true, true);
-            } else {
-                $_SESSION['user'] = ['telegram_id' => $user['telegram_id'], 'name' => $user['name'], 'auth_provider' => $user['auth_provider']];
-                header('Location: ' . $baseUrl . '/index.php');
-                exit;
-            }
-        }
-    }
-}
-
 if (isset($_SESSION['user'])) {
-    header('Location: ' . $baseUrl . '/index.php');
+    error_log("Session exists, redirecting to index.php: " . json_encode($_SESSION['user']));
+    header('Location: https://cardxchk.onrender.com/index.php');
+    ob_end_flush();
     exit;
 }
 ?>
@@ -193,6 +161,7 @@ if (isset($_SESSION['user'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="/assets/branding/cardxchk-mark.png" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
     <style>
@@ -240,10 +209,10 @@ if (isset($_SESSION['user'])) {
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="CARDXCHK_LOGBOT"
                                 data-size="large"
-                                data-auth-url="/login.php"
+                                data-auth-url="https://cardxchk.onrender.com/login.php?telegram_auth=1"
                                 data-request-access="write"
-                                onload="console.log('Telegram widget loaded')"
-                                onerror="console.error('Telegram widget failed to load')"></script>
+                                onload="console.log('Telegram widget script loaded'); document.querySelector('.telegram-login-CARDXCHK_LOGBOT').dataset.loaded = 'true';"
+                                onerror="console.error('Failed to load Telegram widget script'); Swal.fire({title: 'Widget Load Error', text: 'Telegram widget script failed to load. Check network or bot settings.', icon: 'error', confirmButtonColor: '#6ab7d8'});"></script>
                     </div>
 
                     <p class="text-[11px] text-gray-500 text-center">
@@ -264,76 +233,78 @@ if (isset($_SESSION['user'])) {
     </main>
     <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></canvas>
     <script>
-        const canvas = document.getElementById('particleCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        let particles = [];
-        const particleCount = 10;
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 15 + 5;
-                this.speedX = Math.random() * 1.5 - 0.75;
-                this.speedY = Math.random() * 1.5 - 0.75;
-                this.color = ['#ff8787', '#6dd3cb', '#6ab7d8'][Math.floor(Math.random() * 3)];
-                this.text = '𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲';
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX * 0.8;
-                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY * 0.8;
-            }
-            draw() {
-                ctx.font = `${this.size}px Inter`;
-                ctx.fillStyle = this.color;
-                ctx.textAlign = 'center';
-                ctx.fillText(this.text, this.x, this.y);
-            }
-        }
-
-        function init() {
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-            }
-            requestAnimationFrame(animate);
-        }
-
-        init();
-        animate();
-
-        window.addEventListener('resize', () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-        });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
-            if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
-                console.error('Telegram widget not loaded');
-                error_log('Telegram widget not loaded in DOM');
-                Swal.fire({
-                    title: 'Configuration Error',
-                    text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
-                    icon: 'error',
-                    confirmButtonColor: '#6ab7d8'
-                });
-                setTimeout(() => {
-                    location.reload();
-                }, 2000);
+            let particles = [];
+            const particleCount = 10;
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 15 + 5;
+                    this.speedX = Math.random() * 1.5 - 0.75;
+                    this.speedY = Math.random() * 1.5 - 0.75;
+                    this.color = ['#ff8787', '#6dd3cb', '#6ab7d8'][Math.floor(Math.random() * 3)];
+                    this.text = '𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲';
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX * 0.8;
+                    if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY * 0.8;
+                }
+                draw() {
+                    ctx.font = `${this.size}px Inter`;
+                    ctx.fillStyle = this.color;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.text, this.x, this.y);
+                }
             }
+
+            function init() {
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                }
+                requestAnimationFrame(animate);
+            }
+
+            init();
+            animate();
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+
+            // Enhanced widget debugging
+            setTimeout(() => {
+                const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
+                if (!telegramWidget || !telegramWidget.querySelector('iframe') || telegramWidget.dataset.loaded !== 'true') {
+                    console.error('Telegram widget failed to initialize - check CSP, domain, or bot settings');
+                    console.log('Widget element:', telegramWidget);
+                    Swal.fire({
+                        title: 'Widget Load Error',
+                        html: 'Telegram Login Widget failed to initialize. Ensure:<br>1. Domain is set in @BotFather (<code>https://cardxchk.onrender.com</code>).<br>2. CSP allows oauth.telegram.org.<br>3. Bot username is correct (@CARDXCHK_LOGBOT).',
+                        icon: 'error',
+                        confirmButtonColor: '#6ab7d8'
+                    });
+                } else {
+                    console.log('Telegram widget fully loaded with iframe');
+                }
+            }, 3000);
         });
     </script>
 </body>
