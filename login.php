@@ -7,14 +7,13 @@ ini_set('session.cookie_lifetime', 3600);
 ob_start();
 session_start();
 
-// Default hardcoded credentials (will be overridden by .env if available)
+// Default hardcoded credentials (can be overridden by .env)
 $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
-// NOTE: This is the critical token. Verify it is 100% correct for CARDXCHK_LOGBOT
-$telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; 
+$telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
 $baseUrl = 'https://cardxchk.onrender.com';
 
 // -------------------------------
-// LOAD .ENV (optional)
+// LOAD .ENV (optional overrides)
 // -------------------------------
 $envFile = __DIR__ . '/.env';
 if (file_exists($envFile)) {
@@ -66,61 +65,31 @@ try {
 }
 
 // -------------------------------
-// SECURITY TOKENS
-// -------------------------------
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
-// -------------------------------
 // HELPER FUNCTIONS
 // -------------------------------
-function verifyTelegramData($auth_data, $botToken) {
-    if (!isset($auth_data['hash'])) {
-        error_log("Verification failed: 'hash' parameter missing.");
-        return false;
-    }
+function verifyTelegramData(array $data, string $botToken): bool {
+    if (!isset($data['hash'])) return false;
+    $checkHash = $data['hash'];
+    unset($data['hash']);
 
-    $check_hash = $auth_data['hash'];
-    unset($auth_data['hash']);
+    // Telegram docs: sort keys alphabetically
+    ksort($data);
 
-    $data_check_arr = [];
-    foreach ($auth_data as $key => $value) {
-        $data_check_arr[] = $key . '=' . $value;
-    }
-    sort($data_check_arr);
-    $data_check_string = implode("\n", $data_check_arr);
+    // Build data-check-string
+    $dataCheckString = implode("\n", array_map(
+        fn($k, $v) => "$k=$v",
+        array_keys($data),
+        array_values($data)
+    ));
 
-    $secret_key = hash('sha256', $botToken, true);
-    $hash = hash_hmac('sha256', $data_check_string, $secret_key);
+    // Compute hash per Telegram spec
+    $secretKey = hash('sha256', $botToken, true);
+    $calculatedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
 
-    // --- DEBUGGING OUTPUT (CHECK YOUR PHP ERROR LOGS) ---
-    error_log("--- Telegram Auth Debug Start ---");
-    error_log("Auth Bot Token (Partial): " . substr($botToken, 0, 10) . "...");
-    error_log("Data Check String: " . $data_check_string);
-    error_log("Expected Hash (Generated): " . $hash);
-    error_log("Received Hash: " . $check_hash);
-    error_log("Hash Comparison Result: " . (hash_equals($hash, $check_hash) ? "MATCH" : "MISMATCH"));
-    error_log("--- Telegram Auth Debug End ---");
-    // ---------------------------------------------------
-
-
-    if (!hash_equals($hash, $check_hash)) {
-        return false; // Hash mismatch (Token is most likely wrong or data was modified)
-    }
-
-    // Check expiration (24h)
-    if (!isset($auth_data['auth_date']) || (time() - $auth_data['auth_date']) > 86400) {
-        error_log("Verification failed: Authentication data expired or 'auth_date' missing. Current server time: " . time() . ", Auth date: " . ($auth_data['auth_date'] ?? 'N/A'));
-        return false;
-    }
-    
-    return true;
+    return hash_equals($calculatedHash, $checkHash);
 }
 
-function checkTelegramAccess($telegramId, $botToken) {
-    // This function checks if the user is a valid Telegram account, which is a good
-    // check but usually redundant if the hash check passes.
+function checkTelegramAccess($telegramId, $botToken): bool {
     $url = "https://api.telegram.org/bot$botToken/getChat?chat_id=$telegramId";
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -129,19 +98,8 @@ function checkTelegramAccess($telegramId, $botToken) {
         CURLOPT_SSL_VERIFYPEER => true
     ]);
     $response = curl_exec($ch);
-    
-    if (curl_errno($ch)) {
-        error_log("Telegram API curl error: " . curl_error($ch));
-        curl_close($ch);
-        return false;
-    }
-
     curl_close($ch);
     $result = json_decode($response, true);
-    
-    // Note: getChat usually works for any valid Telegram ID. 
-    // If you intended to check if they are a member of a *group*, this function is incorrect.
-    // It's kept here as per your original logic.
     return isset($result['ok']) && $result['ok'] === true;
 }
 
@@ -151,38 +109,29 @@ function checkTelegramAccess($telegramId, $botToken) {
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
-    // Use the correct cookie path and security settings
-    if (isset($_COOKIE['session_id'])) {
-        setcookie('session_id', '', time() - 3600, '/', '', true, true);
-    }
+    setcookie('session_id', '', time() - 3600, '/', '', true, true);
     header('Location: ' . $baseUrl . '/login.php');
     exit;
 }
 
 // -------------------------------
-// TELEGRAM AUTH CALLBACK
+// TELEGRAM AUTH HANDLER
 // -------------------------------
-if (isset($_GET['telegram_auth']) && isset($_GET['id']) && isset($_GET['hash'])) {
-    // Sanitize and filter the GET array to only include known Telegram auth parameters
-    $telegramDataKeys = ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'];
-    $telegramData = array_intersect_key($_GET, array_flip($telegramDataKeys));
+if (isset($_GET['id']) && isset($_GET['hash'])) {
+    $telegramData = $_GET;
 
     if (verifyTelegramData($telegramData, $telegramBotToken)) {
         $telegramId = $telegramData['id'];
         $firstName = $telegramData['first_name'] ?? 'User';
 
         if (checkTelegramAccess($telegramId, $telegramBotToken)) {
-            // Check or insert user
-            try {
-                $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
-                $stmt->execute([$telegramId]);
-                if ($stmt->rowCount() === 0) {
-                    $insert = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
-                    $insert->execute([$telegramId, $firstName]);
-                }
-            } catch (PDOException $e) {
-                error_log("Database error during user check/insert: " . $e->getMessage());
-                die("An internal database error occurred.");
+            // Insert or update user
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
+            $stmt->execute([$telegramId]);
+
+            if ($stmt->rowCount() === 0) {
+                $insert = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
+                $insert->execute([$telegramId, $firstName]);
             }
 
             $_SESSION['user'] = [
@@ -191,30 +140,15 @@ if (isset($_GET['telegram_auth']) && isset($_GET['id']) && isset($_GET['hash']))
                 'auth_provider' => 'telegram'
             ];
 
-            // Regenerate session ID for security
-            session_regenerate_id(true);
-
             $sessionId = bin2hex(random_bytes(16));
             $_SESSION['session_id'] = $sessionId;
-            // Set cookie with security flags
-            $cookie_secure = parse_url($baseUrl, PHP_URL_SCHEME) === 'https';
-            setcookie('session_id', $sessionId, [
-                'expires' => time() + 30 * 24 * 3600,
-                'path' => '/',
-                'domain' => '', // Set to empty string for current host only
-                'secure' => $cookie_secure,
-                'httponly' => true,
-                'samesite' => 'Lax',
-            ]);
+            setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
 
-
-            // Redirect logic (JavaScript for iframe compatibility)
-            $redirectUrl = $baseUrl . '/index.php';
             echo '<script>
                 if (window.top !== window.self) {
-                    window.top.location.href = "' . $redirectUrl . '";
+                    window.top.location.href = "' . $baseUrl . '/index.php";
                 } else {
-                    window.location.href = "' . $redirectUrl . '";
+                    window.location.href = "' . $baseUrl . '/index.php";
                 }
             </script>';
             exit;
@@ -222,7 +156,7 @@ if (isset($_GET['telegram_auth']) && isset($_GET['id']) && isset($_GET['hash']))
             die("Telegram access invalid or revoked. Please try again.");
         }
     } else {
-        die("Invalid Telegram authentication data. Please try again. (Check server logs for details)");
+        die("Invalid Telegram authentication data. Please try again.");
     }
 }
 
@@ -279,11 +213,11 @@ if (isset($_SESSION['user'])) {
                         data-size="large"
                         data-userpic="false"
                         data-request-access="write"
-                        data-auth-url="https://cardxchk.onrender.com/login.php?telegram_auth=1">
+                        data-auth-url="https://cardxchk.onrender.com/login.php">
                     </script>
                 </div>
                 <p class="text-[11px] text-gray-500 text-center">
-                    Telegram OAuth is secure. We only verify your Telegram ID.
+                    Telegram OAuth is secure. We do not access your Telegram data.
                 </p>
             </div>
         </div>
