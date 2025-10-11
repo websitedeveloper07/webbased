@@ -23,6 +23,11 @@ if (file_exists($envFile)) {
     }
 }
 
+// Debug incoming request
+error_log("Request URI: " . $_SERVER['REQUEST_URI']);
+error_log("Origin Header: " . ($_SERVER['HTTP_ORIGIN'] ?? 'Not set'));
+error_log("All GET params: " . json_encode($_GET));
+
 // Database connection
 try {
     $dbUrlString = str_replace('postgresql://', 'pgsql://', $databaseUrl);
@@ -238,7 +243,7 @@ if (isset($_SESSION['user'])) {
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="CARDXCHK_LOGBOT"
                                 data-size="large"
-                                data-auth-url="/login.php"
+                                data-auth-url="https://cardxchk.onrender.com/login.php" <!-- Updated to full URL -->
                                 data-request-access="write"
                                 onload="console.log('Telegram widget loaded')"
                                 onerror="console.error('Telegram widget failed to load')"></script>
