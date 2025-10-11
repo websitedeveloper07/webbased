@@ -166,23 +166,28 @@ if (isset($_SESSION['user'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script async src="https://telegram.org/js/telegram-widget.js" data-telegram-login="@CARDXCHK_LOGBOT" data-size="large" data-onauth="onTelegramAuth(user)" onload="console.log('Telegram widget loaded')" onerror="console.error('Telegram widget failed to load')"></script>
+    <script async src="https://telegram.org/js/telegram-widget.js" data-telegram-login="CARDXCHK_LOGBOT" data-size="large" data-onauth="onTelegramAuth(user)" onload="console.log('Telegram widget loaded')" onerror="console.error('Telegram widget failed to load')"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(-45deg, #0288d1, #4fc3f7, #f06292, #bbdefb);
-            background-size: 400% 400%;
-            animation: gradientShift 10s ease infinite;
             margin: 0;
             min-height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a237e, #4a148c, #6a1b9a, #ab47bc);
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
             position: relative;
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
         }
         .particles {
             position: fixed;
@@ -191,78 +196,133 @@ if (isset($_SESSION['user'])) {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: -1;
+            z-index: 0;
         }
         .particle {
             position: absolute;
-            width: auto;
-            height: auto;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1.2rem;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            animation: floatDiagonal 15s infinite linear;
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(171, 71, 188, 0.7);
+            animation: floatDiagonal 12s infinite linear;
+            white-space: nowrap;
         }
         @keyframes floatDiagonal {
-            0% { transform: translate(0, 100vh) rotate(45deg); opacity: 0.8; }
-            100% { transform: translate(100vw, -100vh) rotate(45deg); opacity: 0; }
-        }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% { transform: translate(-50vw, 100vh) rotate(-45deg); opacity: 0.8; }
+            100% { transform: translate(150vw, -50vh) rotate(-45deg); opacity: 0; }
         }
         .login-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(8px);
-            border-radius: 14px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2), 0 0 60px rgba(171, 71, 188, 0.3);
+            padding: 40px;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             text-align: center;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
+            transform: scale(1);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(171, 71, 188, 0.5);
         }
-        .login-card:hover { transform: translateY(-5px); }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: glowPulse 8s infinite;
+            z-index: 0;
+        }
+        @keyframes glowPulse {
+            0% { transform: scale(0.5); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.2; }
+            100% { transform: scale(0.5); opacity: 0.5; }
+        }
+        .login-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.3), 0 0 80px rgba(171, 71, 188, 0.5);
+        }
         .login-card h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #1a237e;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(26, 35, 126, 0.7);
+            position: relative;
+            z-index: 1;
+        }
+        .login-card h2 i {
+            margin-right: 10px;
+            color: #ab47bc;
         }
         .login-card p {
-            font-size: 1rem;
-            color: #555;
-            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #4a148c;
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-shadow: 0 0 5px rgba(74, 20, 140, 0.3);
+            position: relative;
+            z-index: 1;
         }
         .btn-telegram {
-            background: linear-gradient(45deg, #0088cc, #00bcd4);
+            background: linear-gradient(45deg, #6a1b9a, #ab47bc);
             color: white;
             width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1.1rem;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            gap: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             border: none;
             cursor: pointer;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .btn-telegram::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            z-index: -1;
+        }
+        .btn-telegram:hover::before {
+            width: 300%;
+            height: 300%;
         }
         .btn-telegram:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(171, 71, 188, 0.7), 0 0 40px rgba(106, 27, 154, 0.5);
         }
-        .telegram-icon { font-size: 1.5rem; }
-        .telegram-login-CARDXCHK_LOGBOT { display: none; }
+        .telegram-icon {
+            font-size: 1.8rem;
+            color: #00e676;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.7);
+        }
+        .telegram-login-CARDXCHK_LOGBOT {
+            display: none;
+        }
         @media (max-width: 768px) {
-            .login-card { max-width: 90%; padding: 20px; }
-            .login-card h2 { font-size: 1.7rem; }
-            .btn-telegram { font-size: 1rem; padding: 12px; }
+            .login-card {
+                max-width: 90%;
+                padding: 25px;
+            }
+            .login-card h2 { font-size: 2rem; }
+            .btn-telegram { font-size: 1.1rem; padding: 14px; }
         }
     </style>
 </head>
@@ -270,24 +330,26 @@ if (isset($_SESSION['user'])) {
     <div class="particles" id="particles"></div>
     <div class="login-card">
         <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
-        <p>Sign in to start checking cards</p>
-        <button class="btn-telegram" onclick="document.querySelector('.telegram-login-CARDXCHK_LOGBOT').click()">
-            <i class="fab fa-telegram-plane telegram-icon"></i> Continue with Telegram
+        <p>Unlock the power of card checking</p>
+        <button class="btn-telegram" onclick="setTimeout(() => { const widget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT'); if (widget) { widget.click(); console.log('Widget clicked'); } else { console.error('Widget not found'); error_log('Telegram widget not found in DOM'); } }, 500)">
+            <i class="fab fa-telegram-plane telegram-icon"></i> Sign in with Telegram
         </button>
         <div class="telegram-login-CARDXCHK_LOGBOT"></div>
     </div>
     <script>
         function createParticles() {
             const particlesContainer = document.getElementById('particles');
-            const texts = ['Card ✘ CHK', 'Card CHK', '✘ CHK'];
-            for (let i = 0; i < 20; i++) {
+            const diagonalCount = 10;
+            for (let i = 0; i < diagonalCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
-                particle.textContent = texts[Math.floor(Math.random() * texts.length)];
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDuration = Math.random() * 10 + 10 + 's';
-                particle.style.animationDelay = Math.random() * 5 + 's';
-                particle.style.color = ['#0288d1', '#4fc3f7', '#f06292'][Math.floor(Math.random() * 3)];
+                particle.textContent = 'Card ✘ CHK';
+                particle.style.left = `${i * (100 / (diagonalCount - 1))}%`;
+                particle.style.top = `${i * (100 / (diagonalCount - 1))}%`;
+                particle.style.animationDuration = `${12 + i * 2}s`;
+                particle.style.animationDelay = `${i * 0.5}s`;
+                particle.style.fontSize = `${1.5 - i * 0.1}rem`;
+                particle.style.color = ['#ab47bc', '#6a1b9a', '#4a148c'][i % 3];
                 particlesContainer.appendChild(particle);
             }
         }
@@ -305,7 +367,7 @@ if (isset($_SESSION['user'])) {
                     title: 'Configuration Error',
                     text: 'Telegram Login Widget failed to load. Check bot settings or network.',
                     icon: 'error',
-                    confirmButtonColor: '#f06292'
+                    confirmButtonColor: '#ab47bc'
                 });
             }
         });
