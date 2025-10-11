@@ -182,9 +182,9 @@ if (isset($_SESSION['user'])) {
         }
         body {
             background:
-                radial-gradient(1100px 700px at 8% -10%, rgba(255, 107, 107, 0.20), transparent 60%),
-                radial-gradient(900px 500px at 110% 110%, rgba(78, 205, 196, 0.16), transparent 60%),
-                linear-gradient(45deg, #fff5f5, #e6fffa);
+                radial-gradient(1100px 700px at 8% -10%, rgba(255, 135, 135, 0.20), transparent 60%),
+                radial-gradient(900px 500px at 110% 110%, rgba(109, 211, 203, 0.16), transparent 60%),
+                linear-gradient(45deg, #f9ecec, #e0f6f5);
             color: #1a1a2e;
         }
         .glass {
@@ -251,23 +251,23 @@ if (isset($_SESSION['user'])) {
         canvas.height = window.innerHeight;
 
         let particles = [];
-        const particleCount = 20;
+        const particleCount = 10; // Reduced for less density
 
         class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 20 + 10;
-                this.speedX = Math.random() * 2 - 1;
-                this.speedY = Math.random() * 2 - 1;
-                this.color = ['#ff6b6b', '#4ecdc4', '#45b7d1'][Math.floor(Math.random() * 3)];
-                this.text = 'Card X Chk';
+                this.size = Math.random() * 15 + 5; // Smaller size for subtlety
+                this.speedX = Math.random() * 1.5 - 0.75; // Slower horizontal speed
+                this.speedY = Math.random() * 1.5 - 0.75; // Slower vertical speed
+                this.color = ['#ff8787', '#6dd3cb', '#6ab7d8'][Math.floor(Math.random() * 3)];
+                this.text = '𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲';
             }
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
-                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX;
-                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX * 0.8; // Dampened bounce
+                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY * 0.8; // Dampened bounce
             }
             draw() {
                 ctx.font = `${this.size}px Inter`;
@@ -309,7 +309,7 @@ if (isset($_SESSION['user'])) {
                     title: 'Configuration Error',
                     text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
                     icon: 'error',
-                    confirmButtonColor: '#45b7d1'
+                    confirmButtonColor: '#6ab7d8'
                 });
                 setTimeout(() => {
                     location.reload(); // Fallback reload
