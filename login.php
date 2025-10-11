@@ -2,7 +2,7 @@
 ob_start();
 session_start();
 
-// Set CSP header to allow Telegram widget
+// Set CSP header to allow Telegram widget and dependencies
 header("Content-Security-Policy: default-src 'self'; script-src 'self' https://telegram.org https://cdn.jsdelivr.net; frame-src https://oauth.telegram.org; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.telegram.org; img-src 'self' data: https:;");
 
 // Hardcoded credentials (replace with your actual values or use .env)
@@ -21,7 +21,7 @@ if (file_exists($envFile)) {
     }
 }
 
-// Database connection
+// Database connection (non-fatal)
 try {
     $dbUrlString = str_replace('postgresql://', 'pgsql://', $databaseUrl);
     $dbUrl = parse_url($dbUrlString);
@@ -41,27 +41,14 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
     );
     error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
-} catch (PDOException $e) {
-    error_log("Non-SSL connection failed: " . $e->getMessage() . " | Attempting SSL");
-    try {
-        $pdo = new PDO(
-            "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
-            $user,
-            $pass,
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-        );
-        error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
-    } catch (Exception $e) {
-        error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
-        // Non-fatal for login
-    }
-}
-
-if (isset($pdo)) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
     error_log("Users table ready");
+} catch (Exception $e) {
+    error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
+    // Continue without DB
 }
 
+// Generate CSRF token
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     error_log("CSRF token generated: " . $_SESSION['csrf_token']);
@@ -84,7 +71,6 @@ function verifyTelegramData($data, $botToken) {
     $secretKey = hash('sha256', $botToken, true);
     $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
     $result = hash_equals($hash, $checkHash);
-    // Check auth_date freshness (within 24 hours)
     $authDate = (int)($data['auth_date'] ?? 0);
     if ($result && (time() - $authDate > 86400)) {
         error_log("Auth date too old: $authDate");
@@ -117,7 +103,7 @@ function checkTelegramAccess($telegramId, $botToken) {
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
-    header('Location: https://yourdomain.onrender.com/login.php');
+    header('Location: https://cardxchk.onrender.com/login.php');
     ob_end_flush();
     exit;
 }
@@ -146,7 +132,7 @@ if (isset($_GET['telegram_auth'])) {
             }
             $_SESSION['user'] = ['telegram_id' => $telegramId, 'name' => $telegramData['first_name'], 'auth_provider' => 'telegram'];
             error_log("Session set for user: " . json_encode($_SESSION['user']));
-            header('Location: https://yourdomain.onrender.com/index.php');
+            header('Location: https://cardxchk.onrender.com/index.php');
             ob_end_flush();
             exit;
         } else {
@@ -161,7 +147,7 @@ if (isset($_GET['telegram_auth'])) {
 
 if (isset($_SESSION['user'])) {
     error_log("Session exists, redirecting to index.php: " . json_encode($_SESSION['user']));
-    header('Location: https://cardxchk.onrender.com//index.php');
+    header('Location: https://cardxchk.onrender.com/index.php');
     ob_end_flush();
     exit;
 }
@@ -223,7 +209,7 @@ if (isset($_SESSION['user'])) {
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="CARDXCHK_LOGBOT"
                                 data-size="large"
-                                data-auth-url="/login.php?telegram_auth=1"
+                                data-auth-url="https://cardxchk.onrender.com/login.php?telegram_auth=1"
                                 data-request-access="write"
                                 onload="console.log('Telegram widget script loaded'); document.querySelector('.telegram-login-CARDXCHK_LOGBOT').dataset.loaded = 'true';"
                                 onerror="console.error('Failed to load Telegram widget script'); Swal.fire({title: 'Widget Load Error', text: 'Telegram widget script failed to load. Check network or bot settings.', icon: 'error', confirmButtonColor: '#6ab7d8'});"></script>
@@ -303,7 +289,7 @@ if (isset($_SESSION['user'])) {
                 canvas.height = window.innerHeight;
             });
 
-            // Check widget loading
+            // Enhanced widget debugging
             setTimeout(() => {
                 const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
                 if (!telegramWidget || !telegramWidget.querySelector('iframe') || telegramWidget.dataset.loaded !== 'true') {
@@ -311,7 +297,7 @@ if (isset($_SESSION['user'])) {
                     console.log('Widget element:', telegramWidget);
                     Swal.fire({
                         title: 'Widget Load Error',
-                        text: 'Telegram Login Widget failed to initialize. Ensure your domain is set in @BotFather and CSP allows oauth.telegram.org.',
+                        html: 'Telegram Login Widget failed to initialize. Ensure:<br>1. Domain is set in @BotFather (<code>https://cardxchk.onrender.com</code>).<br>2. CSP allows oauth.telegram.org.<br>3. Bot username is correct (@CARDXCHK_LOGBOT).',
                         icon: 'error',
                         confirmButtonColor: '#6ab7d8'
                     });
