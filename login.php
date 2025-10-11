@@ -83,7 +83,7 @@ if (empty($telegramBotToken)) {
     die("Configuration error: Telegram bot token missing");
 }
 
-// Function to verify Telegram data
+// Function to verify Telegram OAuth data
 function verifyTelegramData($data, $botToken) {
     $checkHash = $data['hash'] ?? '';
     unset($data['hash']);
@@ -127,7 +127,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit;
 }
 
-// Handle Telegram callback
+// Handle Telegram OAuth callback
 if (isset($_GET['telegram_auth'])) {
     $telegramData = [
         'id' => $_GET['id'] ?? '',
@@ -136,6 +136,7 @@ if (isset($_GET['telegram_auth'])) {
         'hash' => $_GET['hash'] ?? ''
     ];
 
+    error_log("Received Telegram OAuth data: " . json_encode($telegramData));
     if (verifyTelegramData($telegramData, $telegramBotToken)) {
         $telegramId = $telegramData['id'];
         if (checkTelegramAccess($telegramId, $telegramBotToken)) {
@@ -145,6 +146,9 @@ if (isset($_GET['telegram_auth'])) {
             if ($stmt->rowCount() === 0) {
                 $stmt = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
                 $stmt->execute([$telegramId, $telegramData['first_name']]);
+                error_log("New user created: telegram_id=$telegramId, name={$telegramData['first_name']}");
+            } else {
+                error_log("User found: telegram_id=$telegramId");
             }
 
             // Set session
@@ -156,16 +160,17 @@ if (isset($_GET['telegram_auth'])) {
             $sessionId = bin2hex(random_bytes(16));
             setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
             $_SESSION['session_id'] = $sessionId;
+            error_log("Session set for user: telegram_id=$telegramId");
 
             header('Location: index.php');
             exit;
         } else {
             error_log("Telegram access revoked for ID: $telegramId");
-            die("Telegram access revoked or invalid");
+            die("Telegram access revoked or invalid. Please re-authenticate.");
         }
     } else {
-        error_log("Invalid Telegram authentication data");
-        die("Invalid Telegram authentication data");
+        error_log("Invalid Telegram OAuth data: " . json_encode($telegramData));
+        die("Invalid Telegram authentication data. Please try again.");
     }
 }
 
@@ -357,7 +362,7 @@ if (isset($_SESSION['user'])) {
         }
         createParticles();
 
-        // Telegram Authentication Callback
+        // Telegram OAuth Callback
         function onTelegramAuth(user) {
             const url = `login.php?telegram_auth=1&id=${user.id}&first_name=${encodeURIComponent(user.first_name)}&auth_date=${user.auth_date}&hash=${user.hash}`;
             window.location.href = url;
