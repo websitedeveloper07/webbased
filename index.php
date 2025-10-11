@@ -1,6 +1,21 @@
 <?php
 session_start();
 
+// Enable error reporting for debugging (disable in production)
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+
+// Log session state
+error_log("Checking session in index.php: " . json_encode($_SESSION));
+
+// Check if user is authenticated
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
+    header('Location: https://yourdomain.onrender.com/login.php'); // Replace with your Render domain
+    exit;
+}
+
 // Load environment variables manually
 $envFile = __DIR__ . '/.env';
 $_ENV = [];
@@ -17,42 +32,40 @@ if (file_exists($envFile)) {
     error_log("Environment file (.env) not found in " . __DIR__);
 }
 
-// Check if user is authenticated
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    header('Location: login.php');
-    exit;
-}
-
 // Database connection (optional, for future result storage)
 try {
     if (!isset($_ENV['DATABASE_URL'])) {
-        throw new Exception("DATABASE_URL not set in .env file");
-    }
-    $dbUrl = parse_url($_ENV['DATABASE_URL']);
-    if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
-        throw new Exception("Invalid DATABASE_URL format");
-    }
-    $pdo = new PDO(
-        "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
-        $dbUrl['user'],
-        $dbUrl['pass'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-
-    // Create results table if it doesn't exist
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS results (
-            id SERIAL PRIMARY KEY,
-            telegram_id BIGINT REFERENCES users(telegram_id),
-            card_number VARCHAR(19),
-            status VARCHAR(20),
-            response TEXT,
-            gateway VARCHAR(50),
-            checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        error_log("DATABASE_URL not set in .env file");
+    } else {
+        $dbUrl = parse_url($_ENV['DATABASE_URL']);
+        if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
+            throw new Exception("Invalid DATABASE_URL format");
+        }
+        $pdo = new PDO(
+            "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
+            $dbUrl['user'],
+            $dbUrl['pass'],
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
         );
-    ");
+        error_log("Database connected in index.php");
+
+        // Create results table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS results (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT REFERENCES users(telegram_id),
+                card_number VARCHAR(19),
+                status VARCHAR(20),
+                response TEXT,
+                gateway VARCHAR(50),
+                checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        error_log("Results table ready");
+    }
 } catch (Exception $e) {
-    error_log("Database connection failed: " . $e->getMessage());
+    error_log("Database connection failed in index.php: " . $e->getMessage());
+    // Continue without DB connection (non-fatal)
 }
 ?>
 <!DOCTYPE html>
