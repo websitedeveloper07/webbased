@@ -2,7 +2,7 @@
 ob_start();
 session_start();
 
-// Hardcoded credentials
+// Hardcoded credentials (replace with your actual values or use .env)
 $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
 
@@ -40,16 +40,18 @@ try {
     error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
 } catch (PDOException $e) {
     error_log("Non-SSL connection failed: " . $e->getMessage() . " | Attempting SSL");
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
-        $user,
-        $pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-    );
-    error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
-} catch (Exception $e) {
-    error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
-    die("Database connection failed. Please try again later.");
+    try {
+        $pdo = new PDO(
+            "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
+            $user,
+            $pass,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+        );
+        error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
+    } catch (Exception $e) {
+        error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
+        die("Database connection failed. Please try again later.");
+    }
 }
 
 $pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
@@ -57,6 +59,7 @@ error_log("Users table ready");
 
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    error_log("CSRF token generated: " . $_SESSION['csrf_token']);
 }
 
 if (empty($telegramBotToken)) {
@@ -76,6 +79,12 @@ function verifyTelegramData($data, $botToken) {
     $secretKey = hash('sha256', $botToken, true);
     $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
     $result = hash_equals($hash, $checkHash);
+    // Check auth_date freshness (within 24 hours)
+    $authDate = (int)($data['auth_date'] ?? 0);
+    if ($result && (time() - $authDate > 86400)) {
+        error_log("Auth date too old: $authDate");
+        $result = false;
+    }
     error_log("Telegram data verification: " . ($result ? "Success" : "Failed") . " | Data: " . json_encode($data) . " | Calculated Hash: $hash | Provided Hash: $checkHash");
     return $result;
 }
@@ -103,19 +112,19 @@ function checkTelegramAccess($telegramId, $botToken) {
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
-    setcookie('session_id', '', time() - 3600, '/', '', true, true);
-    header('Location: login.php');
+    header('Location: /login.php');
+    ob_end_flush();
     exit;
 }
 
 if (isset($_GET['telegram_auth'])) {
+    error_log("Received Telegram OAuth data: " . json_encode($_GET));
     $telegramData = [
         'id' => $_GET['id'] ?? '',
         'first_name' => $_GET['first_name'] ?? '',
         'auth_date' => $_GET['auth_date'] ?? '',
         'hash' => $_GET['hash'] ?? ''
     ];
-    error_log("Received Telegram OAuth data: " . json_encode($telegramData));
     if (verifyTelegramData($telegramData, $telegramBotToken)) {
         $telegramId = $telegramData['id'];
         if (checkTelegramAccess($telegramId, $telegramBotToken)) {
@@ -129,16 +138,8 @@ if (isset($_GET['telegram_auth'])) {
                 error_log("User found: telegram_id=$telegramId");
             }
             $_SESSION['user'] = ['telegram_id' => $telegramId, 'name' => $telegramData['first_name'], 'auth_provider' => 'telegram'];
-            if (isset($_SESSION['user'])) {
-                error_log("Session successfully set for user: telegram_id=$telegramId");
-            } else {
-                error_log("Failed to set session for user: telegram_id=$telegramId");
-            }
-            $sessionId = bin2hex(random_bytes(16));
-            setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
-            $_SESSION['session_id'] = $sessionId;
-            error_log("Attempting redirect to index.php for user: telegram_id=$telegramId");
-            header('Location: /index.php'); // Absolute path to ensure redirect
+            error_log("Session set for user: " . json_encode($_SESSION['user']));
+            header('Location: https://yourdomain.onrender.com/index.php'); // Replace with your Render domain
             ob_end_flush();
             exit;
         } else {
@@ -151,27 +152,10 @@ if (isset($_GET['telegram_auth'])) {
     }
 }
 
-if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
-    if ($_COOKIE['session_id'] === ($_SESSION['session_id'] ?? '')) {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
-        $stmt->execute([$_SESSION['user']['telegram_id'] ?? '']);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user) {
-            if ($user['auth_provider'] === 'telegram' && !checkTelegramAccess($user['telegram_id'], $telegramBotToken)) {
-                error_log("Session invalidated: Telegram access revoked for ID: {$user['telegram_id']}");
-                session_unset();
-                setcookie('session_id', '', time() - 3600, '/', '', true, true);
-            } else {
-                $_SESSION['user'] = ['telegram_id' => $user['telegram_id'], 'name' => $user['name'], 'auth_provider' => $user['auth_provider']];
-                header('Location: /index.php');
-                exit;
-            }
-        }
-    }
-}
-
 if (isset($_SESSION['user'])) {
-    header('Location: /index.php');
+    error_log("Session exists, redirecting to index.php: " . json_encode($_SESSION['user']));
+    header('Location: https://yourdomain.onrender.com/index.php'); // Replace with your Render domain
+    ob_end_flush();
     exit;
 }
 ?>
@@ -184,6 +168,7 @@ if (isset($_SESSION['user'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="/assets/branding/cardxchk-mark.png" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
     <style>
@@ -249,7 +234,7 @@ if (isset($_SESSION['user'])) {
                 <a class="text-teal-500 hover:underline" href="/legal/privacy">Privacy Policy</a>.
             </div>
             <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
-                <span>Powered by</span>
+                <span>Powered by kคli liຖนxx</span>
             </div>
         </div>
     </main>
@@ -314,7 +299,6 @@ if (isset($_SESSION['user'])) {
             const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
             if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
                 console.error('Telegram widget not loaded');
-                error_log('Telegram widget not loaded in DOM');
                 Swal.fire({
                     title: 'Configuration Error',
                     text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
