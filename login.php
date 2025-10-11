@@ -91,7 +91,7 @@ h1 { margin-bottom: 20px; color: #222; }
     <?php endif; ?>
 
     <script async src="https://telegram.org/js/telegram-widget.js?22"
-        data-telegram-login="<?= BOT_USERNAME ?>"
+        data-telegram-login="<?= CardXchk_LOGBOT ?>"
         data-size="large"
         data-radius="8"
         data-auth-url="login.php"
