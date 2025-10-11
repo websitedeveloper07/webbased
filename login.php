@@ -1,276 +1,102 @@
 <?php
-// -------------------------------
-// SESSION & INITIAL CONFIG
-// -------------------------------
-ini_set('session.gc_maxlifetime', 3600);
-ini_set('session.cookie_lifetime', 3600);
-ob_start();
 session_start();
 
-// Default hardcoded credentials (can be overridden by .env)
-$databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
-$telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
-$baseUrl = 'https://cardxchk.onrender.com';
+// === CONFIGURATION ===
+define('BOT_TOKEN', getenv('8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A') ?: 'YOUR_BOT_TOKEN_HERE');
+define('BOT_USERNAME', 'CardXchk_LOGBOT'); // e.g. mybotname_bot
 
-// -------------------------------
-// LOAD .ENV (optional overrides)
-// -------------------------------
-$envFile = __DIR__ . '/.env';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) continue;
-        list($key, $value) = explode('=', $line, 2);
-        $key = trim($key);
-        $value = trim($value);
-        if ($key === 'DATABASE_URL') $databaseUrl = $value;
-        if ($key === 'TELEGRAM_BOT_TOKEN') $telegramBotToken = $value;
-        if ($key === 'BASE_URL') $baseUrl = $value;
+// === TELEGRAM AUTH VALIDATION ===
+function checkTelegramAuthorization($auth_data) {
+    if (!isset($auth_data['hash'])) {
+        throw new Exception('Missing Telegram hash');
     }
+
+    $check_hash = $auth_data['hash'];
+    unset($auth_data['hash']);
+
+    $data_check_arr = [];
+    foreach ($auth_data as $key => $value) {
+        $data_check_arr[] = $key . '=' . $value;
+    }
+
+    sort($data_check_arr);
+    $data_check_string = implode("\n", $data_check_arr);
+    $secret_key = hash('sha256', BOT_TOKEN, true);
+    $hash = hash_hmac('sha256', $data_check_string, $secret_key);
+
+    if (!hash_equals($hash, $check_hash)) {
+        throw new Exception('Invalid Telegram authentication data (hash mismatch)');
+    }
+
+    if ((time() - $auth_data['auth_date']) > 86400) {
+        throw new Exception('Telegram login data is too old');
+    }
+
+    return $auth_data;
 }
 
-// -------------------------------
-// DATABASE CONNECTION
-// -------------------------------
+// === MAIN LOGIC ===
 try {
-    $dbUrlString = str_replace('postgresql://', 'pgsql://', $databaseUrl);
-    $dbUrl = parse_url($dbUrlString);
-    if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
-        throw new Exception("Invalid DATABASE_URL format");
+    if (!empty($_GET['id']) && isset($_GET['hash'])) {
+        // Verify Telegram redirect data
+        $auth_data = checkTelegramAuthorization($_GET);
+
+        // Save in session
+        $_SESSION['auth_provider'] = 'telegram';
+        $_SESSION['telegram_user'] = [
+            'id' => $auth_data['id'],
+            'first_name' => $auth_data['first_name'] ?? '',
+            'last_name' => $auth_data['last_name'] ?? '',
+            'username' => $auth_data['username'] ?? '',
+            'photo_url' => $auth_data['photo_url'] ?? ''
+        ];
+
+        // Redirect to homepage
+        header('Location: index.php');
+        exit;
     }
 
-    $host = $dbUrl['host'];
-    $port = $dbUrl['port'] ?? 5432;
-    $dbname = ltrim($dbUrl['path'], '/');
-    $user = $dbUrl['user'];
-    $pass = $dbUrl['pass'];
-
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
-        $user,
-        $pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-    );
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        telegram_id BIGINT UNIQUE,
-        name VARCHAR(255),
-        auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );");
 } catch (Exception $e) {
-    error_log("Database connection failed: " . $e->getMessage());
-    die("Database connection failed. Please try again later.");
+    $error = $e->getMessage();
 }
 
-// -------------------------------
-// HELPER FUNCTIONS
-// -------------------------------
-function verifyTelegramData(array $data, string $botToken): bool {
-    if (!isset($data['hash'])) return false;
-    $checkHash = $data['hash'];
-    unset($data['hash']);
-
-    // Telegram docs: sort keys alphabetically
-    ksort($data);
-
-    // Build data-check-string
-    $dataCheckString = implode("\n", array_map(
-        fn($k, $v) => "$k=$v",
-        array_keys($data),
-        array_values($data)
-    ));
-
-    // Compute hash per Telegram spec
-    $secretKey = hash('sha256', $botToken, true);
-    $calculatedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
-
-    return hash_equals($calculatedHash, $checkHash);
-}
-
-function checkTelegramAccess($telegramId, $botToken): bool {
-    $url = "https://api.telegram.org/bot$botToken/getChat?chat_id=$telegramId";
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true
-    ]);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    $result = json_decode($response, true);
-    return isset($result['ok']) && $result['ok'] === true;
-}
-
-// -------------------------------
-// LOGOUT HANDLER
-// -------------------------------
-if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    session_unset();
-    session_destroy();
-    setcookie('session_id', '', time() - 3600, '/', '', true, true);
-    header('Location: ' . $baseUrl . '/login.php');
-    exit;
-}
-
-// -------------------------------
-// TELEGRAM AUTH HANDLER
-// -------------------------------
-if (isset($_GET['id']) && isset($_GET['hash'])) {
-    $telegramData = $_GET;
-
-    if (verifyTelegramData($telegramData, $telegramBotToken)) {
-        $telegramId = $telegramData['id'];
-        $firstName = $telegramData['first_name'] ?? 'User';
-
-        if (checkTelegramAccess($telegramId, $telegramBotToken)) {
-            // Insert or update user
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
-            $stmt->execute([$telegramId]);
-
-            if ($stmt->rowCount() === 0) {
-                $insert = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
-                $insert->execute([$telegramId, $firstName]);
-            }
-
-            $_SESSION['user'] = [
-                'telegram_id' => $telegramId,
-                'name' => $firstName,
-                'auth_provider' => 'telegram'
-            ];
-
-            $sessionId = bin2hex(random_bytes(16));
-            $_SESSION['session_id'] = $sessionId;
-            setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
-
-            echo '<script>
-                if (window.top !== window.self) {
-                    window.top.location.href = "' . $baseUrl . '/index.php";
-                } else {
-                    window.location.href = "' . $baseUrl . '/index.php";
-                }
-            </script>';
-            exit;
-        } else {
-            die("Telegram access invalid or revoked. Please try again.");
-        }
-    } else {
-        die("Invalid Telegram authentication data. Please try again.");
-    }
-}
-
-// -------------------------------
-// AUTO LOGIN CHECK
-// -------------------------------
-if (isset($_SESSION['user'])) {
-    header('Location: ' . $baseUrl . '/index.php');
-    exit;
-}
+// === FRONTEND (LOGIN WIDGET) ===
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in • Card X Chk</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" href="/assets/branding/cardxchk-mark.png">
-    <style>
-        :root { --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.12); }
-        html, body { height:100%; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; }
-        body {
-            background:
-                radial-gradient(1100px 700px at 8% -10%, rgba(255,135,135,0.20), transparent 60%),
-                radial-gradient(900px 500px at 110% 110%, rgba(109,211,203,0.16), transparent 60%),
-                linear-gradient(45deg, #f9ecec, #e0f6f5);
-            color:#1a1a2e;
-        }
-        .glass { backdrop-filter: blur(14px); background: var(--glass); border:1px solid var(--stroke); }
-        .card { box-shadow:0 25px 70px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.03); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login via Telegram</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; background: #f4f6fb; margin: 0;
+}
+.container {
+    background: #fff; border-radius: 16px; padding: 40px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;
+}
+h1 { margin-bottom: 20px; color: #222; }
+.error { color: #d33; margin-bottom: 15px; font-weight: 500; }
+</style>
 </head>
-<body class="min-h-full">
-<main class="min-h-screen flex items-center justify-center p-6">
-    <div class="w-full max-w-xl space-y-6">
-        <div class="flex flex-col items-center text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gray-100/60 border border-gray-200/50 grid place-items-center shadow-lg">
-                <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl">
-            </div>
-            <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-gray-800">Card X Chk: Secure Sign-in</h1>
-        </div>
+<body>
+<div class="container">
+    <h1>Login with Telegram</h1>
+    <?php if (!empty($error)): ?>
+        <div class="error">⚠️ <?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
-        <div class="glass card rounded-3xl p-6">
-            <div class="flex flex-col items-center gap-4">
-                <span class="text-sm text-gray-600">Sign in with Telegram</span>
-                <div class="w-full flex justify-center">
-                    <script async
-                        src="https://telegram.org/js/telegram-widget.js?22"
-                        data-telegram-login="CARDXCHK_LOGBOT"
-                        data-size="large"
-                        data-userpic="false"
-                        data-request-access="write"
-                        data-auth-url="https://cardxchk.onrender.com/login.php">
-                    </script>
-                </div>
-                <p class="text-[11px] text-gray-500 text-center">
-                    Telegram OAuth is secure. We do not access your Telegram data.
-                </p>
-            </div>
-        </div>
-
-        <div class="text-center text-xs text-gray-500">
-            By continuing, you agree to our
-            <a class="text-teal-500 hover:underline" href="/legal/terms">Terms of Service</a> and
-            <a class="text-teal-500 hover:underline" href="/legal/privacy">Privacy Policy</a>.
-        </div>
-    </div>
-</main>
-
-<canvas id="particleCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;"></canvas>
-<script>
-const canvas = document.getElementById('particleCanvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-let particles = [];
-class Particle {
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 15 + 5;
-        this.speedX = Math.random() * 1.5 - 0.75;
-        this.speedY = Math.random() * 1.5 - 0.75;
-        this.color = ['#ff8787', '#6dd3cb', '#6ab7d8'][Math.floor(Math.random()*3)];
-        this.text = '𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲';
-    }
-    update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -0.8;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -0.8;
-    }
-    draw() {
-        ctx.font = `${this.size}px Inter`;
-        ctx.fillStyle = this.color;
-        ctx.textAlign = 'center';
-        ctx.fillText(this.text, this.x, this.y);
-    }
-}
-for (let i=0;i<10;i++) particles.push(new Particle());
-function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    particles.forEach(p=>{p.update();p.draw();});
-    requestAnimationFrame(animate);
-}
-animate();
-window.addEventListener('resize',()=>{
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
-</script>
+    <script async src="https://telegram.org/js/telegram-widget.js?22"
+        data-telegram-login="<?= BOT_USERNAME ?>"
+        data-size="large"
+        data-radius="8"
+        data-auth-url="login.php"
+        data-request-access="write">
+    </script>
+</div>
 </body>
 </html>
