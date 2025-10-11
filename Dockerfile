@@ -1,8 +1,18 @@
-# Use the official PHP image with Apache
+# Use the official PHP image with Apache (PHP 8.2 as specified)
 FROM php:8.2-apache
+
+# Install PostgreSQL client libraries and pdo_pgsql extension
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy all files from the repo to the web root
 COPY . /var/www/html/
+
+# Set proper permissions for web root
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
 
 # Expose port 10000 (Render uses this for web services)
 EXPOSE 10000
