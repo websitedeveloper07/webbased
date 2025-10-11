@@ -1,49 +1,52 @@
 <?php
 session_start();
 
-// Load environment variables manually
-$envFile = __DIR__ . '/.env';
-$_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        // Skip comments and invalid lines
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-} else {
-    error_log("Environment file (.env) not found in " . __DIR__);
-    die("Configuration error: .env file missing");
-}
+// Hardcoded credentials
+$databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+$telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
 
 // Database connection
 try {
-    if (!isset($_ENV['DATABASE_URL'])) {
-        throw new Exception("DATABASE_URL not set in .env file");
-    }
     // Normalize scheme (postgresql:// to pgsql://)
-    $dbUrlString = str_replace('postgresql://', 'pgsql://', $_ENV['DATABASE_URL']);
+    $dbUrlString = str_replace('postgresql://', 'pgsql://', $databaseUrl);
     $dbUrl = parse_url($dbUrlString);
     if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
-        throw new Exception("Invalid DATABASE_URL format: " . $_ENV['DATABASE_URL']);
+        throw new Exception("Invalid DATABASE_URL format: " . $databaseUrl);
     }
-    // Set default port if not specified
-    $port = $dbUrl['port'] ?? 5432;
+    $host = $dbUrl['host'];
+    $port = $dbUrl['port'] ?? 5432; // Default port from provided details
     $dbname = ltrim($dbUrl['path'], '/');
-    $pdo = new PDO(
-        "pgsql:host={$dbUrl['host']};port=$port;dbname=$dbname;sslmode=require",
-        $dbUrl['user'],
-        $dbUrl['pass'],
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
+    $user = $dbUrl['user'];
+    $pass = $dbUrl['pass'];
 
-    // Create users table if it doesn't exist
+    // Attempt SSL connection
+    try {
+        $pdo = new PDO(
+            "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
+            $user,
+            $pass,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ]
+        );
+        error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
+    } catch (PDOException $e) {
+        // Fallback to non-SSL connection (mimicking psql command)
+        error_log("SSL connection failed: " . $e->getMessage() . " | Attempting non-SSL connection");
+        $pdo = new PDO(
+            "pgsql:host=$host;port=$port;dbname=$dbname",
+            $user,
+            $pass,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ]
+        );
+        error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
+    }
+
+    // Create users table
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -54,7 +57,7 @@ try {
         );
     ");
 } catch (Exception $e) {
-    error_log("Database connection failed: " . $e->getMessage() . " | URL: " . ($_ENV['DATABASE_URL'] ?? 'not set'));
+    error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
     die("Database connection failed. Please try again later.");
 }
 
@@ -63,10 +66,9 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Telegram Bot Token
-$telegramBotToken = $_ENV['TELEGRAM_BOT_TOKEN'] ?? '';
+// Verify Telegram Bot Token
 if (empty($telegramBotToken)) {
-    error_log("TELEGRAM_BOT_TOKEN not set in .env file");
+    error_log("TELEGRAM_BOT_TOKEN not set");
     die("Configuration error: Telegram bot token missing");
 }
 
