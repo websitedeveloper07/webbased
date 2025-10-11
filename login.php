@@ -24,15 +24,23 @@ try {
     if (!isset($_ENV['DATABASE_URL'])) {
         throw new Exception("DATABASE_URL not set in .env file");
     }
-    $dbUrl = parse_url($_ENV['DATABASE_URL']);
-    if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
-        throw new Exception("Invalid DATABASE_URL format");
+    // Normalize scheme (postgresql:// to pgsql://)
+    $dbUrlString = str_replace('postgresql://', 'pgsql://', $_ENV['DATABASE_URL']);
+    $dbUrl = parse_url($dbUrlString);
+    if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
+        throw new Exception("Invalid DATABASE_URL format: " . $_ENV['DATABASE_URL']);
     }
+    // Set default port if not specified
+    $port = $dbUrl['port'] ?? 5432;
+    $dbname = ltrim($dbUrl['path'], '/');
     $pdo = new PDO(
-        "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
+        "pgsql:host={$dbUrl['host']};port=$port;dbname=$dbname;sslmode=require",
         $dbUrl['user'],
         $dbUrl['pass'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
     );
 
     // Create users table if it doesn't exist
@@ -46,7 +54,7 @@ try {
         );
     ");
 } catch (Exception $e) {
-    error_log("Database connection failed: " . $e->getMessage());
+    error_log("Database connection failed: " . $e->getMessage() . " | URL: " . ($_ENV['DATABASE_URL'] ?? 'not set'));
     die("Database connection failed. Please try again later.");
 }
 
@@ -84,11 +92,13 @@ function checkTelegramAccess($telegramId, $botToken) {
     $url = "https://api.telegram.org/bot$botToken/getChat?chat_id=$telegramId";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     $response = curl_exec($ch);
     $curl_error = curl_error($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     if ($curl_error) {
-        error_log("Telegram API error: $curl_error");
+        error_log("Telegram API error: $curl_error (HTTP $http_code)");
         return false;
     }
     $result = json_decode($response, true);
