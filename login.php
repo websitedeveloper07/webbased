@@ -281,7 +281,7 @@ if (isset($_SESSION['user'])) {
     <div class="login-card">
         <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
         <p>Unlock the power of card checking</p>
-        <iframe src="https://oauth.telegram.org/embed/CARDXCHK_LOGBOT?origin=https%3A%2F%2Fcardxchk.onrender.com&return_to=https%3A%2F%2Fcardxchk.onrender.com%2Flogin.php&size=large" width="100%" height="50" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden;"></iframe>
+        <iframe src="https://oauth.telegram.org/embed/CARDXCHK_LOGBOT?origin=https%3A%2F%2Fcardxchk.onrender.com&return_to=https%3A%2F%2Fcardxchk.onrender.com%2Flogin.php&size=large" width="100%" height="50" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden;" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="clipboard-read; clipboard-write"></iframe>
     </div>
     <script>
         function createParticles() {
@@ -302,8 +302,8 @@ if (isset($_SESSION['user'])) {
         }
         createParticles();
         document.addEventListener('DOMContentLoaded', () => {
-            const telegramWidget = document.querySelector('iframe[src*="oauth.telegram.org"]');
-            if (!telegramWidget) {
+            const iframe = document.querySelector('iframe[src*="oauth.telegram.org"]');
+            if (!iframe) {
                 console.error('Telegram OAuth iframe not loaded');
                 error_log('Telegram OAuth iframe not loaded in DOM');
                 Swal.fire({
@@ -312,6 +312,18 @@ if (isset($_SESSION['user'])) {
                     icon: 'error',
                     confirmButtonColor: '#ab47bc'
                 });
+            } else {
+                iframe.onload = () => console.log('Telegram OAuth iframe loaded');
+                iframe.onerror = () => {
+                    console.error('Telegram OAuth iframe failed to load');
+                    error_log('Telegram OAuth iframe load error');
+                    Swal.fire({
+                        title: 'Load Error',
+                        text: 'Telegram OAuth iframe failed to load. Try refreshing the page.',
+                        icon: 'error',
+                        confirmButtonColor: '#ab47bc'
+                    });
+                };
             }
         });
     </script>
