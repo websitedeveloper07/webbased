@@ -108,7 +108,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit;
 }
 
-if (isset($_GET['telegram_auth'])) {
+// Handle Telegram OAuth callback
+if (isset($_GET['id']) && isset($_GET['hash'])) {
     error_log("Received Telegram OAuth data: " . json_encode($_GET));
     $telegramData = [
         'id' => $_GET['id'] ?? '',
@@ -145,6 +146,7 @@ if (isset($_GET['telegram_auth'])) {
     }
 }
 
+// Redirect authenticated users
 if (isset($_SESSION['user'])) {
     error_log("Session exists, redirecting to index.php: " . json_encode($_SESSION['user']));
     header('Location: https://cardxchk.onrender.com/index.php');
@@ -209,7 +211,7 @@ if (isset($_SESSION['user'])) {
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="CARDXCHK_LOGBOT"
                                 data-size="large"
-                                data-auth-url="https://cardxchk.onrender.com/login.php?telegram_auth=1"
+                                data-auth-url="https://cardxchk.onrender.com/login.php"
                                 data-request-access="write"
                                 onload="console.log('Telegram widget script loaded'); document.querySelector('.telegram-login-CARDXCHK_LOGBOT').dataset.loaded = 'true';"
                                 onerror="console.error('Failed to load Telegram widget script'); Swal.fire({title: 'Widget Load Error', text: 'Telegram widget script failed to load. Check network or bot settings.', icon: 'error', confirmButtonColor: '#6ab7d8'});"></script>
@@ -297,7 +299,7 @@ if (isset($_SESSION['user'])) {
                     console.log('Widget element:', telegramWidget);
                     Swal.fire({
                         title: 'Widget Load Error',
-                        html: 'Telegram Login Widget failed to initialize. Ensure:<br>1. Domain is set in @BotFather (<code>https://cardxchk.onrender.com</code>).<br>2. CSP allows oauth.telegram.org.<br>3. Bot username is correct (@CARDXCHK_LOGBOT).',
+                        html: 'Telegram Login Widget failed to initialize. Ensure:<br>1. Domain is set in @BotFather (<code>https://cardxchk.onrender.com</code>).<br>2. CSP allows oauth.telegram.org.<br>3. Bot username is correct (@CARDXCHK_LOGBOT).<br>4. No ad blockers or browser restrictions.',
                         icon: 'error',
                         confirmButtonColor: '#6ab7d8'
                     });
