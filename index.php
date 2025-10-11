@@ -1,3 +1,46 @@
+<?php
+session_start();
+
+// Load environment variables
+require 'vendor/autoload.php';
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Check if user is authenticated
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    header('Location: login.php');
+    exit;
+}
+
+// Database connection (optional, for future result storage)
+try {
+    $dbUrl = parse_url($_ENV['DATABASE_URL']);
+    $pdo = new PDO(
+        "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
+        $dbUrl['user'],
+        $dbUrl['pass'],
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+
+    // Create results table if it doesn't exist (for future use)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS results (
+            id SERIAL PRIMARY KEY,
+            telegram_id BIGINT REFERENCES users(telegram_id),
+            card_number VARCHAR(19),
+            status VARCHAR(20),
+            response TEXT,
+            gateway VARCHAR(50),
+            checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    ");
+} catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    // Continue without database for now
+}
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,7 +123,7 @@
             border-radius: 14px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
             padding: 20px;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .card:hover {
             transform: scale(1.02);
@@ -117,7 +160,7 @@
             color: #ffca28;
             font-size: 1.6rem;
             padding: 10px;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1008;
         }
         .menu-toggle:hover {
@@ -135,7 +178,7 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1008;
         }
         .back-btn:hover {
@@ -151,7 +194,7 @@
             background: linear-gradient(135deg, rgba(227, 242, 253, 0.95), rgba(187, 222, 251, 0.95));
             backdrop-filter: blur(8px);
             box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother easing */
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1009;
             padding: 20px;
             display: flex;
@@ -171,7 +214,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
+            transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar-item:hover {
             background: rgba(79, 195, 247, 0.2);
@@ -196,9 +239,9 @@
             border: 2px solid #e1e5e9;
             border-radius: 10px;
             font-size: 15px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             background: white;
-            user-select: text; /* Allow text selection for input fields */
+            user-select: text;
         }
         .form-control:focus {
             outline: none;
@@ -218,7 +261,7 @@
             font-weight: 600;
             font-size: 15px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -260,7 +303,7 @@
             padding: 15px;
             border-radius: 10px;
             text-align: center;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .stat-item:hover {
             transform: scale(1.03);
@@ -303,7 +346,7 @@
             flex-direction: column;
             gap: 20px;
             transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother easing */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .result-column.show {
             transform: translateX(0);
@@ -341,7 +384,7 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            user-select: text; /* Allow text selection for result content */
+            user-select: text;
         }
         .result-content::-webkit-scrollbar {
             width: 6px;
@@ -361,7 +404,7 @@
             color: white;
             cursor: pointer;
             font-size: 14px;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .action-btn:hover {
             transform: scale(1.1);
@@ -394,40 +437,6 @@
             font-size: 14px;
             margin-top: 20px;
         }
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: inherit;
-            position: relative;
-            overflow: hidden;
-        }
-        .login-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(8px);
-            border-radius: 14px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-            padding: 30px;
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-            z-index: 1;
-        }
-        .login-card h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 15px;
-        }
-        .hidden {
-            display: none;
-        }
         @media (max-width: 768px) {
             .container { padding: 10px; }
             .header { flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -436,7 +445,6 @@
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
             .result-header { flex-direction: column; gap: 10px; align-items: flex-start; }
             .card { padding: 15px; }
-            .login-card { padding: 20px; }
             .sidebar { width: 250px; }
             .result-column { padding: 10px; }
             .result-content { max-height: 70vh; }
@@ -448,24 +456,8 @@
     <!-- Particle Animation -->
     <div class="particles" id="particles"></div>
 
-    <!-- Login Panel -->
-    <div class="login-container" id="loginContainer">
-        <div class="login-card">
-            <h2><i class="fas fa-lock"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Enter username" autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter password">
-            </div>
-            <button class="btn btn-primary login-btn" id="loginBtn">Login</button>
-        </div>
-    </div>
-
     <!-- Main Checker UI -->
-    <div class="container hidden" id="checkerContainer">
+    <div class="container" id="checkerContainer">
         <div class="header" id="header">
             <div class="title-box">
                 <h1><i class="fas fa-credit-card"></i>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h1>
@@ -480,6 +472,7 @@
             <div class="sidebar-item" data-view="charged"><i class="fas fa-bolt" style="color: #ffca28;"></i> Charged Cards</div>
             <div class="sidebar-item" data-view="approved"><i class="fas fa-check-circle" style="color: #2e7d32;"></i> Approved Cards</div>
             <div class="sidebar-item" data-view="declined"><i class="fas fa-times-circle" style="color: #d32f2f;"></i> Declined Cards</div>
+            <div class="sidebar-item" data-view="logout"><i class="fas fa-sign-out-alt" style="color: #d32f2f;"></i> Logout</div>
         </div>
 
         <!-- Input Section -->
@@ -557,7 +550,7 @@
         <div id="resultContent" class="result-content"></div>
     </div>
 
-    <footer class="hidden" id="footer">
+    <footer id="footer">
         <p><strong>© SINCE 2025 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - All rights reserved</strong></p>
     </footer>
 
@@ -578,10 +571,10 @@
             let declinedCards = JSON.parse(sessionStorage.getItem(`declinedCards-${sessionId}`) || '[]');
             let currentView = 'checkerhub';
 
-            // Particle Animation for both login and main pages
+            // Particle Animation
             function createParticles() {
                 const particlesContainer = $('#particles');
-                for (let i = 0; i < 20; i++) { // Reduced particles for performance
+                for (let i = 0; i < 20; i++) {
                     const particle = $('<div class="particle"></div>');
                     particle.css({
                         left: Math.random() * 100 + '%',
@@ -593,39 +586,6 @@
                 }
             }
             createParticles();
-
-            // Login Logic
-            const validUsername = 'user';
-            const validPassword = 'user';
-
-            function showCheckerUI() {
-                $('#loginContainer').addClass('hidden');
-                $('#checkerContainer').removeClass('hidden');
-                $('#footer').removeClass('hidden');
-                $('#resultColumn').addClass('hidden');
-            }
-
-            $('#loginBtn').click(function() {
-                const username = $('#username').val().trim();
-                const password = $('#password').val().trim();
-
-                if (username === validUsername && password === validPassword) {
-                    showCheckerUI();
-                } else {
-                    Swal.fire({
-                        title: 'Login Failed',
-                        text: 'Invalid username or password',
-                        icon: 'error',
-                        confirmButtonColor: '#f06292'
-                    });
-                }
-            });
-
-            $('#username, #password').keypress(function(e) {
-                if (e.which === 13) {
-                    $('#loginBtn').click();
-                }
-            });
 
             // Card validation and counter
             $('#cards').on('input', function() {
@@ -673,6 +633,16 @@
                 console.log('Click inside sidebar, preventing close');
             });
 
+            // Sidebar item clicks
+            $('.sidebar-item').click(function() {
+                const view = $(this).data('view');
+                if (view === 'logout') {
+                    window.location.href = 'login.php?action=logout';
+                } else {
+                    switchView(view);
+                }
+            });
+
             // Back button
             $('#backBtn').click(function(e) {
                 e.preventDefault();
@@ -685,7 +655,7 @@
                     $('#footer').removeClass('hidden');
                     console.log('Animation complete, switched to checkerhub');
                     switchView('checkerhub');
-                }, 300); // Match animation duration
+                }, 300);
             });
 
             // View switching
@@ -707,11 +677,6 @@
                     renderResult();
                 }
             }
-
-            $('.sidebar-item').click(function() {
-                const view = $(this).data('view');
-                switchView(view);
-            });
 
             function renderResult() {
                 const viewConfig = {
