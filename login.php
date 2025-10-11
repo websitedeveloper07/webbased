@@ -165,102 +165,85 @@ if (isset($_SESSION['user'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Sign in • Card X Chk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="/assets/branding/cardxchk-mark.png">
     <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.06);
+            --stroke: rgba(255, 255, 255, 0.12);
+        }
+        html, body {
+            height: 100%;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        }
         body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            min-height: 100vh;
-            overflow: hidden;
-            background: linear-gradient(135deg, #1a237e, #4a148c, #6a1b9a, #ab47bc);
-            background-size: 400% 400%;
-            animation: gradientFlow 15s ease infinite;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            background:
+                radial-gradient(1100px 700px at 8% -10%, rgba(255, 107, 107, 0.20), transparent 60%),
+                radial-gradient(900px 500px at 110% 110%, rgba(78, 205, 196, 0.16), transparent 60%),
+                linear-gradient(45deg, #fff5f5, #e6fffa);
+            color: #1a1a2e;
         }
-        @keyframes gradientFlow {
-            0% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
-            100% { background-position: 0% 0%; }
+        .glass {
+            backdrop-filter: blur(14px);
+            background: var(--glass);
+            border: 1px solid var(--stroke);
         }
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2), 0 0 60px rgba(171, 71, 188, 0.3);
-            padding: 40px;
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-            transform: scale(1);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(171, 71, 188, 0.5);
-        }
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            animation: glowPulse 8s infinite;
-            z-index: 0;
-        }
-        @keyframes glowPulse {
-            0% { transform: scale(0.5); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.2; }
-            100% { transform: scale(0.5); opacity: 0.5; }
-        }
-        .login-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.3), 0 0 80px rgba(171, 71, 188, 0.5);
-        }
-        .login-card h2 {
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: #1a237e;
-            margin-bottom: 15px;
-            text-shadow: 0 0 10px rgba(26, 35, 126, 0.7);
-            position: relative;
-            z-index: 1;
-        }
-        .login-card h2 i {
-            margin-right: 10px;
-            color: #ab47bc;
-        }
-        .login-card p {
-            font-size: 1.1rem;
-            color: #4a148c;
-            margin-bottom: 25px;
-            font-weight: 500;
-            text-shadow: 0 0 5px rgba(74, 20, 140, 0.3);
-            position: relative;
-            z-index: 1;
-        }
-        @media (max-width: 768px) {
-            .login-card {
-                max-width: 90%;
-                padding: 25px;
-            }
-            .login-card h2 { font-size: 2rem; }
+        .card {
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
         }
     </style>
 </head>
-<body>
-    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></canvas>
-    <div class="login-card">
-        <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
-        <p>Unlock the power of card checking</p>
-        <iframe src="https://oauth.telegram.org/embed/CARDXCHK_LOGBOT?origin=https%3A%2F%2Fcardxchk.onrender.com&return_to=https%3A%2F%2Fcardxchk.onrender.com%2Flogin.php&size=large" width="100%" height="50" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden;" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" allow="clipboard-read; clipboard-write; popups"></iframe>
-    </div>
+<body class="min-h-full">
+    <main class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-xl space-y-6">
+            <!-- Brand -->
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gray-100/60 border border-gray-200/50 grid place-items-center shadow-lg">
+                    <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl">
+                </div>
+                <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-gray-800">Card X Chk: Secure Sign-in</h1>
+            </div>
+
+            <!-- Sign-in Card -->
+            <div class="glass card rounded-3xl p-6">
+                <div class="flex flex-col items-center gap-4">
+                    <span class="text-sm text-gray-600">Sign in with Telegram</span>
+
+                    <!-- Telegram widget -->
+                    <div class="w-full flex justify-center">
+                        <div class="telegram-login-CARDXCHK_LOGBOT"></div>
+                        <script async src="https://telegram.org/js/telegram-widget.js?22"
+                                data-telegram-login="CARDXCHK_LOGBOT"
+                                data-size="large"
+                                data-auth-url="/login.php"
+                                data-request-access="write"
+                                onload="console.log('Telegram widget loaded')"
+                                onerror="console.error('Telegram widget failed to load')"></script>
+                    </div>
+
+                    <p class="text-[11px] text-gray-500 text-center">
+                        Telegram OAuth is secure. We do not get access to your account.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Legal + Powered by -->
+            <div class="text-center text-xs text-gray-500">
+                By continuing, you agree to our
+                <a class="text-teal-500 hover:underline" href="/legal/terms">Terms of Service</a> and
+                <a class="text-teal-500 hover:underline" href="/legal/privacy">Privacy Policy</a>.
+            </div>
+            <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
+                <span>Powered by</span>
+                <img src="/assets/branding/cardxchk-badge.png" alt="Card X Chk" class="h-5">
+            </div>
+        </div>
+    </main>
+    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></canvas>
     <script>
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
@@ -277,8 +260,8 @@ if (isset($_SESSION['user'])) {
                 this.size = Math.random() * 20 + 10;
                 this.speedX = Math.random() * 2 - 1;
                 this.speedY = Math.random() * 2 - 1;
-                this.color = ['#ab47bc', '#6a1b9a', '#4a148c'][Math.floor(Math.random() * 3)];
-                this.text = 'Card ✘ CHK';
+                this.color = ['#ff6b6b', '#4ecdc4', '#45b7d1'][Math.floor(Math.random() * 3)];
+                this.text = 'Card X Chk';
             }
             update() {
                 this.x += this.speedX;
@@ -318,35 +301,19 @@ if (isset($_SESSION['user'])) {
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            const iframe = document.querySelector('iframe[src*="oauth.telegram.org"]');
-            if (!iframe) {
-                console.error('Telegram OAuth iframe not loaded');
-                error_log('Telegram OAuth iframe not loaded in DOM');
+            const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
+            if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
+                console.error('Telegram widget not loaded');
+                error_log('Telegram widget not loaded in DOM');
                 Swal.fire({
                     title: 'Configuration Error',
-                    text: 'Telegram OAuth iframe failed to load. Check network or URL.',
+                    text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
                     icon: 'error',
-                    confirmButtonColor: '#ab47bc'
+                    confirmButtonColor: '#45b7d1'
                 });
-            } else {
-                iframe.onload = () => {
-                    console.log('Telegram OAuth iframe loaded');
-                    iframe.style.pointerEvents = 'auto'; // Ensure clickable
-                };
-                iframe.onerror = () => {
-                    console.error('Telegram OAuth iframe failed to load');
-                    error_log('Telegram OAuth iframe load error');
-                    Swal.fire({
-                        title: 'Load Error',
-                        text: 'Telegram OAuth iframe failed to load. Try refreshing the page or check Render CSP settings.',
-                        icon: 'error',
-                        confirmButtonColor: '#ab47bc'
-                    });
-                    // Fallback: Reload iframe
-                    setTimeout(() => {
-                        iframe.src = iframe.src; // Reload
-                    }, 1000);
-                };
+                setTimeout(() => {
+                    location.reload(); // Fallback reload
+                }, 2000);
             }
         });
     </script>
