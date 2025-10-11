@@ -1,15 +1,33 @@
 <?php
 session_start();
 
-// Load environment variables
-require 'vendor/autoload.php';
-use Dotenv\Dotenv;
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+// Load environment variables manually
+$envFile = __DIR__ . '/.env';
+$_ENV = [];
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments and invalid lines
+        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
+            continue;
+        }
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+    }
+} else {
+    error_log("Environment file (.env) not found in " . __DIR__);
+    die("Configuration error: .env file missing");
+}
 
 // Database connection
 try {
+    if (!isset($_ENV['DATABASE_URL'])) {
+        throw new Exception("DATABASE_URL not set in .env file");
+    }
     $dbUrl = parse_url($_ENV['DATABASE_URL']);
+    if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
+        throw new Exception("Invalid DATABASE_URL format");
+    }
     $pdo = new PDO(
         "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
         $dbUrl['user'],
@@ -27,7 +45,7 @@ try {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ");
-} catch (PDOException $e) {
+} catch (Exception $e) {
     error_log("Database connection failed: " . $e->getMessage());
     die("Database connection failed. Please try again later.");
 }
@@ -38,16 +56,22 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 
 // Telegram Bot Token
-$telegramBotToken = $_ENV['TELEGRAM_BOT_TOKEN'];
+$telegramBotToken = $_ENV['TELEGRAM_BOT_TOKEN'] ?? '';
+if (empty($telegramBotToken)) {
+    error_log("TELEGRAM_BOT_TOKEN not set in .env file");
+    die("Configuration error: Telegram bot token missing");
+}
 
 // Function to verify Telegram data
 function verifyTelegramData($data, $botToken) {
-    $checkHash = $data['hash'];
+    $checkHash = $data['hash'] ?? '';
     unset($data['hash']);
     ksort($data);
     $dataCheckString = '';
     foreach ($data as $key => $value) {
-        $dataCheckString .= "$key=$value\n";
+        if ($value !== '') {
+            $dataCheckString .= "$key=$value\n";
+        }
     }
     $dataCheckString = rtrim($dataCheckString, "\n");
     $secretKey = hash('sha256', $botToken, true);
@@ -151,7 +175,6 @@ if (isset($_SESSION['user'])) {
     header('Location: index.php');
     exit;
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -175,6 +198,7 @@ if (isset($_SESSION['user'])) {
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            position: relative;
         }
         .particles {
             position: fixed;
@@ -187,11 +211,12 @@ if (isset($_SESSION['user'])) {
         }
         .particle {
             position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-bottom: 10px solid rgba(255, 255, 255, 0.7);
+            width: auto;
+            height: auto;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             animation: floatDiagonal 15s infinite linear;
         }
         @keyframes floatDiagonal {
@@ -216,118 +241,110 @@ if (isset($_SESSION['user'])) {
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
             padding: 30px;
             width: 100%;
-            max-width: 360px;
+            max-width: 400px;
             text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        .login-card:hover {
+            transform: translateY(-5px);
         }
         .login-card h2 {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
             color: #333;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .login-card p {
+            font-size: 1rem;
+            color: #555;
             margin-bottom: 20px;
-        }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 15px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 15px;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn:hover {
-            transform: scale(1.05);
         }
         .btn-telegram {
             background: linear-gradient(45deg, #0088cc, #00bcd4);
             color: white;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-control {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e1e5e9;
+            padding: 14px;
             border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .form-control:focus {
-            outline: none;
-            border-color: #f06292;
-            box-shadow: 0 0 0 3px rgba(240, 98, 146, 0.1);
+        .btn-telegram:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
         }
-        .hidden {
-            display: none;
+        .telegram-icon {
+            font-size: 1.5rem;
         }
         @media (max-width: 768px) {
             .login-card {
-                padding: 20px;
                 max-width: 90%;
+                padding: 20px;
+            }
+            .login-card h2 {
+                font-size: 1.7rem;
+            }
+            .btn-telegram {
+                font-size: 1rem;
+                padding: 12px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Particle Animation -->
     <div class="particles" id="particles"></div>
+
+    <!-- Login Card -->
     <div class="login-card">
-        <h2><i class="fas fa-lock"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
-        <div class="form-group">
-            <button onclick="showTelegramInput()" class="btn btn-telegram">
-                <i class="fab fa-telegram-plane"></i> Sign up with Telegram
-            </button>
-        </div>
-        <div class="form-group hidden" id="telegramInput">
-            <input type="text" id="telegramPhone" class="form-control" placeholder="Enter Telegram phone number (e.g., +1234567890)">
-            <button onclick="sendTelegramAuth()" class="btn btn-telegram mt-2">Send Auth Request</button>
-        </div>
+        <h2><i class="fas fa-credit-card"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h2>
+        <p>Sign in to start checking cards</p>
+        <button class="btn-telegram" onclick="document.querySelector('.telegram-login-YourBotName').click()">
+            <i class="fab fa-telegram-plane telegram-icon"></i> Continue with Telegram
+        </button>
     </div>
 
     <script>
+        // Particle Animation with "Card ✘ CHK" text
         function createParticles() {
             const particlesContainer = document.getElementById('particles');
+            const texts = ['Card ✘ CHK', 'Card CHK', '✘ CHK'];
             for (let i = 0; i < 20; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
+                particle.textContent = texts[Math.floor(Math.random() * texts.length)];
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.animationDuration = Math.random() * 10 + 10 + 's';
                 particle.style.animationDelay = Math.random() * 5 + 's';
-                particle.style.borderBottomColor = ['#0288d1', '#4fc3f7', '#f06292'][Math.floor(Math.random() * 3)];
+                particle.style.color = ['#0288d1', '#4fc3f7', '#f06292'][Math.floor(Math.random() * 3)];
                 particlesContainer.appendChild(particle);
             }
         }
         createParticles();
 
-        function showTelegramInput() {
-            document.getElementById('telegramInput').classList.remove('hidden');
-        }
-
-        function sendTelegramAuth() {
-            const phone = document.getElementById('telegramPhone').value.trim();
-            if (!phone.match(/^\+\d{10,15}$/)) {
-                Swal.fire({
-                    title: 'Invalid Phone Number',
-                    text: 'Please enter a valid phone number starting with +',
-                    icon: 'error',
-                    confirmButtonColor: '#f06292'
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: 'Telegram Authentication',
-                text: 'Please check your Telegram app for an authentication request.',
-                icon: 'info',
-                confirmButtonColor: '#f06292'
-            });
-
-            // Telegram Login Widget will handle authentication
-        }
-
+        // Telegram Authentication Callback
         function onTelegramAuth(user) {
             const url = `login.php?telegram_auth=1&id=${user.id}&first_name=${encodeURIComponent(user.first_name)}&auth_date=${user.auth_date}&hash=${user.hash}`;
             window.location.href = url;
         }
+
+        // Error Handling for Telegram Widget
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!document.querySelector('.telegram-login-YourBotName')) {
+                Swal.fire({
+                    title: 'Configuration Error',
+                    text: 'Telegram Login Widget not loaded. Please check the bot configuration.',
+                    icon: 'error',
+                    confirmButtonColor: '#f06292'
+                });
+            }
+        });
     </script>
 </body>
 </html>
