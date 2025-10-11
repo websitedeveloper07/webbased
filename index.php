@@ -80,7 +80,7 @@
             border-radius: 14px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
             padding: 20px;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
         }
         .card:hover {
             transform: scale(1.02);
@@ -117,7 +117,7 @@
             color: #ffca28;
             font-size: 1.6rem;
             padding: 10px;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
             z-index: 1008;
         }
         .menu-toggle:hover {
@@ -135,7 +135,7 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
             z-index: 1008;
         }
         .back-btn:hover {
@@ -160,7 +160,6 @@
         }
         .sidebar.show {
             right: 0;
-            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Smoother animation */
         }
         .sidebar-item {
             padding: 15px;
@@ -172,7 +171,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            transition: background 0.2s ease;
+            transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
         }
         .sidebar-item:hover {
             background: rgba(79, 195, 247, 0.2);
@@ -197,7 +196,7 @@
             border: 2px solid #e1e5e9;
             border-radius: 10px;
             font-size: 15px;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
             background: white;
             user-select: text; /* Allow text selection for input fields */
         }
@@ -219,7 +218,7 @@
             font-weight: 600;
             font-size: 15px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -261,7 +260,7 @@
             padding: 15px;
             border-radius: 10px;
             text-align: center;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
         }
         .stat-item:hover {
             transform: scale(1.03);
@@ -308,13 +307,12 @@
         }
         .result-column.show {
             transform: translateX(0);
-            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Smoother animation */
         }
         .result-column.slide-out {
-            animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            transform: translateX(-100%);
         }
         .container.slide-in {
-            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            transform: translateX(0);
         }
         .result-header {
             display: flex;
@@ -363,7 +361,7 @@
             color: white;
             cursor: pointer;
             font-size: 14px;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transform */
         }
         .action-btn:hover {
             transform: scale(1.1);
@@ -497,7 +495,7 @@
                     <option value="gate/stripeauth.php">Stripe Auth</option>
                     <option value="gate/paypal1$.php">PayPal 1$</option>
                     <option value="gate/shopify1$.php">Shopify 1$</option>
-                    <option value="gate/razorpay.php" disabled>Razorpay (Coming Soon)</option>
+                    <option value="gate/razorpay0.10$.php">Razorpay 0.10$</option>
                 </select>
             </div>
             <div class="btn-group">
@@ -583,7 +581,7 @@
             // Particle Animation for both login and main pages
             function createParticles() {
                 const particlesContainer = $('#particles');
-                for (let i = 0; i < 30; i++) { // Reduced particles for performance
+                for (let i = 0; i < 20; i++) { // Reduced particles for performance
                     const particle = $('<div class="particle"></div>');
                     particle.css({
                         left: Math.random() * 100 + '%',
@@ -650,7 +648,7 @@
                 }
             });
 
-            // Sidebar toggle with swipe animation
+            // Sidebar toggle
             function toggleSidebar(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -675,10 +673,10 @@
                 console.log('Click inside sidebar, preventing close');
             });
 
-            // Back button with swipe animation
+            // Back button
             $('#backBtn').click(function(e) {
                 e.preventDefault();
-                console.log('Click detected on backBtn, switching to checkerhub with animation');
+                console.log('Click detected on backBtn, switching to checkerhub');
                 $('#resultColumn').addClass('slide-out');
                 $('#checkerContainer').removeClass('hidden').addClass('slide-in');
                 setTimeout(() => {
@@ -690,7 +688,7 @@
                 }, 300); // Match animation duration
             });
 
-            // View switching with swipe animation
+            // View switching
             function switchView(view) {
                 console.log(`Switching to view: ${view}`);
                 currentView = view;
@@ -1034,10 +1032,10 @@
             $('#gate').change(function() {
                 const selected = $(this).val();
                 console.log(`Gateway changed to: ${selected}`);
-                if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php') && !selected.includes('shopify1$.php')) {
+                if (!selected.includes('stripeauth.php') && !selected.includes('paypal1$.php') && !selected.includes('shopify1$.php') && !selected.includes('razorpay0.10$.php')) {
                     Swal.fire({
                         title: 'Gateway not implemented',
-                        text: 'Only Stripe Auth, PayPal 1$, and Shopify 1$ are currently available',
+                        text: 'Only Stripe Auth, PayPal 1$, Shopify 1$, and Razorpay 0.10$ are currently available',
                         icon: 'info',
                         confirmButtonColor: '#f06292'
                     });
