@@ -132,28 +132,156 @@ if (isset($_SESSION['user'])) {
     header('Location: ' . $baseUrl . '/index.php');
     exit;
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign in • Card X Chk</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in • Card X Chk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="/assets/branding/cardxchk-mark.png" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.06);
+            --stroke: rgba(255, 255, 255, 0.12);
+        }
+        html, body {
+            height: 100%;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        }
+        body {
+            background:
+                radial-gradient(1100px 700px at 8% -10%, rgba(255, 135, 135, 0.20), transparent 60%),
+                radial-gradient(900px 500px at 110% 110%, rgba(109, 211, 203, 0.16), transparent 60%),
+                linear-gradient(45deg, #f9ecec, #e0f6f5);
+            color: #1a1a2e;
+        }
+        .glass {
+            backdrop-filter: blur(14px);
+            background: var(--glass);
+            border: 1px solid var(--stroke);
+        }
+        .card {
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }
+    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-gray-100">
-<div class="p-6 bg-white rounded-3xl shadow-xl text-center">
-    <h1 class="text-2xl font-bold mb-4">Sign in with Telegram</h1>
-    <?php if (!empty($error)) echo "<p class='text-red-500 mb-3'>$error</p>"; ?>
-    <script async
-        src="https://telegram.org/js/telegram-widget.js?22"
-        data-telegram-login="<?= $telegramBotUsername ?>"
-        data-size="large"
-        data-userpic="true"
-        data-request-access="write"
-        data-auth-url="<?= $baseUrl ?>/login.php">
+<body class="min-h-full">
+    <main class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-xl space-y-6">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gray-100/60 border border-gray-200/50 grid place-items-center shadow-lg">
+                    <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
+                </div>
+                <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-gray-800">Card X Chk: Secure Sign-in</h1>
+            </div>
+
+            <div class="glass card rounded-3xl p-6">
+                <div class="flex flex-col items-center gap-4">
+                    <span class="text-sm text-gray-600">Sign in with Telegram</span>
+                    <?php if (!empty($error)) echo "<p class='text-red-500 mb-3'>$error</p>"; ?>
+                    <div class="w-full flex justify-center">
+                        <div class="telegram-login-CARDXCHK_LOGBOT"></div>
+                        <script async src="https://telegram.org/js/telegram-widget.js?22"
+                                data-telegram-login="CARDXCHK_LOGBOT"
+                                data-size="large"
+                                data-auth-url="<?= $baseUrl ?>/login.php"
+                                data-request-access="write"
+                                onload="console.log('Telegram widget loaded')"
+                                onerror="console.error('Telegram widget failed to load')"></script>
+                    </div>
+
+                    <p class="text-[11px] text-gray-500 text-center">
+                        Telegram OAuth is secure. We do not get access to your account.
+                    </p>
+                </div>
+            </div>
+
+            <div class="text-center text-xs text-gray-500">
+                𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒
+            </div>
+            <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
+                <span>Powered by kคli liຖนxx</span>
+            </div>
+        </div>
+    </main>
+    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></canvas>
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        const particleCount = 10;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 15 + 5;
+                this.speedX = Math.random() * 1.5 - 0.75;
+                this.speedY = Math.random() * 1.5 - 0.75;
+                this.color = ['#ff8787', '#6dd3cb', '#6ab7d8'][Math.floor(Math.random() * 3)];
+                this.text = '𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲';
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX * 0.8;
+                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY * 0.8;
+            }
+            draw() {
+                ctx.font = `${this.size}px Inter`;
+                ctx.fillStyle = this.color;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.text, this.x, this.y);
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
+            if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
+                console.error('Telegram widget not loaded');
+                error_log('Telegram widget not loaded in DOM');
+                Swal.fire({
+                    title: 'Configuration Error',
+                    text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
+                    icon: 'error',
+                    confirmButtonColor: '#6ab7d8'
+                });
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        });
     </script>
-</div>
 </body>
 </html>
