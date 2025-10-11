@@ -2,14 +2,21 @@
 ob_start();
 session_start();
 
+// Configuration
+$CONFIG = [
+    'DOMAIN' => $_ENV['DOMAIN'] ?? 'https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
+    'APP_NAME' => 'Card X Chk',
+    'BOT_USERNAME' => 'CARDXCHK_LOGBOT'
+];
+
 // Set CSP header to allow Telegram widget and dependencies
 header("Content-Security-Policy: default-src 'self'; script-src 'self' https://telegram.org https://cdn.jsdelivr.net; frame-src https://oauth.telegram.org; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.telegram.org; img-src 'self' data: https:;");
 
-// Hardcoded credentials (replace with your actual values or use .env)
-$databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
-$telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
+// Database and Telegram Bot configuration (prefer environment variables)
+$databaseUrl = $_ENV['DATABASE_URL'] ?? 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+$telegramBotToken = $_ENV['TELEGRAM_BOT_TOKEN'] ?? '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
 
-// Load .env fallback (optional)
+// Load .env fallback
 $envFile = __DIR__ . '/.env';
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -18,6 +25,7 @@ if (file_exists($envFile)) {
         list($key, $value) = explode('=', $line, 2);
         if (trim($key) === 'DATABASE_URL') $databaseUrl = trim($value);
         if (trim($key) === 'TELEGRAM_BOT_TOKEN') $telegramBotToken = trim($value);
+        if (trim($key) === 'DOMAIN') $CONFIG['DOMAIN'] = trim($value);
     }
 }
 
@@ -103,7 +111,7 @@ function checkTelegramAccess($telegramId, $botToken) {
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
-    header('Location: https://cardxchk.onrender.com/login.php');
+    header("Location: {$CONFIG['DOMAIN']}/login.php");
     ob_end_flush();
     exit;
 }
@@ -133,7 +141,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
             }
             $_SESSION['user'] = ['telegram_id' => $telegramId, 'name' => $telegramData['first_name'], 'auth_provider' => 'telegram'];
             error_log("Session set for user: " . json_encode($_SESSION['user']));
-            header('Location: https://cardxchk.onrender.com/index.php');
+            header("Location: {$CONFIG['DOMAIN']}/index.php");
             ob_end_flush();
             exit;
         } else {
@@ -149,7 +157,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
 // Redirect authenticated users
 if (isset($_SESSION['user'])) {
     error_log("Session exists, redirecting to index.php: " . json_encode($_SESSION['user']));
-    header('Location: https://cardxchk.onrender.com/index.php');
+    header("Location: {$CONFIG['DOMAIN']}/index.php");
     ob_end_flush();
     exit;
 }
@@ -159,7 +167,7 @@ if (isset($_SESSION['user'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in • Card X Chk</title>
+    <title>Sign in • <?php echo htmlspecialchars($CONFIG['APP_NAME']); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -193,43 +201,46 @@ if (isset($_SESSION['user'])) {
     </style>
 </head>
 <body class="min-h-full">
-    <main class="min-h-screen flex items-center justify-center p-6">
-        <div class="w-full max-w-xl space-y-6">
+    <main class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+        <div class="w-full max-w-md sm:max-w-lg space-y-8">
+            <!-- Header Section -->
             <div class="flex flex-col items-center text-center">
                 <div class="w-16 h-16 rounded-2xl bg-gray-100/60 border border-gray-200/50 grid place-items-center shadow-lg">
-                    <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
+                    <img src="/assets/branding/cardxchk-mark.png" alt="<?php echo htmlspecialchars($CONFIG['APP_NAME']); ?>" class="w-12 h-12 rounded-xl" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
                 </div>
-                <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-gray-800">Card X Chk: Secure Sign-in</h1>
+                <h1 class="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-800"><?php echo htmlspecialchars($CONFIG['APP_NAME']); ?>: Secure Sign-in</h1>
+                <p class="mt-2 text-sm text-gray-600">Sign in securely using your Telegram account</p>
             </div>
 
-            <div class="glass card rounded-3xl p-6">
-                <div class="flex flex-col items-center gap-4">
-                    <span class="text-sm text-gray-600">Sign in with Telegram</span>
-
+            <!-- Login Card -->
+            <div class="glass card rounded-3xl p-6 sm:p-8">
+                <div class="flex flex-col items-center gap-6">
+                    <span class="text-sm font-medium text-gray-600">Sign in with Telegram</span>
                     <div class="w-full flex justify-center">
-                        <div class="telegram-login-CARDXCHK_LOGBOT"></div>
+                        <div class="telegram-login-<?php echo htmlspecialchars($CONFIG['BOT_USERNAME']); ?>"></div>
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
-                                data-telegram-login="CARDXCHK_LOGBOT"
+                                data-telegram-login="<?php echo htmlspecialchars($CONFIG['BOT_USERNAME']); ?>"
                                 data-size="large"
-                                data-auth-url="https://cardxchk.onrender.com/login.php"
+                                data-auth-url="<?php echo htmlspecialchars($CONFIG['DOMAIN']); ?>/login.php"
                                 data-request-access="write"
-                                onload="console.log('Telegram widget script loaded'); document.querySelector('.telegram-login-CARDXCHK_LOGBOT').dataset.loaded = 'true';"
+                                onload="console.log('Telegram widget script loaded'); document.querySelector('.telegram-login-<?php echo htmlspecialchars($CONFIG['BOT_USERNAME']); ?>').dataset.loaded = 'true';"
                                 onerror="console.error('Failed to load Telegram widget script'); Swal.fire({title: 'Widget Load Error', text: 'Telegram widget script failed to load. Check network or bot settings.', icon: 'error', confirmButtonColor: '#6ab7d8'});"></script>
                     </div>
-
-                    <p class="text-[11px] text-gray-500 text-center">
-                        Telegram OAuth is secure. We do not get access to your account.
+                    <p class="text-xs text-gray-500 text-center max-w-xs">
+                        Telegram OAuth is secure. We do not access your Telegram account or personal data.
                     </p>
                 </div>
             </div>
 
-            <div class="text-center text-xs text-gray-500">
-                By continuing, you agree to our
-                <a class="text-teal-500 hover:underline" href="/legal/terms">Terms of Service</a> and
-                <a class="text-teal-500 hover:underline" href="/legal/privacy">Privacy Policy</a>.
-            </div>
-            <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
-                <span>Powered by</span>
+            <!-- Footer Links -->
+            <div class="text-center text-xs text-gray-500 space-y-2">
+                <p>By continuing, you agree to our</p>
+                <div class="flex justify-center gap-2">
+                    <a class="text-teal-500 hover:underline" href="/legal/terms">Terms of Service</a>
+                    <span>•</span>
+                    <a class="text-teal-500 hover:underline" href="/legal/privacy">Privacy Policy</a>
+                </div>
+                <p>Powered by <span class="font-medium"><?php echo htmlspecialchars($CONFIG['APP_NAME']); ?></span></p>
             </div>
         </div>
     </main>
@@ -293,13 +304,13 @@ if (isset($_SESSION['user'])) {
 
             // Enhanced widget debugging
             setTimeout(() => {
-                const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
+                const telegramWidget = document.querySelector('.telegram-login-<?php echo htmlspecialchars($CONFIG['BOT_USERNAME']); ?>');
                 if (!telegramWidget || !telegramWidget.querySelector('iframe') || telegramWidget.dataset.loaded !== 'true') {
                     console.error('Telegram widget failed to initialize - check CSP, domain, or bot settings');
                     console.log('Widget element:', telegramWidget);
                     Swal.fire({
                         title: 'Widget Load Error',
-                        html: 'Telegram Login Widget failed to initialize. Ensure:<br>1. Domain is set in @BotFather (<code>https://cardxchk.onrender.com</code>).<br>2. CSP allows oauth.telegram.org.<br>3. Bot username is correct (@CARDXCHK_LOGBOT).<br>4. No ad blockers or browser restrictions.',
+                        html: 'Telegram Login Widget failed to initialize. Ensure:<br>1. Domain is set in @BotFather (<code><?php echo htmlspecialchars($CONFIG['DOMAIN']); ?></code>).<br>2. CSP allows oauth.telegram.org.<br>3. Bot username is correct (@<?php echo htmlspecialchars($CONFIG['BOT_USERNAME']); ?>).<br>4. No ad blockers or browser restrictions.',
                         icon: 'error',
                         confirmButtonColor: '#6ab7d8'
                     });
