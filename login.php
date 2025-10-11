@@ -84,7 +84,7 @@ function checkTelegramAccess($telegramId, $botToken) {
     $url = "https://api.telegram.org/bot$botToken/getChat?chat_id=$telegramId";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Add timeout to prevent hanging
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     $response = curl_exec($ch);
     $curl_error = curl_error($ch);
@@ -137,8 +137,8 @@ if (isset($_GET['telegram_auth'])) {
             $sessionId = bin2hex(random_bytes(16));
             setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
             $_SESSION['session_id'] = $sessionId;
-            error_log("Redirecting to index.php for user: telegram_id=$telegramId");
-            header('Location: index.php');
+            error_log("Attempting redirect to index.php for user: telegram_id=$telegramId");
+            header('Location: /index.php'); // Absolute path to ensure redirect
             ob_end_flush();
             exit;
         } else {
@@ -163,7 +163,7 @@ if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
                 setcookie('session_id', '', time() - 3600, '/', '', true, true);
             } else {
                 $_SESSION['user'] = ['telegram_id' => $user['telegram_id'], 'name' => $user['name'], 'auth_provider' => $user['auth_provider']];
-                header('Location: index.php');
+                header('Location: /index.php');
                 exit;
             }
         }
@@ -171,7 +171,7 @@ if (isset($_COOKIE['session_id']) && !isset($_SESSION['user'])) {
 }
 
 if (isset($_SESSION['user'])) {
-    header('Location: index.php');
+    header('Location: /index.php');
     exit;
 }
 ?>
@@ -250,7 +250,6 @@ if (isset($_SESSION['user'])) {
             </div>
             <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
                 <span>Powered by</span>
-                <!-- Removed cardxchk-badge.png as requested -->
             </div>
         </div>
     </main>
