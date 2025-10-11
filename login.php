@@ -30,31 +30,29 @@ try {
     $user = $dbUrl['user'];
     $pass = $dbUrl['pass'];
 
-    try {
-        $pdo = new PDO(
-            "pgsql:host=$host;port=$port;dbname=$dbname",
-            $user,
-            $pass,
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-        );
-        error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
-    } catch (PDOException $e) {
-        error_log("Non-SSL connection failed: " . $e->getMessage() . " | Attempting SSL");
-        $pdo = new PDO(
-            "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
-            $user,
-            $pass,
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-        );
-        error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
-    }
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-    error_log("Users table ready");
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname",
+        $user,
+        $pass,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+    );
+    error_log("Database connected without SSL: host=$host, port=$port, dbname=$dbname");
+} catch (PDOException $e) {
+    error_log("Non-SSL connection failed: " . $e->getMessage() . " | Attempting SSL");
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
+        $user,
+        $pass,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+    );
+    error_log("Database connected with SSL: host=$host, port=$port, dbname=$dbname");
 } catch (Exception $e) {
     error_log("Database connection failed: " . $e->getMessage() . " | Host: $host | Port: $port | URL: $databaseUrl");
     die("Database connection failed. Please try again later.");
 }
+
+$pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, telegram_id BIGINT UNIQUE, name VARCHAR(255), auth_provider VARCHAR(20) NOT NULL CHECK (auth_provider = 'telegram'), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+error_log("Users table ready");
 
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -76,7 +74,9 @@ function verifyTelegramData($data, $botToken) {
     $dataCheckString = rtrim($dataCheckString, "\n");
     $secretKey = hash('sha256', $botToken, true);
     $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
-    return hash_equals($hash, $checkHash);
+    $result = hash_equals($hash, $checkHash);
+    error_log("Telegram data verification: " . ($result ? "Success" : "Failed") . " for data: " . json_encode($data));
+    return $result;
 }
 
 function checkTelegramAccess($telegramId, $botToken) {
@@ -89,11 +89,13 @@ function checkTelegramAccess($telegramId, $botToken) {
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     if ($curl_error) {
-        error_log("Telegram API error: $curl_error (HTTP $http_code)");
+        error_log("Telegram API error: $curl_error (HTTP $http_code) for chat_id $telegramId");
         return false;
     }
     $result = json_decode($response, true);
-    return isset($result['ok']) && $result['ok'] === true;
+    $success = isset($result['ok']) && $result['ok'] === true;
+    error_log("Telegram access check: " . ($success ? "Success" : "Failed") . " for chat_id $telegramId");
+    return $success;
 }
 
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
@@ -105,7 +107,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
 }
 
 if (isset($_GET['telegram_auth'])) {
-    $telegramData = ['id' => $_GET['id'] ?? '', 'first_name' => $_GET['first_name'] ?? '', 'auth_date' => $_GET['auth_date'] ?? '', 'hash' => $_GET['hash'] ?? ''];
+    $telegramData = [
+        'id' => $_GET['id'] ?? '',
+        'first_name' => $_GET['first_name'] ?? '',
+        'auth_date' => $_GET['auth_date'] ?? '',
+        'hash' => $_GET['hash'] ?? ''
+    ];
     error_log("Received Telegram OAuth data: " . json_encode($telegramData));
     if (verifyTelegramData($telegramData, $telegramBotToken)) {
         $telegramId = $telegramData['id'];
@@ -123,7 +130,7 @@ if (isset($_GET['telegram_auth'])) {
             $sessionId = bin2hex(random_bytes(16));
             setcookie('session_id', $sessionId, time() + 30 * 24 * 3600, '/', '', true, true);
             $_SESSION['session_id'] = $sessionId;
-            error_log("Session set for user: telegram_id=$telegramId");
+            error_log("Session set for user: telegram_id=$telegramId, redirecting to index.php");
             header('Location: index.php');
             exit;
         } else {
@@ -200,7 +207,6 @@ if (isset($_SESSION['user'])) {
 <body class="min-h-full">
     <main class="min-h-screen flex items-center justify-center p-6">
         <div class="w-full max-w-xl space-y-6">
-            <!-- Brand -->
             <div class="flex flex-col items-center text-center">
                 <div class="w-16 h-16 rounded-2xl bg-gray-100/60 border border-gray-200/50 grid place-items-center shadow-lg">
                     <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-12 h-12 rounded-xl">
@@ -208,12 +214,10 @@ if (isset($_SESSION['user'])) {
                 <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-gray-800">Card X Chk: Secure Sign-in</h1>
             </div>
 
-            <!-- Sign-in Card -->
             <div class="glass card rounded-3xl p-6">
                 <div class="flex flex-col items-center gap-4">
                     <span class="text-sm text-gray-600">Sign in with Telegram</span>
 
-                    <!-- Telegram widget -->
                     <div class="w-full flex justify-center">
                         <div class="telegram-login-CARDXCHK_LOGBOT"></div>
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
@@ -231,7 +235,6 @@ if (isset($_SESSION['user'])) {
                 </div>
             </div>
 
-            <!-- Legal + Powered by -->
             <div class="text-center text-xs text-gray-500">
                 By continuing, you agree to our
                 <a class="text-teal-500 hover:underline" href="/legal/terms">Terms of Service</a> and
@@ -251,23 +254,23 @@ if (isset($_SESSION['user'])) {
         canvas.height = window.innerHeight;
 
         let particles = [];
-        const particleCount = 10; // Reduced for less density
+        const particleCount = 10;
 
         class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 15 + 5; // Smaller size for subtlety
-                this.speedX = Math.random() * 1.5 - 0.75; // Slower horizontal speed
-                this.speedY = Math.random() * 1.5 - 0.75; // Slower vertical speed
+                this.size = Math.random() * 15 + 5;
+                this.speedX = Math.random() * 1.5 - 0.75;
+                this.speedY = Math.random() * 1.5 - 0.75;
                 this.color = ['#ff8787', '#6dd3cb', '#6ab7d8'][Math.floor(Math.random() * 3)];
                 this.text = '𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲';
             }
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
-                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX * 0.8; // Dampened bounce
-                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY * 0.8; // Dampened bounce
+                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX * 0.8;
+                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY * 0.8;
             }
             draw() {
                 ctx.font = `${this.size}px Inter`;
@@ -312,7 +315,7 @@ if (isset($_SESSION['user'])) {
                     confirmButtonColor: '#6ab7d8'
                 });
                 setTimeout(() => {
-                    location.reload(); // Fallback reload
+                    location.reload();
                 }, 2000);
             }
         });
