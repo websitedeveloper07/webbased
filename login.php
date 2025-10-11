@@ -1,10 +1,9 @@
 <?php
-ob_start();
-session_start();
-
-// Adjust session timeout to ensure persistence
+// Configure session settings before starting the session
 ini_set('session.gc_maxlifetime', 3600);
 ini_set('session.cookie_lifetime', 3600);
+ob_start();
+session_start();
 
 // Hardcoded credentials
 $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
