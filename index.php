@@ -164,6 +164,9 @@ try {
             <div class="sidebar-item flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-200/50 text-indigo-900 font-medium" data-view="ccn">
                 <i class="fas fa-exclamation-circle text-orange-500"></i> CCN Cards
             </div>
+            <div class="sidebar-item flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-200/50 text-indigo-900 font-medium" data-view="threeDS">
+                <i class="fas fa-lock text-teal-500"></i> 3DS Cards
+            </div>
             <div class="sidebar-item flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-200/50 text-indigo-900 font-medium" data-view="declined">
                 <i class="fas fa-times-circle text-red-500"></i> Declined Cards
             </div>
@@ -200,7 +203,7 @@ try {
         </div>
 
         <div class="card glass p-6">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
                 <div class="stat-item bg-gradient-to-br from-blue-600 to-blue-400 text-white p-4 rounded-lg text-center">
                     <div class="text-xs opacity-90">Total</div>
                     <div class="text-xl font-bold carregadas">0</div>
@@ -217,11 +220,15 @@ try {
                     <div class="text-xs opacity-90">CCN</div>
                     <div class="text-xl font-bold ccn">0</div>
                 </div>
+                <div class="stat-item bg-gradient-to-br from-teal-600 to-cyan-400 text-white p-4 rounded-lg text-center">
+                    <div class="text-xs opacity-90">3DS</div>
+                    <div class="text-xl font-bold threeDS">0</div>
+                </div>
                 <div class="stat-item bg-gradient-to-br from-red-600 to-red-400 text-white p-4 rounded-lg text-center">
                     <div class="text-xs opacity-90">DEAD|DECLINED</div>
                     <div class="text-xl font-bold reprovadas">0</div>
                 </div>
-                <div class="stat-item bg-gradient-to-br from-purple-600 to-purple-400 text-white p-4 rounded-lg text-center md:col-span-5">
+                <div class="stat-item bg-gradient-to-br from-purple-600 to-purple-400 text-white p-4 rounded-lg text-center md:col-span-6">
                     <div class="text-xs opacity-90">CHECKED</div>
                     <div class="text-xl font-bold checked">0 / 0</div>
                 </div>
@@ -274,6 +281,7 @@ try {
                 let chargedCards = JSON.parse(sessionStorage.getItem(`chargedCards-${sessionId}`) || '[]');
                 let approvedCards = JSON.parse(sessionStorage.getItem(`approvedCards-${sessionId}`) || '[]');
                 let ccnCards = JSON.parse(sessionStorage.getItem(`ccnCards-${sessionId}`) || '[]');
+                let threeDSCards = JSON.parse(sessionStorage.getItem(`threeDSCards-${sessionId}`) || '[]');
                 let declinedCards = JSON.parse(sessionStorage.getItem(`declinedCards-${sessionId}`) || '[]');
                 let currentView = 'checkerhub';
 
@@ -354,15 +362,18 @@ try {
                         $('.charged').text('0');
                         $('.approved').text('0');
                         $('.ccn').text('0');
+                        $('.threeDS').text('0');
                         $('.reprovadas').text('0');
                         $('.checked').text('0 / 0');
                         chargedCards = [];
                         approvedCards = [];
                         ccnCards = [];
+                        threeDSCards = [];
                         declinedCards = [];
                         sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
                         sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                         sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+                        sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
                         sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         $('#resultColumn').addClass('hidden');
                     }
@@ -441,6 +452,7 @@ try {
                         charged: { title: 'Charged Cards', icon: 'fa-bolt', color: '#f59e0b', data: chargedCards, clearable: true },
                         approved: { title: 'Approved Cards', icon: 'fa-check-circle', color: '#10b981', data: approvedCards, clearable: false },
                         ccn: { title: 'CCN Cards', icon: 'fa-exclamation-circle', color: '#f97316', data: ccnCards, clearable: true },
+                        threeDS: { title: '3DS Cards', icon: 'fa-lock', color: '#14b8a6', data: threeDSCards, clearable: true },
                         declined: { title: 'Declined Cards', icon: 'fa-times-circle', color: '#ef4444', data: declinedCards, clearable: true }
                     };
                     const config = viewConfig[currentView];
@@ -462,6 +474,7 @@ try {
                         charged: { title: 'Charged cards', data: chargedCards },
                         approved: { title: 'Approved cards', data: approvedCards },
                         ccn: { title: 'CCN cards', data: ccnCards },
+                        threeDS: { title: '3DS cards', data: threeDSCards },
                         declined: { title: 'Declined cards', data: declinedCards }
                     };
                     const config = viewConfig[currentView];
@@ -492,6 +505,7 @@ try {
                     const viewConfig = {
                         charged: { title: 'Charged cards', data: chargedCards, counter: '.charged' },
                         ccn: { title: 'CCN cards', data: ccnCards, counter: '.ccn' },
+                        threeDS: { title: '3DS cards', data: threeDSCards, counter: '.threeDS' },
                         declined: { title: 'Declined cards', data: declinedCards, counter: '.reprovadas' }
                     };
                     const config = viewConfig[currentView];
@@ -507,7 +521,7 @@ try {
                             config.data.length = 0;
                             sessionStorage.setItem(`${currentView}Cards-${sessionId}`, JSON.stringify(config.data));
                             $(config.counter).text('0');
-                            $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + declinedCards.length} / ${totalCards}`);
+                            $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
                             renderResult();
                             Swal.fire('Cleared!', '', 'success');
                         }
@@ -541,6 +555,7 @@ try {
                                 if (response.includes('CHARGED')) status = 'CHARGED';
                                 else if (response.includes('APPROVED')) status = 'APPROVED';
                                 else if (response.includes('CCN')) status = 'CCN';
+                                else if (response.includes('3D_AUTHENTICATION')) status = '3DS';
                                 resolve({
                                     status: status,
                                     response: response.trim(),
@@ -581,7 +596,8 @@ try {
                     const lines = cardText.split('\n').filter(line => line.trim());
                     const validCards = lines
                         .map(line => line.trim())
-                        .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+                        .filter(line => /^\d{13,19pieza
+19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                         .map(line => {
                             const [number, exp_month, exp_year, cvc] = line.split('|');
                             return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
@@ -616,15 +632,18 @@ try {
                     chargedCards = [];
                     approvedCards = [];
                     ccnCards = [];
+                    threeDSCards = [];
                     declinedCards = [];
                     sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
                     sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                     sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+                    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
                     sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                     $('.carregadas').text(totalCards);
                     $('.charged').text('0');
                     $('.approved').text('0');
                     $('.ccn').text('0');
+                    $('.threeDS').text('0');
                     $('.reprovadas').text('0');
                     $('.checked').text(`0 / ${totalCards}`);
                     $('#startBtn').prop('disabled', true);
@@ -661,19 +680,23 @@ try {
                                     ccnCards.push(cardEntry);
                                     sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
                                     $('.ccn').text(ccnCards.length);
+                                } else if (result.status === '3DS') {
+                                    threeDSCards.push(cardEntry);
+                                    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                                    $('.threeDS').text(threeDSCards.length);
                                 } else {
                                     declinedCards.push(cardEntry);
                                     sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                                     $('.reprovadas').text(declinedCards.length);
                                 }
 
-                                $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + declinedCards.length} / ${totalCards}`);
+                                $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
 
                                 if (currentView === result.status.toLowerCase()) {
                                     renderResult();
                                 }
 
-                                if (chargedCards.length + approvedCards.length + ccnCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                                if (chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
                                     finishProcessing();
                                 }
                             });
@@ -717,7 +740,7 @@ try {
                     abortControllers.forEach(controller => controller.abort());
                     abortControllers = [];
                     activeRequests = 0;
-                    $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + declinedCards.length} / ${totalCards}`);
+                    $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
                     $('#startBtn').prop('disabled', false);
                     $('#stopBtn').prop('disabled', true);
                     $('#loader').hide();
