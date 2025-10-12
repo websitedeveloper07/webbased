@@ -1,11 +1,71 @@
 <?php
 session_start();
+
+// Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
+// Log session state
+error_log("Checking session in index.php: " . json_encode($_SESSION));
+
+// Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
     header('Location: https://cardxchk.onrender.com/login.php');
     exit;
+}
+
+// Load environment variables manually
+$envFile = __DIR__ . '/.env';
+$_ENV = [];
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
+            continue;
+        }
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+    }
+} else {
+    error_log("Environment file (.env) not found in " . __DIR__);
+}
+
+// Database connection (optional, for future result storage)
+try {
+    if (!isset($_ENV['DATABASE_URL'])) {
+        error_log("DATABASE_URL not set in .env file");
+    } else {
+        $dbUrl = parse_url($_ENV['DATABASE_URL']);
+        if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
+            throw new Exception("Invalid DATABASE_URL format");
+        }
+        $pdo = new PDO(
+            "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
+            $dbUrl['user'],
+            $dbUrl['pass'],
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+        error_log("Database connected in index.php");
+
+        // Create results table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS results (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT REFERENCES users(telegram_id),
+                card_number VARCHAR(19),
+                status VARCHAR(20),
+                response TEXT,
+                gateway VARCHAR(50),
+                checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        error_log("Results table ready");
+    }
+} catch (Exception $e) {
+    error_log("Database connection failed in index.php: " . $e->getMessage());
+    // Continue without DB connection (non-fatal)
 }
 ?>
 <!DOCTYPE html>
@@ -15,7 +75,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CardXCHK Checker</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -25,6 +84,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
             --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
             --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
+            --success-green: #22c55e; --declined-red: #ef4444;
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -32,7 +92,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
-            color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
+            color: var(--text-primary); min-height: 100vh;
         }
         .blur-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -101,9 +161,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             position: fixed; left: 0; top: 70px; bottom: 0; width: 260px;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
             padding: 2rem 0; z-index: 999; overflow-y: auto;
-            transform: translateX(0); transition: transform 0.3s ease;
         }
-        .sidebar.closed { transform: translateX(-100%); }
         .sidebar-menu { list-style: none; }
         .sidebar-item { margin: 0.5rem 1rem; }
         .sidebar-link {
@@ -124,9 +182,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
         .main-content {
             margin-left: 260px; margin-top: 70px; padding: 2rem;
             min-height: calc(100vh - 70px); position: relative; z-index: 1;
-            transition: margin-left 0.3s ease;
         }
-        .main-content.sidebar-closed { margin-left: 0; }
         .page-section { display: none; }
         .page-section.active { display: block; }
         .page-title {
@@ -218,13 +274,10 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             color: white;
         }
         .btn-primary:hover { transform: translateY(-3px); }
-        .btn-primary:disabled { background: rgba(59,130,246,0.5); cursor: not-allowed; }
         .btn-secondary {
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
-        .btn-secondary:hover { transform: translateY(-2px); }
-        .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 24px; padding: 2.5rem; margin-bottom: 2rem;
@@ -335,35 +388,31 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             background: rgba(255,255,255,0.05); color: var(--text-primary);
             font-weight: 600; cursor: pointer;
         }
-        .loader {
-            border: 4px solid #f3f3f3; border-top: 4px solid #ec4899;
-            border-radius: 50%; width: 40px; height: 40px;
-            animation: spin 1s linear infinite; margin: 20px auto; display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #statusLog { margin-top: 1rem; color: var(--text-secondary); text-align: center; }
-
         @media (max-width: 768px) {
-            .sidebar { width: 200px; }
-            .main-content { margin-left: 0; padding: 1rem; }
-            .main-content.sidebar-open { margin-left: 200px; }
-            .navbar { padding: 1rem; }
-            .page-title { font-size: 1.5rem; }
-            .checker-section { padding: 1.5rem; }
-            .card-textarea { min-height: 150px; }
-            .btn { padding: 0.7rem 1.5rem; min-width: 100px; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-            .stat-card { padding: 1rem; }
-            .stat-value { font-size: 1.8rem; }
-            .results-section { padding: 1.5rem; }
-            .moving-logo { font-size: 3rem; }
+            .sidebar {
+                transform: translateX(-100%); transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0; padding: 1rem; transition: margin-left 0.3s ease;
+            }
+            .main-content.sidebar-open {
+                margin-left: 260px;
+            }
+            .moving-logo { font-size: 4rem; }
             .moving-logo.in-position { font-size: 1.25rem; left: 1rem; }
-            .action-buttons { flex-direction: column; }
-            .action-buttons .btn { width: 100%; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+            .stat-card { padding: 1.25rem; }
+            .stat-value { font-size: 2rem; }
+            .action-buttons { justify-content: center; }
+            .btn { min-width: 120px; padding: 0.8rem 1.5rem; }
+            .gateway-options { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body data-theme="dark">
+<body data-theme="light">
     <div class="blur-overlay" id="blurOverlay"></div>
     <i class="fas fa-credit-card moving-logo" id="movingLogo"></i>
 
@@ -374,7 +423,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
         </div>
         <div class="navbar-actions">
             <div class="theme-toggle" onclick="toggleTheme()">
-                <div class="theme-toggle-slider"><i class="fas fa-moon"></i></div>
+                <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
             </div>
             <div class="user-info">
                 <div class="user-avatar">
@@ -385,6 +434,9 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             <button class="nav-btn primary">
                 <i class="fas fa-crown"></i><span>10 Days Left</span>
             </button>
+            <div class="menu-toggle cursor-pointer text-white text-2xl p-2 hover:scale-110 transition-transform" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </div>
         </div>
     </nav>
 
@@ -418,33 +470,50 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
                     <div class="stat-value carregadas">0</div>
-                    <div class="stat-label">Total Checked</div>
-                </div>
-                <div class="stat-card approved">
-                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="stat-value approved">0</div>
-                    <div class="stat-label">Approved</div>
+                    <div class="stat-label">Total</div>
                 </div>
                 <div class="stat-card charged">
                     <div class="stat-icon"><i class="fas fa-bolt"></i></div>
                     <div class="stat-value charged">0</div>
-                    <div class="stat-label">Charged</div>
+                    <div class="stat-label">Hit|Charged</div>
+                </div>
+                <div class="stat-card approved">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-value approved">0</div>
+                    <div class="stat-label">Live|Approved</div>
+                </div>
+                <div class="stat-card ccn">
+                    <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <div class="stat-value ccn">0</div>
+                    <div class="stat-label">CCN</div>
+                </div>
+                <div class="stat-card threeDS">
+                    <div class="stat-icon"><i class="fas fa-lock"></i></div>
+                    <div class="stat-value threeDS">0</div>
+                    <div class="stat-label">3DS</div>
                 </div>
                 <div class="stat-card declined">
                     <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
-                    <div class="stat-value declined">0</div>
-                    <div class="stat-label">Declined</div>
+                    <div class="stat-value reprovadas">0</div>
+                    <div class="stat-label">Dead|Declined</div>
+                </div>
+                <div class="stat-card checked">
+                    <div class="stat-icon"><i class="fas fa-check-double"></i></div>
+                    <div class="stat-value checked">0 / 0</div>
+                    <div class="stat-label">Checked</div>
                 </div>
             </div>
 
-            <div class="results-section">
+            <div class="results-section" id="homeResults" style="display: none;">
                 <div class="results-header">
                     <div class="results-title">
                         <i class="fas fa-list-check"></i> Recent Results
                     </div>
                     <div class="results-filters">
                         <button class="filter-btn active" onclick="filterResults('all')">All</button>
+                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
                         <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
+                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
                         <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
                     </div>
                 </div>
@@ -473,8 +542,8 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                 <div class="input-section">
                     <div class="input-header">
                         <label class="input-label">Enter Card Details</label>
-                        <span class="card-count" id="cardCount" style="color: var(--text-secondary);">
-                            <i class="fas fa-list"></i> 0 cards
+                        <span class="card-count" id="cardCount">
+                            <i class="fas fa-list"></i> 0 valid cards detected
                         </span>
                     </div>
                     <textarea id="cardInput" class="card-textarea" 
@@ -482,10 +551,10 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                 </div>
 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" id="startCheckBtn">
+                    <button class="btn btn-primary" id="startBtn">
                         <i class="fas fa-play"></i> Start Check
                     </button>
-                    <button class="btn btn-secondary" id="stopCheckBtn" disabled>
+                    <button class="btn btn-secondary" id="stopBtn" disabled>
                         <i class="fas fa-stop"></i> Stop
                     </button>
                     <button class="btn btn-secondary" id="clearBtn">
@@ -496,7 +565,27 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                     </button>
                 </div>
                 <div class="loader" id="loader"></div>
-                <div id="statusLog"></div>
+                <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-list-check"></i> Recent Results
+                    </div>
+                    <div class="results-filters">
+                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
+                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
+                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
+                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
+                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
+                    </div>
+                </div>
+                <div id="resultsList" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Results Yet</h3>
+                    <p>Start checking cards to see results here</p>
+                </div>
             </div>
         </section>
     </main>
@@ -521,40 +610,30 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                         <input type="radio" name="gateway" value="gate/stripe1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
+                                <i class="fab fa-stripe"></i> Stripe 1$
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Payment processing with charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/braintree1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Braintree
-                                <span class="gateway-badge badge-charge">Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">PayPal owned payment gateway</div>
+                            <div class="gateway-option-desc">Payment processing with $1 charge</div>
                         </div>
                     </label>
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/paypal1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
+                                <i class="fab fa-paypal"></i> PayPal 1$
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Popular online payment system</div>
+                            <div class="gateway-option-desc">Popular online payment system with $1 charge</div>
                         </div>
                     </label>
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/shopify1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
+                                <i class="fab fa-shopify"></i> Shopify 1$
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
+                            <div class="gateway-option-desc">E-commerce payment processing with $1 charge</div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -562,20 +641,10 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:20px; height:20px; object-fit:contain;"> Razorpay
+                                    style="width:20px; height:20px; object-fit:contain;"> Razorpay 0.10$
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Indian payment gateway</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/payu1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-wallet"></i> PayU
-                                <span class="gateway-badge badge-charge">Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Global payment service provider</div>
+                            <div class="gateway-option-desc">Indian payment gateway with 0.10$ charge</div>
                         </div>
                     </label>
                 </div>
@@ -587,23 +656,13 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                 </div>
                 <div class="gateway-options">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripeauth.php" checked>
+                        <input type="radio" name="gateway" value="gate/stripeauth.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
+                                <i class="fab fa-stripe"></i> Stripe Auth
                                 <span class="gateway-badge badge-auth">Auth</span>
                             </div>
                             <div class="gateway-option-desc">Authorization only, no charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/braintreeauth.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Braintree
-                                <span class="gateway-badge badge-auth">Auth</span>
-                            </div>
-                            <div class="gateway-option-desc">Card verification without charge</div>
                         </div>
                     </label>
                 </div>
@@ -632,9 +691,11 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
         let totalCards = 0;
         let chargedCards = [];
         let approvedCards = [];
+        let ccnCards = [];
+        let threeDSCards = [];
         let declinedCards = [];
         let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        let sidebarOpen = true;
+        let sidebarOpen = false;
 
         window.addEventListener('load', function() {
             const movingLogo = document.getElementById('movingLogo');
@@ -656,15 +717,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                     }, 400);
                 }, 1200);
             }, 800);
-
-            // Sidebar toggle for mobile
-            document.querySelector('.navbar-brand').addEventListener('click', function(e) {
-                e.preventDefault();
-                sidebarOpen = !sidebarOpen;
-                document.getElementById('sidebar').classList.toggle('closed', !sidebarOpen);
-                document.querySelector('.main-content').classList.toggle('sidebar-closed', !sidebarOpen);
-                document.getElementById('sidebar').classList.toggle('sidebar-open', sidebarOpen);
-            });
         });
 
         function toggleTheme() {
@@ -685,7 +737,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             document.getElementById('page-' + pageName).classList.add('active');
             document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
             event.target.closest('.sidebar-link').classList.add('active');
-            if (pageName === 'home') renderResult();
         }
 
         function openGatewaySettings() {
@@ -723,30 +774,33 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             if (cardInput && cardCount) {
                 const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
                 const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
-                cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} cards`;
+                cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected (max 1000)`;
             }
         }
 
-        function updateStats(total, approved, charged, declined) {
+        function updateStats(total, charged, approved, ccn, threeDS, declined) {
             document.querySelector('.carregadas').textContent = total;
-            document.querySelector('.approved').textContent = approved;
             document.querySelector('.charged').textContent = charged;
-            document.querySelector('.declined').textContent = declined;
+            document.querySelector('.approved').textContent = approved;
+            document.querySelector('.ccn').textContent = ccn;
+            document.querySelector('.threeDS').textContent = threeDS;
+            document.querySelector('.reprovadas').textContent = declined;
+            document.querySelector('.checked').textContent = `${charged + approved + ccn + threeDS + declined} / ${total}`;
         }
 
         function addResult(card, status, response) {
             const resultsList = document.getElementById('resultsList');
             const cardClass = status.toLowerCase();
-            const icon = status === 'Approved' || status === 'Charged' ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const color = status === 'Approved' ? 'var(--accent-cyan)' : status === 'Charged' ? 'var(--warning)' : 'var(--error)';
+            const icon = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? '--success-green' : '--declined-red';
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: var(${color});">
                     <i class="${icon}"></i>
                 </div>
                 <div class="stat-value">${card.displayCard}</div>
-                <div class="stat-label" style="color: ${color};">${status} - ${response}</div>
+                <div class="stat-label" style="color: var(${color});">${status} - ${response}</div>
             `;
             resultsList.insertBefore(resultDiv, resultsList.firstChild);
             if (resultsList.classList.contains('empty-state')) {
@@ -756,11 +810,11 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
         }
 
         function filterResults(filter) {
-            document.querySelectorAll('#page-home .filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             const items = document.querySelectorAll('.result-item');
             items.forEach(item => {
-                const status = item.className.match(/approved|charged|declined/)[0];
+                const status = item.className.split(' ')[1];
                 item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
             });
             Swal.fire({
@@ -785,7 +839,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                 formData.append('card[cvc]', card.cvc);
 
                 $('#statusLog').text(`Processing card: ${card.displayCard}`);
-                console.log(`Starting request for card: ${card.displayCard} with ${selectedGateway}`);
+                console.log(`Starting request for card: ${card.displayCard}`);
 
                 $.ajax({
                     url: selectedGateway,
@@ -802,10 +856,14 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                             jsonResponse = JSON.parse(response);
                             if (jsonResponse.status === 'CHARGED') status = 'Charged';
                             else if (jsonResponse.status === 'APPROVED') status = 'Approved';
+                            else if (jsonResponse.status === 'CCN') status = 'CCN';
+                            else if (jsonResponse.status === '3DS') status = '3DS';
                         } catch (e) {
                             console.error('Failed to parse response:', response, e);
-                            if (response.includes('Charged!')) status = 'Charged';
-                            else if (response.includes('Approved!')) status = 'Approved';
+                            if (response.includes('CHARGED')) status = 'Charged';
+                            else if (response.includes('APPROVED')) status = 'Approved';
+                            else if (response.includes('CCN')) status = 'CCN';
+                            else if (response.includes('3D_AUTHENTICATION')) status = '3DS';
                         }
                         console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${jsonResponse ? JSON.stringify(jsonResponse) : response}`);
                         resolve({
@@ -884,13 +942,17 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             totalCards = validCards.length;
             chargedCards = [];
             approvedCards = [];
+            ccnCards = [];
+            threeDSCards = [];
             declinedCards = [];
             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
             sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+            sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-            updateStats(totalCards, approvedCards.length, chargedCards.length, declinedCards.length);
-            $('#startCheckBtn').prop('disabled', true);
-            $('#stopCheckBtn').prop('disabled', false);
+            updateStats(totalCards, 0, 0, 0, 0, 0);
+            $('#startBtn').prop('disabled', true);
+            $('#stopBtn').prop('disabled', false);
             $('#loader').show();
             $('#resultsList').addClass('hidden');
             $('#statusLog').text('Starting processing...');
@@ -918,15 +980,21 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                         } else if (result.status === 'Approved') {
                             approvedCards.push(cardEntry);
                             sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                        } else if (result.status === 'CCN') {
+                            ccnCards.push(cardEntry);
+                            sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+                        } else if (result.status === '3DS') {
+                            threeDSCards.push(cardEntry);
+                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
                         } else {
                             declinedCards.push(cardEntry);
                             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
 
-                        addResult(result.card, result.status, result.response);
-                        updateStats(totalCards, approvedCards.length, chargedCards.length, declinedCards.length);
+                        addResult(card, result.status, result.response);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, ccnCards.length, threeDSCards.length, declinedCards.length);
 
-                        if (approvedCards.length + chargedCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                        if (chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
                             finishProcessing();
                         }
                     });
@@ -943,23 +1011,24 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             activeRequests = 0;
             cardQueue = [];
             abortControllers = [];
-            $('#startCheckBtn').prop('disabled', false);
-            $('#stopCheckBtn').prop('disabled', true);
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
             $('#loader').hide();
             $('#cardInput').val('');
             updateCardCount();
             $('#statusLog').text('Processing completed.');
             Swal.fire({
                 title: 'Processing complete!',
-                text: 'All cards have been checked. See the results in the dashboard.',
+                text: 'All cards have been checked. See the results below.',
                 icon: 'success',
                 confirmButtonColor: '#ec4899'
             });
+            $('#resultsList').removeClass('hidden');
         }
 
-        $('#startCheckBtn').on('click', processCards);
+        $('#startBtn').on('click', processCards);
 
-        $('#stopCheckBtn').on('click', function() {
+        $('#stopBtn').on('click', function() {
             if (!isProcessing || isStopping) return;
 
             isProcessing = false;
@@ -968,9 +1037,9 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
             abortControllers.forEach(controller => controller.abort());
             abortControllers = [];
             activeRequests = 0;
-            updateStats(totalCards, approvedCards.length, chargedCards.length, declinedCards.length);
-            $('#startCheckBtn').prop('disabled', false);
-            $('#stopCheckBtn').prop('disabled', true);
+            updateStats(totalCards, chargedCards.length, approvedCards.length, ccnCards.length, threeDSCards.length, declinedCards.length);
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
             $('#loader').hide();
             $('#statusLog').text('Processing stopped.');
             Swal.fire({
@@ -979,6 +1048,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
                 icon: 'warning',
                 confirmButtonColor: '#ec4899'
             });
+            $('#resultsList').removeClass('hidden');
         });
 
         $('#clearBtn').on('click', function() {
@@ -1010,30 +1080,17 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 
         $('#cardInput').on('input', updateCardCount);
 
-        function renderResult() {
-            const totalChecked = approvedCards.length + chargedCards.length + declinedCards.length;
-            updateStats(totalChecked, approvedCards.length, chargedCards.length, declinedCards.length);
-            const resultsList = $('#resultsList');
-            resultsList.empty();
-            if (totalChecked === 0) {
-                resultsList.addClass('empty-state').html(`
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
-                `);
-            } else {
-                resultsList.removeClass('empty-state');
-                [approvedCards, chargedCards, declinedCards].forEach((cards, index) => {
-                    const status = ['Approved', 'Charged', 'Declined'][index];
-                    cards.forEach(card => addResult(card, status, card.response));
-                });
-            }
-        }
-
         document.addEventListener('click', function(e) {
             if (e.target === document.getElementById('gatewaySettings')) {
                 closeGatewaySettings();
             }
+        });
+
+        // Mobile sidebar toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            sidebarOpen = !sidebarOpen;
+            document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
+            document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
         });
     </script>
 </body>
