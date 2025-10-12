@@ -83,7 +83,6 @@ try {
         html, body { height: 100%; }
         body {
             font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial;
-            background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
             margin: 0;
             overflow-x: hidden;
             color: #1e293b;
@@ -104,6 +103,7 @@ try {
             transition: transform 0.3s ease;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.95);
+            transform: translateX(100%);
         }
         .sidebar.show { transform: translateX(0); }
         .result-column { transition: transform 0.3s ease; }
@@ -151,7 +151,7 @@ try {
             </div>
         </header>
 
-        <div class="sidebar fixed top-0 right-0 h-full w-64 md:w-80 glass p-4 transform translate-x-full" id="sidebar">
+        <div class="sidebar fixed top-0 right-0 h-full w-64 md:w-80 glass p-4" id="sidebar">
             <div class="sidebar-item flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-200/50 text-indigo-900 font-medium active" data-view="checkerhub">
                 <i class="fas fa-home text-indigo-500"></i> CheckerHub
             </div>
@@ -267,24 +267,8 @@ try {
     </footer>
 
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
             try {
-                const sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                let isProcessing = false;
-                let isStopping = false;
-                let activeRequests = 0;
-                let cardQueue = [];
-                const MAX_CONCURRENT = 3;
-                const MAX_RETRIES = 1;
-                let abortControllers = [];
-                let totalCards = 0;
-                let chargedCards = JSON.parse(sessionStorage.getItem(`chargedCards-${sessionId}`) || '[]');
-                let approvedCards = JSON.parse(sessionStorage.getItem(`approvedCards-${sessionId}`) || '[]');
-                let ccnCards = JSON.parse(sessionStorage.getItem(`ccnCards-${sessionId}`) || '[]');
-                let threeDSCards = JSON.parse(sessionStorage.getItem(`threeDSCards-${sessionId}`) || '[]');
-                let declinedCards = JSON.parse(sessionStorage.getItem(`declinedCards-${sessionId}`) || '[]');
-                let currentView = 'checkerhub';
-
                 // Particle Animation
                 const canvas = document.getElementById('particleCanvas');
                 const ctx = canvas.getContext('2d');
@@ -292,16 +276,17 @@ try {
                 canvas.height = window.innerHeight;
 
                 let particles = [];
-                const particleCount = 50;
+                const particleCount = 100; // Increased for more dynamic effect
+                const connectDistance = 100;
 
                 class Particle {
                     constructor() {
                         this.x = Math.random() * canvas.width;
                         this.y = Math.random() * canvas.height;
-                        this.size = Math.random() * 10 + 5;
-                        this.speedX = Math.random() * 2 - 1;
-                        this.speedY = Math.random() * 2 - 1;
-                        this.color = ['#4f46e5', '#ec4899', '#10b981', '#f59e0b'][Math.floor(Math.random() * 4)];
+                        this.size = Math.random() * 5 + 3; // Smaller particles for better performance
+                        this.speedX = Math.random() * 1.5 - 0.75;
+                        this.speedY = Math.random() * 1.5 - 0.75;
+                        this.color = ['#4f46e5', '#ec4899', '#10b981', '#f59e0b', '#14b8a6'][Math.floor(Math.random() * 5)];
                         this.opacity = Math.random() * 0.5 + 0.3;
                     }
                     update() {
@@ -309,8 +294,8 @@ try {
                         this.y += this.speedY;
                         if (this.x < 0 || this.x > canvas.width) this.speedX *= -0.9;
                         if (this.y < 0 || this.y > canvas.height) this.speedY *= -0.9;
-                        this.opacity -= 0.005;
-                        if (this.opacity <= 0) {
+                        this.opacity = Math.max(0.3, this.opacity - 0.002);
+                        if (this.opacity <= 0.3) {
                             this.x = Math.random() * canvas.width;
                             this.y = Math.random() * canvas.height;
                             this.opacity = Math.random() * 0.5 + 0.3;
@@ -326,6 +311,26 @@ try {
                     }
                 }
 
+                function connectParticles() {
+                    for (let i = 0; i < particles.length; i++) {
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const dx = particles[i].x - particles[j].x;
+                            const dy = particles[i].y - particles[j].y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance < connectDistance) {
+                                ctx.globalAlpha = (1 - distance / connectDistance) * 0.3;
+                                ctx.strokeStyle = particles[i].color;
+                                ctx.lineWidth = 1;
+                                ctx.beginPath();
+                                ctx.moveTo(particles[i].x, particles[i].y);
+                                ctx.lineTo(particles[j].x, particles[j].y);
+                                ctx.stroke();
+                                ctx.globalAlpha = 1;
+                            }
+                        }
+                    }
+                }
+
                 function init() {
                     particles = [];
                     for (let i = 0; i < particleCount; i++) {
@@ -334,12 +339,13 @@ try {
                 }
 
                 function animate() {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // Semi-transparent clear for trail effect
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     particles.forEach(particle => {
                         particle.update();
                         particle.draw();
                     });
+                    connectParticles();
                     requestAnimationFrame(animate);
                 }
 
@@ -352,436 +358,471 @@ try {
                     init();
                 });
 
-                // Card validation and counter
-                $('#cards').on('input', function() {
-                    const lines = $(this).val().trim().split('\n').filter(line => line.trim());
-                    const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
-                    $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
-                    if (validCards.length > 0) {
-                        $('.carregadas').text('0');
-                        $('.charged').text('0');
-                        $('.approved').text('0');
-                        $('.ccn').text('0');
-                        $('.threeDS').text('0');
-                        $('.reprovadas').text('0');
-                        $('.checked').text('0 / 0');
-                        chargedCards = [];
-                        approvedCards = [];
-                        ccnCards = [];
-                        threeDSCards = [];
-                        declinedCards = [];
-                        sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                        sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                        sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
-                        sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                        $('#resultColumn').addClass('hidden');
-                    }
-                });
-
                 // Sidebar toggle
                 function toggleSidebar(e) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    console.log('Toggling sidebar'); // Debug log
-                    $('#sidebar').toggleClass('show');
+                    try {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        console.log('Toggling sidebar'); // Debug log
+                        const sidebar = document.getElementById('sidebar');
+                        sidebar.classList.toggle('show');
+                        console.log('Sidebar classList:', sidebar.classList.toString()); // Debug log
+                    } catch (error) {
+                        console.error('Error in toggleSidebar:', error);
+                        Swal.fire({
+                            title: 'Sidebar Error',
+                            text: 'Failed to toggle sidebar. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
                 }
 
-                $('#menuToggle').on('click', function(e) {
+                document.getElementById('menuToggle').addEventListener('click', function(e) {
                     console.log('Menu toggle clicked'); // Debug log
                     toggleSidebar(e);
                 });
 
-                $(document).on('click', function(e) {
-                    if (!$(e.target).closest('#menuToggle, #sidebar').length && $('#sidebar').hasClass('show')) {
-                        console.log('Closing sidebar via document click'); // Debug log
-                        $('#sidebar').removeClass('show');
-                    }
-                });
+                // jQuery-based initialization
+                $(document).ready(function() {
+                    try {
+                        const sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                        let isProcessing = false;
+                        let isStopping = false;
+                        let activeRequests = 0;
+                        let cardQueue = [];
+                        const MAX_CONCURRENT = 3;
+                        const MAX_RETRIES = 1;
+                        let abortControllers = [];
+                        let totalCards = 0;
+                        let chargedCards = JSON.parse(sessionStorage.getItem(`chargedCards-${sessionId}`) || '[]');
+                        let approvedCards = JSON.parse(sessionStorage.getItem(`approvedCards-${sessionId}`) || '[]');
+                        let ccnCards = JSON.parse(sessionStorage.getItem(`ccnCards-${sessionId}`) || '[]');
+                        let threeDSCards = JSON.parse(sessionStorage.getItem(`threeDSCards-${sessionId}`) || '[]');
+                        let declinedCards = JSON.parse(sessionStorage.getItem(`declinedCards-${sessionId}`) || '[]');
+                        let currentView = 'checkerhub';
 
-                $('#sidebar').on('click', function(e) {
-                    e.stopPropagation();
-                });
-
-                // Sidebar item clicks
-                $('.sidebar-item').on('click', function() {
-                    const view = $(this).data('view');
-                    console.log(`Sidebar item clicked: ${view}`); // Debug log
-                    if (view === 'logout') {
-                        window.location.href = 'login.php?action=logout';
-                    } else {
-                        switchView(view);
-                    }
-                });
-
-                // Back button
-                $('#backBtn').on('click', function(e) {
-                    e.preventDefault();
-                    console.log('Back button clicked'); // Debug log
-                    $('#resultColumn').addClass('slide-out');
-                    $('#checkerContainer').removeClass('hidden');
-                    setTimeout(() => {
-                        $('#resultColumn').removeClass('slide-out').addClass('hidden');
-                        $('footer').removeClass('hidden');
-                        switchView('checkerhub');
-                    }, 300);
-                });
-
-                // View switching
-                function switchView(view) {
-                    currentView = view;
-                    $('.sidebar-item').removeClass('active');
-                    $(`.sidebar-item[data-view="${view}"]`).addClass('active');
-                    $('#sidebar').removeClass('show');
-                    console.log(`Switching to view: ${view}`); // Debug log
-
-                    if (view === 'checkerhub') {
-                        $('#checkerContainer').removeClass('hidden');
-                        $('footer').removeClass('hidden');
-                        $('#resultColumn').removeClass('show').addClass('hidden');
-                    } else {
-                        $('#checkerContainer').addClass('hidden');
-                        $('footer').addClass('hidden');
-                        $('#resultColumn').removeClass('hidden').addClass('show');
-                        renderResult();
-                    }
-                }
-
-                function renderResult() {
-                    const viewConfig = {
-                        charged: { title: 'Charged Cards', icon: 'fa-bolt', color: '#f59e0b', data: chargedCards, clearable: true },
-                        approved: { title: 'Approved Cards', icon: 'fa-check-circle', color: '#10b981', data: approvedCards, clearable: false },
-                        ccn: { title: 'CCN Cards', icon: 'fa-exclamation-circle', color: '#f97316', data: ccnCards, clearable: true },
-                        threeDS: { title: '3DS Cards', icon: 'fa-lock', color: '#14b8a6', data: threeDSCards, clearable: true },
-                        declined: { title: 'Declined Cards', icon: 'fa-times-circle', color: '#ef4444', data: declinedCards, clearable: true }
-                    };
-                    const config = viewConfig[currentView];
-                    if (!config) return;
-                    $('#resultTitle').html(`<i class="fas ${config.icon}" style="color: ${config.color}"></i> ${config.title}`);
-                    $('#resultContent').empty();
-                    if (config.data.length === 0) {
-                        $('#resultContent').append('<span style="color: #6b7280;">No cards yet</span>');
-                    } else {
-                        config.data.forEach(item => {
-                            $('#resultContent').append(`<div class="card-data text-${config.color.replace('#', '')}">${item.response}</div>`);
-                        });
-                    }
-                }
-
-                $('#copyResult').on('click', function(e) {
-                    e.preventDefault(); // Prevent default click behavior
-                    const viewConfig = {
-                        charged: { title: 'Charged cards', data: chargedCards },
-                        approved: { title: 'Approved cards', data: approvedCards },
-                        ccn: { title: 'CCN cards', data: ccnCards },
-                        threeDS: { title: '3DS cards', data: threeDSCards },
-                        declined: { title: 'Declined cards', data: declinedCards }
-                    };
-                    const config = viewConfig[currentView];
-                    if (!config) return;
-                    const text = config.data.map(item => item.displayCard).join('\n');
-                    if (!text) {
-                        Swal.fire({
-                            title: 'Nothing to copy!',
-                            text: `${config.title} list is empty`,
-                            icon: 'info',
-                            confirmButtonColor: '#ec4899'
-                        });
-                        return;
-                    }
-                    navigator.clipboard.writeText(text).then(() => {
-                        Swal.fire({
-                            title: `Copied ${config.title}!`,
-                            icon: 'success',
-                            toast: true,
-                            position: 'top-end',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    });
-                });
-
-                $('#clearResult').on('click', function() {
-                    const viewConfig = {
-                        charged: { title: 'Charged cards', data: chargedCards, counter: '.charged' },
-                        ccn: { title: 'CCN cards', data: ccnCards, counter: '.ccn' },
-                        threeDS: { title: '3DS cards', data: threeDSCards, counter: '.threeDS' },
-                        declined: { title: 'Declined cards', data: declinedCards, counter: '.reprovadas' }
-                    };
-                    const config = viewConfig[currentView];
-                    if (!config) return;
-                    Swal.fire({
-                        title: `Clear ${config.title.toLowerCase()}?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, clear!',
-                        confirmButtonColor: '#ec4899'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            config.data.length = 0;
-                            sessionStorage.setItem(`${currentView}Cards-${sessionId}`, JSON.stringify(config.data));
-                            $(config.counter).text('0');
-                            $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
-                            renderResult();
-                            Swal.fire('Cleared!', '', 'success');
-                        }
-                    });
-                });
-
-                async function processCard(card, controller, retryCount = 0) {
-                    if (!isProcessing) return null;
-
-                    return new Promise((resolve) => {
-                        const formData = new FormData();
-                        let normalizedYear = card.exp_year;
-                        if (normalizedYear.length === 2) {
-                            normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
-                        }
-                        formData.append('card[number]', card.number);
-                        formData.append('card[exp_month]', card.exp_month);
-                        formData.append('card[exp_year]', normalizedYear);
-                        formData.append('card[cvc]', card.cvc);
-
-                        $.ajax({
-                            url: $('#gate').val(),
-                            method: 'POST',
-                            data: formData,
-                            processData: false,
-                            contentType: false,
-                            timeout: 55000,
-                            signal: controller.signal,
-                            success: function(response) {
-                                let status = 'DECLINED';
-                                if (response.includes('CHARGED')) status = 'CHARGED';
-                                else if (response.includes('APPROVED')) status = 'APPROVED';
-                                else if (response.includes('CCN')) status = 'CCN';
-                                else if (response.includes('3D_AUTHENTICATION')) status = '3DS';
-                                resolve({
-                                    status: status,
-                                    response: response.trim(),
-                                    card: card,
-                                    displayCard: card.displayCard
-                                });
-                            },
-                            error: function(xhr) {
-                                if (xhr.statusText === 'abort') {
-                                    resolve(null);
-                                } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 1000);
-                                } else {
-                                    resolve({
-                                        status: 'DECLINED',
-                                        response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.displayCard}`,
-                                        card: card,
-                                        displayCard: card.displayCard
-                                    });
-                                }
+                        // Card validation and counter
+                        $('#cards').on('input', function() {
+                            const lines = $(this).val().trim().split('\n').filter(line => line.trim());
+                            const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
+                            $('#card-count').text(`${validCards.length} valid cards detected (max 1000)`);
+                            if (validCards.length > 0) {
+                                $('.carregadas').text('0');
+                                $('.charged').text('0');
+                                $('.approved').text('0');
+                                $('.ccn').text('0');
+                                $('.threeDS').text('0');
+                                $('.reprovadas').text('0');
+                                $('.checked').text('0 / 0');
+                                chargedCards = [];
+                                approvedCards = [];
+                                ccnCards = [];
+                                threeDSCards = [];
+                                declinedCards = [];
+                                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                                sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+                                sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                                $('#resultColumn').addClass('hidden');
                             }
                         });
-                    });
-                }
 
-                async function processCards() {
-                    if (isProcessing) {
-                        Swal.fire({
-                            title: 'Processing in progress',
-                            text: 'Please wait until current process completes',
-                            icon: 'warning',
-                            confirmButtonColor: '#ec4899'
-                        });
-                        return;
-                    }
-
-                    const cardText = $('#cards').val().trim();
-                    const lines = cardText.split('\n').filter(line => line.trim());
-                    const validCards = lines
-                        .map(line => line.trim())
-                        .filter(line => /^\d{13,19pieza
-19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
-                        .map(line => {
-                            const [number, exp_month, exp_year, cvc] = line.split('|');
-                            return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                        // Document click to close sidebar
+                        $(document).on('click', function(e) {
+                            if (!$(e.target).closest('#menuToggle, #sidebar').length && $('#sidebar').hasClass('show')) {
+                                console.log('Closing sidebar via document click'); // Debug log
+                                $('#sidebar').removeClass('show');
+                            }
                         });
 
-                    if (validCards.length === 0) {
-                        Swal.fire({
-                            title: 'No valid cards!',
-                            text: 'Please check your card format',
-                            icon: 'error',
-                            confirmButtonColor: '#ec4899'
+                        $('#sidebar').on('click', function(e) {
+                            e.stopPropagation();
                         });
-                        return;
-                    }
 
-                    if (validCards.length > 1000) {
-                        Swal.fire({
-                            title: 'Limit exceeded!',
-                            text: 'Maximum 1000 cards allowed',
-                            icon: 'error',
-                            confirmButtonColor: '#ec4899'
+                        // Sidebar item clicks
+                        $('.sidebar-item').on('click', function() {
+                            const view = $(this).data('view');
+                            console.log(`Sidebar item clicked: ${view}`); // Debug log
+                            if (view === 'logout') {
+                                window.location.href = 'login.php?action=logout';
+                            } else {
+                                switchView(view);
+                            }
                         });
-                        return;
-                    }
 
-                    isProcessing = true;
-                    isStopping = false;
-                    activeRequests = 0;
-                    abortControllers = [];
-                    cardQueue = [...validCards];
-                    totalCards = validCards.length;
-                    chargedCards = [];
-                    approvedCards = [];
-                    ccnCards = [];
-                    threeDSCards = [];
-                    declinedCards = [];
-                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                    sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
-                    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                    $('.carregadas').text(totalCards);
-                    $('.charged').text('0');
-                    $('.approved').text('0');
-                    $('.ccn').text('0');
-                    $('.threeDS').text('0');
-                    $('.reprovadas').text('0');
-                    $('.checked').text(`0 / ${totalCards}`);
-                    $('#startBtn').prop('disabled', true);
-                    $('#stopBtn').prop('disabled', false);
-                    $('#loader').show();
-                    $('#resultColumn').addClass('hidden');
+                        // Back button
+                        $('#backBtn').on('click', function(e) {
+                            e.preventDefault();
+                            console.log('Back button clicked'); // Debug log
+                            $('#resultColumn').addClass('slide-out');
+                            $('#checkerContainer').removeClass('hidden');
+                            setTimeout(() => {
+                                $('#resultColumn').removeClass('slide-out').addClass('hidden');
+                                $('footer').removeClass('hidden');
+                                switchView('checkerhub');
+                            }, 300);
+                        });
 
-                    let requestIndex = 0;
+                        // View switching
+                        function switchView(view) {
+                            currentView = view;
+                            $('.sidebar-item').removeClass('active');
+                            $(`.sidebar-item[data-view="${view}"]`).addClass('active');
+                            $('#sidebar').removeClass('show');
+                            console.log(`Switching to view: ${view}`); // Debug log
 
-                    while (cardQueue.length > 0 && isProcessing) {
-                        while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
-                            const card = cardQueue.shift();
-                            activeRequests++;
-                            const controller = new AbortController();
-                            abortControllers.push(controller);
+                            if (view === 'checkerhub') {
+                                $('#checkerContainer').removeClass('hidden');
+                                $('footer').removeClass('hidden');
+                                $('#resultColumn').removeClass('show').addClass('hidden');
+                            } else {
+                                $('#checkerContainer').addClass('hidden');
+                                $('footer').addClass('hidden');
+                                $('#resultColumn').removeClass('hidden').addClass('show');
+                                renderResult();
+                            }
+                        }
 
-                            await new Promise(resolve => setTimeout(resolve, requestIndex * 200));
-                            requestIndex++;
+                        function renderResult() {
+                            const viewConfig = {
+                                charged: { title: 'Charged Cards', icon: 'fa-bolt', color: '#f59e0b', data: chargedCards, clearable: true },
+                                approved: { title: 'Approved Cards', icon: 'fa-check-circle', color: '#10b981', data: approvedCards, clearable: false },
+                                ccn: { title: 'CCN Cards', icon: 'fa-exclamation-circle', color: '#f97316', data: ccnCards, clearable: true },
+                                threeDS: { title: '3DS Cards', icon: 'fa-lock', color: '#14b8a6', data: threeDSCards, clearable: true },
+                                declined: { title: 'Declined Cards', icon: 'fa-times-circle', color: '#ef4444', data: declinedCards, clearable: true }
+                            };
+                            const config = viewConfig[currentView];
+                            if (!config) return;
+                            $('#resultTitle').html(`<i class="fas ${config.icon}" style="color: ${config.color}"></i> ${config.title}`);
+                            $('#resultContent').empty();
+                            if (config.data.length === 0) {
+                                $('#resultContent').append('<span style="color: #6b7280;">No cards yet</span>');
+                            } else {
+                                config.data.forEach(item => {
+                                    $('#resultContent').append(`<div class="card-data text-${config.color.replace('#', '')}">${item.response}</div>`);
+                                });
+                            }
+                        }
 
-                            processCard(card, controller).then(result => {
-                                if (result === null) return;
+                        $('#copyResult').on('click', function(e) {
+                            e.preventDefault(); // Prevent default click behavior
+                            const viewConfig = {
+                                charged: { title: 'Charged cards', data: chargedCards },
+                                approved: { title: 'Approved cards', data: approvedCards },
+                                ccn: { title: 'CCN cards', data: ccnCards },
+                                threeDS: { title: '3DS cards', data: threeDSCards },
+                                declined: { title: 'Declined cards', data: declinedCards }
+                            };
+                            const config = viewConfig[currentView];
+                            if (!config) return;
+                            const text = config.data.map(item => item.displayCard).join('\n');
+                            if (!text) {
+                                Swal.fire({
+                                    title: 'Nothing to copy!',
+                                    text: `${config.title} list is empty`,
+                                    icon: 'info',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                                return;
+                            }
+                            navigator.clipboard.writeText(text).then(() => {
+                                Swal.fire({
+                                    title: `Copied ${config.title}!`,
+                                    icon: 'success',
+                                    toast: true,
+                                    position: 'top-end',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        });
 
-                                activeRequests--;
-                                const cardEntry = { response: result.response, displayCard: result.displayCard };
-                                if (result.status === 'CHARGED') {
-                                    chargedCards.push(cardEntry);
-                                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                                    $('.charged').text(chargedCards.length);
-                                } else if (result.status === 'APPROVED') {
-                                    approvedCards.push(cardEntry);
-                                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                                    $('.approved').text(approvedCards.length);
-                                } else if (result.status === 'CCN') {
-                                    ccnCards.push(cardEntry);
-                                    sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
-                                    $('.ccn').text(ccnCards.length);
-                                } else if (result.status === '3DS') {
-                                    threeDSCards.push(cardEntry);
-                                    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                                    $('.threeDS').text(threeDSCards.length);
-                                } else {
-                                    declinedCards.push(cardEntry);
-                                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                                    $('.reprovadas').text(declinedCards.length);
-                                }
-
-                                $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
-
-                                if (currentView === result.status.toLowerCase()) {
+                        $('#clearResult').on('click', function() {
+                            const viewConfig = {
+                                charged: { title: 'Charged cards', data: chargedCards, counter: '.charged' },
+                                ccn: { title: 'CCN cards', data: ccnCards, counter: '.ccn' },
+                                threeDS: { title: '3DS cards', data: threeDSCards, counter: '.threeDS' },
+                                declined: { title: 'Declined cards', data: declinedCards, counter: '.reprovadas' }
+                            };
+                            const config = viewConfig[currentView];
+                            if (!config) return;
+                            Swal.fire({
+                                title: `Clear ${config.title.toLowerCase()}?`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Yes, clear!',
+                                confirmButtonColor: '#ec4899'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    config.data.length = 0;
+                                    sessionStorage.setItem(`${currentView}Cards-${sessionId}`, JSON.stringify(config.data));
+                                    $(config.counter).text('0');
+                                    $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
                                     renderResult();
-                                }
-
-                                if (chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
-                                    finishProcessing();
+                                    Swal.fire('Cleared!', '', 'success');
                                 }
                             });
+                        });
+
+                        async function processCard(card, controller, retryCount = 0) {
+                            if (!isProcessing) return null;
+
+                            return new Promise((resolve) => {
+                                const formData = new FormData();
+                                let normalizedYear = card.exp_year;
+                                if (normalizedYear.length === 2) {
+                                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                                }
+                                formData.append('card[number]', card.number);
+                                formData.append('card[exp_month]', card.exp_month);
+                                formData.append('card[exp_year]', normalizedYear);
+                                formData.append('card[cvc]', card.cvc);
+
+                                $.ajax({
+                                    url: $('#gate').val(),
+                                    method: 'POST',
+                                    data: formData,
+                                    processData: false,
+                                    contentType: false,
+                                    timeout: 55000,
+                                    signal: controller.signal,
+                                    success: function(response) {
+                                        let status = 'DECLINED';
+                                        if (response.includes('CHARGED')) status = 'CHARGED';
+                                        else if (response.includes('APPROVED')) status = 'APPROVED';
+                                        else if (response.includes('CCN')) status = 'CCN';
+                                        else if (response.includes('3D_AUTHENTICATION')) status = '3DS';
+                                        resolve({
+                                            status: status,
+                                            response: response.trim(),
+                                            card: card,
+                                            displayCard: card.displayCard
+                                        });
+                                    },
+                                    error: function(xhr) {
+                                        if (xhr.statusText === 'abort') {
+                                            resolve(null);
+                                        } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 1000);
+                                        } else {
+                                            resolve({
+                                                status: 'DECLINED',
+                                                response: `DECLINED [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.displayCard}`,
+                                                card: card,
+                                                displayCard: card.displayCard
+                                            });
+                                        }
+                                    }
+                                });
+                            });
                         }
-                        if (isProcessing) {
-                            await new Promise(resolve => setTimeout(resolve, 5));
+
+                        async function processCards() {
+                            if (isProcessing) {
+                                Swal.fire({
+                                    title: 'Processing in progress',
+                                    text: 'Please wait until current process completes',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                                return;
+                            }
+
+                            const cardText = $('#cards').val().trim();
+                            const lines = cardText.split('\n').filter(line => line.trim());
+                            const validCards = lines
+                                .map(line => line.trim())
+                                .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+                                .map(line => {
+                                    const [number, exp_month, exp_year, cvc] = line.split('|');
+                                    return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                                });
+
+                            if (validCards.length === 0) {
+                                Swal.fire({
+                                    title: 'No valid cards!',
+                                    text: 'Please check your card format',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                                return;
+                            }
+
+                            if (validCards.length > 1000) {
+                                Swal.fire({
+                                    title: 'Limit exceeded!',
+                                    text: 'Maximum 1000 cards allowed',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                                return;
+                            }
+
+                            isProcessing = true;
+                            isStopping = false;
+                            activeRequests = 0;
+                            abortControllers = [];
+                            cardQueue = [...validCards];
+                            totalCards = validCards.length;
+                            chargedCards = [];
+                            approvedCards = [];
+                            ccnCards = [];
+                            threeDSCards = [];
+                            declinedCards = [];
+                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                            sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                            $('.carregadas').text(totalCards);
+                            $('.charged').text('0');
+                            $('.approved').text('0');
+                            $('.ccn').text('0');
+                            $('.threeDS').text('0');
+                            $('.reprovadas').text('0');
+                            $('.checked').text(`0 / ${totalCards}`);
+                            $('#startBtn').prop('disabled', true);
+                            $('#stopBtn').prop('disabled', false);
+                            $('#loader').show();
+                            $('#resultColumn').addClass('hidden');
+
+                            let requestIndex = 0;
+
+                            while (cardQueue.length > 0 && isProcessing) {
+                                while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                                    const card = cardQueue.shift();
+                                    activeRequests++;
+                                    const controller = new AbortController();
+                                    abortControllers.push(controller);
+
+                                    await new Promise(resolve => setTimeout(resolve, requestIndex * 200));
+                                    requestIndex++;
+
+                                    processCard(card, controller).then(result => {
+                                        if (result === null) return;
+
+                                        activeRequests--;
+                                        const cardEntry = { response: result.response, displayCard: result.displayCard };
+                                        if (result.status === 'CHARGED') {
+                                            chargedCards.push(cardEntry);
+                                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                                            $('.charged').text(chargedCards.length);
+                                        } else if (result.status === 'APPROVED') {
+                                            approvedCards.push(cardEntry);
+                                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                                            $('.approved').text(approvedCards.length);
+                                        } else if (result.status === 'CCN') {
+                                            ccnCards.push(cardEntry);
+                                            sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
+                                            $('.ccn').text(ccnCards.length);
+                                        } else if (result.status === '3DS') {
+                                            threeDSCards.push(cardEntry);
+                                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                                            $('.threeDS').text(threeDSCards.length);
+                                        } else {
+                                            declinedCards.push(cardEntry);
+                                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                                            $('.reprovadas').text(declinedCards.length);
+                                        }
+
+                                        $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
+
+                                        if (currentView === result.status.toLowerCase()) {
+                                            renderResult();
+                                        }
+
+                                        if (chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                                            finishProcessing();
+                                        }
+                                    });
+                                }
+                                if (isProcessing) {
+                                    await new Promise(resolve => setTimeout(resolve, 5));
+                                }
+                            }
                         }
-                    }
-                }
 
-                function finishProcessing() {
-                    isProcessing = false;
-                    isStopping = false;
-                    activeRequests = 0;
-                    cardQueue = [];
-                    abortControllers = [];
-                    $('#startBtn').prop('disabled', false);
-                    $('#stopBtn').prop('disabled', true);
-                    $('#loader').hide();
-                    $('#cards').val('');
-                    $('#card-count').text('0 valid cards detected');
-                    Swal.fire({
-                        title: 'Processing complete!',
-                        text: 'All cards have been checked. See the results in the sidebar.',
-                        icon: 'success',
-                        confirmButtonColor: '#ec4899'
-                    });
-                    if (currentView !== 'checkerhub') {
-                        renderResult();
-                    }
-                }
+                        function finishProcessing() {
+                            isProcessing = false;
+                            isStopping = false;
+                            activeRequests = 0;
+                            cardQueue = [];
+                            abortControllers = [];
+                            $('#startBtn').prop('disabled', false);
+                            $('#stopBtn').prop('disabled', true);
+                            $('#loader').hide();
+                            $('#cards').val('');
+                            $('#card-count').text('0 valid cards detected');
+                            Swal.fire({
+                                title: 'Processing complete!',
+                                text: 'All cards have been checked. See the results in the sidebar.',
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899'
+                            });
+                            if (currentView !== 'checkerhub') {
+                                renderResult();
+                            }
+                        }
 
-                $('#startBtn').on('click', processCards);
+                        $('#startBtn').on('click', processCards);
 
-                $('#stopBtn').on('click', function() {
-                    if (!isProcessing || isStopping) return;
+                        $('#stopBtn').on('click', function() {
+                            if (!isProcessing || isStopping) return;
 
-                    isProcessing = false;
-                    isStopping = true;
-                    cardQueue = [];
-                    abortControllers.forEach(controller => controller.abort());
-                    abortControllers = [];
-                    activeRequests = 0;
-                    $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
-                    $('#startBtn').prop('disabled', false);
-                    $('#stopBtn').prop('disabled', true);
-                    $('#loader').hide();
-                    Swal.fire({
-                        title: 'Stopped!',
-                        text: 'Processing has been stopped',
-                        icon: 'warning',
-                        confirmButtonColor: '#ec4899'
-                    });
-                    if (currentView !== 'checkerhub') {
-                        renderResult();
-                    }
-                });
+                            isProcessing = false;
+                            isStopping = true;
+                            cardQueue = [];
+                            abortControllers.forEach(controller => controller.abort());
+                            abortControllers = [];
+                            activeRequests = 0;
+                            $('.checked').text(`${chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length} / ${totalCards}`);
+                            $('#startBtn').prop('disabled', false);
+                            $('#stopBtn').prop('disabled', true);
+                            $('#loader').hide();
+                            Swal.fire({
+                                title: 'Stopped!',
+                                text: 'Processing has been stopped',
+                                icon: 'warning',
+                                confirmButtonColor: '#ec4899'
+                            });
+                            if (currentView !== 'checkerhub') {
+                                renderResult();
+                            }
+                        });
 
-                $('#gate').on('change', function() {
-                    const selected = $(this).val();
-                    const validGates = ['gate/stripeauth.php', 'gate/stripe1$.php', 'gate/paypal1$.php', 'gate/shopify1$.php', 'gate/razorpay0.10$.php'];
-                    if (!validGates.includes(selected)) {
+                        $('#gate').on('change', function() {
+                            const selected = $(this).val();
+                            const validGates = ['gate/stripeauth.php', 'gate/stripe1$.php', 'gate/paypal1$.php', 'gate/shopify1$.php', 'gate/razorpay0.10$.php'];
+                            if (!validGates.includes(selected)) {
+                                Swal.fire({
+                                    title: 'Invalid gateway',
+                                    text: 'Please select a valid gateway',
+                                    icon: 'info',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                                $(this).val('gate/stripeauth.php');
+                            }
+                        });
+
+                        // Allow context menu only for the copy button
+                        $('#copyResult').on('contextmenu', function(e) {
+                            e.stopPropagation(); // Allow right-click on copy button
+                            return true;
+                        });
+                    } catch (error) {
+                        console.error('JavaScript error in index.php:', error);
                         Swal.fire({
-                            title: 'Invalid gateway',
-                            text: 'Please select a valid gateway',
-                            icon: 'info',
+                            title: 'Error!',
+                            text: 'An error occurred while initializing the page. Please try refreshing.',
+                            icon: 'error',
                             confirmButtonColor: '#ec4899'
                         });
-                        $(this).val('gate/stripeauth.php');
                     }
                 });
-
-                // Allow context menu only for the copy button
-                $('#copyResult').on('contextmenu', function(e) {
-                    e.stopPropagation(); // Allow right-click on copy button
-                    return true;
-                });
             } catch (error) {
-                console.error('JavaScript error in index.php:', error);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'An error occurred while initializing the page. Please try refreshing.',
-                    icon: 'error',
-                    confirmButtonColor: '#ec4899'
-                });
+                console.error('DOM Content Loaded error:', error);
             }
         });
     </script>
