@@ -651,7 +651,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">Charge</span>
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Payment processing with charge</div>
                         </div>
@@ -661,7 +661,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-charge">Charge</span>
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Popular online payment system</div>
                         </div>
@@ -671,7 +671,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">Charge</span>
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
@@ -682,7 +682,7 @@ try {
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
                                     style="width:15px; height:15px; object-fit:contain;">Razorpay
-                                <span class="gateway-badge badge-charge">Charge</span>
+                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Indian payment gateway</div>
                         </div>
@@ -692,7 +692,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fas fa-credit-card"></i> Authnet
-                                <span class="gateway-badge badge-charge">Charge</span>
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Authorize.net payment gateway</div>
                         </div>
