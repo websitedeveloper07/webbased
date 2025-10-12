@@ -735,8 +735,8 @@ try {
         let isStopping = false;
         let activeRequests = 0;
         let cardQueue = [];
-        const MAX_CONCURRENT = 3;
-        const MAX_RETRIES = 3;
+        const MAX_CONCURRENT = 2;
+        const MAX_RETRIES = 2;
         let abortControllers = [];
         let totalCards = 0;
         let chargedCards = [];
@@ -963,10 +963,26 @@ try {
                                 status = jsonResponse.status.toUpperCase();
                             }
                             message = jsonResponse.message || jsonResponse.response || response;
+                            // Normalize status
+                            if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
+                                status = '3DS';
+                            } else if (status === 'CHARGED' || status.includes('CHARGED')) {
+                                status = 'CHARGED';
+                            } else if (status === 'APPROVED' || status.includes('APPROVED')) {
+                                status = 'APPROVED';
+                            } else {
+                                status = 'DECLINED';
+                            }
                         } catch (e) {
-                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS')) status = '3DS';
-                            else if (response.includes('CHARGED')) status = 'CHARGED';
-                            else if (response.includes('APPROVED')) status = 'APPROVED';
+                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS') || response.includes('3D')) {
+                                status = '3DS';
+                            } else if (response.includes('CHARGED')) {
+                                status = 'CHARGED';
+                            } else if (response.includes('APPROVED')) {
+                                status = 'APPROVED';
+                            } else {
+                                status = 'DECLINED';
+                            }
                             message = response;
                         }
                         console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
