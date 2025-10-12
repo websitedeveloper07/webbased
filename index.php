@@ -87,6 +87,7 @@ try {
             margin: 0;
             overflow-x: hidden;
             color: #1e293b;
+            user-select: none; /* Disable text selection globally */
         }
         .glass {
             background: rgba(255, 255, 255, 0.7);
@@ -135,7 +136,7 @@ try {
         .sidebar.show ~ #backdrop { display: block; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
     <canvas id="particleCanvas"></canvas>
     <div id="backdrop"></div>
 
@@ -450,12 +451,13 @@ try {
                         $('#resultContent').append('<span style="color: #6b7280;">No cards yet</span>');
                     } else {
                         config.data.forEach(item => {
-                            $('#resultContent').append(`<div class="card-data text-${config.color.replace('#', '')}">${item}</div>`);
+                            $('#resultContent').append(`<div class="card-data text-${config.color.replace('#', '')}">${item.response}</div>`);
                         });
                     }
                 }
 
-                $('#copyResult').on('click', function() {
+                $('#copyResult').on('click', function(e) {
+                    e.preventDefault(); // Prevent default click behavior
                     const viewConfig = {
                         charged: { title: 'Charged cards', data: chargedCards },
                         approved: { title: 'Approved cards', data: approvedCards },
@@ -464,7 +466,7 @@ try {
                     };
                     const config = viewConfig[currentView];
                     if (!config) return;
-                    const text = config.data.join('\n');
+                    const text = config.data.map(item => item.displayCard).join('\n');
                     if (!text) {
                         Swal.fire({
                             title: 'Nothing to copy!',
@@ -646,20 +648,21 @@ try {
                                 if (result === null) return;
 
                                 activeRequests--;
+                                const cardEntry = { response: result.response, displayCard: result.displayCard };
                                 if (result.status === 'CHARGED') {
-                                    chargedCards.push(result.response);
+                                    chargedCards.push(cardEntry);
                                     sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
                                     $('.charged').text(chargedCards.length);
                                 } else if (result.status === 'APPROVED') {
-                                    approvedCards.push(result.response);
+                                    approvedCards.push(cardEntry);
                                     sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                                     $('.approved').text(approvedCards.length);
                                 } else if (result.status === 'CCN') {
-                                    ccnCards.push(result.response);
+                                    ccnCards.push(cardEntry);
                                     sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
                                     $('.ccn').text(ccnCards.length);
                                 } else {
-                                    declinedCards.push(result.response);
+                                    declinedCards.push(cardEntry);
                                     sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                                     $('.reprovadas').text(declinedCards.length);
                                 }
@@ -741,6 +744,12 @@ try {
                         });
                         $(this).val('gate/stripeauth.php');
                     }
+                });
+
+                // Allow context menu only for the copy button
+                $('#copyResult').on('contextmenu', function(e) {
+                    e.stopPropagation(); // Allow right-click on copy button
+                    return true;
                 });
             } catch (error) {
                 console.error('JavaScript error in index.php:', error);
