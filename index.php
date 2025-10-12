@@ -99,7 +99,11 @@ try {
         .btn { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .sidebar { transition: transform 0.3s ease; }
+        .sidebar {
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+        }
         .sidebar.show { transform: translateX(0); }
         .result-column { transition: transform 0.3s ease; }
         .result-column.show { transform: translateX(0); }
@@ -118,10 +122,22 @@ try {
         canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .result-content::-webkit-scrollbar { width: 6px; }
         .result-content::-webkit-scrollbar-thumb { background: #ec4899; border-radius: 3px; }
+        #backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            display: none;
+        }
+        .sidebar.show ~ #backdrop { display: block; }
     </style>
 </head>
 <body>
     <canvas id="particleCanvas"></canvas>
+    <div id="backdrop"></div>
 
     <div class="container mx-auto px-4 py-6 max-w-5xl" id="checkerContainer">
         <header class="flex justify-between items-center mb-6 glass p-4 rounded-xl">
@@ -134,7 +150,7 @@ try {
             </div>
         </header>
 
-        <div class="sidebar fixed top-0 right-0 h-full w-64 md:w-80 glass p-4 transform translate-x-full" id="sidebar">
+        <div class="sidebar fixed top-0 right-0 h-full w-64 md:w-80 glass p-4 transform translate-x-full">
             <div class="sidebar-item flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-200/50 text-indigo-900 font-medium active" data-view="checkerhub">
                 <i class="fas fa-home text-indigo-500"></i> CheckerHub
             </div>
