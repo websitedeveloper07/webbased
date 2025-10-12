@@ -84,7 +84,6 @@ try {
             --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
             --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
             --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
-            --success-green: #22c55e; --declined-red: #ef4444;
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -161,6 +160,7 @@ try {
             position: fixed; left: 0; top: 70px; bottom: 0; width: 260px;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
             padding: 2rem 0; z-index: 999; overflow-y: auto;
+            transform: translateX(0); transition: transform 0.3s ease;
         }
         .sidebar-menu { list-style: none; }
         .sidebar-item { margin: 0.5rem 1rem; }
@@ -182,7 +182,9 @@ try {
         .main-content {
             margin-left: 260px; margin-top: 70px; padding: 2rem;
             min-height: calc(100vh - 70px); position: relative; z-index: 1;
+            transition: margin-left 0.3s ease;
         }
+        .main-content.sidebar-closed { margin-left: 0; }
         .page-section { display: none; }
         .page-section.active { display: block; }
         .page-title {
@@ -388,27 +390,48 @@ try {
             background: rgba(255,255,255,0.05); color: var(--text-primary);
             font-weight: 600; cursor: pointer;
         }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ec4899;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #statusLog { margin-top: 1rem; color: var(--text-secondary); text-align: center; }
+        .result-item.declined .stat-label { color: var(--declined-red); }
+        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.3ds .stat-label { color: var(--success-green); }
+
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%); transition: transform 0.3s ease;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0; padding: 1rem; transition: margin-left 0.3s ease;
-            }
-            .main-content.sidebar-open {
-                margin-left: 260px;
-            }
-            .moving-logo { font-size: 4rem; }
-            .moving-logo.in-position { font-size: 1.25rem; left: 1rem; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+            .navbar { padding: 1rem; justify-content: space-between; }
+            .navbar-actions { gap: 0.5rem; }
+            .user-info { padding: 0.3rem 0.8rem; gap: 0.5rem; }
+            .user-avatar { width: 30px; height: 30px; }
+            .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+            .sidebar { width: 80vw; transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 1rem; margin-top: 70px; }
+            .page-title { font-size: 1.5rem; }
+            .page-subtitle { font-size: 0.9rem; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
             .stat-card { padding: 1.25rem; }
             .stat-value { font-size: 2rem; }
-            .action-buttons { justify-content: center; }
-            .btn { min-width: 120px; padding: 0.8rem 1.5rem; }
-            .gateway-options { grid-template-columns: 1fr; }
+            .stat-label { font-size: 0.8rem; }
+            .checker-section { padding: 1.5rem; }
+            .input-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .action-buttons { justify-content: center; gap: 0.5rem; }
+            .btn { min-width: 100%; padding: 0.75rem; font-size: 0.9rem; }
+            .results-header { flex-direction: column; gap: 1rem; }
+            .results-filters { justify-content: center; gap: 0.5rem; }
+            .filter-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .settings-content { padding: 1.5rem; max-width: 90vw; }
+            .gateway-option { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .gateway-option input { margin-right: 0; margin-bottom: 0.5rem; }
+            .settings-footer { flex-direction: column; gap: 0.5rem; }
+            .btn-save, .btn-cancel { width: 100%; }
         }
     </style>
 </head>
@@ -475,12 +498,12 @@ try {
                 <div class="stat-card charged">
                     <div class="stat-icon"><i class="fas fa-bolt"></i></div>
                     <div class="stat-value charged">0</div>
-                    <div class="stat-label">Hit|Charged</div>
+                    <div class="stat-label">HIT|CHARGED</div>
                 </div>
                 <div class="stat-card approved">
                     <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
                     <div class="stat-value approved">0</div>
-                    <div class="stat-label">Live|Approved</div>
+                    <div class="stat-label">LIVE|APPROVED</div>
                 </div>
                 <div class="stat-card ccn">
                     <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
@@ -495,16 +518,16 @@ try {
                 <div class="stat-card declined">
                     <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
                     <div class="stat-value reprovadas">0</div>
-                    <div class="stat-label">Dead|Declined</div>
+                    <div class="stat-label">DEAD|DECLINED</div>
                 </div>
                 <div class="stat-card checked">
                     <div class="stat-icon"><i class="fas fa-check-double"></i></div>
                     <div class="stat-value checked">0 / 0</div>
-                    <div class="stat-label">Checked</div>
+                    <div class="stat-label">CHECKED</div>
                 </div>
             </div>
 
-            <div class="results-section" id="homeResults" style="display: none;">
+            <div class="results-section">
                 <div class="results-header">
                     <div class="results-title">
                         <i class="fas fa-list-check"></i> Recent Results
@@ -568,7 +591,7 @@ try {
                 <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
             </div>
 
-            <div class="results-section">
+            <div class="results-section" id="checkingResults">
                 <div class="results-header">
                     <div class="results-title">
                         <i class="fas fa-list-check"></i> Recent Results
@@ -581,7 +604,7 @@ try {
                         <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
                     </div>
                 </div>
-                <div id="resultsList" class="empty-state">
+                <div id="checkingResultsList" class="empty-state">
                     <i class="fas fa-inbox"></i>
                     <h3>No Results Yet</h3>
                     <p>Start checking cards to see results here</p>
@@ -610,30 +633,30 @@ try {
                         <input type="radio" name="gateway" value="gate/stripe1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe 1$
+                                <i class="fab fa-stripe"></i> Stripe
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Payment processing with $1 charge</div>
+                            <div class="gateway-option-desc">Payment processing with charge</div>
                         </div>
                     </label>
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/paypal1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal 1$
+                                <i class="fab fa-paypal"></i> PayPal
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Popular online payment system with $1 charge</div>
+                            <div class="gateway-option-desc">Popular online payment system</div>
                         </div>
                     </label>
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/shopify1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify 1$
+                                <i class="fab fa-shopify"></i> Shopify
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">E-commerce payment processing with $1 charge</div>
+                            <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -641,10 +664,10 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:20px; height:20px; object-fit:contain;"> Razorpay 0.10$
+                                    style="width:20px; height:20px; object-fit:contain;">Razorpay
                                 <span class="gateway-badge badge-charge">Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Indian payment gateway with 0.10$ charge</div>
+                            <div class="gateway-option-desc">Indian payment gateway</div>
                         </div>
                     </label>
                 </div>
@@ -659,7 +682,7 @@ try {
                         <input type="radio" name="gateway" value="gate/stripeauth.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe Auth
+                                <i class="fab fa-stripe"></i> Stripe
                                 <span class="gateway-badge badge-auth">Auth</span>
                             </div>
                             <div class="gateway-option-desc">Authorization only, no charge</div>
@@ -737,6 +760,7 @@ try {
             document.getElementById('page-' + pageName).classList.add('active');
             document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
             event.target.closest('.sidebar-link').classList.add('active');
+            if (pageName === 'home') renderResult();
         }
 
         function openGatewaySettings() {
@@ -792,15 +816,15 @@ try {
             const resultsList = document.getElementById('resultsList');
             const cardClass = status.toLowerCase();
             const icon = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? '--success-green' : '--declined-red';
+            const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? var(--success-green) : var(--declined-red);
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: var(${color});">
+                <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
                     <i class="${icon}"></i>
                 </div>
                 <div class="stat-value">${card.displayCard}</div>
-                <div class="stat-label" style="color: var(${color});">${status} - ${response}</div>
+                <div class="stat-label" style="color: ${color};">${status} - ${response}</div>
             `;
             resultsList.insertBefore(resultDiv, resultsList.firstChild);
             if (resultsList.classList.contains('empty-state')) {
@@ -974,10 +998,10 @@ try {
 
                         activeRequests--;
                         const cardEntry = { response: result.response, displayCard: result.displayCard };
-                        if (result.status === 'Charged') {
+                        if (result.status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                        } else if (result.status === 'Approved') {
+                        } else if (result.status === 'APPROVED') {
                             approvedCards.push(cardEntry);
                             sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                         } else if (result.status === 'CCN') {
@@ -1024,6 +1048,7 @@ try {
                 confirmButtonColor: '#ec4899'
             });
             $('#resultsList').removeClass('hidden');
+            $('#homeResults').style.display = 'none';
         }
 
         $('#startBtn').on('click', processCards);
@@ -1049,6 +1074,7 @@ try {
                 confirmButtonColor: '#ec4899'
             });
             $('#resultsList').removeClass('hidden');
+            $('#homeResults').style.display = 'none';
         });
 
         $('#clearBtn').on('click', function() {
