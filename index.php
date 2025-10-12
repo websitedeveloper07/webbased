@@ -72,7 +72,7 @@ try {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -101,77 +101,77 @@ try {
         }
         .blur-overlay.active { opacity: 1; display: block; }
         .moving-logo {
-            position: fixed; font-size: 5rem; z-index: 10000;
+            position: fixed; font-size: 3rem; z-index: 10000;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
             transition: all 1.2s ease-in-out;
         }
-        .moving-logo.in-position { font-size: 1.75rem; top: 1.9rem; left: 2rem; transform: translate(0,0); }
+        .moving-logo.in-position { font-size: 1.2rem; top: 1rem; left: 1rem; transform: translate(0,0); }
         .moving-logo.hidden { opacity: 0; }
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10,14,39,0.85); backdrop-filter: blur(20px);
-            padding: 1rem 2rem; display: flex; justify-content: space-between;
+            background: rgba(10,14,39,0.85); backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem; display: flex; justify-content: space-between;
             z-index: 1000; border-bottom: 1px solid var(--border-color);
         }
         .navbar-brand {
-            display: flex; align-items: center; gap: 0.75rem;
-            font-size: 1.5rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 1.2rem; font-weight: 700;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .navbar-brand i { opacity: 0; font-size: 1.75rem; transition: opacity 0.5s; }
+        .navbar-brand i { opacity: 0; font-size: 1.2rem; transition: opacity 0.5s; }
         .navbar-brand i.visible, .brand-text.visible { opacity: 1; }
         .brand-text { opacity: 0; transition: opacity 0.5s; }
-        .navbar-actions { display: flex; align-items: center; gap: 1rem; }
+        .navbar-actions { display: flex; align-items: center; gap: 0.5rem; }
         .theme-toggle {
-            width: 60px; height: 32px; background: var(--secondary-bg);
-            border-radius: 20px; cursor: pointer; border: 2px solid var(--border-color);
+            width: 40px; height: 20px; background: var(--secondary-bg);
+            border-radius: 10px; cursor: pointer; border: 1px solid var(--border-color);
             position: relative; transition: all 0.3s;
         }
         .theme-toggle-slider {
-            position: absolute; width: 24px; height: 24px; border-radius: 50%;
+            position: absolute; width: 16px; height: 16px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            left: 4px; transition: transform 0.3s; display: flex;
-            align-items: center; justify-content: center; color: white; font-size: 0.7rem;
+            left: 2px; transition: transform 0.3s; display: flex;
+            align-items: center; justify-content: center; color: white; font-size: 0.5rem;
         }
-        [data-theme="light"] .theme-toggle-slider { transform: translateX(28px); }
+        [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.5rem 1rem; background: rgba(255,255,255,0.05);
-            border-radius: 12px; border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.05);
+            border-radius: 8px; border: 1px solid var(--border-color);
         }
         .user-avatar {
-            width: 35px; height: 35px; border-radius: 50%;
+            width: 25px; height: 25px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-purple), #ec4899);
             display: flex; align-items: center; justify-content: center;
-            font-weight: 600; color: white;
+            font-weight: 600; color: white; font-size: 0.8rem;
         }
         .nav-btn {
             background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
-            padding: 0.6rem 1.2rem; border-radius: 12px; cursor: pointer;
-            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem;
         }
         .nav-btn.primary {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             border: none; color: white;
         }
         .sidebar {
-            position: fixed; left: 0; top: 70px; bottom: 0; width: 260px;
+            position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
-            padding: 2rem 0; z-index: 999; overflow-y: auto;
+            padding: 1rem 0; z-index: 999; overflow-y: auto;
             transform: translateX(-100%); transition: transform 0.3s ease;
         }
         .sidebar.open {
             transform: translateX(0);
         }
         .sidebar-menu { list-style: none; }
-        .sidebar-item { margin: 0.5rem 1rem; }
+        .sidebar-item { margin: 0.3rem 0.5rem; }
         .sidebar-link {
-            display: flex; align-items: center; gap: 1rem;
-            padding: 0.85rem 1.25rem; color: var(--text-secondary);
-            border-radius: 12px; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 0.75rem; color: var(--text-secondary);
+            border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
         }
         .sidebar-link:hover {
             background: rgba(59,130,246,0.1); color: var(--accent-blue);
@@ -181,139 +181,139 @@ try {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             color: white;
         }
-        .sidebar-link i { width: 20px; text-align: center; }
-        .sidebar-divider { height: 1px; background: var(--border-color); margin: 1.5rem 1rem; }
+        .sidebar-link i { width: 15px; text-align: center; font-size: 0.9rem; }
+        .sidebar-divider { height: 1px; background: var(--border-color); margin: 1rem 0.5rem; }
         .main-content {
-            margin-left: 0; margin-top: 70px; padding: 2rem;
-            min-height: calc(100vh - 70px); position: relative; z-index: 1;
+            margin-left: 0; margin-top: 50px; padding: 1rem;
+            min-height: calc(100vh - 50px); position: relative; z-index: 1;
             transition: margin-left 0.3s ease;
         }
-        .main-content.sidebar-open { margin-left: 260px; }
+        .main-content.sidebar-open { margin-left: 70vw; }
         .page-section { display: none; }
         .page-section.active { display: block; }
         .page-title {
-            font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;
+            font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;
             background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .page-subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+        .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem; margin-bottom: 2rem;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem; margin-bottom: 1rem;
         }
         .stat-card {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 20px; padding: 1.75rem; position: relative;
-            transition: all 0.3s; box-shadow: 0 2px 8px var(--shadow); min-height: 180px;
+            border-radius: 12px; padding: 0.75rem; position: relative;
+            transition: all 0.3s; box-shadow: 0 2px 4px var(--shadow); min-height: 100px;
             display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
         }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 40px var(--shadow); }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 20px var(--shadow); }
         .stat-card::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
         }
         .stat-card.approved::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); }
         .stat-card.charged::before { background: linear-gradient(90deg, var(--warning), #ec4899); }
         .stat-card.declined::before { background: linear-gradient(90deg, var(--error), #ec4899); }
         .stat-icon {
-            width: 50px; height: 50px; border-radius: 14px;
+            width: 30px; height: 30px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; margin-bottom: 1rem;
+            font-size: 1rem; margin-bottom: 0.5rem;
             background: rgba(59,130,246,0.15); color: var(--accent-blue);
         }
         .stat-card.approved .stat-icon { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
         .stat-card.charged .stat-icon { background: rgba(245,158,11,0.15); color: var(--warning); }
         .stat-card.declined .stat-icon { background: rgba(239,68,68,0.15); color: var(--error); }
-        .stat-value { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
         .stat-label {
-            color: var(--text-secondary); font-size: 0.95rem; text-transform: uppercase; font-weight: 600;
+            color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
         }
         .checker-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 24px; padding: 2.5rem; margin-bottom: 2rem;
+            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
         }
         .checker-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+            margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
         }
         .checker-title {
-            font-size: 1.75rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.75rem;
+            font-size: 1.2rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem;
         }
-        .checker-title i { color: var(--accent-cyan); }
+        .checker-title i { color: var(--accent-cyan); font-size: 1rem; }
         .settings-btn {
-            padding: 0.6rem 1.2rem; border-radius: 12px;
+            padding: 0.3rem 0.6rem; border-radius: 8px;
             border: 1px solid var(--border-color);
             background: rgba(255,255,255,0.05); color: var(--text-primary);
             cursor: pointer; font-weight: 500; display: flex;
-            align-items: center; gap: 0.5rem; transition: all 0.3s;
+            align-items: center; gap: 0.3rem; font-size: 0.8rem;
         }
         .settings-btn:hover {
             border-color: var(--accent-blue); color: var(--accent-blue);
             transform: translateY(-2px);
         }
-        .input-section { margin-bottom: 2rem; }
+        .input-section { margin-bottom: 1rem; }
         .input-header {
             display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 1rem;
+            align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;
         }
-        .input-label { font-weight: 600; }
+        .input-label { font-weight: 600; font-size: 0.9rem; }
         .card-textarea {
-            width: 100%; min-height: 200px; background: var(--secondary-bg);
-            border: 2px solid var(--border-color); border-radius: 16px;
-            padding: 1.25rem; color: var(--text-primary);
+            width: 100%; min-height: 150px; background: var(--secondary-bg);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 0.75rem; color: var(--text-primary);
             font-family: 'Courier New', monospace; resize: vertical;
-            transition: all 0.3s;
+            font-size: 0.9rem; transition: all 0.3s;
         }
         .card-textarea:focus {
             outline: none; border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
-        .action-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
         .btn {
-            padding: 0.9rem 2rem; border-radius: 14px; border: none;
+            padding: 0.5rem 1rem; border-radius: 8px; border: none;
             font-weight: 600; cursor: pointer; display: flex;
-            align-items: center; gap: 0.75rem; min-width: 140px;
-            transition: all 0.3s;
+            align-items: center; gap: 0.3rem; min-width: 100px;
+            font-size: 0.9rem; transition: all 0.3s;
         }
         .btn-primary {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             color: white;
         }
-        .btn-primary:hover { transform: translateY(-3px); }
+        .btn-primary:hover { transform: translateY(-2px); }
         .btn-secondary {
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 24px; padding: 2.5rem; margin-bottom: 2rem;
+            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
         }
         .results-header {
             display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+            align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
         }
         .results-title {
-            font-size: 1.75rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.75rem;
+            font-size: 1.2rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem;
         }
-        .results-title i { color: var(--accent-green); }
-        .results-filters { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .results-title i { color: var(--accent-green); font-size: 1rem; }
+        .results-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .filter-btn {
-            padding: 0.5rem 1rem; border-radius: 10px;
+            padding: 0.3rem 0.6rem; border-radius: 6px;
             border: 1px solid var(--border-color);
             background: rgba(255,255,255,0.03); color: var(--text-secondary);
-            cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
+            cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
         }
         .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
         .filter-btn.active {
             background: var(--accent-blue); border-color: var(--accent-blue); color: white;
         }
         .empty-state {
-            text-align: center; padding: 4rem 2rem; color: var(--text-secondary);
+            text-align: center; padding: 1.5rem 0.5rem; color: var(--text-secondary);
         }
-        .empty-state i { font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.3; }
-        .empty-state h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3; }
+        .empty-state h3 { font-size: 1rem; margin-bottom: 0.3rem; }
         .settings-popup {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
@@ -322,97 +322,97 @@ try {
         .settings-popup.active { display: flex; }
         .settings-content {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 24px; padding: 2rem; max-width: 600px; width: 90%;
+            border-radius: 12px; padding: 1rem; max-width: 90vw; width: 90%;
             max-height: 80vh; overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             animation: slideUp 0.3s ease;
         }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .settings-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 2rem; padding-bottom: 1rem;
+            margin-bottom: 1rem; padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--border-color);
         }
         .settings-title {
-            font-size: 1.5rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.75rem;
+            font-size: 1.1rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem;
         }
         .settings-close {
-            width: 35px; height: 35px; border-radius: 10px; border: none;
+            width: 25px; height: 25px; border-radius: 6px; border: none;
             background: rgba(255,255,255,0.05); color: var(--text-secondary);
             cursor: pointer; display: flex; align-items: center;
-            justify-content: center; transition: all 0.3s;
+            justify-content: center; font-size: 0.9rem; transition: all 0.3s;
         }
         .settings-close:hover {
             background: var(--error); color: white; transform: rotate(90deg);
         }
-        .gateway-group { margin-bottom: 2rem; }
+        .gateway-group { margin-bottom: 1rem; }
         .gateway-group-title {
-            font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;
-            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
+            display: flex; align-items: center; gap: 0.3rem;
         }
-        .gateway-options { display: grid; gap: 0.75rem; }
+        .gateway-options { display: grid; gap: 0.5rem; }
         .gateway-option {
-            display: flex; align-items: center; padding: 1rem;
-            background: var(--secondary-bg); border: 2px solid var(--border-color);
-            border-radius: 12px; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; padding: 0.5rem;
+            background: var(--secondary-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; cursor: pointer; transition: all 0.3s;
         }
         .gateway-option:hover {
-            border-color: var(--accent-blue); transform: translateX(5px);
+            border-color: var(--accent-blue); transform: translateX(3px);
         }
         .gateway-option input[type="radio"] {
-            width: 20px; height: 20px; margin-right: 1rem;
+            width: 15px; height: 15px; margin-right: 0.5rem;
             cursor: pointer; accent-color: var(--accent-blue);
         }
         .gateway-option-content { flex: 1; }
         .gateway-option-name {
             font-weight: 600; display: flex; align-items: center;
-            gap: 0.5rem; margin-bottom: 0.25rem;
+            gap: 0.3rem; margin-bottom: 0.2rem; font-size: 0.9rem;
         }
-        .gateway-option-desc { font-size: 0.85rem; color: var(--text-secondary); }
+        .gateway-option-desc { font-size: 0.7rem; color: var(--text-secondary); }
         .gateway-badge {
-            padding: 0.25rem 0.75rem; border-radius: 6px;
-            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            padding: 0.2rem 0.5rem; border-radius: 4px;
+            font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
         }
         .badge-charge { background: rgba(245,158,11,0.15); color: var(--warning); }
         .badge-auth { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
         .settings-footer {
-            display: flex; gap: 1rem; margin-top: 2rem;
-            padding-top: 1rem; border-top: 1px solid var(--border-color);
+            display: flex; gap: 0.5rem; margin-top: 1rem;
+            padding-top: 0.5rem; border-top: 1px solid var(--border-color);
         }
         .btn-save {
-            flex: 1; padding: 0.9rem; border-radius: 12px; border: none;
+            flex: 1; padding: 0.5rem; border-radius: 8px; border: none;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
         }
         .btn-save:hover { transform: translateY(-2px); }
         .btn-cancel {
-            flex: 1; padding: 0.9rem; border-radius: 12px;
+            flex: 1; padding: 0.5rem; border-radius: 8px;
             border: 1px solid var(--border-color);
             background: rgba(255,255,255,0.05); color: var(--text-primary);
-            font-weight: 600; cursor: pointer;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
         }
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #ec4899;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ec4899;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 25px;
+            height: 25px;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 10px auto;
             display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #statusLog { margin-top: 1rem; color: var(--text-secondary); text-align: center; }
+        #statusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
-        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 1rem; margin-left: auto; }
+        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
-        .menu-toggle { color: #ffffff !important; font-size: 1.5rem; padding: 0.5rem; cursor: pointer; transition: all 0.3s; }
+        .menu-toggle { color: #ffffff !important; font-size: 1.2rem; padding: 0.3rem; cursor: pointer; transition: all 0.3s; }
         .menu-toggle:hover { transform: scale(1.1); }
         .sidebar-link.logout {
             color: var(--error);
@@ -424,32 +424,51 @@ try {
             color: var(--error);
             transform: translateX(5px);
         }
-        @media (max-width: 768px) {
-            .navbar { padding: 1rem; justify-content: space-between; }
-            .navbar-actions { gap: 0.5rem; }
-            .user-info { padding: 0.3rem 0.8rem; gap: 0.5rem; }
-            .user-avatar { width: 30px; height: 30px; }
-            .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-            .sidebar { width: 80vw; }
-            .main-content { padding: 1rem; }
-            .page-title { font-size: 1.5rem; }
-            .page-subtitle { font-size: 0.9rem; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
-            .stat-card { padding: 1.25rem; min-height: 150px; }
-            .stat-value { font-size: 2rem; }
-            .stat-label { font-size: 0.8rem; }
-            .checker-section { padding: 1.5rem; }
-            .input-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-            .action-buttons { justify-content: center; gap: 0.5rem; flex-direction: column; }
-            .btn { min-width: 100%; padding: 0.75rem; font-size: 0.9rem; }
-            .results-header { flex-direction: column; gap: 1rem; }
-            .results-filters { justify-content: center; gap: 0.5rem; }
-            .filter-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-            .settings-content { padding: 1.5rem; max-width: 90vw; }
-            .gateway-option { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-            .gateway-option input { margin-right: 0; margin-bottom: 0.5rem; }
-            .settings-footer { flex-direction: column; gap: 0.5rem; }
-            .btn-save, .btn-cancel { width: 100%; }
+        @media (min-width: 769px) {
+            .navbar { padding: 1rem 2rem; }
+            .navbar-brand { font-size: 1.5rem; }
+            .navbar-brand i { font-size: 1.75rem; }
+            .theme-toggle { width: 60px; height: 32px; }
+            .theme-toggle-slider { width: 24px; height: 24px; font-size: 0.7rem; }
+            [data-theme="light"] .theme-toggle-slider { transform: translateX(28px); }
+            .user-info { padding: 0.5rem 1rem; gap: 0.75rem; }
+            .user-avatar { width: 35px; height: 35px; font-size: 1rem; }
+            .nav-btn { padding: 0.6rem 1.2rem; font-size: 1rem; }
+            .sidebar { width: 260px; top: 70px; }
+            .main-content { margin-top: 70px; padding: 2rem; margin-left: 0; }
+            .main-content.sidebar-open { margin-left: 260px; }
+            .page-title { font-size: 2rem; }
+            .page-subtitle { font-size: 1rem; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+            .stat-card { padding: 1.75rem; min-height: 180px; border-radius: 20px; }
+            .stat-icon { width: 50px; height: 50px; font-size: 1.5rem; }
+            .stat-value { font-size: 2.5rem; }
+            .stat-label { font-size: 0.95rem; }
+            .checker-section { padding: 2.5rem; border-radius: 24px; }
+            .checker-title { font-size: 1.75rem; }
+            .checker-title i { font-size: 1.2rem; }
+            .settings-btn { padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 12px; }
+            .input-label { font-size: 1rem; }
+            .card-textarea { min-height: 200px; padding: 1.25rem; font-size: 1rem; border-radius: 16px; }
+            .btn { padding: 0.9rem 2rem; min-width: 140px; font-size: 1rem; border-radius: 14px; }
+            .results-section { padding: 2.5rem; border-radius: 24px; }
+            .results-title { font-size: 1.75rem; }
+            .results-title i { font-size: 1.2rem; }
+            .filter-btn { padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; }
+            .settings-content { padding: 2rem; max-width: 600px; border-radius: 24px; }
+            .settings-title { font-size: 1.5rem; }
+            .settings-close { width: 35px; height: 35px; font-size: 1rem; border-radius: 10px; }
+            .gateway-group-title { font-size: 1.1rem; }
+            .gateway-option { padding: 1rem; border-radius: 12px; }
+            .gateway-option input[type="radio"] { width: 20px; height: 20px; }
+            .gateway-option-name { font-size: 1rem; }
+            .gateway-option-desc { font-size: 0.85rem; }
+            .gateway-badge { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 6px; }
+            .btn-save, .btn-cancel { padding: 0.9rem; font-size: 1rem; border-radius: 12px; }
+            .loader { width: 40px; height: 40px; border-width: 4px; }
+            #statusLog { font-size: 0.95rem; }
+            .copy-btn { font-size: 1rem; }
+            .menu-toggle { font-size: 1.5rem; padding: 0.5rem; }
         }
     </style>
 </head>
@@ -510,50 +529,50 @@ try {
     <main class="main-content">
         <section class="page-section active" id="page-home">
             <h1 class="page-title">𝐃𝐚𝐬𝐡𝐛𝐨𝐚𝐫𝐝</h1>
-            <p class="page-subtitle">𝘞𝘦𝘭𝘤𝘰𝘮𝘦 𝘣𝘢𝘤𝘬! 𝘏𝘦𝘳𝘦’𝘴 𝘺𝘰𝘶𝘳 𝘤𝘶𝘳𝘳𝘦𝘯𝘵 𝘴𝘵𝘢𝘵𝘴.</p>
+            <p class="page-subtitle">𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐛𝐚𝐜𝐤! 𝐇𝐞𝐫𝐞’𝐬 𝐲𝐨𝐮𝐫 𝐜𝐮𝐫𝐫𝐞𝐧𝐭 𝐬𝐭𝐚𝐭𝐬.</p>
 
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
                     <div id="total-value" class="stat-value">0</div>
-                    <div class="stat-label">Total Cards</div>
+                    <div class="stat-label">TOTAL</div>
                 </div>
                 <div class="stat-card charged">
                     <div class="stat-icon"><i class="fas fa-bolt"></i></div>
                     <div id="charged-value" class="stat-value">0</div>
-                    <div class="stat-label">Charged Cards</div>
+                    <div class="stat-label">HIT|CHARGED</div>
                 </div>
                 <div class="stat-card approved">
                     <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
                     <div id="approved-value" class="stat-value">0</div>
-                    <div class="stat-label">Approved cards</div>
+                    <div class="stat-label">LIVE|APPROVED</div>
                 </div>
                 <div class="stat-card threeDS">
                     <div class="stat-icon"><i class="fas fa-lock"></i></div>
                     <div id="threed-value" class="stat-value">0</div>
-                    <div class="stat-label">3DS cards</div>
+                    <div class="stat-label">3DS</div>
                 </div>
                 <div class="stat-card declined">
                     <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
                     <div id="declined-value" class="stat-value">0</div>
-                    <div class="stat-label">Dead cards</div>
+                    <div class="stat-label">DEAD|DECLINED</div>
                 </div>
                 <div class="stat-card checked">
                     <div class="stat-icon"><i class="fas fa-check-double"></i></div>
                     <div id="checked-value" class="stat-value">0 / 0</div>
-                    <div class="stat-label">Executed</div>
+                    <div class="stat-label">CHECKED</div>
                 </div>
             </div>
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">Card Checker</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
 
             <div class="checker-section">
                 <div class="checker-header">
                     <div class="checker-title">
-                        <i class="fas fa-shield-alt"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹
+                        <i class="fas fa-shield-alt"></i> Card Checker
                     </div>
                     <button class="settings-btn" onclick="openGatewaySettings()">
                         <i class="fas fa-cog"></i> Gateway Settings
@@ -573,7 +592,7 @@ try {
 
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="startBtn">
-                        <i class="fas fa-play"></i> Start Execute
+                        <i class="fas fa-play"></i> Start Check
                     </button>
                     <button class="btn btn-secondary" id="stopBtn" disabled>
                         <i class="fas fa-stop"></i> Stop
@@ -632,7 +651,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                                <span class="gateway-badge badge-charge">Charge</span>
                             </div>
                             <div class="gateway-option-desc">Payment processing with charge</div>
                         </div>
@@ -642,7 +661,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                                <span class="gateway-badge badge-charge">Charge</span>
                             </div>
                             <div class="gateway-option-desc">Popular online payment system</div>
                         </div>
@@ -652,7 +671,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                                <span class="gateway-badge badge-charge">Charge</span>
                             </div>
                             <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
@@ -662,10 +681,20 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:20px; height:20px; object-fit:contain;">Razorpay
-                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
+                                    style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                <span class="gateway-badge badge-charge">Charge</span>
                             </div>
                             <div class="gateway-option-desc">Indian payment gateway</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/authnet1$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fas fa-credit-card"></i> Authnet
+                                <span class="gateway-badge badge-charge">Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">Authorize.net payment gateway</div>
                         </div>
                     </label>
                 </div>
@@ -855,13 +884,13 @@ try {
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color};">
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
                     <i class="${icon}"></i>
                 </div>
                 <div class="stat-content">
                     <div>
-                        <div class="stat-value">${card.displayCard}</div>
-                        <div class="stat-label" style="color: ${color};">${status} - ${response}</div>
+                        <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
+                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
                     </div>
                     <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
                 </div>
