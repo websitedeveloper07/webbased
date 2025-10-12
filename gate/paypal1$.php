@@ -60,7 +60,7 @@ $button_session_id = "uid_{$lol2}_{$lol3}";
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Reduced timeout to handle faster checks
+curl_setopt($ch, CURLOPT_TIMEOUT, 180); // Increased timeout to 180 seconds
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For testing, disable in production
 
 // Step 1: Add to cart
