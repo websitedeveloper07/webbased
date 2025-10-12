@@ -74,6 +74,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CardXCHK Checker</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -84,6 +85,7 @@ try {
             --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
             --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
             --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
+            --success-green: #22c55e; --declined-red: #ef4444;
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -91,14 +93,13 @@ try {
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
-            color: var(--text-primary); min-height: 100vh;
+            color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
         }
         .blur-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            backdrop-filter: blur(5px); z-index: 9998; opacity: 1;
-            transition: opacity 1.2s ease-in-out, backdrop-filter 1.2s ease-in-out;
+            backdrop-filter: blur(5px); z-index: 9998; opacity: 0; display: none;
         }
-        .blur-overlay.fade-out { opacity: 0; backdrop-filter: blur(0); pointer-events: none; }
+        .blur-overlay.active { opacity: 1; display: block; }
         .moving-logo {
             position: fixed; font-size: 5rem; z-index: 10000;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
@@ -160,7 +161,10 @@ try {
             position: fixed; left: 0; top: 70px; bottom: 0; width: 260px;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
             padding: 2rem 0; z-index: 999; overflow-y: auto;
-            transform: translateX(0); transition: transform 0.3s ease;
+            transform: translateX(-100%); transition: transform 0.3s ease;
+        }
+        .sidebar.open {
+            transform: translateX(0);
         }
         .sidebar-menu { list-style: none; }
         .sidebar-item { margin: 0.5rem 1rem; }
@@ -180,11 +184,11 @@ try {
         .sidebar-link i { width: 20px; text-align: center; }
         .sidebar-divider { height: 1px; background: var(--border-color); margin: 1.5rem 1rem; }
         .main-content {
-            margin-left: 260px; margin-top: 70px; padding: 2rem;
+            margin-left: 0; margin-top: 70px; padding: 2rem;
             min-height: calc(100vh - 70px); position: relative; z-index: 1;
             transition: margin-left 0.3s ease;
         }
-        .main-content.sidebar-closed { margin-left: 0; }
+        .main-content.sidebar-open { margin-left: 260px; }
         .page-section { display: none; }
         .page-section.active { display: block; }
         .page-title {
@@ -411,9 +415,8 @@ try {
             .user-info { padding: 0.3rem 0.8rem; gap: 0.5rem; }
             .user-avatar { width: 30px; height: 30px; }
             .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-            .sidebar { width: 80vw; transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 1rem; margin-top: 70px; }
+            .sidebar { width: 80vw; }
+            .main-content { padding: 1rem; }
             .page-title { font-size: 1.5rem; }
             .page-subtitle { font-size: 0.9rem; }
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
@@ -524,26 +527,6 @@ try {
                     <div class="stat-icon"><i class="fas fa-check-double"></i></div>
                     <div class="stat-value checked">0 / 0</div>
                     <div class="stat-label">CHECKED</div>
-                </div>
-            </div>
-
-            <div class="results-section">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list-check"></i> Recent Results
-                    </div>
-                    <div class="results-filters">
-                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
-                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
-                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
-                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
-                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
-                    </div>
-                </div>
-                <div id="resultsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
                 </div>
             </div>
         </section>
@@ -728,12 +711,13 @@ try {
 
             setTimeout(function() {
                 movingLogo.classList.add('in-position');
-                blurOverlay.classList.add('fade-out');
+                blurOverlay.classList.add('active');
                 setTimeout(function() {
                     navbarLogo.classList.add('visible');
                     brandText.classList.add('visible');
                     setTimeout(function() {
                         movingLogo.classList.add('hidden');
+                        blurOverlay.classList.remove('active');
                     }, 200);
                     setTimeout(function() {
                         blurOverlay.style.display = 'none';
@@ -760,7 +744,9 @@ try {
             document.getElementById('page-' + pageName).classList.add('active');
             document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
             event.target.closest('.sidebar-link').classList.add('active');
-            if (pageName === 'home') renderResult();
+            if (pageName === 'home') {
+                renderResult();
+            }
         }
 
         function openGatewaySettings() {
@@ -813,14 +799,14 @@ try {
         }
 
         function addResult(card, status, response) {
-            const resultsList = document.getElementById('resultsList');
+            const resultsList = document.getElementById('checkingResultsList');
             const cardClass = status.toLowerCase();
             const icon = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? var(--success-green) : var(--declined-red);
+            const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color};">
                     <i class="${icon}"></i>
                 </div>
                 <div class="stat-value">${card.displayCard}</div>
@@ -846,6 +832,39 @@ try {
                 title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
                 showConfirmButton: false, timer: 1500
             });
+        }
+
+        function renderResult() {
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+            const allCards = [...chargedCards, ...approvedCards, ...ccnCards, ...threeDSCards, ...declinedCards].slice(0, 5);
+            if (allCards.length === 0) {
+                resultsList.classList.add('empty-state');
+                resultsList.innerHTML = `
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Results Yet</h3>
+                    <p>Start checking cards to see results here</p>
+                `;
+            } else {
+                resultsList.classList.remove('empty-state');
+                allCards.forEach(card => {
+                    const status = card.response.includes('CHARGED') ? 'Charged' :
+                                 card.response.includes('APPROVED') ? 'Approved' :
+                                 card.response.includes('CCN') ? 'CCN' :
+                                 card.response.includes('3DS') ? '3DS' : 'Declined';
+                    const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = `stat-card ${status.toLowerCase()} result-item`;
+                    resultDiv.innerHTML = `
+                        <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color};">
+                            <i class="${(status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle'}"></i>
+                        </div>
+                        <div class="stat-value">${card.displayCard}</div>
+                        <div class="stat-label" style="color: ${color};">${status} - ${card.response}</div>
+                    `;
+                    resultsList.appendChild(resultDiv);
+                });
+            }
         }
 
         async function processCard(card, controller, retryCount = 0) {
@@ -978,7 +997,7 @@ try {
             $('#startBtn').prop('disabled', true);
             $('#stopBtn').prop('disabled', false);
             $('#loader').show();
-            $('#resultsList').addClass('hidden');
+            $('#checkingResultsList').addClass('hidden');
             $('#statusLog').text('Starting processing...');
 
             let requestIndex = 0;
@@ -998,10 +1017,10 @@ try {
 
                         activeRequests--;
                         const cardEntry = { response: result.response, displayCard: result.displayCard };
-                        if (result.status === 'CHARGED') {
+                        if (result.status === 'Charged') {
                             chargedCards.push(cardEntry);
                             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                        } else if (result.status === 'APPROVED') {
+                        } else if (result.status === 'Approved') {
                             approvedCards.push(cardEntry);
                             sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                         } else if (result.status === 'CCN') {
@@ -1047,8 +1066,7 @@ try {
                 icon: 'success',
                 confirmButtonColor: '#ec4899'
             });
-            $('#resultsList').removeClass('hidden');
-            $('#homeResults').style.display = 'none';
+            $('#checkingResultsList').removeClass('hidden');
         }
 
         $('#startBtn').on('click', processCards);
@@ -1073,8 +1091,7 @@ try {
                 icon: 'warning',
                 confirmButtonColor: '#ec4899'
             });
-            $('#resultsList').removeClass('hidden');
-            $('#homeResults').style.display = 'none';
+            $('#checkingResultsList').removeClass('hidden');
         });
 
         $('#clearBtn').on('click', function() {
@@ -1097,10 +1114,35 @@ try {
         });
 
         $('#exportBtn').on('click', function() {
+            const allCards = [...chargedCards, ...approvedCards, ...ccnCards, ...threeDSCards, ...declinedCards];
+            if (allCards.length === 0) {
+                Swal.fire({
+                    title: 'No data to export!',
+                    text: 'Please check some cards first.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            let csvContent = "Card,Status,Response\n";
+            allCards.forEach(card => {
+                const status = card.response.includes('CHARGED') ? 'Charged' :
+                             card.response.includes('APPROVED') ? 'Approved' :
+                             card.response.includes('CCN') ? 'CCN' :
+                             card.response.includes('3DS') ? '3DS' : 'Declined';
+                csvContent += `${card.displayCard},${status},${card.response}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             Swal.fire({
-                icon: 'info', title: 'Export',
-                text: 'Export functionality coming soon',
-                confirmButtonColor: '#3b82f6'
+                toast: true, position: 'top-end', icon: 'success',
+                title: 'Exported!', showConfirmButton: false, timer: 1500
             });
         });
 
