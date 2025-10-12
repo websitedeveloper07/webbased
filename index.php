@@ -586,17 +586,27 @@ try {
                                     data: formData,
                                     processData: false,
                                     contentType: false,
-                                    timeout: 55000,
+                                    timeout: 180000, // Adjusted to match paypal1$.php timeout of 180 seconds
                                     signal: controller.signal,
                                     success: function(response) {
                                         let status = 'DECLINED';
-                                        if (response.includes('CHARGED')) status = 'CHARGED';
-                                        else if (response.includes('APPROVED')) status = 'APPROVED';
-                                        else if (response.includes('CCN')) status = 'CCN';
-                                        else if (response.includes('3D_AUTHENTICATION')) status = '3DS';
+                                        let jsonResponse;
+                                        try {
+                                            jsonResponse = JSON.parse(response);
+                                            if (jsonResponse.status === 'CHARGED') status = 'CHARGED';
+                                            else if (jsonResponse.status === 'APPROVED') status = 'APPROVED';
+                                            else if (jsonResponse.status === 'CCN') status = 'CCN';
+                                            else if (jsonResponse.status === '3DS') status = '3DS';
+                                        } catch (e) {
+                                            console.error('Failed to parse response:', response, e);
+                                            if (response.includes('Charged!')) status = 'CHARGED';
+                                            else if (response.includes('Approved! - Ccn')) status = 'CCN';
+                                            else if (response.includes('Approved! - AVS')) status = 'APPROVED';
+                                            else if (response.includes('OTP! - 3D')) status = '3DS';
+                                        }
                                         resolve({
                                             status: status,
-                                            response: response.trim(),
+                                            response: jsonResponse ? jsonResponse.response || response : response,
                                             card: card,
                                             displayCard: card.displayCard
                                         });
