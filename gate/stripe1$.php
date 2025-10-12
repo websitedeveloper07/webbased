@@ -2,7 +2,7 @@
 header('Content-Type: text/plain');
 
 // Hardcoded Stripe public key (replace with your actual key if needed)
-define('STRIPE_PUBLIC_KEY', 'pk_live_51049Hm4QFaGycgRKpWt6KEA9QxP8gjo8sbC6f2qvl4OnzKUZ7W0l00vlzcuhJBjX5wyQaAJxSPZ5k72ZONiXf2Za00Y1jRrMhU');
+define('STRIPE_PUBLIC_KEY', 'pk_live_51S4GUbP9nOtSRfTVvoqmYr7VvT8fDx5ABdsUeZ4TCmohz6iZ63ZC7iedfVOL7seMcFBLrz0rd5MDd8ojZnYrWw9A003MzCGQdF');
 
 try {
     // Retrieve card details from POST
