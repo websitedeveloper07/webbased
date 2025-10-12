@@ -735,7 +735,7 @@ try {
         let isStopping = false;
         let activeRequests = 0;
         let cardQueue = [];
-        const MAX_CONCURRENT = 2;
+        const MAX_CONCURRENT = 5;
         const MAX_RETRIES = 2;
         let abortControllers = [];
         let totalCards = 0;
@@ -879,8 +879,8 @@ try {
             const resultsList = document.getElementById('checkingResultsList');
             if (!resultsList) return;
             const cardClass = status.toLowerCase();
-            const icon = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
+            const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
@@ -955,7 +955,7 @@ try {
                     timeout: 300000,
                     signal: controller.signal,
                     success: function(response) {
-                        let status = 'Declined';
+                        let status = 'DECLINED';
                         let message = response;
                         try {
                             const jsonResponse = JSON.parse(response);
@@ -964,9 +964,9 @@ try {
                             }
                             message = jsonResponse.message || jsonResponse.response || response;
                         } catch (e) {
-                            if (response.includes('CHARGED')) status = 'Charged';
-                            else if (response.includes('APPROVED')) status = 'Approved';
-                            else if (response.includes('3D_AUTHENTICATION') || response.includes('3DS')) status = '3DS';
+                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS')) status = '3DS';
+                            else if (response.includes('CHARGED')) status = 'CHARGED';
+                            else if (response.includes('APPROVED')) status = 'APPROVED';
                             message = response;
                         }
                         console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
@@ -986,7 +986,7 @@ try {
                             setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                         } else {
                             resolve({
-                                status: 'Declined',
+                                status: 'DECLINED',
                                 response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`,
                                 card: card,
                                 displayCard: card.displayCard
@@ -1180,9 +1180,9 @@ try {
             }
             let csvContent = "Card,Status,Response\n";
             allCards.forEach(card => {
-                const status = card.response.includes('CHARGED') ? 'Charged' :
-                             card.response.includes('APPROVED') ? 'Approved' :
-                             card.response.includes('3DS') ? '3DS' : 'Declined';
+                const status = card.response.includes('CHARGED') ? 'CHARGED' :
+                             card.response.includes('APPROVED') ? 'APPROVED' :
+                             card.response.includes('3DS') ? '3DS' : 'DECLINED';
                 csvContent += `${card.displayCard},${status},${card.response}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
