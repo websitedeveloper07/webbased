@@ -1,12 +1,8 @@
 <?php
-require_once '../vendor/autoload.php';
-use Dotenv\Dotenv;
-
-// Load environment variables
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
-
 header('Content-Type: text/plain');
+
+// Hardcoded Stripe public key (replace with your actual key if needed)
+define('STRIPE_PUBLIC_KEY', 'pk_live_51049Hm4QFaGycgRKpWt6KEA9QxP8gjo8sbC6f2qvl4OnzKUZ7W0l00vlzcuhJBjX5wyQaAJxSPZ5k72ZONiXf2Za00Y1jRrMhU');
 
 try {
     // Retrieve card details from POST
@@ -56,7 +52,7 @@ try {
         'card[cvc]' => $cvc,
         'card[exp_month]' => $expMonth,
         'card[exp_year]' => $expYear,
-        'key' => $_ENV['STRIPE_PUBLIC_KEY']
+        'key' => STRIPE_PUBLIC_KEY
     ]);
 
     $ch = curl_init();
