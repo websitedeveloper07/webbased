@@ -74,7 +74,6 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CardXCHK Checker</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -85,7 +84,6 @@ try {
             --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
             --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
             --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
-            --success-green: #22c55e; --declined-red: #ef4444;
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -93,13 +91,14 @@ try {
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
-            color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
+            color: var(--text-primary); min-height: 100vh;
         }
         .blur-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            backdrop-filter: blur(5px); z-index: 9998; opacity: 0; display: none;
+            backdrop-filter: blur(5px); z-index: 9998; opacity: 1;
+            transition: opacity 1.2s ease-in-out, backdrop-filter 1.2s ease-in-out;
         }
-        .blur-overlay.active { opacity: 1; display: block; }
+        .blur-overlay.fade-out { opacity: 0; backdrop-filter: blur(0); pointer-events: none; }
         .moving-logo {
             position: fixed; font-size: 5rem; z-index: 10000;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
@@ -415,8 +414,10 @@ try {
             .user-info { padding: 0.3rem 0.8rem; gap: 0.5rem; }
             .user-avatar { width: 30px; height: 30px; }
             .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-            .sidebar { width: 80vw; }
-            .main-content { padding: 1rem; }
+            .sidebar { width: 100%; height: calc(100vh - 70px); transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { padding: 1rem; margin-left: 0; }
+            .main-content.sidebar-open { margin-left: 0; } /* Sidebar covers the content on mobile */
             .page-title { font-size: 1.5rem; }
             .page-subtitle { font-size: 0.9rem; }
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
@@ -527,6 +528,26 @@ try {
                     <div class="stat-icon"><i class="fas fa-check-double"></i></div>
                     <div class="stat-value checked">0 / 0</div>
                     <div class="stat-label">CHECKED</div>
+                </div>
+            </div>
+
+            <div class="results-section" id="homeResults">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-list-check"></i> Recent Results
+                    </div>
+                    <div class="results-filters">
+                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
+                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
+                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
+                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
+                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
+                    </div>
+                </div>
+                <div id="resultsList" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Results Yet</h3>
+                    <p>Start checking cards to see results here</p>
                 </div>
             </div>
         </section>
@@ -711,13 +732,12 @@ try {
 
             setTimeout(function() {
                 movingLogo.classList.add('in-position');
-                blurOverlay.classList.add('active');
+                blurOverlay.classList.add('fade-out');
                 setTimeout(function() {
                     navbarLogo.classList.add('visible');
                     brandText.classList.add('visible');
                     setTimeout(function() {
                         movingLogo.classList.add('hidden');
-                        blurOverlay.classList.remove('active');
                     }, 200);
                     setTimeout(function() {
                         blurOverlay.style.display = 'none';
@@ -746,6 +766,8 @@ try {
             event.target.closest('.sidebar-link').classList.add('active');
             if (pageName === 'home') {
                 renderResult();
+            } else if (pageName === 'checking') {
+                document.getElementById('checkingResults').style.display = 'block';
             }
         }
 
@@ -806,7 +828,7 @@ try {
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color};">
+                <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
                     <i class="${icon}"></i>
                 </div>
                 <div class="stat-value">${card.displayCard}</div>
@@ -851,12 +873,12 @@ try {
                     const status = card.response.includes('CHARGED') ? 'Charged' :
                                  card.response.includes('APPROVED') ? 'Approved' :
                                  card.response.includes('CCN') ? 'CCN' :
-                                 card.response.includes('3DS') ? '3DS' : 'Declined';
+                                 card.response.includes('3D_AUTHENTICATION') ? '3DS' : 'Declined';
                     const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
                     const resultDiv = document.createElement('div');
                     resultDiv.className = `stat-card ${status.toLowerCase()} result-item`;
                     resultDiv.innerHTML = `
-                        <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color};">
+                        <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
                             <i class="${(status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle'}"></i>
                         </div>
                         <div class="stat-value">${card.displayCard}</div>
@@ -867,299 +889,108 @@ try {
             }
         }
 
-        async function processCard(card, controller, retryCount = 0) {
-            if (!isProcessing) return null;
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            if (savedTheme === 'light') {
+                document.querySelector('.theme-toggle-slider i').className = 'fas fa-sun';
+            }
 
-            return new Promise((resolve) => {
-                const formData = new FormData();
-                let normalizedYear = card.exp_year;
-                if (normalizedYear.length === 2) {
-                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
-                }
-                formData.append('card[number]', card.number);
-                formData.append('card[exp_month]', card.exp_month);
-                formData.append('card[exp_year]', normalizedYear);
-                formData.append('card[cvc]', card.cvc);
+            document.querySelectorAll('#page-home .filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#page-home .filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'info',
+                        title: `Filter: ${this.textContent.trim()}`,
+                        showConfirmButton: false, timer: 1500
+                    });
+                });
+            });
 
-                $('#statusLog').text(`Processing card: ${card.displayCard}`);
-                console.log(`Starting request for card: ${card.displayCard}`);
-
-                $.ajax({
-                    url: selectedGateway,
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    timeout: 300000,
-                    signal: controller.signal,
-                    success: function(response) {
-                        let status = 'Declined';
-                        let jsonResponse;
-                        try {
-                            jsonResponse = JSON.parse(response);
-                            if (jsonResponse.status === 'CHARGED') status = 'Charged';
-                            else if (jsonResponse.status === 'APPROVED') status = 'Approved';
-                            else if (jsonResponse.status === 'CCN') status = 'CCN';
-                            else if (jsonResponse.status === '3DS') status = '3DS';
-                        } catch (e) {
-                            console.error('Failed to parse response:', response, e);
-                            if (response.includes('CHARGED')) status = 'Charged';
-                            else if (response.includes('APPROVED')) status = 'Approved';
-                            else if (response.includes('CCN')) status = 'CCN';
-                            else if (response.includes('3D_AUTHENTICATION')) status = '3DS';
-                        }
-                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${jsonResponse ? JSON.stringify(jsonResponse) : response}`);
-                        resolve({
-                            status: status,
-                            response: jsonResponse ? jsonResponse.message || jsonResponse.response || response : response,
-                            card: card,
-                            displayCard: card.displayCard
+            const checkBtn = document.querySelector('.btn-primary');
+            if (checkBtn) {
+                checkBtn.addEventListener('click', function() {
+                    const cardInput = document.getElementById('cardInput');
+                    const cards = cardInput ? cardInput.value.trim() : '';
+                    if (!cards) {
+                        Swal.fire({
+                            icon: 'warning', title: 'No Cards',
+                            text: 'Please enter card details',
+                            confirmButtonColor: '#3b82f6'
                         });
-                    },
-                    error: function(xhr) {
-                        $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
-                        console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                        if (xhr.statusText === 'abort') {
-                            resolve(null);
-                        } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                        } else {
-                            resolve({
-                                status: 'Declined',
-                                response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})] ${card.displayCard}`,
-                                card: card,
-                                displayCard: card.displayCard
+                        return;
+                    }
+                    const cardLines = cards.split('\n').filter(line => line.trim() !== '');
+                    const gateway = selectedGateway;
+                    Swal.fire({
+                        icon: 'success', title: 'Checking Started!',
+                        text: `Checking ${cardLines.length} card(s) with ${gateway}`,
+                        confirmButtonColor: '#10b981'
+                    });
+                });
+            }
+
+            document.querySelectorAll('.btn-secondary').forEach(btn => {
+                const btnText = btn.innerHTML.toLowerCase();
+                if (btnText.includes('trash')) {
+                    btn.addEventListener('click', function() {
+                        const cardInput = document.getElementById('cardInput');
+                        if (cardInput && cardInput.value.trim()) {
+                            Swal.fire({
+                                title: 'Clear Input?', text: 'Remove all entered cards',
+                                icon: 'warning', showCancelButton: true,
+                                confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    cardInput.value = '';
+                                    updateCardCount();
+                                    Swal.fire({
+                                        toast: true, position: 'top-end', icon: 'success',
+                                        title: 'Cleared!', showConfirmButton: false, timer: 1500
+                                    });
+                                }
                             });
                         }
-                    }
-                });
-            });
-        }
-
-        async function processCards() {
-            if (isProcessing) {
-                Swal.fire({
-                    title: 'Processing in progress',
-                    text: 'Please wait until current process completes',
-                    icon: 'warning',
-                    confirmButtonColor: '#ec4899'
-                });
-                return;
-            }
-
-            const cardText = $('#cardInput').val().trim();
-            const lines = cardText.split('\n').filter(line => line.trim());
-            const validCards = lines
-                .map(line => line.trim())
-                .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
-                .map(line => {
-                    const [number, exp_month, exp_year, cvc] = line.split('|');
-                    return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
-                });
-
-            if (validCards.length === 0) {
-                Swal.fire({
-                    title: 'No valid cards!',
-                    text: 'Please check your card format',
-                    icon: 'error',
-                    confirmButtonColor: '#ec4899'
-                });
-                return;
-            }
-
-            if (validCards.length > 1000) {
-                Swal.fire({
-                    title: 'Limit exceeded!',
-                    text: 'Maximum 1000 cards allowed',
-                    icon: 'error',
-                    confirmButtonColor: '#ec4899'
-                });
-                return;
-            }
-
-            isProcessing = true;
-            isStopping = false;
-            activeRequests = 0;
-            abortControllers = [];
-            cardQueue = [...validCards];
-            totalCards = validCards.length;
-            chargedCards = [];
-            approvedCards = [];
-            ccnCards = [];
-            threeDSCards = [];
-            declinedCards = [];
-            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-            sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
-            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-            updateStats(totalCards, 0, 0, 0, 0, 0);
-            $('#startBtn').prop('disabled', true);
-            $('#stopBtn').prop('disabled', false);
-            $('#loader').show();
-            $('#checkingResultsList').addClass('hidden');
-            $('#statusLog').text('Starting processing...');
-
-            let requestIndex = 0;
-
-            while (cardQueue.length > 0 && isProcessing) {
-                while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
-                    const card = cardQueue.shift();
-                    activeRequests++;
-                    const controller = new AbortController();
-                    abortControllers.push(controller);
-
-                    await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
-                    requestIndex++;
-
-                    processCard(card, controller).then(result => {
-                        if (result === null) return;
-
-                        activeRequests--;
-                        const cardEntry = { response: result.response, displayCard: result.displayCard };
-                        if (result.status === 'Charged') {
-                            chargedCards.push(cardEntry);
-                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                        } else if (result.status === 'Approved') {
-                            approvedCards.push(cardEntry);
-                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                        } else if (result.status === 'CCN') {
-                            ccnCards.push(cardEntry);
-                            sessionStorage.setItem(`ccnCards-${sessionId}`, JSON.stringify(ccnCards));
-                        } else if (result.status === '3DS') {
-                            threeDSCards.push(cardEntry);
-                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                        } else {
-                            declinedCards.push(cardEntry);
-                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                        }
-
-                        addResult(card, result.status, result.response);
-                        updateStats(totalCards, chargedCards.length, approvedCards.length, ccnCards.length, threeDSCards.length, declinedCards.length);
-
-                        if (chargedCards.length + approvedCards.length + ccnCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
-                            finishProcessing();
-                        }
+                    });
+                } else if (btnText.includes('stop')) {
+                    btn.addEventListener('click', function() {
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'info',
+                            title: 'Checking Stopped', showConfirmButton: false, timer: 1500
+                        });
+                    });
+                } else if (btnText.includes('download')) {
+                    btn.addEventListener('click', function() {
+                        Swal.fire({
+                            icon: 'info', title: 'Export',
+                            text: 'Export functionality coming soon',
+                            confirmButtonColor: '#3b82f6'
+                        });
                     });
                 }
-                if (isProcessing) {
-                    await new Promise(resolve => setTimeout(resolve, 10));
+            });
+
+            const cardInput = document.getElementById('cardInput');
+            if (cardInput) {
+                cardInput.addEventListener('input', updateCardCount);
+            }
+
+            document.addEventListener('click', function(e) {
+                if (e.target === document.getElementById('gatewaySettings')) {
+                    closeGatewaySettings();
                 }
+            });
+        });
+
+        function updateCardCount() {
+            const cardInput = document.getElementById('cardInput');
+            const cardCount = document.querySelector('.card-count');
+            if (cardInput && cardCount) {
+                const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
+                cardCount.innerHTML = `<i class="fas fa-list"></i> ${lines.length} cards`;
             }
         }
-
-        function finishProcessing() {
-            isProcessing = false;
-            isStopping = false;
-            activeRequests = 0;
-            cardQueue = [];
-            abortControllers = [];
-            $('#startBtn').prop('disabled', false);
-            $('#stopBtn').prop('disabled', true);
-            $('#loader').hide();
-            $('#cardInput').val('');
-            updateCardCount();
-            $('#statusLog').text('Processing completed.');
-            Swal.fire({
-                title: 'Processing complete!',
-                text: 'All cards have been checked. See the results below.',
-                icon: 'success',
-                confirmButtonColor: '#ec4899'
-            });
-            $('#checkingResultsList').removeClass('hidden');
-        }
-
-        $('#startBtn').on('click', processCards);
-
-        $('#stopBtn').on('click', function() {
-            if (!isProcessing || isStopping) return;
-
-            isProcessing = false;
-            isStopping = true;
-            cardQueue = [];
-            abortControllers.forEach(controller => controller.abort());
-            abortControllers = [];
-            activeRequests = 0;
-            updateStats(totalCards, chargedCards.length, approvedCards.length, ccnCards.length, threeDSCards.length, declinedCards.length);
-            $('#startBtn').prop('disabled', false);
-            $('#stopBtn').prop('disabled', true);
-            $('#loader').hide();
-            $('#statusLog').text('Processing stopped.');
-            Swal.fire({
-                title: 'Stopped!',
-                text: 'Processing has been stopped',
-                icon: 'warning',
-                confirmButtonColor: '#ec4899'
-            });
-            $('#checkingResultsList').removeClass('hidden');
-        });
-
-        $('#clearBtn').on('click', function() {
-            if ($('#cardInput').val().trim()) {
-                Swal.fire({
-                    title: 'Clear Input?', text: 'Remove all entered cards',
-                    icon: 'warning', showCancelButton: true,
-                    confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $('#cardInput').val('');
-                        updateCardCount();
-                        Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success',
-                            title: 'Cleared!', showConfirmButton: false, timer: 1500
-                        });
-                    }
-                });
-            }
-        });
-
-        $('#exportBtn').on('click', function() {
-            const allCards = [...chargedCards, ...approvedCards, ...ccnCards, ...threeDSCards, ...declinedCards];
-            if (allCards.length === 0) {
-                Swal.fire({
-                    title: 'No data to export!',
-                    text: 'Please check some cards first.',
-                    icon: 'warning',
-                    confirmButtonColor: '#ec4899'
-                });
-                return;
-            }
-            let csvContent = "Card,Status,Response\n";
-            allCards.forEach(card => {
-                const status = card.response.includes('CHARGED') ? 'Charged' :
-                             card.response.includes('APPROVED') ? 'Approved' :
-                             card.response.includes('CCN') ? 'CCN' :
-                             card.response.includes('3DS') ? '3DS' : 'Declined';
-                csvContent += `${card.displayCard},${status},${card.response}\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'Exported!', showConfirmButton: false, timer: 1500
-            });
-        });
-
-        $('#cardInput').on('input', updateCardCount);
-
-        document.addEventListener('click', function(e) {
-            if (e.target === document.getElementById('gatewaySettings')) {
-                closeGatewaySettings();
-            }
-        });
-
-        // Mobile sidebar toggle
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            sidebarOpen = !sidebarOpen;
-            document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
-            document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
-        });
     </script>
 </body>
 </html>
