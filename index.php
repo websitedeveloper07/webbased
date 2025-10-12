@@ -1,89 +1,22 @@
-<?php
-session_start();
 
-// Enable error reporting for debugging (disable in production)
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-
-// Log session state
-error_log("Checking session in index.php: " . json_encode($_SESSION));
-
-// Check if user is authenticated
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
-    header('Location: https://cardxchk.onrender.com/login.php');
-    exit;
-}
-
-// Load environment variables manually
-$envFile = __DIR__ . '/.env';
-$_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-} else {
-    error_log("Environment file (.env) not found in " . __DIR__);
-}
-
-// Database connection (optional, for future result storage)
-try {
-    if (!isset($_ENV['DATABASE_URL'])) {
-        error_log("DATABASE_URL not set in .env file");
-    } else {
-        $dbUrl = parse_url($_ENV['DATABASE_URL']);
-        if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
-            throw new Exception("Invalid DATABASE_URL format");
-        }
-        $pdo = new PDO(
-            "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
-            $dbUrl['user'],
-            $dbUrl['pass'],
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
-        error_log("Database connected in index.php");
-
-        // Create results table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS results (
-                id SERIAL PRIMARY KEY,
-                telegram_id BIGINT REFERENCES users(telegram_id),
-                card_number VARCHAR(19),
-                status VARCHAR(20),
-                response TEXT,
-                gateway VARCHAR(50),
-                checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-        error_log("Results table ready");
-    }
-} catch (Exception $e) {
-    error_log("Database connection failed in index.php: " . $e->getMessage());
-    // Continue without DB connection (non-fatal)
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CardXCHK Checker</title>
+    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
             --primary-bg: #0a0e27; --secondary-bg: #131937; --card-bg: #1a1f3a;
             --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
             --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
             --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
+            --success-green: #22c55e; --declined-red: #ef4444;
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -91,14 +24,13 @@ try {
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
-            color: var(--text-primary); min-height: 100vh;
+            color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
         }
         .blur-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            backdrop-filter: blur(5px); z-index: 9998; opacity: 1;
-            transition: opacity 1.2s ease-in-out, backdrop-filter 1.2s ease-in-out;
+            backdrop-filter: blur(5px); z-index: 9998; opacity: 0; display: none;
         }
-        .blur-overlay.fade-out { opacity: 0; backdrop-filter: blur(0); pointer-events: none; }
+        .blur-overlay.active { opacity: 1; display: block; }
         .moving-logo {
             position: fixed; font-size: 5rem; z-index: 10000;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
@@ -203,7 +135,8 @@ try {
         .stat-card {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 20px; padding: 1.75rem; position: relative;
-            transition: all 0.3s; box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s; box-shadow: 0 2px 8px var(--shadow); min-height: 180px;
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
         }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 40px var(--shadow); }
         .stat-card::before {
@@ -224,7 +157,7 @@ try {
         .stat-card.declined .stat-icon { background: rgba(239,68,68,0.15); color: var(--error); }
         .stat-value { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
         .stat-label {
-            color: var(--text-secondary); font-size: 0.95rem; text-transform: uppercase;
+            color: var(--text-secondary); font-size: 0.95rem; text-transform: uppercase; font-weight: 600;
         }
         .checker-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
@@ -406,27 +339,39 @@ try {
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #statusLog { margin-top: 1rem; color: var(--text-secondary); text-align: center; }
         .result-item.declined .stat-label { color: var(--declined-red); }
-        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.3ds .stat-label { color: var(--success-green); }
-
+        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
+        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 1rem; margin-left: auto; }
+        .copy-btn:hover { color: var(--accent-purple); }
+        .stat-content { display: flex; align-items: center; justify-content: space-between; }
+        .menu-toggle { color: #ffffff !important; font-size: 1.5rem; padding: 0.5rem; cursor: pointer; transition: all 0.3s; }
+        .menu-toggle:hover { transform: scale(1.1); }
+        .sidebar-link.logout {
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+        }
+        .sidebar-link.logout:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+            transform: translateX(5px);
+        }
         @media (max-width: 768px) {
             .navbar { padding: 1rem; justify-content: space-between; }
             .navbar-actions { gap: 0.5rem; }
             .user-info { padding: 0.3rem 0.8rem; gap: 0.5rem; }
             .user-avatar { width: 30px; height: 30px; }
             .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-            .sidebar { width: 100%; height: calc(100vh - 70px); transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { padding: 1rem; margin-left: 0; }
-            .main-content.sidebar-open { margin-left: 0; } /* Sidebar covers the content on mobile */
+            .sidebar { width: 80vw; }
+            .main-content { padding: 1rem; }
             .page-title { font-size: 1.5rem; }
             .page-subtitle { font-size: 0.9rem; }
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
-            .stat-card { padding: 1.25rem; }
+            .stat-card { padding: 1.25rem; min-height: 150px; }
             .stat-value { font-size: 2rem; }
             .stat-label { font-size: 0.8rem; }
             .checker-section { padding: 1.5rem; }
             .input-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-            .action-buttons { justify-content: center; gap: 0.5rem; }
+            .action-buttons { justify-content: center; gap: 0.5rem; flex-direction: column; }
             .btn { min-width: 100%; padding: 0.75rem; font-size: 0.9rem; }
             .results-header { flex-direction: column; gap: 1rem; }
             .results-filters { justify-content: center; gap: 0.5rem; }
@@ -446,7 +391,7 @@ try {
     <nav class="navbar">
         <div class="navbar-brand">
             <i class="fas fa-credit-card" id="navbarLogo"></i>
-            <span class="brand-text" id="brandText">CARDXCHK</span>
+            <span class="brand-text" id="brandText">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
         </div>
         <div class="navbar-actions">
             <div class="theme-toggle" onclick="toggleTheme()">
@@ -461,7 +406,7 @@ try {
             <button class="nav-btn primary">
                 <i class="fas fa-crown"></i><span>10 Days Left</span>
             </button>
-            <div class="menu-toggle cursor-pointer text-white text-2xl p-2 hover:scale-110 transition-transform" id="menuToggle">
+            <div class="menu-toggle" id="menuToggle">
                 <i class="fas fa-bars"></i>
             </div>
         </div>
@@ -470,19 +415,24 @@ try {
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a class="sidebar-link active" onclick="showPage('home')">
+                <a class="sidebar-link active" onclick="showPage('home'); closeSidebar()">
                     <i class="fas fa-home"></i><span>Home</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('checking')">
+                <a class="sidebar-link" onclick="showPage('checking'); closeSidebar()">
                     <i class="fas fa-credit-card"></i><span>Card Checking</span>
                 </a>
             </li>
             <div class="sidebar-divider"></div>
             <li class="sidebar-item">
-                <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info')">
+                <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
                     <i class="fas fa-plus"></i><span>More Coming Soon</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
                 </a>
             </li>
         </ul>
@@ -490,76 +440,51 @@ try {
 
     <main class="main-content">
         <section class="page-section active" id="page-home">
-            <h1 class="page-title">Dashboard</h1>
-            <p class="page-subtitle">Welcome back! Here's your checking overview</p>
+            <h1 class="page-title">𝐃𝐚𝐬𝐡𝐛𝐨𝐚𝐫𝐝</h1>
+            <p class="page-subtitle">𝘞𝘦𝘭𝘤𝘰𝘮𝘦 𝘣𝘢𝘤𝘬! 𝘏𝘦𝘳𝘦’𝘴 𝘺𝘰𝘶𝘳 𝘤𝘶𝘳𝘳𝘦𝘯𝘵 𝘴𝘵𝘢𝘵𝘴.</p>
 
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
-                    <div class="stat-value carregadas">0</div>
-                    <div class="stat-label">Total</div>
+                    <div id="total-value" class="stat-value">0</div>
+                    <div class="stat-label">Total Cards</div>
                 </div>
                 <div class="stat-card charged">
                     <div class="stat-icon"><i class="fas fa-bolt"></i></div>
-                    <div class="stat-value charged">0</div>
-                    <div class="stat-label">HIT|CHARGED</div>
+                    <div id="charged-value" class="stat-value">0</div>
+                    <div class="stat-label">Charged Cards</div>
                 </div>
                 <div class="stat-card approved">
                     <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="stat-value approved">0</div>
-                    <div class="stat-label">LIVE|APPROVED</div>
-                </div>
-                <div class="stat-card ccn">
-                    <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
-                    <div class="stat-value ccn">0</div>
-                    <div class="stat-label">CCN</div>
+                    <div id="approved-value" class="stat-value">0</div>
+                    <div class="stat-label">Approved cards</div>
                 </div>
                 <div class="stat-card threeDS">
                     <div class="stat-icon"><i class="fas fa-lock"></i></div>
-                    <div class="stat-value threeDS">0</div>
-                    <div class="stat-label">3DS</div>
+                    <div id="threed-value" class="stat-value">0</div>
+                    <div class="stat-label">3DS cards</div>
                 </div>
                 <div class="stat-card declined">
                     <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
-                    <div class="stat-value reprovadas">0</div>
-                    <div class="stat-label">DEAD|DECLINED</div>
+                    <div id="declined-value" class="stat-value">0</div>
+                    <div class="stat-label">Dead cards</div>
                 </div>
                 <div class="stat-card checked">
                     <div class="stat-icon"><i class="fas fa-check-double"></i></div>
-                    <div class="stat-value checked">0 / 0</div>
-                    <div class="stat-label">CHECKED</div>
-                </div>
-            </div>
-
-            <div class="results-section" id="homeResults">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list-check"></i> Recent Results
-                    </div>
-                    <div class="results-filters">
-                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
-                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
-                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
-                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
-                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
-                    </div>
-                </div>
-                <div id="resultsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
+                    <div id="checked-value" class="stat-value">0 / 0</div>
+                    <div class="stat-label">Executed</div>
                 </div>
             </div>
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">Card Checking</h1>
-            <p class="page-subtitle">Check your cards with multiple gateways</p>
+            <h1 class="page-title">Card Checker</h1>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
 
             <div class="checker-section">
                 <div class="checker-header">
                     <div class="checker-title">
-                        <i class="fas fa-shield-alt"></i> Card Checker
+                        <i class="fas fa-shield-alt"></i> 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹
                     </div>
                     <button class="settings-btn" onclick="openGatewaySettings()">
                         <i class="fas fa-cog"></i> Gateway Settings
@@ -579,7 +504,7 @@ try {
 
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="startBtn">
-                        <i class="fas fa-play"></i> Start Check
+                        <i class="fas fa-play"></i> Start Execute
                     </button>
                     <button class="btn btn-secondary" id="stopBtn" disabled>
                         <i class="fas fa-stop"></i> Stop
@@ -718,7 +643,6 @@ try {
         let totalCards = 0;
         let chargedCards = [];
         let approvedCards = [];
-        let ccnCards = [];
         let threeDSCards = [];
         let declinedCards = [];
         let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -732,18 +656,51 @@ try {
 
             setTimeout(function() {
                 movingLogo.classList.add('in-position');
-                blurOverlay.classList.add('fade-out');
+                blurOverlay.classList.add('active');
                 setTimeout(function() {
                     navbarLogo.classList.add('visible');
                     brandText.classList.add('visible');
                     setTimeout(function() {
                         movingLogo.classList.add('hidden');
+                        blurOverlay.classList.remove('active');
                     }, 200);
                     setTimeout(function() {
                         blurOverlay.style.display = 'none';
                     }, 400);
                 }, 1200);
             }, 800);
+        });
+
+        // Disable copy, context menu, and dev tools, but allow pasting in the textarea
+        document.addEventListener('contextmenu', e => {
+            if (e.target.id !== 'cardInput') e.preventDefault();
+        });
+        document.addEventListener('copy', e => {
+            if (e.target.id !== 'cardInput') e.preventDefault();
+        });
+        document.addEventListener('cut', e => {
+            if (e.target.id !== 'cardInput') e.preventDefault();
+        });
+        document.addEventListener('paste', e => {
+            if (e.target.id === 'cardInput') {
+                const pastedText = e.clipboardData.getData('text');
+                const cursorPos = e.target.selectionStart;
+                const textBefore = e.target.value.substring(0, cursorPos);
+                const textAfter = e.target.value.substring(e.target.selectionEnd);
+                e.target.value = textBefore + pastedText + textAfter;
+                e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
+                e.preventDefault();
+                updateCardCount();
+            } else {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
+                if (e.target.id !== 'cardInput') e.preventDefault();
+            } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
+                e.preventDefault();
+            }
         });
 
         function toggleTheme() {
@@ -754,7 +711,7 @@ try {
             document.querySelector('.theme-toggle-slider i').className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             Swal.fire({
                 toast: true, position: 'top-end', icon: 'success',
-                title: `${theme === 'light' ? '☀️ Light' : '🌙 Dark'} Mode`,
+                title: `${theme === 'light' ? 'Light' : 'Dark'} Mode`,
                 showConfirmButton: false, timer: 1500
             });
         }
@@ -764,11 +721,12 @@ try {
             document.getElementById('page-' + pageName).classList.add('active');
             document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
             event.target.closest('.sidebar-link').classList.add('active');
-            if (pageName === 'home') {
-                renderResult();
-            } else if (pageName === 'checking') {
-                document.getElementById('checkingResults').style.display = 'block';
-            }
+        }
+
+        function closeSidebar() {
+            sidebarOpen = false;
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.main-content').classList.remove('sidebar-open');
         }
 
         function openGatewaySettings() {
@@ -810,35 +768,52 @@ try {
             }
         }
 
-        function updateStats(total, charged, approved, ccn, threeDS, declined) {
-            document.querySelector('.carregadas').textContent = total;
-            document.querySelector('.charged').textContent = charged;
-            document.querySelector('.approved').textContent = approved;
-            document.querySelector('.ccn').textContent = ccn;
-            document.querySelector('.threeDS').textContent = threeDS;
-            document.querySelector('.reprovadas').textContent = declined;
-            document.querySelector('.checked').textContent = `${charged + approved + ccn + threeDS + declined} / ${total}`;
+        function updateStats(total, charged, approved, threeDS, declined) {
+            document.getElementById('total-value').textContent = total;
+            document.getElementById('charged-value').textContent = charged;
+            document.getElementById('approved-value').textContent = approved;
+            document.getElementById('threed-value').textContent = threeDS;
+            document.getElementById('declined-value').textContent = declined;
+            document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
         }
 
         function addResult(card, status, response) {
             const resultsList = document.getElementById('checkingResultsList');
+            if (!resultsList) return;
             const cardClass = status.toLowerCase();
             const icon = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
             const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
             const resultDiv = document.createElement('div');
             resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color};">
                     <i class="${icon}"></i>
                 </div>
-                <div class="stat-value">${card.displayCard}</div>
-                <div class="stat-label" style="color: ${color};">${status} - ${response}</div>
+                <div class="stat-content">
+                    <div>
+                        <div class="stat-value">${card.displayCard}</div>
+                        <div class="stat-label" style="color: ${color};">${status} - ${response}</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
+                </div>
             `;
             resultsList.insertBefore(resultDiv, resultsList.firstChild);
             if (resultsList.classList.contains('empty-state')) {
                 resultsList.classList.remove('empty-state');
                 resultsList.innerHTML = '';
+                resultsList.appendChild(resultDiv);
             }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success',
+                    title: 'Card copied!', showConfirmButton: false, timer: 1500
+                });
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
         }
 
         function filterResults(filter) {
@@ -856,140 +831,307 @@ try {
             });
         }
 
-        function renderResult() {
-            const resultsList = document.getElementById('resultsList');
-            resultsList.innerHTML = '';
-            const allCards = [...chargedCards, ...approvedCards, ...ccnCards, ...threeDSCards, ...declinedCards].slice(0, 5);
-            if (allCards.length === 0) {
-                resultsList.classList.add('empty-state');
-                resultsList.innerHTML = `
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
-                `;
-            } else {
-                resultsList.classList.remove('empty-state');
-                allCards.forEach(card => {
-                    const status = card.response.includes('CHARGED') ? 'Charged' :
-                                 card.response.includes('APPROVED') ? 'Approved' :
-                                 card.response.includes('CCN') ? 'CCN' :
-                                 card.response.includes('3D_AUTHENTICATION') ? '3DS' : 'Declined';
-                    const color = (status === 'Approved' || status === 'Charged' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
-                    const resultDiv = document.createElement('div');
-                    resultDiv.className = `stat-card ${status.toLowerCase()} result-item`;
-                    resultDiv.innerHTML = `
-                        <div class="stat-icon" style="background: rgba(${color}, 0.15); color: ${color};">
-                            <i class="${(status === 'Approved' || status === 'Charged' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle'}"></i>
-                        </div>
-                        <div class="stat-value">${card.displayCard}</div>
-                        <div class="stat-label" style="color: ${color};">${status} - ${card.response}</div>
-                    `;
-                    resultsList.appendChild(resultDiv);
+        async function processCard(card, controller, retryCount = 0) {
+            if (!isProcessing) return null;
+
+            return new Promise((resolve) => {
+                const formData = new FormData();
+                let normalizedYear = card.exp_year;
+                if (normalizedYear.length === 2) {
+                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                }
+                formData.append('card[number]', card.number);
+                formData.append('card[exp_month]', card.exp_month);
+                formData.append('card[exp_year]', normalizedYear);
+                formData.append('card[cvc]', card.cvc);
+
+                $('#statusLog').text(`Processing card: ${card.displayCard}`);
+                console.log(`Starting request for card: ${card.displayCard}`);
+
+                $.ajax({
+                    url: selectedGateway,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    timeout: 300000,
+                    signal: controller.signal,
+                    success: function(response) {
+                        let status = 'Declined';
+                        let message = response;
+                        try {
+                            const jsonResponse = JSON.parse(response);
+                            if (jsonResponse.status) {
+                                status = jsonResponse.status.toUpperCase();
+                            }
+                            message = jsonResponse.message || jsonResponse.response || response;
+                        } catch (e) {
+                            if (response.includes('CHARGED')) status = 'Charged';
+                            else if (response.includes('APPROVED')) status = 'Approved';
+                            else if (response.includes('3D_AUTHENTICATION') || response.includes('3DS')) status = '3DS';
+                            message = response;
+                        }
+                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
+                        resolve({
+                            status: status,
+                            response: message,
+                            card: card,
+                            displayCard: card.displayCard
+                        });
+                    },
+                    error: function(xhr) {
+                        $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
+                        console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                        if (xhr.statusText === 'abort') {
+                            resolve(null);
+                        } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                        } else {
+                            resolve({
+                                status: 'Declined',
+                                response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`,
+                                card: card,
+                                displayCard: card.displayCard
+                            });
+                        }
+                    }
                 });
+            });
+        }
+
+        async function processCards() {
+            if (isProcessing) {
+                Swal.fire({
+                    title: 'Processing in progress',
+                    text: 'Please wait until current process completes',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            const cardText = $('#cardInput').val().trim();
+            const lines = cardText.split('\n').filter(line => line.trim());
+            const validCards = lines
+                .map(line => line.trim())
+                .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+                .map(line => {
+                    const [number, exp_month, exp_year, cvc] = line.split('|');
+                    return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                });
+
+            if (validCards.length === 0) {
+                Swal.fire({
+                    title: 'No valid cards!',
+                    text: 'Please check your card format',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            if (validCards.length > 1000) {
+                Swal.fire({
+                    title: 'Limit exceeded!',
+                    text: 'Maximum 1000 cards allowed',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            isProcessing = true;
+            isStopping = false;
+            activeRequests = 0;
+            abortControllers = [];
+            cardQueue = [...validCards];
+            totalCards = validCards.length;
+            chargedCards = [];
+            approvedCards = [];
+            threeDSCards = [];
+            declinedCards = [];
+            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+            updateStats(totalCards, 0, 0, 0, 0);
+            $('#startBtn').prop('disabled', true);
+            $('#stopBtn').prop('disabled', false);
+            $('#loader').show();
+            $('#checkingResultsList').innerHTML = '';
+            $('#statusLog').text('Starting processing...');
+
+            let requestIndex = 0;
+
+            while (cardQueue.length > 0 && isProcessing) {
+                while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                    const card = cardQueue.shift();
+                    activeRequests++;
+                    const controller = new AbortController();
+                    abortControllers.push(controller);
+
+                    await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
+                    requestIndex++;
+
+                    processCard(card, controller).then(result => {
+                        if (result === null) return;
+
+                        activeRequests--;
+                        const cardEntry = { response: result.response, displayCard: result.displayCard };
+                        if (result.status === 'CHARGED') {
+                            chargedCards.push(cardEntry);
+                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                        } else if (result.status === 'APPROVED') {
+                            approvedCards.push(cardEntry);
+                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                        } else if (result.status === '3DS') {
+                            threeDSCards.push(cardEntry);
+                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                        } else {
+                            declinedCards.push(cardEntry);
+                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        }
+
+                        addResult(card, result.status, result.response);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+
+                        if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                            finishProcessing();
+                        }
+                    });
+                }
+                if (isProcessing) {
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
-            if (savedTheme === 'light') {
-                document.querySelector('.theme-toggle-slider i').className = 'fas fa-sun';
-            }
-
-            document.querySelectorAll('#page-home .filter-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('#page-home .filter-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    Swal.fire({
-                        toast: true, position: 'top-end', icon: 'info',
-                        title: `Filter: ${this.textContent.trim()}`,
-                        showConfirmButton: false, timer: 1500
-                    });
-                });
+        function finishProcessing() {
+            isProcessing = false;
+            isStopping = false;
+            activeRequests = 0;
+            cardQueue = [];
+            abortControllers = [];
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
+            $('#loader').hide();
+            $('#cardInput').val('');
+            updateCardCount();
+            $('#statusLog').text('Processing completed.');
+            Swal.fire({
+                title: 'Processing complete!',
+                text: 'All cards have been checked. See the results below.',
+                icon: 'success',
+                confirmButtonColor: '#ec4899'
             });
+        }
 
-            const checkBtn = document.querySelector('.btn-primary');
-            if (checkBtn) {
-                checkBtn.addEventListener('click', function() {
-                    const cardInput = document.getElementById('cardInput');
-                    const cards = cardInput ? cardInput.value.trim() : '';
-                    if (!cards) {
-                        Swal.fire({
-                            icon: 'warning', title: 'No Cards',
-                            text: 'Please enter card details',
-                            confirmButtonColor: '#3b82f6'
-                        });
-                        return;
-                    }
-                    const cardLines = cards.split('\n').filter(line => line.trim() !== '');
-                    const gateway = selectedGateway;
-                    Swal.fire({
-                        icon: 'success', title: 'Checking Started!',
-                        text: `Checking ${cardLines.length} card(s) with ${gateway}`,
-                        confirmButtonColor: '#10b981'
-                    });
-                });
-            }
+        $('#startBtn').on('click', processCards);
 
-            document.querySelectorAll('.btn-secondary').forEach(btn => {
-                const btnText = btn.innerHTML.toLowerCase();
-                if (btnText.includes('trash')) {
-                    btn.addEventListener('click', function() {
-                        const cardInput = document.getElementById('cardInput');
-                        if (cardInput && cardInput.value.trim()) {
-                            Swal.fire({
-                                title: 'Clear Input?', text: 'Remove all entered cards',
-                                icon: 'warning', showCancelButton: true,
-                                confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    cardInput.value = '';
-                                    updateCardCount();
-                                    Swal.fire({
-                                        toast: true, position: 'top-end', icon: 'success',
-                                        title: 'Cleared!', showConfirmButton: false, timer: 1500
-                                    });
-                                }
-                            });
-                        }
-                    });
-                } else if (btnText.includes('stop')) {
-                    btn.addEventListener('click', function() {
-                        Swal.fire({
-                            toast: true, position: 'top-end', icon: 'info',
-                            title: 'Checking Stopped', showConfirmButton: false, timer: 1500
-                        });
-                    });
-                } else if (btnText.includes('download')) {
-                    btn.addEventListener('click', function() {
-                        Swal.fire({
-                            icon: 'info', title: 'Export',
-                            text: 'Export functionality coming soon',
-                            confirmButtonColor: '#3b82f6'
-                        });
-                    });
-                }
-            });
+        $('#stopBtn').on('click', function() {
+            if (!isProcessing || isStopping) return;
 
-            const cardInput = document.getElementById('cardInput');
-            if (cardInput) {
-                cardInput.addEventListener('input', updateCardCount);
-            }
-
-            document.addEventListener('click', function(e) {
-                if (e.target === document.getElementById('gatewaySettings')) {
-                    closeGatewaySettings();
-                }
+            isProcessing = false;
+            isStopping = true;
+            cardQueue = [];
+            abortControllers.forEach(controller => controller.abort());
+            abortControllers = [];
+            activeRequests = 0;
+            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
+            $('#loader').hide();
+            $('#statusLog').text('Processing stopped.');
+            Swal.fire({
+                title: 'Stopped!',
+                text: 'Processing has been stopped',
+                icon: 'warning',
+                confirmButtonColor: '#ec4899'
             });
         });
 
-        function updateCardCount() {
-            const cardInput = document.getElementById('cardInput');
-            const cardCount = document.querySelector('.card-count');
-            if (cardInput && cardCount) {
-                const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
-                cardCount.innerHTML = `<i class="fas fa-list"></i> ${lines.length} cards`;
+        $('#clearBtn').on('click', function() {
+            if ($('#cardInput').val().trim()) {
+                Swal.fire({
+                    title: 'Clear Input?', text: 'Remove all entered cards',
+                    icon: 'warning', showCancelButton: true,
+                    confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#cardInput').val('');
+                        updateCardCount();
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success',
+                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                        });
+                    }
+                });
             }
+        });
+
+        $('#exportBtn').on('click', function() {
+            const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
+            if (allCards.length === 0) {
+                Swal.fire({
+                    title: 'No data to export!',
+                    text: 'Please check some cards first.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            let csvContent = "Card,Status,Response\n";
+            allCards.forEach(card => {
+                const status = card.response.includes('CHARGED') ? 'Charged' :
+                             card.response.includes('APPROVED') ? 'Approved' :
+                             card.response.includes('3DS') ? '3DS' : 'Declined';
+                csvContent += `${card.displayCard},${status},${card.response}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success',
+                title: 'Exported!', showConfirmButton: false, timer: 1500
+            });
+        });
+
+        $('#cardInput').on('input', updateCardCount);
+
+        document.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('gatewaySettings')) {
+                closeGatewaySettings();
+            }
+        });
+
+        // Mobile sidebar toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            sidebarOpen = !sidebarOpen;
+            document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
+            document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
+        });
+
+        function logout() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You will be logged out and returned to the login page.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#d1d5db',
+                confirmButtonText: 'Yes, logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Perform logout action (e.g., clear session and redirect)
+                    sessionStorage.clear();
+                    window.location.href = 'https://cardxchk.onrender.com/login.php';
+                }
+            });
         }
     </script>
 </body>
