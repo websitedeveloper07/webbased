@@ -590,7 +590,7 @@ try {
                                     data: formData,
                                     processData: false,
                                     contentType: false,
-                                    timeout: 300000, // Increased to 300 seconds (5 minutes) to handle long delays
+                                    timeout: 300000, // 5 minutes timeout
                                     signal: controller.signal,
                                     success: function(response) {
                                         let status = 'DECLINED';
@@ -601,6 +601,10 @@ try {
                                             else if (jsonResponse.status === 'APPROVED') status = 'APPROVED';
                                             else if (jsonResponse.status === 'CCN') status = 'CCN';
                                             else if (jsonResponse.status === '3DS') status = '3DS';
+                                            else if (jsonResponse.status === 'error' && jsonResponse.message === 'Invalid card data') {
+                                                console.warn(`Invalid card data for: ${card.displayCard}`);
+                                                status = 'DECLINED';
+                                            }
                                         } catch (e) {
                                             console.error('Failed to parse response:', response, e);
                                             if (response.includes('Charged!')) status = 'CHARGED';
@@ -608,21 +612,21 @@ try {
                                             else if (response.includes('Approved! - AVS')) status = 'APPROVED';
                                             else if (response.includes('OTP! - 3D')) status = '3DS';
                                         }
-                                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}`); // Debug log
+                                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${jsonResponse ? JSON.stringify(jsonResponse) : response}`); // Debug log
                                         resolve({
                                             status: status,
-                                            response: jsonResponse ? jsonResponse.response || response : response,
+                                            response: jsonResponse ? jsonResponse.message || jsonResponse.response || response : response,
                                             card: card,
                                             displayCard: card.displayCard
                                         });
                                     },
                                     error: function(xhr) {
                                         $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`); // Update status log
-                                        console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}`); // Debug log
+                                        console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`); // Debug log
                                         if (xhr.statusText === 'abort') {
                                             resolve(null);
                                         } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000); // Increased retry delay
+                                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                                         } else {
                                             resolve({
                                                 status: 'DECLINED',
