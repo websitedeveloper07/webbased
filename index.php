@@ -215,6 +215,7 @@ try {
         .stat-card.approved::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); }
         .stat-card.charged::before { background: linear-gradient(90deg, var(--warning), #ec4899); }
         .stat-card.declined::before { background: linear-gradient(90deg, var(--error), #ec4899); }
+        .stat-card.3ds::before { background: linear-gradient(90deg, var(--accent-purple), #ec4899); }
         .stat-icon {
             width: 30px; height: 30px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
@@ -224,6 +225,7 @@ try {
         .stat-card.approved .stat-icon { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
         .stat-card.charged .stat-icon { background: rgba(245,158,11,0.15); color: var(--warning); }
         .stat-card.declined .stat-icon { background: rgba(239,68,68,0.15); color: var(--error); }
+        .stat-card.3ds .stat-icon { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
         .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
         .stat-label {
             color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
@@ -408,7 +410,7 @@ try {
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #statusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
         .result-item.declined .stat-label { color: var(--declined-red); }
-        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
+        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.3ds .stat-label { color: var(--success-green); }
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
@@ -432,8 +434,7 @@ try {
             .theme-toggle-slider { width: 24px; height: 24px; font-size: 0.7rem; }
             [data-theme="light"] .theme-toggle-slider { transform: translateX(28px); }
             .user-info { padding: 0.5rem 1rem; gap: 0.75rem; }
-            .user-avatar { width: 35px; height: 35px; font-size: 1rem; }
-            .nav-btn { padding: 0.6rem 1.2rem; font-size: 1rem; }
+            .user-avatar { padding: 0.6rem 1.2rem; font-size: 1rem; }
             .sidebar { width: 260px; top: 70px; }
             .main-content { margin-top: 70px; padding: 2rem; margin-left: 0; }
             .main-content.sidebar-open { margin-left: 260px; }
@@ -552,9 +553,9 @@ try {
                     <div id="approved-value" class="stat-value">0</div>
                     <div class="stat-label">LIVE|APPROVED</div>
                 </div>
-                <div class="stat-card threeDS">
+                <div class="stat-card 3ds">
                     <div class="stat-icon"><i class="fas fa-lock"></i></div>
-                    <div id="threed-value" class="stat-value">0</div>
+                    <div id="3ds-value" class="stat-value">0</div>
                     <div class="stat-label">3DS</div>
                 </div>
                 <div class="stat-card declined">
@@ -969,7 +970,7 @@ try {
             document.getElementById('total-value').textContent = total;
             document.getElementById('charged-value').textContent = charged;
             document.getElementById('approved-value').textContent = approved;
-            document.getElementById('threed-value').textContent = threeDS;
+            document.getElementById('3ds-value').textContent = threeDS;
             document.getElementById('declined-value').textContent = declined;
             document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
         }
@@ -977,7 +978,8 @@ try {
         function addResult(card, status, response, isAuto = false) {
             const resultsList = isAuto ? document.getElementById('autoResultsList') : document.getElementById('checkingResultsList');
             if (!resultsList) return;
-            const cardClass = status.toLowerCase();
+            let cardClass = status.toLowerCase();
+            if (status === '3DS') cardClass = '3ds';
             const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
             const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
             const resultDiv = document.createElement('div');
@@ -1018,7 +1020,8 @@ try {
             event.target.classList.add('active');
             const items = document.querySelectorAll('#checkingResultsList .result-item');
             items.forEach(item => {
-                const status = item.className.split(' ')[1];
+                let status = item.className.split(' ')[1];
+                if (status === '3ds') status = '3ds';
                 item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
             });
             Swal.fire({
@@ -1033,7 +1036,8 @@ try {
             event.target.classList.add('active');
             const items = document.querySelectorAll('#autoResultsList .result-item');
             items.forEach(item => {
-                const status = item.className.split(' ')[1];
+                let status = item.className.split(' ')[1];
+                if (status === '3ds') status = '3ds';
                 item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
             });
             Swal.fire({
@@ -1050,7 +1054,7 @@ try {
                 const formData = new FormData();
                 let normalizedYear = card.exp_year;
                 if (normalizedYear.length === 2) {
-                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                    normalizedYear = '20' + normalizedYear;
                 }
                 formData.append('card[number]', card.number);
                 formData.append('card[exp_month]', card.exp_month);
@@ -1317,7 +1321,7 @@ try {
                 formData.append(`cards[${j}][exp_month]`, card.exp_month);
                 let normalizedYear = card.exp_year;
                 if (normalizedYear.length === 2) {
-                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                    normalizedYear = '20' + normalizedYear;
                 }
                 formData.append(`cards[${j}][exp_year]`, normalizedYear);
                 formData.append(`cards[${j}][cvc]`, card.cvc);
@@ -1338,32 +1342,43 @@ try {
                     const lines = response.trim().split('\n').filter(line => line.trim());
                     lines.forEach(line => {
                         const match = line.match(/^(\w+) \[(.*?)\] \(Gateway: (.*?), Price: (.*?)\) (.*)$/);
+                        let status, msg, displayCard, fullResponse;
                         if (match) {
-                            const status = match[1].toUpperCase();
-                            const msg = match[2];
+                            status = match[1].toUpperCase();
+                            msg = match[2];
                             const gateway = match[3];
                             const price = match[4];
-                            const displayCard = match[5];
-                            const fullResponse = `[${msg}] (Gateway: ${gateway}, Price: ${price})`;
-
-                            const cardEntry = { response: fullResponse, displayCard };
-                            if (status === 'CHARGED') {
-                                chargedCards.push(cardEntry);
-                                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                            } else if (status === 'APPROVED') {
-                                approvedCards.push(cardEntry);
-                                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                            } else if (status === '3DS') {
-                                threeDSCards.push(cardEntry);
-                                sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                            displayCard = match[5];
+                            fullResponse = `[${msg}] (Gateway: ${gateway}, Price: ${price})`;
+                        } else {
+                            const declineMatch = line.match(/^DECLINED \[(.*?)\] (.*)$/);
+                            if (declineMatch) {
+                                status = 'DECLINED';
+                                msg = declineMatch[1];
+                                displayCard = declineMatch[2];
+                                fullResponse = `[${msg}]`;
                             } else {
-                                declinedCards.push(cardEntry);
-                                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                                return; // skip invalid lines
                             }
-
-                            addResult({displayCard}, status, fullResponse, true);
-                            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
                         }
+                        if (status === '3D_AUTHENTICATION') status = '3DS';
+                        const cardEntry = { response: fullResponse, displayCard };
+                        if (status === 'CHARGED') {
+                            chargedCards.push(cardEntry);
+                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                        } else if (status === 'APPROVED') {
+                            approvedCards.push(cardEntry);
+                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                        } else if (status === '3DS') {
+                            threeDSCards.push(cardEntry);
+                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                        } else {
+                            declinedCards.push(cardEntry);
+                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        }
+
+                        addResult({displayCard}, status, fullResponse, true);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
                     });
                     finishAutoProcessing();
                 },
@@ -1456,6 +1471,7 @@ try {
             isStopping = true;
             abortControllers.forEach(controller => controller.abort());
             abortControllers = [];
+            activeRequests = 0;
             updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
             $('#autoStartBtn').prop('disabled', false);
             $('#autoStopBtn').prop('disabled', true);
