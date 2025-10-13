@@ -512,6 +512,11 @@ try {
                     <i class="fas fa-credit-card"></i><span>Card Checking</span>
                 </a>
             </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" onclick="showPage('autoshopify'); closeSidebar()">
+                    <i class="fas fa-shopping-cart"></i><span>Autoshopify</span>
+                </a>
+            </li>
             <div class="sidebar-divider"></div>
             <li class="sidebar-item">
                 <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
@@ -622,6 +627,79 @@ try {
                     </div>
                 </div>
                 <div id="checkingResultsList" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Results Yet</h3>
+                    <p>Start checking cards to see results here</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section" id="page-autoshopify">
+            <h1 class="page-title">Autoshopify Card Checker</h1>
+            <p class="page-subtitle">Check your cards on multiple sites using Autoshopify</p>
+
+            <div class="checker-section">
+                <div class="checker-header">
+                    <div class="checker-title">
+                        <i class="fas fa-shopping-cart"></i> Autoshopify Checker
+                    </div>
+                    <!-- No settings for now -->
+                </div>
+
+                <div class="input-section">
+                    <div class="input-header">
+                        <label class="input-label">Enter Sites (one per line)</label>
+                        <span class="card-count" id="sitesCount">
+                            <i class="fas fa-globe"></i> 0 sites detected
+                        </span>
+                    </div>
+                    <textarea id="sitesInput" class="card-textarea" 
+                        placeholder="Enter sites: https://example.com&#10;Example:&#10;https://shop1.com&#10;https://shop2.com"></textarea>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-header">
+                        <label class="input-label">Enter Card Details</label>
+                        <span class="card-count" id="autoCardCount">
+                            <i class="fas fa-list"></i> 0 valid cards detected
+                        </span>
+                    </div>
+                    <textarea id="autoCardInput" class="card-textarea" 
+                        placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="autoStartBtn">
+                        <i class="fas fa-play"></i> Start Check
+                    </button>
+                    <button class="btn btn-secondary" id="autoStopBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button class="btn btn-secondary" id="autoClearBtn">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                    <button class="btn btn-secondary" id="autoExportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                <div class="loader" id="autoLoader"></div>
+                <div id="autoStatusLog" class="text-sm text-gray-500 mt-2"></div>
+            </div>
+
+            <div class="results-section" id="autoResults">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-list-check"></i> Recent Results
+                    </div>
+                    <div class="results-filters">
+                        <button class="filter-btn active" onclick="filterAutoResults('all')">All</button>
+                        <button class="filter-btn" onclick="filterAutoResults('charged')">Charged</button>
+                        <button class="filter-btn" onclick="filterAutoResults('approved')">Approved</button>
+                        <button class="filter-btn" onclick="filterAutoResults('3ds')">3D Cards</button>
+                        <button class="filter-btn" onclick="filterAutoResults('declined')">Declined</button>
+                    </div>
+                </div>
+                <div id="autoResultsList" class="empty-state">
                     <i class="fas fa-inbox"></i>
                     <h3>No Results Yet</h3>
                     <p>Start checking cards to see results here</p>
@@ -771,16 +849,16 @@ try {
 
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
         document.addEventListener('contextmenu', e => {
-            if (e.target.id !== 'cardInput') e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
         });
         document.addEventListener('copy', e => {
-            if (e.target.id !== 'cardInput') e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
         });
         document.addEventListener('cut', e => {
-            if (e.target.id !== 'cardInput') e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
         });
         document.addEventListener('paste', e => {
-            if (e.target.id === 'cardInput') {
+            if (e.target.id === 'cardInput' || e.target.id === 'autoCardInput' || e.target.id === 'sitesInput') {
                 const pastedText = e.clipboardData.getData('text');
                 const cursorPos = e.target.selectionStart;
                 const textBefore = e.target.value.substring(0, cursorPos);
@@ -788,14 +866,16 @@ try {
                 e.target.value = textBefore + pastedText + textAfter;
                 e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
                 e.preventDefault();
-                updateCardCount();
+                if (e.target.id === 'cardInput') updateCardCount();
+                if (e.target.id === 'autoCardInput') updateAutoCardCount();
+                if (e.target.id === 'sitesInput') updateSitesCount();
             } else {
                 e.preventDefault();
             }
         });
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
-                if (e.target.id !== 'cardInput') e.preventDefault();
+                if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
             } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
                 e.preventDefault();
             }
@@ -866,6 +946,25 @@ try {
             }
         }
 
+        function updateAutoCardCount() {
+            const cardInput = document.getElementById('autoCardInput');
+            const cardCount = document.getElementById('autoCardCount');
+            if (cardInput && cardCount) {
+                const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
+                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
+                cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected (max 1000)`;
+            }
+        }
+
+        function updateSitesCount() {
+            const sitesInput = document.getElementById('sitesInput');
+            const sitesCount = document.getElementById('sitesCount');
+            if (sitesInput && sitesCount) {
+                const lines = sitesInput.value.trim().split('\n').filter(line => line.trim() !== '');
+                sitesCount.innerHTML = `<i class="fas fa-globe"></i> ${lines.length} sites detected`;
+            }
+        }
+
         function updateStats(total, charged, approved, threeDS, declined) {
             document.getElementById('total-value').textContent = total;
             document.getElementById('charged-value').textContent = charged;
@@ -875,8 +974,8 @@ try {
             document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
         }
 
-        function addResult(card, status, response) {
-            const resultsList = document.getElementById('checkingResultsList');
+        function addResult(card, status, response, isAuto = false) {
+            const resultsList = isAuto ? document.getElementById('autoResultsList') : document.getElementById('checkingResultsList');
             if (!resultsList) return;
             const cardClass = status.toLowerCase();
             const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
@@ -915,9 +1014,24 @@ try {
         }
 
         function filterResults(filter) {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#checkingResults .filter-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            const items = document.querySelectorAll('.result-item');
+            const items = document.querySelectorAll('#checkingResultsList .result-item');
+            items.forEach(item => {
+                const status = item.className.split(' ')[1];
+                item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
+            });
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'info',
+                title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
+                showConfirmButton: false, timer: 1500
+            });
+        }
+
+        function filterAutoResults(filter) {
+            document.querySelectorAll('#autoResults .filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            const items = document.querySelectorAll('#autoResultsList .result-item');
             items.forEach(item => {
                 const status = item.className.split(' ')[1];
                 item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
@@ -1106,7 +1220,7 @@ try {
                             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
 
-                        addResult(card, result.status, result.response);
+                        addResult({displayCard: result.displayCard}, result.status, result.response);
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
 
                         if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
@@ -1118,6 +1232,155 @@ try {
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
             }
+        }
+
+        async function processAutoCards() {
+            if (isProcessing) {
+                Swal.fire({
+                    title: 'Processing in progress',
+                    text: 'Please wait until current process completes',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            const sitesText = $('#sitesInput').val().trim();
+            const sitesLines = sitesText.split('\n').filter(line => line.trim());
+            const sites = sitesLines.map(line => line.trim());
+
+            if (sites.length === 0) {
+                Swal.fire({
+                    title: 'No sites!',
+                    text: 'Please enter at least one site',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            const cardText = $('#autoCardInput').val().trim();
+            const lines = cardText.split('\n').filter(line => line.trim());
+            const validCards = lines
+                .map(line => line.trim())
+                .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+                .map(line => {
+                    const [number, exp_month, exp_year, cvc] = line.split('|');
+                    return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                });
+
+            if (validCards.length === 0) {
+                Swal.fire({
+                    title: 'No valid cards!',
+                    text: 'Please check your card format',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            if (validCards.length > 1000) {
+                Swal.fire({
+                    title: 'Limit exceeded!',
+                    text: 'Maximum 1000 cards allowed',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            isProcessing = true;
+            isStopping = false;
+            abortControllers = [];
+            totalCards = validCards.length;
+            chargedCards = [];
+            approvedCards = [];
+            threeDSCards = [];
+            declinedCards = [];
+            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+            updateStats(totalCards, 0, 0, 0, 0);
+            $('#autoStartBtn').prop('disabled', true);
+            $('#autoStopBtn').prop('disabled', false);
+            $('#autoLoader').show();
+            $('#autoResultsList').innerHTML = '';
+            $('#autoStatusLog').text('Starting processing...');
+
+            const formData = new FormData();
+            sites.forEach((site, i) => {
+                formData.append(`sites[${i}]`, site);
+            });
+            validCards.forEach((card, j) => {
+                formData.append(`cards[${j}][number]`, card.number);
+                formData.append(`cards[${j}][exp_month]`, card.exp_month);
+                let normalizedYear = card.exp_year;
+                if (normalizedYear.length === 2) {
+                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                }
+                formData.append(`cards[${j}][exp_year]`, normalizedYear);
+                formData.append(`cards[${j}][cvc]`, card.cvc);
+            });
+
+            const controller = new AbortController();
+            abortControllers.push(controller);
+
+            $.ajax({
+                url: 'autoshopify.php',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                timeout: 300000,
+                signal: controller.signal,
+                success: function(response) {
+                    const lines = response.trim().split('\n').filter(line => line.trim());
+                    lines.forEach(line => {
+                        const match = line.match(/^(\w+) \[(.*?)\] \(Gateway: (.*?), Price: (.*?)\) (.*)$/);
+                        if (match) {
+                            const status = match[1].toUpperCase();
+                            const msg = match[2];
+                            const gateway = match[3];
+                            const price = match[4];
+                            const displayCard = match[5];
+                            const fullResponse = `[${msg}] (Gateway: ${gateway}, Price: ${price})`;
+
+                            const cardEntry = { response: fullResponse, displayCard };
+                            if (status === 'CHARGED') {
+                                chargedCards.push(cardEntry);
+                                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                            } else if (status === 'APPROVED') {
+                                approvedCards.push(cardEntry);
+                                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                            } else if (status === '3DS') {
+                                threeDSCards.push(cardEntry);
+                                sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                            } else {
+                                declinedCards.push(cardEntry);
+                                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                            }
+
+                            addResult({displayCard}, status, fullResponse, true);
+                            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                        }
+                    });
+                    finishAutoProcessing();
+                },
+                error: function(xhr) {
+                    $('#autoStatusLog').text(`Error: ${xhr.statusText} (HTTP ${xhr.status})`);
+                    console.error(`Error: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                    if (xhr.statusText !== 'abort') {
+                        Swal.fire({
+                            title: 'Processing error!',
+                            text: 'An error occurred during processing',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    finishAutoProcessing();
+                }
+            });
         }
 
         function finishProcessing() {
@@ -1132,6 +1395,26 @@ try {
             $('#cardInput').val('');
             updateCardCount();
             $('#statusLog').text('Processing completed.');
+            Swal.fire({
+                title: 'Processing complete!',
+                text: 'All cards have been checked. See the results below.',
+                icon: 'success',
+                confirmButtonColor: '#ec4899'
+            });
+        }
+
+        function finishAutoProcessing() {
+            isProcessing = false;
+            isStopping = false;
+            abortControllers = [];
+            $('#autoStartBtn').prop('disabled', false);
+            $('#autoStopBtn').prop('disabled', true);
+            $('#autoLoader').hide();
+            $('#autoCardInput').val('');
+            $('#sitesInput').val('');
+            updateAutoCardCount();
+            updateSitesCount();
+            $('#autoStatusLog').text('Processing completed.');
             Swal.fire({
                 title: 'Processing complete!',
                 text: 'All cards have been checked. See the results below.',
@@ -1164,6 +1447,28 @@ try {
             });
         });
 
+        $('#autoStartBtn').on('click', processAutoCards);
+
+        $('#autoStopBtn').on('click', function() {
+            if (!isProcessing || isStopping) return;
+
+            isProcessing = false;
+            isStopping = true;
+            abortControllers.forEach(controller => controller.abort());
+            abortControllers = [];
+            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+            $('#autoStartBtn').prop('disabled', false);
+            $('#autoStopBtn').prop('disabled', true);
+            $('#autoLoader').hide();
+            $('#autoStatusLog').text('Processing stopped.');
+            Swal.fire({
+                title: 'Stopped!',
+                text: 'Processing has been stopped',
+                icon: 'warning',
+                confirmButtonColor: '#ec4899'
+            });
+        });
+
         $('#clearBtn').on('click', function() {
             if ($('#cardInput').val().trim()) {
                 Swal.fire({
@@ -1174,6 +1479,27 @@ try {
                     if (result.isConfirmed) {
                         $('#cardInput').val('');
                         updateCardCount();
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success',
+                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                        });
+                    }
+                });
+            }
+        });
+
+        $('#autoClearBtn').on('click', function() {
+            if ($('#autoCardInput').val().trim() || $('#sitesInput').val().trim()) {
+                Swal.fire({
+                    title: 'Clear Input?', text: 'Remove all entered cards and sites',
+                    icon: 'warning', showCancelButton: true,
+                    confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#autoCardInput').val('');
+                        $('#sitesInput').val('');
+                        updateAutoCardCount();
+                        updateSitesCount();
                         Swal.fire({
                             toast: true, position: 'top-end', icon: 'success',
                             title: 'Cleared!', showConfirmButton: false, timer: 1500
@@ -1215,7 +1541,41 @@ try {
             });
         });
 
+        $('#autoExportBtn').on('click', function() {
+            const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
+            if (allCards.length === 0) {
+                Swal.fire({
+                    title: 'No data to export!',
+                    text: 'Please check some cards first.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            let csvContent = "Card,Status,Response\n";
+            allCards.forEach(card => {
+                const status = card.response.includes('CHARGED') ? 'CHARGED' :
+                             card.response.includes('APPROVED') ? 'APPROVED' :
+                             card.response.includes('3DS') ? '3DS' : 'DECLINED';
+                csvContent += `${card.displayCard},${status},${card.response}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `autoshopify_results_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success',
+                title: 'Exported!', showConfirmButton: false, timer: 1500
+            });
+        });
+
         $('#cardInput').on('input', updateCardCount);
+        $('#autoCardInput').on('input', updateAutoCardCount);
+        $('#sitesInput').on('input', updateSitesCount);
 
         document.addEventListener('click', function(e) {
             if (e.target === document.getElementById('gatewaySettings')) {
