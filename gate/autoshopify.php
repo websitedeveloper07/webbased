@@ -14,10 +14,9 @@ function log_message($message) {
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
 }
 
-// Function to process cards with parallel batches using curl_multi, handling sequential site checks per card
+// Function to process cards with parallel batches using curl_multi, handling sequential site checks per card, and echoing results immediately
 function processCardsInParallel($processed_cards, $sites, $concurrent = 3, $retry_per_site = 1) {
     $num_cards = count($processed_cards);
-    $results = array_fill(0, $num_cards, null);
     $card_states = [];
     for ($i = 0; $i < $num_cards; $i++) {
         $card_states[$i] = [
@@ -55,7 +54,9 @@ function processCardsInParallel($processed_cards, $sites, $concurrent = 3, $retr
             if ($state['current_site'] >= count($sites)) {
                 // No more sites
                 $card_details = $state['card']['number'] . '|' . $state['card']['exp_month'] . '|' . $state['card']['exp_year'] . '|' . $state['card']['cvc'];
-                $results[$idx] = "DECLINED [All sites failed or errored] " . $card_details;
+                echo "DECLINED [All sites failed or errored] " . $card_details . "\n";
+                flush();
+                log_message("DECLINED [All sites failed or errored] $card_details");
                 $state['done'] = true;
                 continue;
             }
@@ -132,8 +133,10 @@ function processCardsInParallel($processed_cards, $sites, $concurrent = 3, $retr
                             $mapped_status = 'DECLINED';
                         }
                         $response_msg = htmlspecialchars($response_text, ENT_QUOTES, 'UTF-8');
-                        $results[$idx] = "$mapped_status [$response_msg] (Gateway: $gateway, Price: $price) $card_details";
-                        log_message($results[$idx]);
+                        $output = "$mapped_status [$response_msg] (Gateway: $gateway, Price: $price) $card_details";
+                        echo $output . "\n";
+                        flush();
+                        log_message($output);
                         $state['done'] = true;
                         $failed = false;
                     } else {
@@ -157,7 +160,10 @@ function processCardsInParallel($processed_cards, $sites, $concurrent = 3, $retr
                     $state['retries_left'] = $retry_per_site + 1;
                     log_message("Moving to next site for idx $idx, new site index: {$state['current_site']}");
                     if ($state['current_site'] >= count($sites)) {
-                        $results[$idx] = "DECLINED [All sites failed or errored] $card_details";
+                        $output = "DECLINED [All sites failed or errored] $card_details";
+                        echo $output . "\n";
+                        flush();
+                        log_message($output);
                         $state['done'] = true;
                     }
                 }
@@ -168,15 +174,16 @@ function processCardsInParallel($processed_cards, $sites, $concurrent = 3, $retr
         }
 
         curl_multi_close($mh);
+        // Optional: small delay to avoid overwhelming the server
+        usleep(200000); // 0.2 seconds
     }
-
-    return $results;
 }
 
 // Check if the request is POST and contains cards and sites data
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['cards']) || !is_array($_POST['cards']) || !isset($_POST['sites']) || !is_array($_POST['sites'])) {
     log_message("Invalid request or missing cards/sites data");
-    echo "ERROR [Invalid request or missing cards/sites data]";
+    echo "ERROR [Invalid request or missing cards/sites data]\n";
+    flush();
     exit;
 }
 
@@ -185,13 +192,14 @@ $sites = $_POST['sites'];
 $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 $processed_cards = [];
 
-// Validate and normalize each card
+// Validate and normalize each card (output invalid ones immediately)
 foreach ($cards as $index => $card) {
     // Validate card data
     foreach ($required_fields as $field) {
         if (empty($card[$field])) {
             log_message("Missing $field for card index $index");
             echo "DECLINED [Missing $field]\n";
+            flush();
             continue 2;
         }
     }
@@ -207,6 +215,7 @@ foreach ($cards as $index => $card) {
     if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
         log_message("Invalid exp_month format for card index $index: $exp_month_raw");
         echo "DECLINED [Invalid exp_month format]\n";
+        flush();
         continue;
     }
 
@@ -221,6 +230,7 @@ foreach ($cards as $index => $card) {
     } else {
         log_message("Invalid exp_year format for card index $index: $exp_year_raw");
         echo "DECLINED [Invalid exp_year format - must be YY or YYYY]\n";
+        flush();
         continue;
     }
 
@@ -228,16 +238,19 @@ foreach ($cards as $index => $card) {
     if (!preg_match('/^\d{13,19}$/', $card_number)) {
         log_message("Invalid card number format for card index $index: $card_number");
         echo "DECLINED [Invalid card number format]\n";
+        flush();
         continue;
     }
     if (!preg_match('/^\d{4}$/', (string) $exp_year) || $exp_year > (int) date('Y') + 10) {
         log_message("Invalid exp_year after normalization for card index $index: $exp_year");
         echo "DECLINED [Invalid exp_year format or too far in future]\n";
+        flush();
         continue;
     }
     if (!preg_match('/^\d{3,4}$/', $cvc)) {
         log_message("Invalid CVC format for card index $index: $cvc");
         echo "DECLINED [Invalid CVC format]\n";
+        flush();
         continue;
     }
 
@@ -246,7 +259,9 @@ foreach ($cards as $index => $card) {
     $current_timestamp = strtotime('first day of this month');
     if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
         log_message("Card expired for card index $index: $card_number|$exp_month|$exp_year|$cvc");
-        echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc\n";
+        $card_details = "$card_number|$exp_month|$exp_year|$cvc";
+        echo "DECLINED [Card expired] $card_details\n";
+        flush();
         continue;
     }
 
@@ -258,13 +273,6 @@ foreach ($cards as $index => $card) {
     ];
 }
 
-// Process cards in parallel (3 concurrent)
-$results = processCardsInParallel($processed_cards, $sites, 3);
-
-// Output results
-foreach ($results as $result) {
-    if ($result !== null) {
-        echo "$result\n";
-    }
-}
+// Process valid cards in parallel (3 concurrent), echoing results as each check completes (per attempt or final)
+processCardsInParallel($processed_cards, $sites, 3);
 ?>
