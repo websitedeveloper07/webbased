@@ -226,7 +226,7 @@ try {
         .stat-card.declined .stat-icon { background: rgba(239,68,68,0.15); color: var(--error); }
         .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
         .stat-label {
-            color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
+            color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; font-weight: 600;
         }
         .checker-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
@@ -303,7 +303,7 @@ try {
             padding: 0.3rem 0.6rem; border-radius: 6px;
             border: 1px solid var(--border-color);
             background: rgba(255,255,255,0.03); color: var(--text-secondary);
-            cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
+            cursor: pointer; font-size: 0.8rem; transition: all 0.3s;
         }
         .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
         .filter-btn.active {
@@ -372,7 +372,7 @@ try {
             font-weight: 600; display: flex; align-items: center;
             gap: 0.3rem; margin-bottom: 0.2rem; font-size: 0.9rem;
         }
-        .gateway-option-desc { font-size: 0.7rem; color: var(--text-secondary); }
+        .gateway-option-desc { font-size: 0.8rem; color: var(--text-secondary); }
         .gateway-badge {
             padding: 0.2rem 0.5rem; border-radius: 4px;
             font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
@@ -411,7 +411,7 @@ try {
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
-        .stat-content { display: flex; align-items: center; justify-content: space-between; }
+        .stat-content { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .menu-toggle { color: #ffffff !important; font-size: 1.2rem; padding: 0.3rem; cursor: pointer; transition: all 0.3s; }
         .menu-toggle:hover { transform: scale(1.1); }
         .sidebar-link.logout {
@@ -428,7 +428,7 @@ try {
             .navbar { padding: 1rem 2rem; }
             .navbar-brand { font-size: 1.5rem; }
             .navbar-brand i { font-size: 1.75rem; }
-            .theme-toggle { width: 60px; height: 32px; }
+            .theme-toggle { width: 60px; height: 32px; border-radius: 16px; }
             .theme-toggle-slider { width: 24px; height: 24px; font-size: 0.7rem; }
             [data-theme="light"] .theme-toggle-slider { transform: translateX(28px); }
             .user-info { padding: 0.5rem 1rem; gap: 0.75rem; }
@@ -730,6 +730,15 @@ try {
     </div>
 
     <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        const sliderIcon = document.querySelector('.theme-toggle-slider i');
+        if (savedTheme === 'light') {
+            sliderIcon.className = 'fas fa-sun';
+        } else {
+            sliderIcon.className = 'fas fa-moon';
+        }
+
         let selectedGateway = 'gate/stripeauth.php';
         let isProcessing = false;
         let isStopping = false;
@@ -767,6 +776,7 @@ try {
                     }, 400);
                 }, 1200);
             }, 800);
+            handleResize();
         });
 
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
@@ -1246,6 +1256,23 @@ try {
                     window.location.href = 'https://cardxchk.onrender.com/login.php';
                 }
             });
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        function handleResize() {
+            if (window.innerWidth >= 769) {
+                sidebarOpen = true;
+                document.getElementById('sidebar').classList.add('open');
+                document.querySelector('.main-content').classList.add('sidebar-open');
+                document.getElementById('menuToggle').style.display = 'none';
+            } else {
+                document.getElementById('menuToggle').style.display = 'block';
+                if (!sidebarOpen) {
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.querySelector('.main-content').classList.remove('sidebar-open');
+                }
+            }
         }
     </script>
 </body>
