@@ -1331,7 +1331,7 @@ try {
             abortControllers.push(controller);
 
             $.ajax({
-                url: 'autoshopify.php',
+                url: '/gate/autoshopify.php',
                 method: 'POST',
                 data: formData,
                 processData: false,
