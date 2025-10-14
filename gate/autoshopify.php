@@ -80,7 +80,7 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Reduced timeout
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20); // Further reduced timeout
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
 
@@ -96,12 +96,12 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         if ($response === false || $http_code !== 200 || !empty($curl_error)) {
             if ($curl_errno == CURLE_OPERATION_TIMEDOUT && $attempt < $retry) {
                 log_message("Timeout for $card_details on $site, retrying...");
-                usleep(300000); // Reduced to 0.3s delay
+                usleep(200000); // Reduced to 0.2s delay
                 continue;
             }
             log_message("Failed for $card_details on $site: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
             $result = [
-                'status' => 'DECLINED',
+                'status' => 'ERROR',
                 'message' => "API request failed: $curl_error (HTTP $http_code)",
                 'card' => $card_details,
                 'site' => $site
@@ -133,7 +133,7 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         if (json_last_error() !== JSON_ERROR_NONE || !isset($result['Response'], $result['Status'])) {
             log_message("Invalid JSON for $card_details on $site: " . substr($response, 0, 100));
             $result = [
-                'status' => 'DECLINED',
+                'status' => 'ERROR',
                 'message' => "Invalid API response: " . substr($response, 0, 100),
                 'card' => $card_details,
                 'site' => $site
