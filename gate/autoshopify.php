@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !isset($_
 }
 
 $card = $_POST['card'];
-$sites = $_POST['sites'];
+$available_sites = $_POST['sites'];
 $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 
 // Validate card data
@@ -168,17 +168,19 @@ if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
 }
 
 // Validate sites
-if (empty($sites)) {
+if (empty($available_sites)) {
     log_message("No sites provided");
     echo json_encode(['status' => 'DECLINED', 'message' => 'No sites provided']);
     exit;
 }
 
-// Process card with each site sequentially until a valid response is received
-foreach ($sites as $site) {
-    $site = filter_var($site, FILTER_SANITIZE_URL);
+// Process card with one site at a time, switching on error
+$site_index = 0;
+while ($site_index < count($available_sites)) {
+    $site = filter_var($available_sites[$site_index], FILTER_SANITIZE_URL);
     if (!filter_var($site, FILTER_VALIDATE_URL)) {
         log_message("Invalid site URL: $site");
+        $site_index++;
         continue; // Skip invalid URLs
     }
 
@@ -193,8 +195,10 @@ foreach ($sites as $site) {
         ]);
         exit;
     }
-    // If DECLINED due to API error, try next site
-    log_message("Site $site failed for $card_number, trying next site...");
+
+    // If DECLINED due to API error, remove the failed site and try the next one
+    log_message("Site $site failed for $card_number, removing and trying next site...");
+    array_splice($available_sites, $site_index, 1); // Remove failed site
     usleep(500000); // 0.5s delay before trying next site
 }
 
@@ -203,6 +207,6 @@ echo json_encode([
     'status' => $result['status'],
     'message' => $result['message'],
     'card' => $result['card_details'],
-    'site' => $site
+    'site' => isset($site) ? $site : 'None'
 ]);
 ?>
