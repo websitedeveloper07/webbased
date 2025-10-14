@@ -1071,7 +1071,7 @@ async function processCard(card, controller, retryCount = 0) {
             data: formData,
             processData: false,
             contentType: false,
-            timeout: 20000, // Reduced to match server
+            timeout: 15000, // Reduced to match server
             signal: controller.signal,
             success: function(response) {
                 let status = 'DECLINED';
@@ -1090,17 +1090,7 @@ async function processCard(card, controller, retryCount = 0) {
                         status = 'DECLINED';
                     }
                 } catch (e) {
-                    if (typeof response === 'string') {
-                        if (response.includes('3D_AUTHENTICATION') || response.includes('3DS')) {
-                            status = '3DS';
-                        } else if (response.includes('CHARGED')) {
-                            status = 'CHARGED';
-                        } else if (response.includes('APPROVED')) {
-                            status = 'APPROVED';
-                        } else {
-                            status = 'DECLINED';
-                        }
-                    }
+                    console.error(`Error parsing response for card: ${card.displayCard}, Response: ${response}`);
                     message = response;
                 }
                 console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
@@ -1117,7 +1107,7 @@ async function processCard(card, controller, retryCount = 0) {
                 if (xhr.statusText === 'abort') {
                     resolve(null);
                 } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 1000);
+                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 500);
                 } else {
                     resolve({
                         status: 'DECLINED',
@@ -1193,47 +1183,77 @@ async function processCards() {
     $('#checkingResultsList').innerHTML = '';
     $('#statusLog').text('Starting processing...');
 
-    let requestIndex = 0;
-
-    while (cardQueue.length > 0 && isProcessing) {
-        while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
-            const card = cardQueue.shift();
-            activeRequests++;
+    if (validCards.length < 3) {
+        // Sequential processing for 1 or 2 cards
+        for (const card of cardQueue) {
+            if (!isProcessing || isStopping) break;
             const controller = new AbortController();
             abortControllers.push(controller);
+            activeRequests++;
+            const result = await processCard(card, controller);
+            activeRequests--;
+            if (result === null) continue;
 
-            await new Promise(resolve => setTimeout(resolve, requestIndex * 200));
-            requestIndex++;
+            const cardEntry = { response: result.response, displayCard: result.displayCard };
+            if (result.status === 'CHARGED') {
+                chargedCards.push(cardEntry);
+                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+            } else if (result.status === 'APPROVED') {
+                approvedCards.push(cardEntry);
+                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+            } else if (result.status === '3DS') {
+                threeDSCards.push(cardEntry);
+                sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+            } else {
+                declinedCards.push(cardEntry);
+                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+            }
 
-            processCard(card, controller).then(result => {
-                if (result === null) return;
-
-                activeRequests--;
-                const cardEntry = { response: result.response, displayCard: result.displayCard };
-                if (result.status === 'CHARGED') {
-                    chargedCards.push(cardEntry);
-                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                } else if (result.status === 'APPROVED') {
-                    approvedCards.push(cardEntry);
-                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                } else if (result.status === '3DS') {
-                    threeDSCards.push(cardEntry);
-                    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                } else {
-                    declinedCards.push(cardEntry);
-                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                }
-
-                addResult({displayCard: result.displayCard}, result.status, result.response);
-                updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-
-                if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
-                    finishProcessing();
-                }
-            });
+            addResult({ displayCard: result.displayCard }, result.status, result.response);
+            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
         }
-        if (isProcessing) {
-            await new Promise(resolve => setTimeout(resolve, 10));
+        if (activeRequests === 0 && cardQueue.length === 0) {
+            finishProcessing();
+        }
+    } else {
+        // Parallel processing for 3+ cards
+        while (cardQueue.length > 0 && isProcessing) {
+            while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                const card = cardQueue.shift();
+                activeRequests++;
+                const controller = new AbortController();
+                abortControllers.push(controller);
+
+                processCard(card, controller).then(result => {
+                    activeRequests--;
+                    if (result === null) return;
+
+                    const cardEntry = { response: result.response, displayCard: result.displayCard };
+                    if (result.status === 'CHARGED') {
+                        chargedCards.push(cardEntry);
+                        sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                    } else if (result.status === 'APPROVED') {
+                        approvedCards.push(cardEntry);
+                        sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                    } else if (result.status === '3DS') {
+                        threeDSCards.push(cardEntry);
+                        sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                    } else {
+                        declinedCards.push(cardEntry);
+                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                    }
+
+                    addResult({ displayCard: result.displayCard }, result.status, result.response);
+                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+
+                    if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                        finishProcessing();
+                    }
+                });
+            }
+            if (isProcessing) {
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
         }
     }
 }
@@ -1296,7 +1316,7 @@ async function processAutoCards() {
     isProcessing = true;
     isStopping = false;
     abortControllers = [];
-    totalCards = validCards.length; // One check per card
+    totalCards = validCards.length;
     chargedCards = [];
     approvedCards = [];
     threeDSCards = [];
@@ -1312,7 +1332,7 @@ async function processAutoCards() {
     $('#autoResultsList').innerHTML = '';
     $('#autoStatusLog').text('Starting processing...');
 
-    async function checkCardWithSites(card, sites, siteIndex = 0) {
+    async function checkCardWithSites(card, sites, siteIndex = 0, retryCount = 0) {
         if (siteIndex >= sites.length || !isProcessing || isStopping) {
             if (siteIndex >= sites.length) {
                 const cardEntry = { response: 'Declined [No valid sites]', displayCard: card.displayCard, site: '' };
@@ -1320,6 +1340,7 @@ async function processAutoCards() {
                 sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                 addResult({ displayCard: card.displayCard }, 'DECLINED', cardEntry.response, true);
                 updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                $('#autoStatusLog').text(`Processed ${chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length} of ${totalCards} cards`);
             }
             activeRequests--;
             return;
@@ -1342,6 +1363,7 @@ async function processAutoCards() {
         formData.append('site', site);
 
         $('#autoStatusLog').text(`Processing: ${card.displayCard} on ${site}`);
+        console.log(`Request for card: ${card.displayCard}, Site: ${site}, Retry: ${retryCount}`);
 
         $.ajax({
             url: 'gate/autoshopify.php',
@@ -1349,7 +1371,7 @@ async function processAutoCards() {
             data: formData,
             processData: false,
             contentType: false,
-            timeout: 20000, // Match server timeout
+            timeout: 15000, // Match server timeout
             signal: controller.signal,
             success: function(response) {
                 let status = 'DECLINED';
@@ -1372,25 +1394,19 @@ async function processAutoCards() {
                         status = 'DECLINED';
                     }
                 } catch (e) {
-                    console.error(`Error parsing response for card: ${card.displayCard}, Response: ${response}`);
-                    if (typeof response === 'string') {
-                        if (response.includes('3D_AUTHENTICATION') || response.includes('3DS')) {
-                            status = '3DS';
-                        } else if (response.includes('CHARGED')) {
-                            status = 'CHARGED';
-                        } else if (response.includes('APPROVED')) {
-                            status = 'APPROVED';
-                        } else {
-                            status = 'DECLINED';
-                        }
-                    }
+                    console.error(`Error parsing response for card: ${card.displayCard}, Site: ${site}, Response: ${response}`);
                     message = response;
                 }
 
-                if (status === 'ERROR' || status === 'DECLINED') {
-                    // Retry with next site
+                if ((status === 'ERROR' || status === 'DECLINED') && retryCount < MAX_RETRIES) {
+                    console.log(`Retrying card: ${card.displayCard} on site: ${site}, Retry: ${retryCount + 1}`);
                     activeRequests--;
-                    setTimeout(() => checkCardWithSites(card, sites, siteIndex + 1), 100);
+                    setTimeout(() => checkCardWithSites(card, sites, siteIndex, retryCount + 1), 100);
+                    return;
+                } else if ((status === 'ERROR' || status === 'DECLINED') && siteIndex < sites.length - 1) {
+                    console.log(`Moving to next site for card: ${card.displayCard}, Next site: ${sites[siteIndex + 1]}`);
+                    activeRequests--;
+                    setTimeout(() => checkCardWithSites(card, sites, siteIndex + 1, 0), 100);
                     return;
                 }
 
@@ -1412,14 +1428,30 @@ async function processAutoCards() {
                 addResult({ displayCard: card.displayCard }, status, message, true);
                 updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
                 $('#autoStatusLog').text(`Processed ${chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length} of ${totalCards} cards`);
+                console.log(`Completed card: ${card.displayCard}, Status: ${status}, Site: ${usedSite}`);
                 activeRequests--;
             },
             error: function(xhr) {
                 if (xhr.statusText !== 'abort') {
-                    // Treat AJAX errors as DECLINED and retry with next site
-                    const message = xhr.responseText || 'Request failed';
-                    activeRequests--;
-                    setTimeout(() => checkCardWithSites(card, sites, siteIndex + 1), 100);
+                    console.error(`AJAX error for card: ${card.displayCard}, Site: ${site}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                    if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES) {
+                        console.log(`Retrying card: ${card.displayCard} on site: ${site}, Retry: ${retryCount + 1}`);
+                        activeRequests--;
+                        setTimeout(() => checkCardWithSites(card, sites, siteIndex, retryCount + 1), 100);
+                    } else if (siteIndex < sites.length - 1) {
+                        console.log(`Moving to next site for card: ${card.displayCard}, Next site: ${sites[siteIndex + 1]}`);
+                        activeRequests--;
+                        setTimeout(() => checkCardWithSites(card, sites, siteIndex + 1, 0), 100);
+                    } else {
+                        const message = xhr.responseText || 'Request failed';
+                        const cardEntry = { response: `Declined [${message}]`, displayCard: card.displayCard, site: '' };
+                        declinedCards.push(cardEntry);
+                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        addResult({ displayCard: card.displayCard }, 'DECLINED', cardEntry.response, true);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                        $('#autoStatusLog').text(`Processed ${chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length} of ${totalCards} cards (error)`);
+                        activeRequests--;
+                    }
                 } else {
                     activeRequests--;
                 }
@@ -1435,7 +1467,7 @@ async function processAutoCards() {
             return;
         }
 
-        if (validCards.length >= 3 && activeRequests >= MAX_CONCURRENT) {
+        if (activeRequests >= MAX_CONCURRENT) {
             setTimeout(processNext, 10);
             return;
         }
@@ -1447,7 +1479,7 @@ async function processAutoCards() {
     }
 
     cardQueue = [...validCards];
-    if (validCards.length < 3) {
+    if (validCards.length <= 2) {
         // Sequential processing for 1 or 2 cards
         for (const card of cardQueue) {
             if (!isProcessing || isStopping) break;
