@@ -434,7 +434,8 @@ try {
             .theme-toggle-slider { width: 24px; height: 24px; font-size: 0.7rem; }
             [data-theme="light"] .theme-toggle-slider { transform: translateX(28px); }
             .user-info { padding: 0.5rem 1rem; gap: 0.75rem; }
-            .user-avatar { padding: 0.6rem 1.2rem; font-size: 1rem; }
+            .user-avatar { width: 35px; height: 35px; font-size: 1rem; }
+            .nav-btn { padding: 0.6rem 1.2rem; font-size: 1rem; }
             .sidebar { width: 260px; top: 70px; }
             .main-content { margin-top: 70px; padding: 2rem; margin-left: 0; }
             .main-content.sidebar-open { margin-left: 260px; }
@@ -1270,7 +1271,7 @@ try {
                 .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
                 .map(line => {
                     const [number, exp_month, exp_year, cvc] = line.split('|');
-                    return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                    return { number, exp_month, exp_year, cvc, displayCard: line };
                 });
 
             if (validCards.length === 0) {
@@ -1312,90 +1313,109 @@ try {
             $('#autoResultsList').innerHTML = '';
             $('#autoStatusLog').text('Starting processing...');
 
-            const formData = new FormData();
-            sites.forEach((site, i) => {
-                formData.append(`sites[${i}]`, site);
-            });
-            validCards.forEach((card, j) => {
-                formData.append(`cards[${j}][number]`, card.number);
-                formData.append(`cards[${j}][exp_month]`, card.exp_month);
+            const maxConcurrent = 3;
+            let currentConcurrent = 0;
+            let processed = 0;
+            const cardQueue = [...validCards];
+
+            const processNext = async () => {
+                if (isStopping || cardQueue.length === 0) {
+                    if (currentConcurrent === 0 && cardQueue.length === 0) finishAutoProcessing();
+                    return;
+                }
+
+                const card = cardQueue.shift();
+                currentConcurrent++;
+                const controller = new AbortController();
+                abortControllers.push(controller);
+
+                const formData = new FormData();
+                formData.append('card[number]', card.number);
+                formData.append('card[exp_month]', card.exp_month);
                 let normalizedYear = card.exp_year;
                 if (normalizedYear.length === 2) {
                     normalizedYear = '20' + normalizedYear;
                 }
-                formData.append(`cards[${j}][exp_year]`, normalizedYear);
-                formData.append(`cards[${j}][cvc]`, card.cvc);
-            });
+                formData.append('card[exp_year]', normalizedYear);
+                formData.append('card[cvc]', card.cvc);
+                sites.forEach((site, i) => formData.append('sites[' + i + ']', site));
 
-            const controller = new AbortController();
-            abortControllers.push(controller);
+                $('#autoStatusLog').text(`Processing card: ${card.displayCard}`);
 
-            $.ajax({
-                url: '/gate/autoshopify.php',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                timeout: 300000,
-                signal: controller.signal,
-                success: function(response) {
-                    const lines = response.trim().split('\n').filter(line => line.trim());
-                    lines.forEach(line => {
-                        const match = line.match(/^(\w+) \[(.*?)\] \(Gateway: (.*?), Price: (.*?)\) (.*)$/);
-                        let status, msg, displayCard, fullResponse;
-                        if (match) {
-                            status = match[1].toUpperCase();
-                            msg = match[2];
-                            const gateway = match[3];
-                            const price = match[4];
-                            displayCard = match[5];
-                            fullResponse = `[${msg}] (Gateway: ${gateway}, Price: ${price})`;
-                        } else {
-                            const declineMatch = line.match(/^DECLINED \[(.*?)\] (.*)$/);
-                            if (declineMatch) {
-                                status = 'DECLINED';
-                                msg = declineMatch[1];
-                                displayCard = declineMatch[2];
-                                fullResponse = `[${msg}]`;
-                            } else {
-                                return; // skip invalid lines
+                $.ajax({
+                    url: 'gate/autoshopify.php',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    timeout: 300000,
+                    signal: controller.signal,
+                    success: function(response) {
+                        let status = 'DECLINED';
+                        let message = response;
+                        try {
+                            const jsonResponse = JSON.parse(response);
+                            if (jsonResponse.status) {
+                                status = jsonResponse.status.toUpperCase();
                             }
+                            message = jsonResponse.message || jsonResponse.response || response;
+                            if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
+                                status = '3DS';
+                            } else if (status === 'CHARGED' || status.includes('CHARGED')) {
+                                status = 'CHARGED';
+                            } else if (status === 'APPROVED' || status.includes('APPROVED')) {
+                                status = 'APPROVED';
+                            } else {
+                                status = 'DECLINED';
+                            }
+                        } catch (e) {
+                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS') || response.includes('3D')) {
+                                status = '3DS';
+                            } else if (response.includes('CHARGED')) {
+                                status = 'CHARGED';
+                            } else if (response.includes('APPROVED')) {
+                                status = 'APPROVED';
+                            } else {
+                                status = 'DECLINED';
+                            }
+                            message = response;
                         }
-                        if (status === '3D_AUTHENTICATION') status = '3DS';
-                        const cardEntry = { response: fullResponse, displayCard };
+                        const cardEntry = { response: message, displayCard: card.displayCard };
                         if (status === 'CHARGED') {
                             chargedCards.push(cardEntry);
-                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
                         } else if (status === 'APPROVED') {
                             approvedCards.push(cardEntry);
-                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                         } else if (status === '3DS') {
                             threeDSCards.push(cardEntry);
-                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
                         } else {
                             declinedCards.push(cardEntry);
-                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
-
-                        addResult({displayCard}, status, fullResponse, true);
+                        addResult({displayCard: card.displayCard}, status, message, true);
+                        processed++;
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                    });
-                    finishAutoProcessing();
-                },
-                error: function(xhr) {
-                    $('#autoStatusLog').text(`Error: ${xhr.statusText} (HTTP ${xhr.status})`);
-                    console.error(`Error: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                    if (xhr.statusText !== 'abort') {
-                        Swal.fire({
-                            title: 'Processing error!',
-                            text: 'An error occurred during processing',
-                            icon: 'error',
-                            confirmButtonColor: '#ec4899'
-                        });
+                        $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} cards`);
+                        currentConcurrent--;
+                        processNext();
+                    },
+                    error: function(xhr) {
+                        if (xhr.statusText !== 'abort') {
+                            const message = xhr.responseText || 'Request failed';
+                            const cardEntry = { response: message, displayCard: card.displayCard };
+                            declinedCards.push(cardEntry);
+                            addResult({displayCard: card.displayCard}, 'DECLINED', message, true);
+                            processed++;
+                            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                            $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} cards (error on card)`);
+                        }
+                        currentConcurrent--;
+                        processNext();
                     }
-                    finishAutoProcessing();
-                }
-            });
+                });
+            };
+
+            for (let i = 0; i < maxConcurrent && i < totalCards; i++) {
+                processNext();
+            }
         }
 
         function finishProcessing() {
@@ -1425,10 +1445,6 @@ try {
             $('#autoStartBtn').prop('disabled', false);
             $('#autoStopBtn').prop('disabled', true);
             $('#autoLoader').hide();
-            $('#autoCardInput').val('');
-            $('#sitesInput').val('');
-            updateAutoCardCount();
-            updateSitesCount();
             $('#autoStatusLog').text('Processing completed.');
             Swal.fire({
                 title: 'Processing complete!',
