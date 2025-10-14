@@ -1297,7 +1297,7 @@ try {
             isProcessing = true;
             isStopping = false;
             abortControllers = [];
-            totalCards = validCards.length;
+            totalCards = validCards.length * sites.length;
             chargedCards = [];
             approvedCards = [];
             threeDSCards = [];
@@ -1316,7 +1316,13 @@ try {
             const maxConcurrent = 3;
             let currentConcurrent = 0;
             let processed = 0;
-            const cardQueue = [...validCards];
+            let queue = [];
+            validCards.forEach(card => {
+                sites.forEach(site => {
+                    queue.push({card, site});
+                });
+            });
+            cardQueue = queue;
 
             const processNext = async () => {
                 if (isStopping || cardQueue.length === 0) {
@@ -1324,7 +1330,8 @@ try {
                     return;
                 }
 
-                const card = cardQueue.shift();
+                const item = cardQueue.shift();
+                const {card, site} = item;
                 currentConcurrent++;
                 const controller = new AbortController();
                 abortControllers.push(controller);
@@ -1339,9 +1346,9 @@ try {
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvc);
                 formData.append('card[displayCard]', card.displayCard);
-                sites.forEach((site, i) => formData.append('sites[' + i + ']', site));
+                formData.append('site', site);
 
-                $('#autoStatusLog').text(`Processing card: ${card.displayCard}`);
+                $('#autoStatusLog').text(`Processing: ${card.displayCard} @ ${site}`);
 
                 $.ajax({
                     url: 'gate/autoshopify.php',
@@ -1362,8 +1369,17 @@ try {
                             status = 'DECLINED';
                             fullResponse = response;
                         }
-                        if (status === '3D_AUTHENTICATION') status = '3DS';
-                        const cardEntry = { response: fullResponse, displayCard: card.displayCard };
+                        if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
+                            status = '3DS';
+                        } else if (status === 'CHARGED' || status.includes('CHARGED')) {
+                            status = 'CHARGED';
+                        } else if (status === 'APPROVED' || status.includes('APPROVED')) {
+                            status = 'APPROVED';
+                        } else {
+                            status = 'DECLINED';
+                        }
+                        const display = `${card.displayCard} @ ${site}`;
+                        const cardEntry = { response: fullResponse, displayCard: display };
                         if (status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                         } else if (status === 'APPROVED') {
@@ -1373,22 +1389,23 @@ try {
                         } else {
                             declinedCards.push(cardEntry);
                         }
-                        addResult({displayCard: card.displayCard}, status, fullResponse, true);
+                        addResult({displayCard: display}, status, fullResponse, true);
                         processed++;
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                        $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} cards`);
+                        $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} checks`);
                         currentConcurrent--;
                         processNext();
                     },
                     error: function(xhr) {
                         if (xhr.statusText !== 'abort') {
                             const message = xhr.responseText || 'Request failed';
-                            const cardEntry = { response: message, displayCard: card.displayCard };
+                            const display = `${card.displayCard} @ ${site}`;
+                            const cardEntry = { response: message, displayCard: display };
                             declinedCards.push(cardEntry);
-                            addResult({displayCard: card.displayCard}, 'DECLINED', message, true);
+                            addResult({displayCard: display}, 'DECLINED', message, true);
                             processed++;
                             updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                            $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} cards (error on card)`);
+                            $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} checks (error)`);
                         }
                         currentConcurrent--;
                         processNext();
@@ -1557,7 +1574,12 @@ try {
         });
 
         $('#autoExportBtn').on('click', function() {
-            const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
+            const allCards = [
+                ...chargedCards.map(c => ({...c, status: 'CHARGED'})),
+                ...approvedCards.map(c => ({...c, status: 'APPROVED'})),
+                ...threeDSCards.map(c => ({...c, status: '3DS'})),
+                ...declinedCards.map(c => ({...c, status: 'DECLINED'}))
+            ];
             if (allCards.length === 0) {
                 Swal.fire({
                     title: 'No data to export!',
@@ -1567,12 +1589,10 @@ try {
                 });
                 return;
             }
-            let csvContent = "Card,Status,Response\n";
-            allCards.forEach(card => {
-                const status = card.response.includes('CHARGED') ? 'CHARGED' :
-                             card.response.includes('APPROVED') ? 'APPROVED' :
-                             card.response.includes('3DS') ? '3DS' : 'DECLINED';
-                csvContent += `${card.displayCard},${status},${card.response}\n`;
+            let csvContent = "Card,Site,Status,Response\n";
+            allCards.forEach(({displayCard, status, response}) => {
+                const [cardStr, siteStr] = displayCard.split(' @ ');
+                csvContent += `${cardStr},${siteStr || ''},${status},${response}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
