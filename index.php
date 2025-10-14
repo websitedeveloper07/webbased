@@ -1338,6 +1338,7 @@ try {
                 }
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvc);
+                formData.append('card[displayCard]', card.displayCard);
                 sites.forEach((site, i) => formData.append('sites[' + i + ']', site));
 
                 $('#autoStatusLog').text(`Processing card: ${card.displayCard}`);
@@ -1351,36 +1352,18 @@ try {
                     timeout: 300000,
                     signal: controller.signal,
                     success: function(response) {
-                        let status = 'DECLINED';
-                        let message = response;
-                        try {
-                            const jsonResponse = JSON.parse(response);
-                            if (jsonResponse.status) {
-                                status = jsonResponse.status.toUpperCase();
-                            }
-                            message = jsonResponse.message || jsonResponse.response || response;
-                            if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
-                                status = '3DS';
-                            } else if (status === 'CHARGED' || status.includes('CHARGED')) {
-                                status = 'CHARGED';
-                            } else if (status === 'APPROVED' || status.includes('APPROVED')) {
-                                status = 'APPROVED';
-                            } else {
-                                status = 'DECLINED';
-                            }
-                        } catch (e) {
-                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS') || response.includes('3D')) {
-                                status = '3DS';
-                            } else if (response.includes('CHARGED')) {
-                                status = 'CHARGED';
-                            } else if (response.includes('APPROVED')) {
-                                status = 'APPROVED';
-                            } else {
-                                status = 'DECLINED';
-                            }
-                            message = response;
+                        const match = response.match(/^(\w+) \[(.*?)\] (.*)$/);
+                        let status, msg, fullResponse;
+                        if (match) {
+                            status = match[1].toUpperCase();
+                            msg = match[2];
+                            fullResponse = `[${msg}]`;
+                        } else {
+                            status = 'DECLINED';
+                            fullResponse = response;
                         }
-                        const cardEntry = { response: message, displayCard: card.displayCard };
+                        if (status === '3D_AUTHENTICATION') status = '3DS';
+                        const cardEntry = { response: fullResponse, displayCard: card.displayCard };
                         if (status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                         } else if (status === 'APPROVED') {
@@ -1390,7 +1373,7 @@ try {
                         } else {
                             declinedCards.push(cardEntry);
                         }
-                        addResult({displayCard: card.displayCard}, status, message, true);
+                        addResult({displayCard: card.displayCard}, status, fullResponse, true);
                         processed++;
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
                         $('#autoStatusLog').text(`Processed ${processed} of ${totalCards} cards`);
