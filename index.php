@@ -452,7 +452,7 @@ try {
             .settings-btn { padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 12px; }
             .input-label { font-size: 1rem; }
             .card-textarea { min-height: 200px; padding: 1.25rem; font-size: 1rem; border-radius: 16px; }
-            .btn { padding: 0.9rem 2rem; min{keyword: min-width: 140px; font-size: 1rem; border-radius: 14px; }
+            .btn { padding: 0.9rem 2rem; min-width: 140px; font-size: 1rem; border-radius: 14px; }
             .results-section { padding: 2.5rem; border-radius: 24px; }
             .results-title { font-size: 1.75rem; }
             .results-title i { font-size: 1.2rem; }
@@ -729,6 +729,7 @@ let activeRequests = 0;
 let cardQueue = [];
 const MAX_CONCURRENT = 3; // Max 3 parallel requests for 3+ cards
 const MAX_RETRIES = 2;
+const PROCESSING_TIMEOUT = 15000; // 15 seconds timeout for processing
 let abortControllers = [];
 let totalCards = 0;
 let chargedCards = [];
@@ -924,7 +925,12 @@ function filterResults(filter) {
 }
 
 async function processCard(card, controller, retryCount = 0) {
-    if (!isProcessing) return null;
+    if (!isProcessing) {
+        console.log(`Aborting processCard for ${card.displayCard}: isProcessing is false`);
+        return null;
+    }
+
+    console.log(`Processing card: ${card.displayCard}, Retry: ${retryCount}, Active Requests: ${activeRequests}`);
 
     return new Promise((resolve) => {
         const formData = new FormData();
@@ -938,7 +944,7 @@ async function processCard(card, controller, retryCount = 0) {
         formData.append('card[cvc]', card.cvc);
 
         $('#statusLog').text(`Processing card: ${card.displayCard}`);
-        console.log(`Starting request for card: ${card.displayCard}`);
+        console.log(`Sending AJAX request for card: ${card.displayCard}`);
 
         $.ajax({
             url: selectedGateway,
@@ -946,7 +952,7 @@ async function processCard(card, controller, retryCount = 0) {
             data: formData,
             processData: false,
             contentType: false,
-            timeout: 15000, // Reduced to match server
+            timeout: 15000,
             signal: controller.signal,
             success: function(response) {
                 let status = 'DECLINED';
@@ -965,10 +971,10 @@ async function processCard(card, controller, retryCount = 0) {
                         status = 'DECLINED';
                     }
                 } catch (e) {
-                    console.error(`Error parsing response for card: ${card.displayCard}, Response: ${response}`);
-                    message = response;
+                    console.error(`Error parsing response for card: ${card.displayCard}, Response: ${response}, Error: ${e.message}`);
+                    message = response || 'Unknown error';
                 }
-                console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
+                console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}, Active Requests: ${activeRequests}`);
                 resolve({
                     status: status,
                     response: message,
@@ -978,10 +984,11 @@ async function processCard(card, controller, retryCount = 0) {
             },
             error: function(xhr) {
                 $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
-                console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}, Active Requests: ${activeRequests}`);
                 if (xhr.statusText === 'abort') {
                     resolve(null);
                 } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                    console.log(`Retrying card: ${card.displayCard}, Retry count: ${retryCount + 1}`);
                     setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 500);
                 } else {
                     resolve({
@@ -1037,6 +1044,7 @@ async function processCards() {
         return;
     }
 
+    console.log(`Starting processing for ${validCards.length} cards`);
     isProcessing = true;
     isStopping = false;
     activeRequests = 0;
@@ -1058,50 +1066,32 @@ async function processCards() {
     $('#checkingResultsList').innerHTML = '';
     $('#statusLog').text('Starting processing...');
 
-    if (validCards.length < 3) {
-        // Sequential processing for 1 or 2 cards
-        for (const card of cardQueue) {
-            if (!isProcessing || isStopping) break;
-            const controller = new AbortController();
-            abortControllers.push(controller);
-            activeRequests++;
-            const result = await processCard(card, controller);
-            activeRequests--;
-            if (result === null) continue;
-
-            const cardEntry = { response: result.response, displayCard: result.displayCard };
-            if (result.status === 'CHARGED') {
-                chargedCards.push(cardEntry);
-                sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-            } else if (result.status === 'APPROVED') {
-                approvedCards.push(cardEntry);
-                sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-            } else if (result.status === '3DS') {
-                threeDSCards.push(cardEntry);
-                sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-            } else {
-                declinedCards.push(cardEntry);
-                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-            }
-
-            addResult({ displayCard: result.displayCard }, result.status, result.response);
-            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+    // Set a timeout to prevent infinite processing
+    const timeoutId = setTimeout(() => {
+        if (isProcessing) {
+            console.error('Processing timeout reached');
+            isProcessing = false;
+            isStopping = true;
+            abortControllers.forEach(controller => controller.abort());
+            finishProcessing('Processing timed out after 15 seconds.');
         }
-        if (activeRequests === 0 && cardQueue.length === 0) {
-            finishProcessing();
-        }
-    } else {
-        // Parallel processing for 3+ cards
-        while (cardQueue.length > 0 && isProcessing) {
-            while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+    }, PROCESSING_TIMEOUT);
+
+    try {
+        if (validCards.length < 3) {
+            // Sequential processing for 1 or 2 cards
+            console.log(`Processing ${validCards.length} cards sequentially`);
+            while (cardQueue.length > 0 && isProcessing && !isStopping) {
                 const card = cardQueue.shift();
-                activeRequests++;
+                console.log(`Processing card: ${card.displayCard}, Queue length: ${cardQueue.length}, Active Requests: ${activeRequests}`);
                 const controller = new AbortController();
                 abortControllers.push(controller);
-
-                processCard(card, controller).then(result => {
+                activeRequests++;
+                try {
+                    const result = await processCard(card, controller);
                     activeRequests--;
-                    if (result === null) return;
+                    console.log(`Card processed: ${card.displayCard}, Result: ${result ? result.status : 'null'}, Active Requests: ${activeRequests}, Queue length: ${cardQueue.length}`);
+                    if (result === null) continue;
 
                     const cardEntry = { response: result.response, displayCard: result.displayCard };
                     if (result.status === 'CHARGED') {
@@ -1121,33 +1111,126 @@ async function processCards() {
                     addResult({ displayCard: result.displayCard }, result.status, result.response);
                     updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
 
-                    if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                    // Check if all cards are processed
+                    if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
+                        console.log('All cards processed sequentially, calling finishProcessing');
+                        clearTimeout(timeoutId);
                         finishProcessing();
                     }
-                });
+                } catch (e) {
+                    console.error(`Error processing card: ${card.displayCard}, Error: ${e.message}`);
+                    activeRequests--;
+                    declinedCards.push({ response: `Error: ${e.message}`, displayCard: card.displayCard });
+                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                    addResult({ displayCard: card.displayCard }, 'DECLINED', `Error: ${e.message}`);
+                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+
+                    // Check if all cards are processed after error
+                    if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
+                        console.log('All cards processed after error, calling finishProcessing');
+                        clearTimeout(timeoutId);
+                        finishProcessing();
+                    }
+                }
             }
-            if (isProcessing) {
-                await new Promise(resolve => setTimeout(resolve, 10));
+            // Final check in case loop exits unexpectedly
+            if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
+                console.log('Sequential processing loop exited, calling finishProcessing');
+                clearTimeout(timeoutId);
+                finishProcessing();
+            }
+        } else {
+            // Parallel processing for 3+ cards
+            console.log(`Processing ${validCards.length} cards in parallel`);
+            while (cardQueue.length > 0 && isProcessing && !isStopping) {
+                while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                    const card = cardQueue.shift();
+                    console.log(`Processing card: ${card.displayCard}, Queue length: ${cardQueue.length}, Active Requests: ${activeRequests}`);
+                    activeRequests++;
+                    const controller = new AbortController();
+                    abortControllers.push(controller);
+
+                    processCard(card, controller).then(result => {
+                        activeRequests--;
+                        console.log(`Card processed: ${card.displayCard}, Result: ${result ? result.status : 'null'}, Active Requests: ${activeRequests}, Queue length: ${cardQueue.length}`);
+                        if (result === null) return;
+
+                        const cardEntry = { response: result.response, displayCard: result.displayCard };
+                        if (result.status === 'CHARGED') {
+                            chargedCards.push(cardEntry);
+                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                        } else if (result.status === 'APPROVED') {
+                            approvedCards.push(cardEntry);
+                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                        } else if (result.status === '3DS') {
+                            threeDSCards.push(cardEntry);
+                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                        } else {
+                            declinedCards.push(cardEntry);
+                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        }
+
+                        addResult({ displayCard: result.displayCard }, result.status, result.response);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+
+                        if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
+                            console.log('All cards processed in parallel, calling finishProcessing');
+                            clearTimeout(timeoutId);
+                            finishProcessing();
+                        }
+                    }).catch(e => {
+                        console.error(`Error processing card: ${card.displayCard}, Error: ${e.message}`);
+                        activeRequests--;
+                        declinedCards.push({ response: `Error: ${e.message}`, displayCard: card.displayCard });
+                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        addResult({ displayCard: card.displayCard }, 'DECLINED', `Error: ${e.message}`);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+
+                        if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
+                            console.log('All cards processed after error in parallel, calling finishProcessing');
+                            clearTimeout(timeoutId);
+                            finishProcessing();
+                        }
+                    });
+                }
+                if (isProcessing) {
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+            }
+            // Final check for parallel processing
+            if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
+                console.log('Parallel processing loop exited, calling finishProcessing');
+                clearTimeout(timeoutId);
+                finishProcessing();
             }
         }
+    } catch (e) {
+        console.error(`Unexpected error in processCards: ${e.message}`);
+        clearTimeout(timeoutId);
+        finishProcessing(`Unexpected error: ${e.message}`);
     }
 }
 
-function finishProcessing() {
+function finishProcessing(errorMessage = null) {
+    console.log(`finishProcessing called, errorMessage: ${errorMessage}, Active Requests: ${activeRequests}, Queue length: ${cardQueue.length}`);
     isProcessing = false;
     isStopping = false;
     activeRequests = 0;
     cardQueue = [];
+    abortControllers.forEach(controller => controller.abort());
     abortControllers = [];
     $('#startBtn').prop('disabled', false);
     $('#stopBtn').prop('disabled', true);
     $('#loader').hide();
     $('#cardInput').val('');
     updateCardCount();
-    $('#statusLog').text('Processing completed.');
+    $('#statusLog').text(errorMessage ? `Processing failed: ${errorMessage}` : 'Processing completed.');
+
     Swal.fire({
-        title: 'Card Checking Complete!',
-        html: `
+        title: errorMessage ? 'Processing Failed' : 'Card Checking Complete!',
+        html: errorMessage ? `
+            <p>An error occurred: ${errorMessage}</p>
+        ` : `
             <p>All cards have been processed.</p>
             <ul style="text-align: left; margin-top: 10px;">
                 <li>Charged: ${chargedCards.length}</li>
@@ -1157,8 +1240,8 @@ function finishProcessing() {
                 <li>Total: ${totalCards}</li>
             </ul>
         `,
-        icon: 'success',
-        confirmButtonColor: '#10b981'
+        icon: errorMessage ? 'error' : 'success',
+        confirmButtonColor: errorMessage ? '#ef4444' : '#10b981'
     });
 }
 
@@ -1167,6 +1250,7 @@ $('#startBtn').on('click', processCards);
 $('#stopBtn').on('click', function() {
     if (!isProcessing || isStopping) return;
 
+    console.log('Stop button clicked, stopping processing');
     isProcessing = false;
     isStopping = true;
     cardQueue = [];
