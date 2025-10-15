@@ -215,7 +215,6 @@ try {
         .stat-card.approved::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); }
         .stat-card.charged::before { background: linear-gradient(90deg, var(--warning), #ec4899); }
         .stat-card.declined::before { background: linear-gradient(90deg, var(--error), #ec4899); }
-        .stat-card.3ds::before { background: linear-gradient(90deg, var(--accent-purple), #ec4899); }
         .stat-icon {
             width: 30px; height: 30px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
@@ -225,7 +224,6 @@ try {
         .stat-card.approved .stat-icon { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
         .stat-card.charged .stat-icon { background: rgba(245,158,11,0.15); color: var(--warning); }
         .stat-card.declined .stat-icon { background: rgba(239,68,68,0.15); color: var(--error); }
-        .stat-card.3ds .stat-icon { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
         .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
         .stat-label {
             color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
@@ -410,7 +408,7 @@ try {
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #statusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
         .result-item.declined .stat-label { color: var(--declined-red); }
-        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.3ds .stat-label { color: var(--success-green); }
+        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
@@ -549,9 +547,9 @@ try {
                     <div id="approved-value" class="stat-value">0</div>
                     <div class="stat-label">LIVE|APPROVED</div>
                 </div>
-                <div class="stat-card 3ds">
+                <div class="stat-card threeDS">
                     <div class="stat-icon"><i class="fas fa-lock"></i></div>
-                    <div id="3ds-value" class="stat-value">0</div>
+                    <div id="threed-value" class="stat-value">0</div>
                     <div class="stat-label">3DS</div>
                 </div>
                 <div class="stat-card declined">
@@ -669,6 +667,16 @@ try {
                         </div>
                     </label>
                     <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/shopify1$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-shopify"></i> Shopify
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">E-commerce payment processing</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/razorpay0.10$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
@@ -721,440 +729,368 @@ try {
         </div>
     </div>
 
-<script>
-let selectedGateway = 'gate/stripeauth.php';
-let isProcessing = false;
-let isStopping = false;
-let activeRequests = 0;
-let cardQueue = [];
-const MAX_CONCURRENT = 3; // Max 3 parallel requests for 3+ cards
-const MAX_RETRIES = 2;
-const PROCESSING_TIMEOUT = 15000; // 15 seconds timeout for processing
-let abortControllers = [];
-let totalCards = 0;
-let chargedCards = [];
-let approvedCards = [];
-let threeDSCards = [];
-let declinedCards = [];
-let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-let sidebarOpen = false;
+    <script>
+        let selectedGateway = 'gate/stripeauth.php';
+        let isProcessing = false;
+        let isStopping = false;
+        let activeRequests = 0;
+        let cardQueue = [];
+        const MAX_CONCURRENT = 2;
+        const MAX_RETRIES = 2;
+        let abortControllers = [];
+        let totalCards = 0;
+        let chargedCards = [];
+        let approvedCards = [];
+        let threeDSCards = [];
+        let declinedCards = [];
+        let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        let sidebarOpen = false;
 
-window.addEventListener('load', function() {
-    const movingLogo = document.getElementById('movingLogo');
-    const navbarLogo = document.getElementById('navbarLogo');
-    const brandText = document.getElementById('brandText');
-    const blurOverlay = document.getElementById('blurOverlay');
+        window.addEventListener('load', function() {
+            const movingLogo = document.getElementById('movingLogo');
+            const navbarLogo = document.getElementById('navbarLogo');
+            const brandText = document.getElementById('brandText');
+            const blurOverlay = document.getElementById('blurOverlay');
 
-    setTimeout(function() {
-        movingLogo.classList.add('in-position');
-        blurOverlay.classList.add('active');
-        setTimeout(function() {
-            navbarLogo.classList.add('visible');
-            brandText.classList.add('visible');
             setTimeout(function() {
-                movingLogo.classList.add('hidden');
-                blurOverlay.classList.remove('active');
-            }, 200);
-            setTimeout(function() {
-                blurOverlay.style.display = 'none';
-            }, 400);
-        }, 1200);
-    }, 800);
-});
-
-// Disable copy, context menu, and dev tools, but allow pasting in the textarea
-document.addEventListener('contextmenu', e => {
-    if (e.target.id !== 'cardInput') e.preventDefault();
-});
-document.addEventListener('copy', e => {
-    if (e.target.id !== 'cardInput') e.preventDefault();
-});
-document.addEventListener('cut', e => {
-    if (e.target.id !== 'cardInput') e.preventDefault();
-});
-document.addEventListener('paste', e => {
-    if (e.target.id === 'cardInput') {
-        const pastedText = e.clipboardData.getData('text');
-        const cursorPos = e.target.selectionStart;
-        const textBefore = e.target.value.substring(0, cursorPos);
-        const textAfter = e.target.value.substring(e.target.selectionEnd);
-        e.target.value = textBefore + pastedText + textAfter;
-        e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
-        e.preventDefault();
-        updateCardCount();
-    } else {
-        e.preventDefault();
-    }
-});
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
-        if (e.target.id !== 'cardInput') e.preventDefault();
-    } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
-        e.preventDefault();
-    }
-});
-
-function toggleTheme() {
-    const body = document.body;
-    const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    body.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    document.querySelector('.theme-toggle-slider i').className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
-    Swal.fire({
-        toast: true, position: 'top-end', icon: 'success',
-        title: `${theme === 'light' ? 'Light' : 'Dark'} Mode`,
-        showConfirmButton: false, timer: 1500
-    });
-}
-
-function showPage(pageName) {
-    document.querySelectorAll('.page-section').forEach(page => page.classList.remove('active'));
-    document.getElementById('page-' + pageName).classList.add('active');
-    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
-    event.target.closest('.sidebar-link').classList.add('active');
-}
-
-function closeSidebar() {
-    sidebarOpen = false;
-    document.getElementById('sidebar').classList.remove('open');
-    document.querySelector('.main-content').classList.remove('sidebar-open');
-}
-
-function openGatewaySettings() {
-    document.getElementById('gatewaySettings').classList.add('active');
-    const radio = document.querySelector(`input[value="${selectedGateway}"]`);
-    if (radio) radio.checked = true;
-}
-
-function closeGatewaySettings() {
-    document.getElementById('gatewaySettings').classList.remove('active');
-}
-
-function saveGatewaySettings() {
-    const selected = document.querySelector('input[name="gateway"]:checked');
-    if (selected) {
-        selectedGateway = selected.value;
-        const gatewayName = selected.parentElement.querySelector('.gateway-option-name').textContent.trim();
-        Swal.fire({
-            icon: 'success', title: 'Gateway Updated!',
-            text: `Now using: ${gatewayName}`,
-            confirmButtonColor: '#10b981'
+                movingLogo.classList.add('in-position');
+                blurOverlay.classList.add('active');
+                setTimeout(function() {
+                    navbarLogo.classList.add('visible');
+                    brandText.classList.add('visible');
+                    setTimeout(function() {
+                        movingLogo.classList.add('hidden');
+                        blurOverlay.classList.remove('active');
+                    }, 200);
+                    setTimeout(function() {
+                        blurOverlay.style.display = 'none';
+                    }, 400);
+                }, 1200);
+            }, 800);
         });
-        closeGatewaySettings();
-    } else {
-        Swal.fire({
-            icon: 'warning', title: 'No Gateway Selected',
-            text: 'Please select a gateway', confirmButtonColor: '#f59e0b'
+
+        // Disable copy, context menu, and dev tools, but allow pasting in the textarea
+        document.addEventListener('contextmenu', e => {
+            if (e.target.id !== 'cardInput') e.preventDefault();
         });
-    }
-}
-
-function updateCardCount() {
-    const cardInput = document.getElementById('cardInput');
-    const cardCount = document.getElementById('cardCount');
-    if (cardInput && cardCount) {
-        const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
-        const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
-        cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected (max 1000)`;
-    }
-}
-
-function updateStats(total, charged, approved, threeDS, declined) {
-    document.getElementById('total-value').textContent = total;
-    document.getElementById('charged-value').textContent = charged;
-    document.getElementById('approved-value').textContent = approved;
-    document.getElementById('3ds-value').textContent = threeDS;
-    document.getElementById('declined-value').textContent = declined;
-    document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
-}
-
-function addResult(card, status, response) {
-    const resultsList = document.getElementById('checkingResultsList');
-    if (!resultsList) return;
-    let cardClass = status.toLowerCase();
-    if (status === '3DS') cardClass = '3ds';
-    const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
-    const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
-    const resultDiv = document.createElement('div');
-    resultDiv.className = `stat-card ${cardClass} result-item`;
-    resultDiv.innerHTML = `
-        <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
-            <i class="${icon}"></i>
-        </div>
-        <div class="stat-content">
-            <div>
-                <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
-                <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
-            </div>
-            <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
-        </div>
-    `;
-    resultsList.insertBefore(resultDiv, resultsList.firstChild);
-    if (resultsList.classList.contains('empty-state')) {
-        resultsList.classList.remove('empty-state');
-        resultsList.innerHTML = '';
-        resultsList.appendChild(resultDiv);
-    }
-}
-
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        Swal.fire({
-            toast: true, position: 'top-end', icon: 'success',
-            title: 'Card copied!', showConfirmButton: false, timer: 1500
+        document.addEventListener('copy', e => {
+            if (e.target.id !== 'cardInput') e.preventDefault();
         });
-    }).catch(err => {
-        console.error('Failed to copy: ', err);
-    });
-}
+        document.addEventListener('cut', e => {
+            if (e.target.id !== 'cardInput') e.preventDefault();
+        });
+        document.addEventListener('paste', e => {
+            if (e.target.id === 'cardInput') {
+                const pastedText = e.clipboardData.getData('text');
+                const cursorPos = e.target.selectionStart;
+                const textBefore = e.target.value.substring(0, cursorPos);
+                const textAfter = e.target.value.substring(e.target.selectionEnd);
+                e.target.value = textBefore + pastedText + textAfter;
+                e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
+                e.preventDefault();
+                updateCardCount();
+            } else {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
+                if (e.target.id !== 'cardInput') e.preventDefault();
+            } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
+                e.preventDefault();
+            }
+        });
 
-function filterResults(filter) {
-    document.querySelectorAll('#checkingResults .filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    const items = document.querySelectorAll('#checkingResultsList .result-item');
-    items.forEach(item => {
-        let status = item.className.split(' ')[1];
-        if (status === '3ds') status = '3ds';
-        item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
-    });
-    Swal.fire({
-        toast: true, position: 'top-end', icon: 'info',
-        title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
-        showConfirmButton: false, timer: 1500
-    });
-}
-
-async function processCard(card, controller, retryCount = 0) {
-    if (!isProcessing) {
-        console.log(`Aborting processCard for ${card.displayCard}: isProcessing is false`);
-        return null;
-    }
-
-    console.log(`Processing card: ${card.displayCard}, Retry: ${retryCount}, Active Requests: ${activeRequests}`);
-
-    return new Promise((resolve) => {
-        const formData = new FormData();
-        let normalizedYear = card.exp_year;
-        if (normalizedYear.length === 2) {
-            normalizedYear = '20' + normalizedYear;
+        function toggleTheme() {
+            const body = document.body;
+            const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            document.querySelector('.theme-toggle-slider i').className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success',
+                title: `${theme === 'light' ? 'Light' : 'Dark'} Mode`,
+                showConfirmButton: false, timer: 1500
+            });
         }
-        formData.append('card[number]', card.number);
-        formData.append('card[exp_month]', card.exp_month);
-        formData.append('card[exp_year]', normalizedYear);
-        formData.append('card[cvc]', card.cvc);
 
-        $('#statusLog').text(`Processing card: ${card.displayCard}`);
-        console.log(`Sending AJAX request for card: ${card.displayCard}`);
+        function showPage(pageName) {
+            document.querySelectorAll('.page-section').forEach(page => page.classList.remove('active'));
+            document.getElementById('page-' + pageName).classList.add('active');
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+            event.target.closest('.sidebar-link').classList.add('active');
+        }
 
-        $.ajax({
-            url: selectedGateway,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            timeout: 15000,
-            signal: controller.signal,
-            success: function(response) {
-                let status = 'DECLINED';
-                let message = response;
-                try {
-                    const jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
-                    status = jsonResponse.status ? jsonResponse.status.toUpperCase() : 'DECLINED';
-                    message = jsonResponse.message || response;
-                    if (status.includes('3D_AUTHENTICATION') || status.includes('3DS') || message.includes('3D_AUTHENTICATION') || message.includes('3DS')) {
-                        status = '3DS';
-                    } else if (status === 'CHARGED' || message.includes('CHARGED')) {
-                        status = 'CHARGED';
-                    } else if (status === 'APPROVED' && !message.includes('3D_AUTHENTICATION')) {
-                        status = 'APPROVED';
-                    } else {
-                        status = 'DECLINED';
-                    }
-                } catch (e) {
-                    console.error(`Error parsing response for card: ${card.displayCard}, Response: ${response}, Error: ${e.message}`);
-                    message = response || 'Unknown error';
-                }
-                console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}, Active Requests: ${activeRequests}`);
-                resolve({
-                    status: status,
-                    response: message,
-                    card: card,
-                    displayCard: card.displayCard
+        function closeSidebar() {
+            sidebarOpen = false;
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.main-content').classList.remove('sidebar-open');
+        }
+
+        function openGatewaySettings() {
+            document.getElementById('gatewaySettings').classList.add('active');
+            const radio = document.querySelector(`input[value="${selectedGateway}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        function closeGatewaySettings() {
+            document.getElementById('gatewaySettings').classList.remove('active');
+        }
+
+        function saveGatewaySettings() {
+            const selected = document.querySelector('input[name="gateway"]:checked');
+            if (selected) {
+                selectedGateway = selected.value;
+                const gatewayName = selected.parentElement.querySelector('.gateway-option-name').textContent.trim();
+                Swal.fire({
+                    icon: 'success', title: 'Gateway Updated!',
+                    text: `Now using: ${gatewayName}`,
+                    confirmButtonColor: '#10b981'
                 });
-            },
-            error: function(xhr) {
-                $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
-                console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}, Active Requests: ${activeRequests}`);
-                if (xhr.statusText === 'abort') {
-                    resolve(null);
-                } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                    console.log(`Retrying card: ${card.displayCard}, Retry count: ${retryCount + 1}`);
-                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 500);
-                } else {
-                    resolve({
-                        status: 'DECLINED',
-                        response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`,
-                        card: card,
-                        displayCard: card.displayCard
-                    });
-                }
+                closeGatewaySettings();
+            } else {
+                Swal.fire({
+                    icon: 'warning', title: 'No Gateway Selected',
+                    text: 'Please select a gateway', confirmButtonColor: '#f59e0b'
+                });
             }
-        });
-    });
-}
-
-async function processCards() {
-    if (isProcessing) {
-        Swal.fire({
-            title: 'Processing in progress',
-            text: 'Please wait until current process completes',
-            icon: 'warning',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    const cardText = $('#cardInput').val().trim();
-    const lines = cardText.split('\n').filter(line => line.trim());
-    const validCards = lines
-        .map(line => line.trim())
-        .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
-        .map(line => {
-            const [number, exp_month, exp_year, cvc] = line.split('|');
-            return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
-        });
-
-    if (validCards.length === 0) {
-        Swal.fire({
-            title: 'No valid cards!',
-            text: 'Please check your card format',
-            icon: 'error',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    if (validCards.length > 1000) {
-        Swal.fire({
-            title: 'Limit exceeded!',
-            text: 'Maximum 1000 cards allowed',
-            icon: 'error',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    console.log(`Starting processing for ${validCards.length} cards`);
-    isProcessing = true;
-    isStopping = false;
-    activeRequests = 0;
-    abortControllers = [];
-    cardQueue = [...validCards];
-    totalCards = validCards.length;
-    chargedCards = [];
-    approvedCards = [];
-    threeDSCards = [];
-    declinedCards = [];
-    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-    updateStats(totalCards, 0, 0, 0, 0);
-    $('#startBtn').prop('disabled', true);
-    $('#stopBtn').prop('disabled', false);
-    $('#loader').show();
-    $('#checkingResultsList').innerHTML = '';
-    $('#statusLog').text('Starting processing...');
-
-    // Set a timeout to prevent infinite processing
-    const timeoutId = setTimeout(() => {
-        if (isProcessing) {
-            console.error('Processing timeout reached');
-            isProcessing = false;
-            isStopping = true;
-            abortControllers.forEach(controller => controller.abort());
-            finishProcessing('Processing timed out after 15 seconds.');
         }
-    }, PROCESSING_TIMEOUT);
 
-    try {
-        if (validCards.length < 3) {
-            // Sequential processing for 1 or 2 cards
-            console.log(`Processing ${validCards.length} cards sequentially`);
-            while (cardQueue.length > 0 && isProcessing && !isStopping) {
-                const card = cardQueue.shift();
-                console.log(`Processing card: ${card.displayCard}, Queue length: ${cardQueue.length}, Active Requests: ${activeRequests}`);
-                const controller = new AbortController();
-                abortControllers.push(controller);
-                activeRequests++;
-                try {
-                    const result = await processCard(card, controller);
-                    activeRequests--;
-                    console.log(`Card processed: ${card.displayCard}, Result: ${result ? result.status : 'null'}, Active Requests: ${activeRequests}, Queue length: ${cardQueue.length}`);
-                    if (result === null) continue;
+        function updateCardCount() {
+            const cardInput = document.getElementById('cardInput');
+            const cardCount = document.getElementById('cardCount');
+            if (cardInput && cardCount) {
+                const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
+                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
+                cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected (max 1000)`;
+            }
+        }
 
-                    const cardEntry = { response: result.response, displayCard: result.displayCard };
-                    if (result.status === 'CHARGED') {
-                        chargedCards.push(cardEntry);
-                        sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                    } else if (result.status === 'APPROVED') {
-                        approvedCards.push(cardEntry);
-                        sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                    } else if (result.status === '3DS') {
-                        threeDSCards.push(cardEntry);
-                        sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                    } else {
-                        declinedCards.push(cardEntry);
-                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                    }
+        function updateStats(total, charged, approved, threeDS, declined) {
+            document.getElementById('total-value').textContent = total;
+            document.getElementById('charged-value').textContent = charged;
+            document.getElementById('approved-value').textContent = approved;
+            document.getElementById('threed-value').textContent = threeDS;
+            document.getElementById('declined-value').textContent = declined;
+            document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
+        }
 
-                    addResult({ displayCard: result.displayCard }, result.status, result.response);
-                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+        function addResult(card, status, response) {
+            const resultsList = document.getElementById('checkingResultsList');
+            if (!resultsList) return;
+            const cardClass = status.toLowerCase();
+            const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `stat-card ${cardClass} result-item`;
+            resultDiv.innerHTML = `
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
+                    <i class="${icon}"></i>
+                </div>
+                <div class="stat-content">
+                    <div>
+                        <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
+                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
+                </div>
+            `;
+            resultsList.insertBefore(resultDiv, resultsList.firstChild);
+            if (resultsList.classList.contains('empty-state')) {
+                resultsList.classList.remove('empty-state');
+                resultsList.innerHTML = '';
+                resultsList.appendChild(resultDiv);
+            }
+        }
 
-                    // Check if all cards are processed
-                    if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
-                        console.log('All cards processed sequentially, calling finishProcessing');
-                        clearTimeout(timeoutId);
-                        finishProcessing();
-                    }
-                } catch (e) {
-                    console.error(`Error processing card: ${card.displayCard}, Error: ${e.message}`);
-                    activeRequests--;
-                    declinedCards.push({ response: `Error: ${e.message}`, displayCard: card.displayCard });
-                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                    addResult({ displayCard: card.displayCard }, 'DECLINED', `Error: ${e.message}`);
-                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success',
+                    title: 'Card copied!', showConfirmButton: false, timer: 1500
+                });
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
 
-                    // Check if all cards are processed after error
-                    if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
-                        console.log('All cards processed after error, calling finishProcessing');
-                        clearTimeout(timeoutId);
-                        finishProcessing();
-                    }
+        function filterResults(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            const items = document.querySelectorAll('.result-item');
+            items.forEach(item => {
+                const status = item.className.split(' ')[1];
+                item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
+            });
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'info',
+                title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
+                showConfirmButton: false, timer: 1500
+            });
+        }
+
+        async function processCard(card, controller, retryCount = 0) {
+            if (!isProcessing) return null;
+
+            return new Promise((resolve) => {
+                const formData = new FormData();
+                let normalizedYear = card.exp_year;
+                if (normalizedYear.length === 2) {
+                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
                 }
+                formData.append('card[number]', card.number);
+                formData.append('card[exp_month]', card.exp_month);
+                formData.append('card[exp_year]', normalizedYear);
+                formData.append('card[cvc]', card.cvc);
+
+                $('#statusLog').text(`Processing card: ${card.displayCard}`);
+                console.log(`Starting request for card: ${card.displayCard}`);
+
+                $.ajax({
+                    url: selectedGateway,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    timeout: 300000,
+                    signal: controller.signal,
+                    success: function(response) {
+                        let status = 'DECLINED';
+                        let message = response;
+                        try {
+                            const jsonResponse = JSON.parse(response);
+                            if (jsonResponse.status) {
+                                status = jsonResponse.status.toUpperCase();
+                            }
+                            message = jsonResponse.message || jsonResponse.response || response;
+                            // Normalize status
+                            if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
+                                status = '3DS';
+                            } else if (status === 'CHARGED' || status.includes('CHARGED')) {
+                                status = 'CHARGED';
+                            } else if (status === 'APPROVED' || status.includes('APPROVED')) {
+                                status = 'APPROVED';
+                            } else {
+                                status = 'DECLINED';
+                            }
+                        } catch (e) {
+                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS') || response.includes('3D')) {
+                                status = '3DS';
+                            } else if (response.includes('CHARGED')) {
+                                status = 'CHARGED';
+                            } else if (response.includes('APPROVED')) {
+                                status = 'APPROVED';
+                            } else {
+                                status = 'DECLINED';
+                            }
+                            message = response;
+                        }
+                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
+                        resolve({
+                            status: status,
+                            response: message,
+                            card: card,
+                            displayCard: card.displayCard
+                        });
+                    },
+                    error: function(xhr) {
+                        $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
+                        console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                        if (xhr.statusText === 'abort') {
+                            resolve(null);
+                        } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                            setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                        } else {
+                            resolve({
+                                status: 'DECLINED',
+                                response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`,
+                                card: card,
+                                displayCard: card.displayCard
+                            });
+                        }
+                    }
+                });
+            });
+        }
+
+        async function processCards() {
+            if (isProcessing) {
+                Swal.fire({
+                    title: 'Processing in progress',
+                    text: 'Please wait until current process completes',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
             }
-            // Final check in case loop exits unexpectedly
-            if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
-                console.log('Sequential processing loop exited, calling finishProcessing');
-                clearTimeout(timeoutId);
-                finishProcessing();
+
+            const cardText = $('#cardInput').val().trim();
+            const lines = cardText.split('\n').filter(line => line.trim());
+            const validCards = lines
+                .map(line => line.trim())
+                .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+                .map(line => {
+                    const [number, exp_month, exp_year, cvc] = line.split('|');
+                    return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                });
+
+            if (validCards.length === 0) {
+                Swal.fire({
+                    title: 'No valid cards!',
+                    text: 'Please check your card format',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
             }
-        } else {
-            // Parallel processing for 3+ cards
-            console.log(`Processing ${validCards.length} cards in parallel`);
-            while (cardQueue.length > 0 && isProcessing && !isStopping) {
+
+            if (validCards.length > 1000) {
+                Swal.fire({
+                    title: 'Limit exceeded!',
+                    text: 'Maximum 1000 cards allowed',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+
+            isProcessing = true;
+            isStopping = false;
+            activeRequests = 0;
+            abortControllers = [];
+            cardQueue = [...validCards];
+            totalCards = validCards.length;
+            chargedCards = [];
+            approvedCards = [];
+            threeDSCards = [];
+            declinedCards = [];
+            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+            updateStats(totalCards, 0, 0, 0, 0);
+            $('#startBtn').prop('disabled', true);
+            $('#stopBtn').prop('disabled', false);
+            $('#loader').show();
+            $('#checkingResultsList').innerHTML = '';
+            $('#statusLog').text('Starting processing...');
+
+            let requestIndex = 0;
+
+            while (cardQueue.length > 0 && isProcessing) {
                 while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                     const card = cardQueue.shift();
-                    console.log(`Processing card: ${card.displayCard}, Queue length: ${cardQueue.length}, Active Requests: ${activeRequests}`);
                     activeRequests++;
                     const controller = new AbortController();
                     abortControllers.push(controller);
 
+                    await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
+                    requestIndex++;
+
                     processCard(card, controller).then(result => {
-                        activeRequests--;
-                        console.log(`Card processed: ${card.displayCard}, Result: ${result ? result.status : 'null'}, Active Requests: ${activeRequests}, Queue length: ${cardQueue.length}`);
                         if (result === null) return;
 
+                        activeRequests--;
                         const cardEntry = { response: result.response, displayCard: result.displayCard };
                         if (result.status === 'CHARGED') {
                             chargedCards.push(cardEntry);
@@ -1170,25 +1106,10 @@ async function processCards() {
                             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
 
-                        addResult({ displayCard: result.displayCard }, result.status, result.response);
+                        addResult(card, result.status, result.response);
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
 
-                        if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
-                            console.log('All cards processed in parallel, calling finishProcessing');
-                            clearTimeout(timeoutId);
-                            finishProcessing();
-                        }
-                    }).catch(e => {
-                        console.error(`Error processing card: ${card.displayCard}, Error: ${e.message}`);
-                        activeRequests--;
-                        declinedCards.push({ response: `Error: ${e.message}`, displayCard: card.displayCard });
-                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                        addResult({ displayCard: card.displayCard }, 'DECLINED', `Error: ${e.message}`);
-                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-
-                        if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
-                            console.log('All cards processed after error in parallel, calling finishProcessing');
-                            clearTimeout(timeoutId);
+                        if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
                             finishProcessing();
                         }
                     });
@@ -1197,161 +1118,135 @@ async function processCards() {
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
             }
-            // Final check for parallel processing
-            if (cardQueue.length === 0 && activeRequests === 0 && isProcessing) {
-                console.log('Parallel processing loop exited, calling finishProcessing');
-                clearTimeout(timeoutId);
-                finishProcessing();
-            }
         }
-    } catch (e) {
-        console.error(`Unexpected error in processCards: ${e.message}`);
-        clearTimeout(timeoutId);
-        finishProcessing(`Unexpected error: ${e.message}`);
-    }
-}
 
-function finishProcessing(errorMessage = null) {
-    console.log(`finishProcessing called, errorMessage: ${errorMessage}, Active Requests: ${activeRequests}, Queue length: ${cardQueue.length}`);
-    isProcessing = false;
-    isStopping = false;
-    activeRequests = 0;
-    cardQueue = [];
-    abortControllers.forEach(controller => controller.abort());
-    abortControllers = [];
-    $('#startBtn').prop('disabled', false);
-    $('#stopBtn').prop('disabled', true);
-    $('#loader').hide();
-    $('#cardInput').val('');
-    updateCardCount();
-    $('#statusLog').text(errorMessage ? `Processing failed: ${errorMessage}` : 'Processing completed.');
+        function finishProcessing() {
+            isProcessing = false;
+            isStopping = false;
+            activeRequests = 0;
+            cardQueue = [];
+            abortControllers = [];
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
+            $('#loader').hide();
+            $('#cardInput').val('');
+            updateCardCount();
+            $('#statusLog').text('Processing completed.');
+            Swal.fire({
+                title: 'Processing complete!',
+                text: 'All cards have been checked. See the results below.',
+                icon: 'success',
+                confirmButtonColor: '#ec4899'
+            });
+        }
 
-    Swal.fire({
-        title: errorMessage ? 'Processing Failed' : 'Card Checking Complete!',
-        html: errorMessage ? `
-            <p>An error occurred: ${errorMessage}</p>
-        ` : `
-            <p>All cards have been processed.</p>
-            <ul style="text-align: left; margin-top: 10px;">
-                <li>Charged: ${chargedCards.length}</li>
-                <li>Approved: ${approvedCards.length}</li>
-                <li>3DS: ${threeDSCards.length}</li>
-                <li>Declined: ${declinedCards.length}</li>
-                <li>Total: ${totalCards}</li>
-            </ul>
-        `,
-        icon: errorMessage ? 'error' : 'success',
-        confirmButtonColor: errorMessage ? '#ef4444' : '#10b981'
-    });
-}
+        $('#startBtn').on('click', processCards);
 
-$('#startBtn').on('click', processCards);
+        $('#stopBtn').on('click', function() {
+            if (!isProcessing || isStopping) return;
 
-$('#stopBtn').on('click', function() {
-    if (!isProcessing || isStopping) return;
+            isProcessing = false;
+            isStopping = true;
+            cardQueue = [];
+            abortControllers.forEach(controller => controller.abort());
+            abortControllers = [];
+            activeRequests = 0;
+            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
+            $('#loader').hide();
+            $('#statusLog').text('Processing stopped.');
+            Swal.fire({
+                title: 'Stopped!',
+                text: 'Processing has been stopped',
+                icon: 'warning',
+                confirmButtonColor: '#ec4899'
+            });
+        });
 
-    console.log('Stop button clicked, stopping processing');
-    isProcessing = false;
-    isStopping = true;
-    cardQueue = [];
-    abortControllers.forEach(controller => controller.abort());
-    abortControllers = [];
-    activeRequests = 0;
-    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-    $('#startBtn').prop('disabled', false);
-    $('#stopBtn').prop('disabled', true);
-    $('#loader').hide();
-    $('#statusLog').text('Processing stopped.');
-    Swal.fire({
-        title: 'Stopped!',
-        text: 'Processing has been stopped',
-        icon: 'warning',
-        confirmButtonColor: '#ec4899'
-    });
-});
-
-$('#clearBtn').on('click', function() {
-    if ($('#cardInput').val().trim()) {
-        Swal.fire({
-            title: 'Clear Input?', text: 'Remove all entered cards',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#cardInput').val('');
-                updateCardCount();
+        $('#clearBtn').on('click', function() {
+            if ($('#cardInput').val().trim()) {
                 Swal.fire({
-                    toast: true, position: 'top-end', icon: 'success',
-                    title: 'Cleared!', showConfirmButton: false, timer: 1500
+                    title: 'Clear Input?', text: 'Remove all entered cards',
+                    icon: 'warning', showCancelButton: true,
+                    confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#cardInput').val('');
+                        updateCardCount();
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success',
+                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                        });
+                    }
                 });
             }
         });
-    }
-});
 
-$('#exportBtn').on('click', function() {
-    const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
-    if (allCards.length === 0) {
-        Swal.fire({
-            title: 'No data to export!',
-            text: 'Please check some cards first.',
-            icon: 'warning',
-            confirmButtonColor: '#ec4899'
+        $('#exportBtn').on('click', function() {
+            const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
+            if (allCards.length === 0) {
+                Swal.fire({
+                    title: 'No data to export!',
+                    text: 'Please check some cards first.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            let csvContent = "Card,Status,Response\n";
+            allCards.forEach(card => {
+                const status = card.response.includes('CHARGED') ? 'CHARGED' :
+                             card.response.includes('APPROVED') ? 'APPROVED' :
+                             card.response.includes('3DS') ? '3DS' : 'DECLINED';
+                csvContent += `${card.displayCard},${status},${card.response}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success',
+                title: 'Exported!', showConfirmButton: false, timer: 1500
+            });
         });
-        return;
-    }
-    let csvContent = "Card,Status,Response\n";
-    allCards.forEach(card => {
-        const status = card.response.includes('CHARGED') ? 'CHARGED' :
-                      card.response.includes('APPROVED') ? 'APPROVED' :
-                      card.response.includes('3DS') ? '3DS' : 'DECLINED';
-        csvContent += `${card.displayCard},${status},${card.response}\n`;
-    });
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    Swal.fire({
-        toast: true, position: 'top-end', icon: 'success',
-        title: 'Exported!', showConfirmButton: false, timer: 1500
-    });
-});
 
-$('#cardInput').on('input', updateCardCount);
+        $('#cardInput').on('input', updateCardCount);
 
-document.addEventListener('click', function(e) {
-    if (e.target === document.getElementById('gatewaySettings')) {
-        closeGatewaySettings();
-    }
-});
+        document.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('gatewaySettings')) {
+                closeGatewaySettings();
+            }
+        });
 
-// Mobile sidebar toggle
-document.getElementById('menuToggle').addEventListener('click', function() {
-    sidebarOpen = !sidebarOpen;
-    document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
-    document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
-});
+        // Mobile sidebar toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            sidebarOpen = !sidebarOpen;
+            document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
+            document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
+        });
 
-function logout() {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: 'You will be logged out and returned to the login page.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#d1d5db',
-        confirmButtonText: 'Yes, logout'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            sessionStorage.clear();
-            window.location.href = 'https://cardxchk.onrender.com/login.php';
+        function logout() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You will be logged out and returned to the login page.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#d1d5db',
+                confirmButtonText: 'Yes, logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Perform logout action (e.g., clear session and redirect)
+                    sessionStorage.clear();
+                    window.location.href = 'https://cardxchk.onrender.com/login.php';
+                }
+            });
         }
-    });
-}
-</script>
+    </script>
 </body>
 </html>
