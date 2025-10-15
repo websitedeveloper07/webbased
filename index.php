@@ -452,7 +452,7 @@ try {
             .settings-btn { padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 12px; }
             .input-label { font-size: 1rem; }
             .card-textarea { min-height: 200px; padding: 1.25rem; font-size: 1rem; border-radius: 16px; }
-            .btn { padding: 0.9rem 2rem; min-width: 140px; font-size: 1rem; border-radius: 14px; }
+            .btn { padding: 0.9rem 2rem; min{keyword: min-width: 140px; font-size: 1rem; border-radius: 14px; }
             .results-section { padding: 2.5rem; border-radius: 24px; }
             .results-title { font-size: 1.75rem; }
             .results-title i { font-size: 1.2rem; }
@@ -1146,10 +1146,19 @@ function finishProcessing() {
     updateCardCount();
     $('#statusLog').text('Processing completed.');
     Swal.fire({
-        title: 'Processing complete!',
-        text: 'All cards have been checked. See the results below.',
+        title: 'Card Checking Complete!',
+        html: `
+            <p>All cards have been processed.</p>
+            <ul style="text-align: left; margin-top: 10px;">
+                <li>Charged: ${chargedCards.length}</li>
+                <li>Approved: ${approvedCards.length}</li>
+                <li>3DS: ${threeDSCards.length}</li>
+                <li>Declined: ${declinedCards.length}</li>
+                <li>Total: ${totalCards}</li>
+            </ul>
+        `,
         icon: 'success',
-        confirmButtonColor: '#ec4899'
+        confirmButtonColor: '#10b981'
     });
 }
 
