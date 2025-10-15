@@ -514,11 +514,6 @@ try {
                     <i class="fas fa-credit-card"></i><span>Card Checking</span>
                 </a>
             </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('autoshopify'); closeSidebar()">
-                    <i class="fas fa-shopping-cart"></i><span>Autoshopify</span>
-                </a>
-            </li>
             <div class="sidebar-divider"></div>
             <li class="sidebar-item">
                 <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
@@ -635,79 +630,6 @@ try {
                 </div>
             </div>
         </section>
-
-        <section class="page-section" id="page-autoshopify">
-            <h1 class="page-title">Autoshopify Card Checker</h1>
-            <p class="page-subtitle">Check your cards on multiple sites using Autoshopify</p>
-
-            <div class="checker-section">
-                <div class="checker-header">
-                    <div class="checker-title">
-                        <i class="fas fa-shopping-cart"></i> Autoshopify Checker
-                    </div>
-                    <!-- No settings for now -->
-                </div>
-
-                <div class="input-section">
-                    <div class="input-header">
-                        <label class="input-label">Enter Sites (one per line)</label>
-                        <span class="card-count" id="sitesCount">
-                            <i class="fas fa-globe"></i> 0 sites detected
-                        </span>
-                    </div>
-                    <textarea id="sitesInput" class="card-textarea" 
-                        placeholder="Enter sites: https://example.com&#10;Example:&#10;https://shop1.com&#10;https://shop2.com"></textarea>
-                </div>
-
-                <div class="input-section">
-                    <div class="input-header">
-                        <label class="input-label">Enter Card Details</label>
-                        <span class="card-count" id="autoCardCount">
-                            <i class="fas fa-list"></i> 0 valid cards detected
-                        </span>
-                    </div>
-                    <textarea id="autoCardInput" class="card-textarea" 
-                        placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="autoStartBtn">
-                        <i class="fas fa-play"></i> Start Check
-                    </button>
-                    <button class="btn btn-secondary" id="autoStopBtn" disabled>
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                    <button class="btn btn-secondary" id="autoClearBtn">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                    <button class="btn btn-secondary" id="autoExportBtn">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-                <div class="loader" id="autoLoader"></div>
-                <div id="autoStatusLog" class="text-sm text-gray-500 mt-2"></div>
-            </div>
-
-            <div class="results-section" id="autoResults">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list-check"></i> Recent Results
-                    </div>
-                    <div class="results-filters">
-                        <button class="filter-btn active" onclick="filterAutoResults('all')">All</button>
-                        <button class="filter-btn" onclick="filterAutoResults('charged')">Charged</button>
-                        <button class="filter-btn" onclick="filterAutoResults('approved')">Approved</button>
-                        <button class="filter-btn" onclick="filterAutoResults('3ds')">3D Cards</button>
-                        <button class="filter-btn" onclick="filterAutoResults('declined')">Declined</button>
-                    </div>
-                </div>
-                <div id="autoResultsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
-                </div>
-            </div>
-        </section>
     </main>
 
     <div class="settings-popup" id="gatewaySettings">
@@ -744,16 +666,6 @@ try {
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Popular online payment system</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -851,16 +763,16 @@ window.addEventListener('load', function() {
 
 // Disable copy, context menu, and dev tools, but allow pasting in the textarea
 document.addEventListener('contextmenu', e => {
-    if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
+    if (e.target.id !== 'cardInput') e.preventDefault();
 });
 document.addEventListener('copy', e => {
-    if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
+    if (e.target.id !== 'cardInput') e.preventDefault();
 });
 document.addEventListener('cut', e => {
-    if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
+    if (e.target.id !== 'cardInput') e.preventDefault();
 });
 document.addEventListener('paste', e => {
-    if (e.target.id === 'cardInput' || e.target.id === 'autoCardInput' || e.target.id === 'sitesInput') {
+    if (e.target.id === 'cardInput') {
         const pastedText = e.clipboardData.getData('text');
         const cursorPos = e.target.selectionStart;
         const textBefore = e.target.value.substring(0, cursorPos);
@@ -868,16 +780,14 @@ document.addEventListener('paste', e => {
         e.target.value = textBefore + pastedText + textAfter;
         e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
         e.preventDefault();
-        if (e.target.id === 'cardInput') updateCardCount();
-        if (e.target.id === 'autoCardInput') updateAutoCardCount();
-        if (e.target.id === 'sitesInput') updateSitesCount();
+        updateCardCount();
     } else {
         e.preventDefault();
     }
 });
 document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
-        if (e.target.id !== 'cardInput' && e.target.id !== 'autoCardInput' && e.target.id !== 'sitesInput') e.preventDefault();
+        if (e.target.id !== 'cardInput') e.preventDefault();
     } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
         e.preventDefault();
     }
@@ -948,25 +858,6 @@ function updateCardCount() {
     }
 }
 
-function updateAutoCardCount() {
-    const cardInput = document.getElementById('autoCardInput');
-    const cardCount = document.getElementById('autoCardCount');
-    if (cardInput && cardCount) {
-        const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
-        const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
-        cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected (max 1000)`;
-    }
-}
-
-function updateSitesCount() {
-    const sitesInput = document.getElementById('sitesInput');
-    const sitesCount = document.getElementById('sitesCount');
-    if (sitesInput && sitesCount) {
-        const lines = sitesInput.value.trim().split('\n').filter(line => line.trim() !== '');
-        sitesCount.innerHTML = `<i class="fas fa-globe"></i> ${lines.length} sites detected`;
-    }
-}
-
 function updateStats(total, charged, approved, threeDS, declined) {
     document.getElementById('total-value').textContent = total;
     document.getElementById('charged-value').textContent = charged;
@@ -976,8 +867,8 @@ function updateStats(total, charged, approved, threeDS, declined) {
     document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
 }
 
-function addResult(card, status, response, isAuto = false) {
-    const resultsList = isAuto ? document.getElementById('autoResultsList') : document.getElementById('checkingResultsList');
+function addResult(card, status, response) {
+    const resultsList = document.getElementById('checkingResultsList');
     if (!resultsList) return;
     let cardClass = status.toLowerCase();
     if (status === '3DS') cardClass = '3ds';
@@ -1020,22 +911,6 @@ function filterResults(filter) {
     document.querySelectorAll('#checkingResults .filter-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     const items = document.querySelectorAll('#checkingResultsList .result-item');
-    items.forEach(item => {
-        let status = item.className.split(' ')[1];
-        if (status === '3ds') status = '3ds';
-        item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
-    });
-    Swal.fire({
-        toast: true, position: 'top-end', icon: 'info',
-        title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
-        showConfirmButton: false, timer: 1500
-    });
-}
-
-function filterAutoResults(filter) {
-    document.querySelectorAll('#autoResults .filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    const items = document.querySelectorAll('#autoResultsList .result-item');
     items.forEach(item => {
         let status = item.className.split(' ')[1];
         if (status === '3ds') status = '3ds';
@@ -1258,244 +1133,6 @@ async function processCards() {
     }
 }
 
-async function processAutoCards() {
-    if (isProcessing) {
-        Swal.fire({
-            title: 'Processing in progress',
-            text: 'Please wait until current process completes',
-            icon: 'warning',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    const sitesText = $('#sitesInput').val().trim();
-    const sitesLines = sitesText.split('\n').filter(line => line.trim());
-    const sites = sitesLines.map(line => line.trim());
-
-    if (sites.length === 0) {
-        Swal.fire({
-            title: 'No sites!',
-            text: 'Please enter at least one site',
-            icon: 'error',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    const cardText = $('#autoCardInput').val().trim();
-    const lines = cardText.split('\n').filter(line => line.trim());
-    const validCards = lines
-        .map(line => line.trim())
-        .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
-        .map(line => {
-            const [number, exp_month, exp_year, cvc] = line.split('|');
-            return { number, exp_month, exp_year, cvc, displayCard: line };
-        });
-
-    if (validCards.length === 0) {
-        Swal.fire({
-            title: 'No valid cards!',
-            text: 'Please check your card format',
-            icon: 'error',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    if (validCards.length > 1000) {
-        Swal.fire({
-            title: 'Limit exceeded!',
-            text: 'Maximum 1000 cards allowed',
-            icon: 'error',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-
-    isProcessing = true;
-    isStopping = false;
-    abortControllers = [];
-    totalCards = validCards.length;
-    chargedCards = [];
-    approvedCards = [];
-    threeDSCards = [];
-    declinedCards = [];
-    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-    updateStats(totalCards, 0, 0, 0, 0);
-    $('#autoStartBtn').prop('disabled', true);
-    $('#autoStopBtn').prop('disabled', false);
-    $('#autoLoader').show();
-    $('#autoResultsList').innerHTML = '';
-    $('#autoStatusLog').text('Starting processing...');
-
-    async function checkCardWithSites(card, sites, siteIndex = 0, retryCount = 0) {
-        if (siteIndex >= sites.length || !isProcessing || isStopping) {
-            if (siteIndex >= sites.length) {
-                const cardEntry = { response: 'Declined [No valid sites]', displayCard: card.displayCard, site: '' };
-                declinedCards.push(cardEntry);
-                sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                addResult({ displayCard: card.displayCard }, 'DECLINED', cardEntry.response, true);
-                updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                $('#autoStatusLog').text(`Processed ${chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length} of ${totalCards} cards`);
-            }
-            activeRequests--;
-            return;
-        }
-
-        const site = sites[siteIndex];
-        const controller = new AbortController();
-        abortControllers.push(controller);
-
-        const formData = new FormData();
-        formData.append('card[number]', card.number);
-        formData.append('card[exp_month]', card.exp_month);
-        let normalizedYear = card.exp_year;
-        if (normalizedYear.length === 2) {
-            normalizedYear = '20' + normalizedYear;
-        }
-        formData.append('card[exp_year]', normalizedYear);
-        formData.append('card[cvc]', card.cvc);
-        formData.append('card[displayCard]', card.displayCard);
-        formData.append('site', site);
-
-        $('#autoStatusLog').text(`Processing: ${card.displayCard} on ${site}`);
-        console.log(`Request for card: ${card.displayCard}, Site: ${site}, Retry: ${retryCount}`);
-
-        $.ajax({
-            url: 'gate/autoshopify.php',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            timeout: 15000, // Match server timeout
-            signal: controller.signal,
-            success: function(response) {
-                let status = 'DECLINED';
-                let message = response;
-                let displayCard = card.displayCard;
-                let usedSite = site;
-                try {
-                    const jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
-                    status = jsonResponse.status ? jsonResponse.status.toUpperCase() : 'DECLINED';
-                    message = jsonResponse.message || response;
-                    displayCard = jsonResponse.card || card.displayCard;
-                    usedSite = jsonResponse.site || site;
-                    if (status.includes('3D_AUTHENTICATION') || status.includes('3DS') || message.includes('3D_AUTHENTICATION') || message.includes('3DS')) {
-                        status = '3DS';
-                    } else if (status === 'CHARGED' || message.includes('CHARGED')) {
-                        status = 'CHARGED';
-                    } else if (status === 'APPROVED' && !message.includes('3D_AUTHENTICATION')) {
-                        status = 'APPROVED';
-                    } else {
-                        status = 'DECLINED';
-                    }
-                } catch (e) {
-                    console.error(`Error parsing response for card: ${card.displayCard}, Site: ${site}, Response: ${response}`);
-                    message = response;
-                }
-
-                if ((status === 'ERROR' || status === 'DECLINED') && retryCount < MAX_RETRIES) {
-                    console.log(`Retrying card: ${card.displayCard} on site: ${site}, Retry: ${retryCount + 1}`);
-                    activeRequests--;
-                    setTimeout(() => checkCardWithSites(card, sites, siteIndex, retryCount + 1), 100);
-                    return;
-                } else if ((status === 'ERROR' || status === 'DECLINED') && siteIndex < sites.length - 1) {
-                    console.log(`Moving to next site for card: ${card.displayCard}, Next site: ${sites[siteIndex + 1]}`);
-                    activeRequests--;
-                    setTimeout(() => checkCardWithSites(card, sites, siteIndex + 1, 0), 100);
-                    return;
-                }
-
-                const cardEntry = { response: message, displayCard: card.displayCard, site: usedSite };
-                if (status === 'CHARGED') {
-                    chargedCards.push(cardEntry);
-                    sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                } else if (status === 'APPROVED') {
-                    approvedCards.push(cardEntry);
-                    sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
-                } else if (status === '3DS') {
-                    threeDSCards.push(cardEntry);
-                    sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
-                } else {
-                    declinedCards.push(cardEntry);
-                    sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                }
-
-                addResult({ displayCard: card.displayCard }, status, message, true);
-                updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                $('#autoStatusLog').text(`Processed ${chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length} of ${totalCards} cards`);
-                console.log(`Completed card: ${card.displayCard}, Status: ${status}, Site: ${usedSite}`);
-                activeRequests--;
-            },
-            error: function(xhr) {
-                if (xhr.statusText !== 'abort') {
-                    console.error(`AJAX error for card: ${card.displayCard}, Site: ${site}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                    if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES) {
-                        console.log(`Retrying card: ${card.displayCard} on site: ${site}, Retry: ${retryCount + 1}`);
-                        activeRequests--;
-                        setTimeout(() => checkCardWithSites(card, sites, siteIndex, retryCount + 1), 100);
-                    } else if (siteIndex < sites.length - 1) {
-                        console.log(`Moving to next site for card: ${card.displayCard}, Next site: ${sites[siteIndex + 1]}`);
-                        activeRequests--;
-                        setTimeout(() => checkCardWithSites(card, sites, siteIndex + 1, 0), 100);
-                    } else {
-                        const message = xhr.responseText || 'Request failed';
-                        const cardEntry = { response: `Declined [${message}]`, displayCard: card.displayCard, site: '' };
-                        declinedCards.push(cardEntry);
-                        sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
-                        addResult({ displayCard: card.displayCard }, 'DECLINED', cardEntry.response, true);
-                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                        $('#autoStatusLog').text(`Processed ${chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length} of ${totalCards} cards (error)`);
-                        activeRequests--;
-                    }
-                } else {
-                    activeRequests--;
-                }
-            }
-        });
-    }
-
-    async function processNext() {
-        if (!isProcessing || isStopping || cardQueue.length === 0) {
-            if (activeRequests === 0 && cardQueue.length === 0) {
-                finishAutoProcessing();
-            }
-            return;
-        }
-
-        if (activeRequests >= MAX_CONCURRENT) {
-            setTimeout(processNext, 10);
-            return;
-        }
-
-        const card = cardQueue.shift();
-        activeRequests++;
-        await checkCardWithSites(card, sites);
-        setTimeout(processNext, 0);
-    }
-
-    cardQueue = [...validCards];
-    if (validCards.length <= 2) {
-        // Sequential processing for 1 or 2 cards
-        for (const card of cardQueue) {
-            if (!isProcessing || isStopping) break;
-            await checkCardWithSites(card, sites);
-        }
-        if (activeRequests === 0 && cardQueue.length === 0) {
-            finishAutoProcessing();
-        }
-    } else {
-        // Parallel processing for 3+ cards
-        for (let i = 0; i < Math.min(MAX_CONCURRENT, cardQueue.length); i++) {
-            setTimeout(processNext, i * 50);
-        }
-    }
-}
-
 function finishProcessing() {
     isProcessing = false;
     isStopping = false;
@@ -1508,28 +1145,6 @@ function finishProcessing() {
     $('#cardInput').val('');
     updateCardCount();
     $('#statusLog').text('Processing completed.');
-    Swal.fire({
-        title: 'Processing complete!',
-        text: 'All cards have been checked. See the results below.',
-        icon: 'success',
-        confirmButtonColor: '#ec4899'
-    });
-}
-
-function finishAutoProcessing() {
-    isProcessing = false;
-    isStopping = false;
-    abortControllers.forEach(controller => controller.abort());
-    abortControllers = [];
-    cardQueue = [];
-    $('#autoStartBtn').prop('disabled', false);
-    $('#autoStopBtn').prop('disabled', true);
-    $('#autoLoader').hide();
-    $('#autoCardInput').val('');
-    $('#sitesInput').val('');
-    updateAutoCardCount();
-    updateSitesCount();
-    $('#autoStatusLog').text('Processing completed.');
     Swal.fire({
         title: 'Processing complete!',
         text: 'All cards have been checked. See the results below.',
@@ -1562,30 +1177,6 @@ $('#stopBtn').on('click', function() {
     });
 });
 
-$('#autoStartBtn').on('click', processAutoCards);
-
-$('#autoStopBtn').on('click', function() {
-    if (!isProcessing || isStopping) return;
-
-    isProcessing = false;
-    isStopping = true;
-    cardQueue = [];
-    abortControllers.forEach(controller => controller.abort());
-    abortControllers = [];
-    activeRequests = 0;
-    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-    $('#autoStartBtn').prop('disabled', false);
-    $('#autoStopBtn').prop('disabled', true);
-    $('#autoLoader').hide();
-    $('#autoStatusLog').text('Processing stopped.');
-    Swal.fire({
-        title: 'Stopped!',
-        text: 'Processing has been stopped',
-        icon: 'warning',
-        confirmButtonColor: '#ec4899'
-    });
-});
-
 $('#clearBtn').on('click', function() {
     if ($('#cardInput').val().trim()) {
         Swal.fire({
@@ -1596,27 +1187,6 @@ $('#clearBtn').on('click', function() {
             if (result.isConfirmed) {
                 $('#cardInput').val('');
                 updateCardCount();
-                Swal.fire({
-                    toast: true, position: 'top-end', icon: 'success',
-                    title: 'Cleared!', showConfirmButton: false, timer: 1500
-                });
-            }
-        });
-    }
-});
-
-$('#autoClearBtn').on('click', function() {
-    if ($('#autoCardInput').val().trim() || $('#sitesInput').val().trim()) {
-        Swal.fire({
-            title: 'Clear Input?', text: 'Remove all entered cards and sites',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#autoCardInput').val('');
-                $('#sitesInput').val('');
-                updateAutoCardCount();
-                updateSitesCount();
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'success',
                     title: 'Cleared!', showConfirmButton: false, timer: 1500
@@ -1658,43 +1228,7 @@ $('#exportBtn').on('click', function() {
     });
 });
 
-$('#autoExportBtn').on('click', function() {
-    const allCards = [
-        ...chargedCards.map(c => ({...c, status: 'CHARGED'})),
-        ...approvedCards.map(c => ({...c, status: 'APPROVED'})),
-        ...threeDSCards.map(c => ({...c, status: '3DS'})),
-        ...declinedCards.map(c => ({...c, status: 'DECLINED'}))
-    ];
-    if (allCards.length === 0) {
-        Swal.fire({
-            title: 'No data to export!',
-            text: 'Please check some cards first.',
-            icon: 'warning',
-            confirmButtonColor: '#ec4899'
-        });
-        return;
-    }
-    let csvContent = "Card,Site,Status,Response\n";
-    allCards.forEach(({displayCard, site, status, response}) => {
-        csvContent += `${displayCard},${site || ''},${status},${response}\n`;
-    });
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `autoshopify_results_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    Swal.fire({
-        toast: true, position: 'top-end', icon: 'success',
-        title: 'Exported!', showConfirmButton: false, timer: 1500
-    });
-});
-
 $('#cardInput').on('input', updateCardCount);
-$('#autoCardInput').on('input', updateAutoCardCount);
-$('#sitesInput').on('input', updateSitesCount);
 
 document.addEventListener('click', function(e) {
     if (e.target === document.getElementById('gatewaySettings')) {
