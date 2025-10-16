@@ -6,9 +6,6 @@ ini_set('session.gc_maxlifetime', 3600);
 ini_set('session.cookie_lifetime', 3600);
 session_start();
 
-// Set CSP headers to allow Telegram widget
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org https://cdn.jsdelivr.net; frame-src 'self' https://oauth.telegram.org; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';");
-
 // -------------------------------
 // CONFIGURATION
 // -------------------------------
@@ -140,424 +137,179 @@ if (isset($_SESSION['user'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in • Card X Chk</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/assets/branding/cardxchk-mark.png" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
     <style>
-        * {
-            -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
+        :root {
+            --glass: rgba(20, 20, 30, 0.7);
+            --stroke: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1;
+            --accent-light: #818cf8;
         }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Enhanced Background */
-        .background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+        html, body {
             height: 100%;
-            background: 
-                linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%),
-                radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.2) 0%, transparent 40%),
-                radial-gradient(ellipse at bottom left, rgba(59, 130, 246, 0.2) 0%, transparent 40%);
-            z-index: -2;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            overflow-x: hidden;
         }
-        
-        /* Animated Grid Pattern */
-        .grid-pattern {
-            position: fixed;
+        body {
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-image: 
-                linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: -1;
-            animation: grid-move 20s linear infinite;
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: 0;
         }
-        
-        @keyframes grid-move {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
+        .glass {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--glass);
+            border: 1px solid var(--stroke);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
-        
-        /* Floating Orbs */
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(40px);
-            opacity: 0.6;
-            z-index: -1;
+        .card {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
         }
-        
-        .orb-1 {
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, #3b82f6, transparent);
-            top: -150px;
-            right: -100px;
-            animation: float-1 20s ease-in-out infinite;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
         }
-        
-        .orb-2 {
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, #8b5cf6, transparent);
-            bottom: -100px;
-            left: -50px;
-            animation: float-2 15s ease-in-out infinite;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            transition: all 0.3s ease;
         }
-        
-        .orb-3 {
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, #06b6d4, transparent);
-            top: 50%;
-            left: 10%;
-            animation: float-3 25s ease-in-out infinite;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
         }
-        
-        @keyframes float-1 {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-30px) translateX(20px); }
-        }
-        
-        @keyframes float-2 {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(30px) translateX(-20px); }
-        }
-        
-        @keyframes float-3 {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-20px) translateX(30px); }
-        }
-        
-        /* Login Container */
-        .login-container {
-            width: 90%;
-            max-width: 360px;
-            margin: 20px;
-            padding: 30px 25px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.25),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        .logo-container {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
             border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 10;
         }
-        
-        /* Logo Section */
-        .logo-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-        
-        .logo-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            margin-bottom: 14px;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
-            transition: transform 0.3s ease;
-        }
-        
-        .logo-icon:hover {
-            transform: translateY(-3px);
-        }
-        
-        .brand-name {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 6px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-            letter-spacing: 1px;
-        }
-        
-        .tagline {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 30px;
-        }
-        
-        /* Telegram Widget Container */
-        .telegram-widget-container {
-            margin: 25px 0;
-            display: flex;
-            justify-content: center;
-            position: relative;
-            min-height: 50px;
-            align-items: center;
-        }
-        
-        /* Error Message */
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            backdrop-filter: blur(10px);
-        }
-        
-        .error-message i {
-            margin-right: 10px;
-            font-size: 16px;
-        }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 11px;
-            color: #64748b;
-        }
-        
-        .footer-divider {
-            margin: 16px 0;
-            color: #475569;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-        
-        .footer-brand {
-            font-weight: 600;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-        }
-        
-        /* Loader */
-        .loader {
-            width: 24px;
-            height: 24px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: #3b82f6;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Mobile optimizations */
-        @media (max-width: 480px) {
-            body {
-                padding: 0;
+        @media (max-width: 640px) {
+            .glass {
+                padding: 1.5rem !important;
             }
-            
-            .login-container {
-                width: 95%;
-                max-width: 320px;
-                margin: 15px;
-                padding: 25px 20px;
-            }
-            
-            .brand-name {
-                font-size: 22px;
-            }
-            
-            .logo-icon {
-                width: 48px;
-                height: 48px;
-                font-size: 20px;
-            }
-            
-            .tagline {
-                font-size: 12px;
-            }
-            
-            .orb-1 {
-                width: 180px;
-                height: 180px;
-                top: -90px;
-                right: -50px;
-            }
-            
-            .orb-2 {
-                width: 120px;
-                height: 120px;
-                bottom: -60px;
-                left: -30px;
-            }
-            
-            .orb-3 {
-                width: 80px;
-                height: 80px;
-            }
-            
-            .grid-pattern {
-                background-size: 30px 30px;
-            }
-            
-            .error-message {
-                font-size: 12px;
-                padding: 10px;
-            }
-            
-            .footer {
-                font-size: 10px;
-            }
-        }
-        
-        /* Small mobile devices */
-        @media (max-width: 360px) {
-            .login-container {
-                width: 98%;
-                max-width: 300px;
-                padding: 20px 15px;
-            }
-            
-            .brand-name {
-                font-size: 20px;
-            }
-            
-            .logo-icon {
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
+            h1 {
+                font-size: 1.5rem !important;
             }
         }
     </style>
 </head>
-<body>
-    <!-- Enhanced Background Layers -->
-    <div class="background"></div>
-    <div class="grid-pattern"></div>
-    
-    <!-- Floating Orbs -->
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    
-    <!-- Main Login Container -->
-    <div class="login-container">
-        <div class="logo-section">
-            <div class="logo-icon">
-                <i class="fas fa-credit-card"></i>
+<body class="min-h-full">
+    <main class="min-h-screen flex items-center justify-center p-4 sm:p-6 relative z-10">
+        <div class="w-full max-w-md sm:max-w-xl space-y-6 sm:space-y-8">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl logo-container grid place-items-center shadow-xl">
+                    <img src="/assets/branding/cardxchk-mark.png" alt="Card X Chk" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='">
+                </div>
+                <h1 class="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-100">Card X Chk</h1>
+                <p class="mt-1 text-sm sm:text-base text-gray-400">Secure Sign-in Portal</p>
             </div>
-            <h1 class="brand-name">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</h1>
-            <p class="tagline">Secure Authentication Portal</p>
-        </div>
-        
-        <?php if (!empty($error)): ?>
-            <div class="error-message">
-                <i class="fas fa-exclamation-circle"></i>
-                <?= $error ?>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Telegram Widget Container -->
-        <div class="telegram-widget-container">
-            <div class="loader" id="telegram-loader"></div>
-            <div id="telegram-widget" style="display: none;">
-                <script async src="https://telegram.org/js/telegram-widget.js?22"
-                        data-telegram-login="<?= $telegramBotUsername ?>"
-                        data-size="large"
-                        data-auth-url="<?= $baseUrl ?>/login.php"
-                        data-request-access="write"
-                        data-userpic="false"
-                        onload="widgetLoaded()"
-                        onerror="widgetError()"></script>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div class="footer-divider">𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</div>
-            <div>Powered by <span class="footer-brand">kคli liຖนxx</span></div>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function widgetLoaded() {
-            // Hide loader and show widget
-            document.getElementById('telegram-loader').style.display = 'none';
-            document.getElementById('telegram-widget').style.display = 'block';
-        }
-        
-        function widgetError() {
-            // Hide loader and show error
-            document.getElementById('telegram-loader').style.display = 'none';
-            
-            Swal.fire({
-                title: 'Login Issue',
-                text: 'Telegram login failed to load. Please check your connection and try again.',
-                icon: 'warning',
-                confirmButtonText: 'Retry',
-                confirmButtonColor: '#3b82f6'
-            }).then(() => {
-                location.reload();
-            });
-        }
-        
-        // Check if widget loaded after timeout
-        setTimeout(() => {
-            const loader = document.getElementById('telegram-loader');
-            const widget = document.querySelector('#telegram-widget iframe');
-            
-            // If loader is still visible and no widget found, show error
-            if (loader && loader.style.display !== 'none' && !widget) {
-                widgetError();
-            }
-        }, 5000);
-        
-        // Add subtle parallax effect on mouse move (desktop only)
-        if (window.innerWidth > 768) {
-            document.addEventListener('mousemove', (e) => {
-                const orbs = document.querySelectorAll('.orb');
-                const x = e.clientX / window.innerWidth;
-                const y = e.clientY / window.innerHeight;
-                
-                orbs.forEach((orb, index) => {
-                    const speed = (index + 1) * 10;
-                    const xPos = (x - 0.5) * speed;
-                    const yPos = (y - 0.5) * speed;
+
+            <div class="glass card rounded-3xl p-6 sm:p-8">
+                <div class="flex flex-col items-center gap-5 sm:gap-6">
+                    <div class="text-center">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-100">Welcome Back</h2>
+                        <p class="mt-1 text-sm text-gray-400">Sign in with Telegram to continue</p>
+                    </div>
                     
-                    orb.style.transform = `translate(${xPos}px, ${yPos}px)`;
+                    <?php if (!empty($error)): ?>
+                        <div class="w-full p-3 bg-red-900/30 border border-red-800/50 rounded-lg text-red-300 text-sm">
+                            <?php echo htmlspecialchars($error); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="w-full flex justify-center">
+                        <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
+                        <script async src="https://telegram.org/js/telegram-widget.js?22"
+                                data-telegram-login="<?= htmlspecialchars($telegramBotUsername) ?>"
+                                data-size="large"
+                                data-auth-url="<?= $baseUrl ?>/login.php"
+                                data-request-access="write"
+                                onload="console.log('Telegram widget loaded')"
+                                onerror="console.error('Telegram widget failed to load')"></script>
+                    </div>
+
+                    <div class="mt-2 text-center">
+                        <p class="text-xs text-gray-500">
+                            <span class="inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Secure authentication with Telegram
+                            </span>
+                        </p>
+                        <p class="mt-1 text-[11px] text-gray-600">
+                            We don't store your Telegram credentials
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-xs text-gray-600 tracking-widest">
+                𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒
+            </div>
+            <div class="flex items-center justify-center gap-2 text-xs text-gray-600">
+                <span>Powered by kคli liຖนxx</span>
+            </div>
+        </div>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
+            if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
+                console.error('Telegram widget not loaded');
+                error_log('Telegram widget not loaded in DOM');
+                
+                // Fallback UI if widget fails to load
+                const widgetContainer = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
+                if (widgetContainer) {
+                    widgetContainer.innerHTML = `
+                        <div class="p-4 bg-red-900/30 border border-red-800/50 rounded-lg text-center">
+                            <p class="text-red-300 text-sm">Telegram widget failed to load</p>
+                            <p class="text-gray-400 text-xs mt-1">Please check your connection and try again</p>
+                            <button onclick="location.reload()" class="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition">
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                // Show error notification
+                Swal.fire({
+                    title: 'Configuration Error',
+                    text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
+                    icon: 'error',
+                    confirmButtonColor: '#6ab7d8'
                 });
-            });
-        }
+                
+                // Auto-retry after delay
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+            }
+        });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>
