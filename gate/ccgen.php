@@ -84,9 +84,9 @@ function generate_cards($input, $num_cards = 10, $format_index = 0) {
 }
 
 // Handle HTTP request
-$input = isset($_GET['bin']) ? trim($_GET['bin']) : '';
-$num_cards = isset($_GET['num']) && ctype_digit($_GET['num']) ? (int)$_GET['num'] : 10;
-$format_index = isset($_GET['format']) && ctype_digit($_GET['format']) && $_GET['format'] < 5 ? (int)$_GET['format'] : 0;
+ $input = isset($_GET['bin']) ? trim($_GET['bin']) : '';
+ $num_cards = isset($_GET['num']) && ctype_digit($_GET['num']) ? (int)$_GET['num'] : 10;
+ $format_index = isset($_GET['format']) && ctype_digit($_GET['format']) && $_GET['format'] < 5 ? (int)$_GET['format'] : 0;
 
 if (empty($input)) {
     header('Content-Type: application/json; charset=utf-8');
@@ -94,7 +94,7 @@ if (empty($input)) {
     exit;
 }
 
-$result = generate_cards($input, $num_cards, $format_index);
+ $result = generate_cards($input, $num_cards, $format_index);
 
 // Handle errors
 if (isset($result['error'])) {
@@ -103,17 +103,7 @@ if (isset($result['error'])) {
     exit;
 }
 
-// Output cards
-$cards = $result['cards'];
-if ($num_cards > 10) {
-    header('Content-Type: text/plain');
-    header('Content-Disposition: attachment; filename="generated_cards.txt"');
-    foreach ($cards as $card) {
-        echo $card . "\n";
-    }
-} else {
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['cards' => $cards]);
-}
-
+// Always return JSON format
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode(['cards' => $result['cards']]);
 ?>
