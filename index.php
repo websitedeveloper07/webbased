@@ -17,8 +17,8 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 }
 
 // Load environment variables manually
-$envFile = __DIR__ . '/.env';
-$_ENV = [];
+ $envFile = __DIR__ . '/.env';
+ $_ENV = [];
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -228,19 +228,19 @@ try {
         .stat-label {
             color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
         }
-        .checker-section {
+        .checker-section, .generator-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
         }
-        .checker-header {
+        .checker-header, .generator-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
         }
-        .checker-title {
+        .checker-title, .generator-title {
             font-size: 1.2rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
-        .checker-title i { color: var(--accent-cyan); font-size: 1rem; }
+        .checker-title i, .generator-title i { color: var(--accent-cyan); font-size: 1rem; }
         .settings-btn {
             padding: 0.3rem 0.6rem; border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -268,6 +268,24 @@ try {
         .card-textarea:focus {
             outline: none; border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-control {
+            width: 100%; padding: 0.75rem; background: var(--secondary-bg);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            color: var(--text-primary); font-size: 0.9rem; transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none; border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        }
+        .form-row {
+            display: flex; gap: 1rem; flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1; min-width: 120px;
         }
         .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
         .btn {
@@ -406,7 +424,7 @@ try {
             display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #statusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
+        #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
@@ -423,6 +441,112 @@ try {
             background: rgba(239, 68, 68, 0.2);
             color: var(--error);
             transform: translateX(5px);
+        }
+        .generated-card {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .generated-card-text {
+            flex: 1;
+            word-break: break-all;
+        }
+        .generated-card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .card-copy-btn, .card-check-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--accent-blue);
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .card-copy-btn:hover, .card-check-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-purple);
+        }
+        .custom-select {
+            position: relative;
+            display: flex;
+            width: 100%;
+        }
+        .custom-select select {
+            appearance: none;
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .custom-select select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        .custom-select::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            right: 0.75rem;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-secondary);
+        }
+        .custom-input-group {
+            display: flex;
+            width: 100%;
+        }
+        .custom-input-group input {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px 0 0 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .custom-input-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        .custom-input-group .input-group-append {
+            display: flex;
+        }
+        .custom-input-group .input-group-text {
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .custom-input-group .input-group-text:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
         }
         @media (min-width: 769px) {
             .navbar { padding: 1rem 2rem; }
@@ -444,9 +568,9 @@ try {
             .stat-icon { width: 50px; height: 50px; font-size: 1.5rem; }
             .stat-value { font-size: 2.5rem; }
             .stat-label { font-size: 0.95rem; }
-            .checker-section { padding: 2.5rem; border-radius: 24px; }
-            .checker-title { font-size: 1.75rem; }
-            .checker-title i { font-size: 1.2rem; }
+            .checker-section, .generator-section { padding: 2.5rem; border-radius: 24px; }
+            .checker-title, .generator-title { font-size: 1.75rem; }
+            .checker-title i, .generator-title i { font-size: 1.2rem; }
             .settings-btn { padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 12px; }
             .input-label { font-size: 1rem; }
             .card-textarea { min-height: 200px; padding: 1.25rem; font-size: 1rem; border-radius: 16px; }
@@ -466,9 +590,15 @@ try {
             .gateway-badge { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 6px; }
             .btn-save, .btn-cancel { padding: 0.9rem; font-size: 1rem; border-radius: 12px; }
             .loader { width: 40px; height: 40px; border-width: 4px; }
-            #statusLog { font-size: 0.95rem; }
+            #statusLog, #genStatusLog { font-size: 0.95rem; }
             .copy-btn { font-size: 1rem; }
             .menu-toggle { font-size: 1.5rem; padding: 0.5rem; }
+            .generated-card { padding: 1rem; }
+            .generated-card-text { font-size: 1rem; }
+            .card-copy-btn, .card-check-btn { font-size: 0.9rem; padding: 0.3rem 0.7rem; }
+            .custom-select select { padding: 1rem; font-size: 1rem; }
+            .custom-input-group input { padding: 1rem; font-size: 1rem; }
+            .custom-input-group .input-group-text { padding: 0 1rem; font-size: 1rem; }
         }
     </style>
 </head>
@@ -510,6 +640,11 @@ try {
             <li class="sidebar-item">
                 <a class="sidebar-link" onclick="showPage('checking'); closeSidebar()">
                     <i class="fas fa-credit-card"></i><span>Card Checking</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" onclick="showPage('generator'); closeSidebar()">
+                    <i class="fas fa-magic"></i><span>Card Generator</span>
                 </a>
             </li>
             <div class="sidebar-divider"></div>
@@ -625,6 +760,94 @@ try {
                     <i class="fas fa-inbox"></i>
                     <h3>No Results Yet</h3>
                     <p>Start checking cards to see results here</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section" id="page-generator">
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑻𝑶𝑹</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞 𝐯𝐚𝐥𝐢𝐝 𝐜𝐫𝐞𝐝𝐢𝐭 𝐜𝐚𝐫𝐝𝐬 𝐰𝐢𝐭𝐡 𝐋𝐮𝐡𝐧 𝐜𝐡𝐞𝐜𝐤𝐬𝐮𝐦</p>
+
+            <div class="generator-section">
+                <div class="generator-header">
+                    <div class="generator-title">
+                        <i class="fas fa-magic"></i> Card Generator
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">BIN (6-8 digits)</label>
+                    <input type="text" id="binInput" class="form-control" placeholder="Enter BIN (e.g., 414740)" maxlength="8">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="input-label">Month</label>
+                        <div class="custom-select">
+                            <select id="monthSelect" class="form-control">
+                                <option value="rnd">rnd</option>
+                                <option value="01">01</option>
+                                <option value="02">02</option>
+                                <option value="03">03</option>
+                                <option value="04">04</option>
+                                <option value="05">05</option>
+                                <option value="06">06</option>
+                                <option value="07">07</option>
+                                <option value="08">08</option>
+                                <option value="09">09</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label class="input-label">Year</label>
+                        <div class="custom-input-group">
+                            <input type="text" id="yearInput" class="form-control" placeholder="Year (e.g., 30, 2030)" maxlength="4">
+                            <div class="input-group-append">
+                                <span class="input-group-text" onclick="setYearRnd()">rnd</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label class="input-label">CVV</label>
+                        <div class="custom-input-group">
+                            <input type="text" id="cvvInput" class="form-control" placeholder="CVV (e.g., 123)" maxlength="4">
+                            <div class="input-group-append">
+                                <span class="input-group-text" onclick="setCvvRnd()">rnd</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">Number of Cards</label>
+                    <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="100">
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="generateBtn">
+                        <i class="fas fa-magic"></i> Generate Cards
+                    </button>
+                    <button class="btn btn-secondary" id="clearGenBtn">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                <div class="loader" id="genLoader"></div>
+                <div id="genStatusLog" class="text-sm text-gray-500 mt-2"></div>
+            </div>
+
+            <div class="results-section" id="generatorResults">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-list"></i> Generated Cards
+                    </div>
+                </div>
+                <div id="generatedCardsList" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Cards Generated Yet</h3>
+                    <p>Generate cards to see them here</p>
                 </div>
             </div>
         </section>
@@ -771,16 +994,16 @@ try {
 
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
         document.addEventListener('contextmenu', e => {
-            if (e.target.id !== 'cardInput') e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
         });
         document.addEventListener('copy', e => {
-            if (e.target.id !== 'cardInput') e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
         });
         document.addEventListener('cut', e => {
-            if (e.target.id !== 'cardInput') e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
         });
         document.addEventListener('paste', e => {
-            if (e.target.id === 'cardInput') {
+            if (e.target.id === 'cardInput' || e.target.id === 'binInput' || e.target.id === 'cvvInput' || e.target.id === 'yearInput') {
                 const pastedText = e.clipboardData.getData('text');
                 const cursorPos = e.target.selectionStart;
                 const textBefore = e.target.value.substring(0, cursorPos);
@@ -788,14 +1011,14 @@ try {
                 e.target.value = textBefore + pastedText + textAfter;
                 e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
                 e.preventDefault();
-                updateCardCount();
+                if (e.target.id === 'cardInput') updateCardCount();
             } else {
                 e.preventDefault();
             }
         });
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
-                if (e.target.id !== 'cardInput') e.preventDefault();
+                if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
             } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
                 e.preventDefault();
             }
@@ -903,14 +1126,50 @@ try {
             }
         }
 
+        function addGeneratedCard(card) {
+            const cardsList = document.getElementById('generatedCardsList');
+            if (!cardsList) return;
+            
+            if (cardsList.classList.contains('empty-state')) {
+                cardsList.classList.remove('empty-state');
+                cardsList.innerHTML = '';
+            }
+            
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'generated-card';
+            cardDiv.innerHTML = `
+                <div class="generated-card-text">${card}</div>
+                <div class="generated-card-actions">
+                    <button class="card-copy-btn" onclick="copyToClipboard('${card}')"><i class="fas fa-copy"></i></button>
+                    <button class="card-check-btn" onclick="checkGeneratedCard('${card}')"><i class="fas fa-check-circle"></i></button>
+                </div>
+            `;
+            cardsList.appendChild(cardDiv);
+        }
+
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'success',
-                    title: 'Card copied!', showConfirmButton: false, timer: 1500
+                    title: 'Copied!', showConfirmButton: false, timer: 1500
                 });
             }).catch(err => {
                 console.error('Failed to copy: ', err);
+            });
+        }
+
+        function checkGeneratedCard(card) {
+            // Switch to checking page and populate the card input
+            showPage('checking');
+            document.getElementById('cardInput').value = card;
+            updateCardCount();
+            
+            // Scroll to the checking section
+            document.getElementById('page-checking').scrollIntoView({ behavior: 'smooth' });
+            
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'info',
+                title: 'Card added to checker', showConfirmButton: false, timer: 1500
             });
         }
 
@@ -1140,7 +1399,162 @@ try {
             });
         }
 
+        function setYearRnd() {
+            document.getElementById('yearInput').value = 'rnd';
+        }
+
+        function setCvvRnd() {
+            document.getElementById('cvvInput').value = 'rnd';
+        }
+
+        function generateCards() {
+            const bin = $('#binInput').val().trim();
+            const month = $('#monthSelect').val();
+            let year = $('#yearInput').val().trim();
+            const cvv = $('#cvvInput').val().trim();
+            const numCards = parseInt($('#numCardsInput').val());
+            
+            // Validate BIN
+            if (!/^\d{6,8}$/.test(bin)) {
+                Swal.fire({
+                    title: 'Invalid BIN!',
+                    text: 'Please enter a valid 6-8 digit BIN',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            
+            // Validate number of cards
+            if (isNaN(numCards) || numCards < 1 || numCards > 100) {
+                Swal.fire({
+                    title: 'Invalid Number!',
+                    text: 'Please enter a number between 1 and 100',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            
+            // Validate year if not random
+            if (year !== 'rnd') {
+                // Convert two-digit year to four-digit
+                if (year.length === 2) {
+                    const currentYear = new Date().getFullYear();
+                    const currentCentury = Math.floor(currentYear / 100) * 100;
+                    const twoDigitYear = parseInt(year);
+                    // If the two-digit year is less than 50, assume current century, otherwise previous century
+                    year = (twoDigitYear < 50 ? currentCentury : currentCentury - 100) + twoDigitYear;
+                }
+                
+                // Validate year is a number and between 2000 and 2099
+                if (!/^\d{4}$/.test(year) || parseInt(year) < 2000 || parseInt(year) > 2099) {
+                    Swal.fire({
+                        title: 'Invalid Year!',
+                        text: 'Please enter a valid year (e.g., 2025, 30, or "rnd")',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                    return;
+                }
+            }
+            
+            // Validate CVV if not random
+            if (cvv !== 'rnd' && !/^\d{3,4}$/.test(cvv)) {
+                Swal.fire({
+                    title: 'Invalid CVV!',
+                    text: 'Please enter a valid 3-4 digit CVV or "rnd"',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+                return;
+            }
+            
+            // Prepare parameters
+            let params = bin;
+            if (month !== 'rnd') params += '|' + month;
+            if (year !== 'rnd') params += '|' + year;
+            if (cvv !== 'rnd') params += '|' + cvv;
+            
+            // Show loader
+            $('#genLoader').show();
+            $('#genStatusLog').text('Generating cards...');
+            $('#generatedCardsList').html('');
+            
+            // Make AJAX request
+            $.ajax({
+                url: 'ccgen.php',
+                method: 'GET',
+                data: {
+                    bin: params,
+                    num: numCards,
+                    format: 0
+                },
+                success: function(response) {
+                    $('#genLoader').hide();
+                    
+                    try {
+                        const data = JSON.parse(response);
+                        
+                        if (data.error) {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.error,
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                            $('#genStatusLog').text('Error: ' + data.error);
+                            return;
+                        }
+                        
+                        if (data.cards && data.cards.length > 0) {
+                            $('#genStatusLog').text(`Generated ${data.cards.length} cards successfully!`);
+                            
+                            // Add cards to the list
+                            data.cards.forEach(card => {
+                                addGeneratedCard(card);
+                            });
+                            
+                            Swal.fire({
+                                title: 'Success!',
+                                text: `Generated ${data.cards.length} cards`,
+                                icon: 'success',
+                                confirmButtonColor: '#10b981'
+                            });
+                        } else {
+                            $('#genStatusLog').text('No cards generated');
+                            Swal.fire({
+                                title: 'No Cards!',
+                                text: 'Could not generate cards with the provided parameters',
+                                icon: 'warning',
+                                confirmButtonColor: '#f59e0b'
+                            });
+                        }
+                    } catch (e) {
+                        $('#genStatusLog').text('Error parsing response');
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Invalid response from server',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    $('#genLoader').hide();
+                    $('#genStatusLog').text('Error: ' + xhr.statusText);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to generate cards: ' + xhr.statusText,
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+            });
+        }
+
         $('#startBtn').on('click', processCards);
+        $('#generateBtn').on('click', generateCards);
 
         $('#stopBtn').on('click', function() {
             if (!isProcessing || isStopping) return;
@@ -1181,6 +1595,20 @@ try {
                     }
                 });
             }
+        });
+
+        $('#clearGenBtn').on('click', function() {
+            $('#binInput').val('');
+            $('#monthSelect').val('rnd');
+            $('#yearInput').val('');
+            $('#cvvInput').val('');
+            $('#numCardsInput').val('10');
+            $('#generatedCardsList').html('<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Cards Generated Yet</h3><p>Generate cards to see them here</p></div>');
+            $('#genStatusLog').text('');
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success',
+                title: 'Cleared!', showConfirmButton: false, timer: 1500
+            });
         });
 
         $('#exportBtn').on('click', function() {
