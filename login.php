@@ -12,7 +12,7 @@ session_start();
 $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
 $telegramBotUsername = 'CardXchk_LOGBOT';
-$baseUrl = 'https://cardxchk.onrender.com';
+$baseUrl = 'http://cxchk.site';
 
 // -------------------------------
 // DATABASE CONNECTION
