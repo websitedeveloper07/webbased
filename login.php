@@ -6,12 +6,15 @@ ini_set('session.gc_maxlifetime', 3600);
 ini_set('session.cookie_lifetime', 3600);
 session_start();
 
+// Set CSP headers to allow Telegram widget
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org https://cdn.jsdelivr.net; frame-src 'self' https://oauth.telegram.org; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';");
+
 // -------------------------------
 // CONFIGURATION
 // -------------------------------
  $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
  $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
- $telegramBotUsername = 'CardXchk_LOGBOT';
+ $telegramBotUsername = 'CardXchk_LOGBOT'; // Make sure this matches exactly without @
  $baseUrl = 'http://cxchk.site';
 
 // -------------------------------
@@ -396,14 +399,6 @@ if (isset($_SESSION['user'])) {
         input, textarea, select {
             font-size: 16px; /* Prevents zoom on iOS */
         }
-        
-        /* Ensure proper viewport scaling */
-        @viewport {
-            width: device-width;
-            initial-scale: 1.0;
-            maximum-scale: 1.0;
-            user-scalable: 0;
-        }
     </style>
 </head>
 <body class="min-h-full">
@@ -443,12 +438,25 @@ if (isset($_SESSION['user'])) {
                             <div class="loader" id="telegram-loader"></div>
                         </div>
                         <div id="telegram-widget" style="display: none;">
-                            <div class="telegram-login-CARDXCHK_LOGBOT"></div>
+                            <!-- Try direct iframe approach as fallback -->
+                            <iframe 
+                                id="telegram-login-iframe"
+                                src="https://oauth.telegram.org/embed/CardXchk_LOGBOT?origin=<?= urlencode($baseUrl) ?>&return_to=<?= urlencode($baseUrl) ?>/login.php&size=large&userpic=false&request_access=write"
+                                width="240"
+                                height="50"
+                                style="border: none; overflow: hidden;"
+                                onload="telegramWidgetLoaded()"
+                                onerror="telegramWidgetError()">
+                            </iframe>
+                            
+                            <!-- Original widget as backup -->
+                            <div class="telegram-login-CARDXCHK_LOGBOT" style="display: none;"></div>
                             <script async src="https://telegram.org/js/telegram-widget.js?22"
-                                    data-telegram-login="CARDXCHK_LOGBOT"
+                                    data-telegram-login="CardXchk_LOGBOT"
                                     data-size="large"
                                     data-auth-url="<?= $baseUrl ?>/login.php"
                                     data-request-access="write"
+                                    data-userpic="false"
                                     onload="console.log('Telegram widget loaded')"
                                     onerror="console.error('Telegram widget failed to load')"></script>
                         </div>
@@ -519,24 +527,75 @@ if (isset($_SESSION['user'])) {
                 if (loader) loader.style.display = 'none';
                 if (widget) widget.style.display = 'block';
                 
-                // Check if widget loaded properly
+                // Check if widget loaded properly after timeout
                 setTimeout(() => {
-                    const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
-                    if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
-                        console.error('Telegram widget not loaded');
-                        Swal.fire({
-                            title: 'Configuration Error',
-                            text: 'Telegram Login Widget failed to load. Check bot settings, network, or Render CSP settings.',
-                            icon: 'error',
-                            confirmButtonColor: '#6ab7d8',
-                            confirmButtonText: 'Retry'
-                        }).then(() => {
-                            location.reload();
-                        });
-                    }
-                }, 2000);
+                    checkTelegramWidget();
+                }, 3000);
             }, 1500);
         });
+        
+        function checkTelegramWidget() {
+            const telegramWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
+            const telegramIframe = document.getElementById('telegram-login-iframe');
+            
+            if ((!telegramWidget || !telegramWidget.querySelector('iframe')) && 
+                (!telegramIframe || telegramIframe.style.display === 'none')) {
+                console.error('Telegram widget not loaded');
+                showTelegramError();
+            }
+        }
+        
+        function telegramWidgetLoaded() {
+            console.log('Telegram iframe loaded successfully');
+            // Hide the original widget if iframe works
+            const originalWidget = document.querySelector('.telegram-login-CARDXCHK_LOGBOT');
+            if (originalWidget) {
+                originalWidget.style.display = 'none';
+            }
+        }
+        
+        function telegramWidgetError() {
+            console.error('Telegram iframe failed to load');
+            showTelegramError();
+        }
+        
+        function showTelegramError() {
+            Swal.fire({
+                title: 'Telegram Login Issue',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">The Telegram login widget couldn't load. This could be due to:</p>
+                        <ul class="list-disc pl-5 mb-3 space-y-1">
+                            <li>Network connectivity issues</li>
+                            <li>Bot configuration problems</li>
+                            <li>Browser security restrictions</li>
+                        </ul>
+                        <p class="mb-3">Try these solutions:</p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>Check your internet connection</li>
+                            <li>Disable ad blockers or privacy extensions</li>
+                            <li>Try a different browser</li>
+                            <li>Clear browser cache and cookies</li>
+                        </ol>
+                    </div>
+                `,
+                icon: 'warning',
+                confirmButtonColor: '#6ab7d8',
+                confirmButtonText: 'Try Again',
+                showCancelButton: true,
+                cancelButtonText: 'Refresh Page'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Try to reload just the widget
+                    const widgetContainer = document.getElementById('telegram-widget');
+                    if (widgetContainer) {
+                        widgetContainer.innerHTML = widgetContainer.innerHTML;
+                    }
+                } else {
+                    location.reload();
+                }
+            });
+        }
         
         // Add interactive hover effect to the card (disabled on mobile)
         if (window.innerWidth > 640) {
