@@ -1539,53 +1539,42 @@ try {
                     num: numCards,
                     format: 0
                 },
+                dataType: 'json',  // Specify that we expect JSON response
                 success: function(response) {
                     $('#genLoader').hide();
                     
-                    try {
-                        const data = JSON.parse(response);
+                    // Check if response has cards property
+                    if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
+                        $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
                         
-                        if (data.error) {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.error,
-                                icon: 'error',
-                                confirmButtonColor: '#ec4899'
-                            });
-                            $('#genStatusLog').text('Error: ' + data.error);
-                            return;
-                        }
+                        // Add cards to the list
+                        response.cards.forEach(card => {
+                            addGeneratedCard(card);
+                        });
                         
-                        if (data.cards && data.cards.length > 0) {
-                            $('#genStatusLog').text(`Generated ${data.cards.length} cards successfully!`);
-                            
-                            // Add cards to the list
-                            data.cards.forEach(card => {
-                                addGeneratedCard(card);
-                            });
-                            
-                            Swal.fire({
-                                title: 'Success!',
-                                text: `Generated ${data.cards.length} cards`,
-                                icon: 'success',
-                                confirmButtonColor: '#10b981'
-                            });
-                        } else {
-                            $('#genStatusLog').text('No cards generated');
-                            Swal.fire({
-                                title: 'No Cards!',
-                                text: 'Could not generate cards with the provided parameters',
-                                icon: 'warning',
-                                confirmButtonColor: '#f59e0b'
-                            });
-                        }
-                    } catch (e) {
-                        $('#genStatusLog').text('Error parsing response');
+                        Swal.fire({
+                            title: 'Success!',
+                            text: `Generated ${response.cards.length} cards`,
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        });
+                    } else if (response.error) {
+                        // Handle error response
                         Swal.fire({
                             title: 'Error!',
-                            text: 'Invalid response from server',
+                            text: response.error,
                             icon: 'error',
                             confirmButtonColor: '#ec4899'
+                        });
+                        $('#genStatusLog').text('Error: ' + response.error);
+                    } else {
+                        // Handle case where no cards were generated
+                        $('#genStatusLog').text('No cards generated');
+                        Swal.fire({
+                            title: 'No Cards!',
+                            text: 'Could not generate cards with the provided parameters',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b'
                         });
                     }
                 },
