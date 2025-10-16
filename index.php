@@ -560,64 +560,16 @@ try {
             gap: 0.5rem;
             flex-wrap: wrap;
         }
-        @media (min-width: 769px) {
-            .navbar { padding: 1rem 2rem; }
-            .navbar-brand { font-size: 1.5rem; }
-            .navbar-brand i { font-size: 1.75rem; }
-            .theme-toggle { width: 60px; height: 32px; }
-            .theme-toggle-slider { width: 24px; height: 24px; font-size: 0.7rem; }
-            [data-theme="light"] .theme-toggle-slider { transform: translateX(28px); }
-            .user-info { padding: 0.5rem 1rem; gap: 0.75rem; }
-            .user-avatar { width: 35px; height: 35px; font-size: 1rem; }
-            .nav-btn { padding: 0.6rem 1.2rem; font-size: 1rem; }
-            .sidebar { width: 260px; top: 70px; }
-            .main-content { margin-top: 70px; padding: 2rem; margin-left: 0; }
-            .main-content.sidebar-open { margin-left: 260px; }
-            .page-title { font-size: 2rem; }
-            .page-subtitle { font-size: 1rem; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-            .stat-card { padding: 1.75rem; min-height: 180px; border-radius: 20px; }
-            .stat-icon { width: 50px; height: 50px; font-size: 1.5rem; }
-            .stat-value { font-size: 2.5rem; }
-            .stat-label { font-size: 0.95rem; }
-            .checker-section, .generator-section { padding: 2.5rem; border-radius: 24px; }
-            .checker-title, .generator-title { font-size: 1.75rem; }
-            .checker-title i, .generator-title i { font-size: 1.2rem; }
-            .settings-btn { padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 12px; }
-            .input-label { font-size: 1rem; }
-            .card-textarea { min-height: 200px; padding: 1.25rem; font-size: 1rem; border-radius: 16px; }
-            .btn { padding: 0.9rem 2rem; min-width: 140px; font-size: 1rem; border-radius: 14px; }
-            .results-section { padding: 2.5rem; border-radius: 24px; }
-            .results-title { font-size: 1.75rem; }
-            .results-title i { font-size: 1.2rem; }
-            .filter-btn { padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; }
-            .settings-content { padding: 2rem; max-width: 600px; border-radius: 24px; }
-            .settings-title { font-size: 1.5rem; }
-            .settings-close { width: 35px; height: 35px; font-size: 1rem; border-radius: 10px; }
-            .gateway-group-title { font-size: 1.1rem; }
-            .gateway-option { padding: 1rem; border-radius: 12px; }
-            .gateway-option input[type="radio"] { width: 20px; height: 20px; }
-            .gateway-option-name { font-size: 1rem; }
-            .gateway-option-desc { font-size: 0.85rem; }
-            .gateway-badge { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 6px; }
-            .btn-save, .btn-cancel { padding: 0.9rem; font-size: 1rem; border-radius: 12px; }
-            .loader { width: 40px; height: 40px; border-width: 4px; }
-            #statusLog, #genStatusLog { font-size: 0.95rem; }
-            .copy-btn { font-size: 1rem; }
-            .menu-toggle { font-size: 1.5rem; padding: 0.5rem; }
-            .generated-cards-container { padding: 1rem; font-size: 1rem; max-height: 400px; }
-            .custom-select select { padding: 1rem; font-size: 1rem; }
-            .custom-input-group input { padding: 1rem; font-size: 1rem; }
-            .custom-input-group .input-group-text { padding: 0 1rem; font-size: 1rem; }
-            .copy-all-btn, .clear-all-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
-        }
         
         /* Mobile-specific styles */
         @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .navbar { padding: 0.4rem 0.8rem; }
             .navbar-brand { font-size: 1rem; }
             .navbar-brand i { font-size: 1rem; }
             .user-avatar { width: 20px; height: 20px; font-size: 0.7rem; }
             .nav-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+            .sidebar { width: 80vw; }
             .page-title { font-size: 1.2rem; }
             .page-subtitle { font-size: 0.8rem; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
@@ -640,6 +592,10 @@ try {
             .copy-all-btn, .clear-all-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
             .form-row { flex-direction: column; gap: 0.5rem; }
             .form-col { min-width: 100%; }
+            .settings-content { max-width: 95vw; }
+            .gateway-option { padding: 0.5rem; }
+            .gateway-option-name { font-size: 0.8rem; }
+            .gateway-option-desc { font-size: 0.65rem; }
         }
     </style>
 </head>
@@ -864,7 +820,7 @@ try {
 
                 <div class="form-group">
                     <label class="input-label">Number of Cards</label>
-                    <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="100">
+                    <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="5000">
                 </div>
 
                 <div class="action-buttons">
@@ -1523,16 +1479,37 @@ try {
             }
             
             // Validate number of cards
-            if (isNaN(numCards) || numCards < 1 || numCards > 100) {
+            if (isNaN(numCards) || numCards < 1 || numCards > 5000) {
                 Swal.fire({
                     title: 'Invalid Number!',
-                    text: 'Please enter a number between 1 and 100',
+                    text: 'Please enter a number between 1 and 5000',
                     icon: 'error',
                     confirmButtonColor: '#ec4899'
                 });
                 return;
             }
             
+            // Show warning for large number of cards
+            if (numCards > 1000) {
+                Swal.fire({
+                    title: 'Large Number of Cards',
+                    text: `You are about to generate ${numCards} cards. This may take a while and use significant resources. Continue?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'Yes, generate'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        continueGenerateCards(bin, month, year, cvv, numCards);
+                    }
+                });
+            } else {
+                continueGenerateCards(bin, month, year, cvv, numCards);
+            }
+        }
+        
+        function continueGenerateCards(bin, month, year, cvv, numCards) {
             // Validate year if not random
             if (year !== 'rnd') {
                 // Convert two-digit year to four-digit
@@ -1759,7 +1736,7 @@ try {
                 if (result.isConfirmed) {
                     // Perform logout action (e.g., clear session and redirect)
                     sessionStorage.clear();
-                    window.location.href = 'https://cardxchk.onrender.com/login.php';
+                    window.location.href = 'http://cxchk.site/login.php';
                 }
             });
         }
