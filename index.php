@@ -442,39 +442,19 @@ try {
             color: var(--error);
             transform: translateX(5px);
         }
-        .generated-card {
+        .generated-cards-container {
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 0.75rem;
-            margin-bottom: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .generated-card-text {
-            flex: 1;
-            word-break: break-all;
-        }
-        .generated-card-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .card-copy-btn, .card-check-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            color: var(--accent-blue);
             font-size: 0.8rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        .card-copy-btn:hover, .card-check-btn:hover {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-purple);
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
         }
         .custom-select {
             position: relative;
@@ -548,7 +528,7 @@ try {
             background: rgba(59, 130, 246, 0.1);
             color: var(--accent-blue);
         }
-        .copy-all-btn {
+        .copy-all-btn, .clear-all-btn {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid var(--accent-blue);
             color: var(--accent-blue);
@@ -562,9 +542,23 @@ try {
             align-items: center;
             gap: 0.3rem;
         }
-        .copy-all-btn:hover {
+        .copy-all-btn:hover, .clear-all-btn:hover {
             background: var(--accent-blue);
             color: white;
+        }
+        .clear-all-btn {
+            border-color: var(--error);
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .clear-all-btn:hover {
+            background: var(--error);
+            color: white;
+        }
+        .results-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
         @media (min-width: 769px) {
             .navbar { padding: 1rem 2rem; }
@@ -611,13 +605,41 @@ try {
             #statusLog, #genStatusLog { font-size: 0.95rem; }
             .copy-btn { font-size: 1rem; }
             .menu-toggle { font-size: 1.5rem; padding: 0.5rem; }
-            .generated-card { padding: 1rem; }
-            .generated-card-text { font-size: 1rem; }
-            .card-copy-btn, .card-check-btn { font-size: 0.9rem; padding: 0.3rem 0.7rem; }
+            .generated-cards-container { padding: 1rem; font-size: 1rem; max-height: 400px; }
             .custom-select select { padding: 1rem; font-size: 1rem; }
             .custom-input-group input { padding: 1rem; font-size: 1rem; }
             .custom-input-group .input-group-text { padding: 0 1rem; font-size: 1rem; }
-            .copy-all-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
+            .copy-all-btn, .clear-all-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
+        }
+        
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            .navbar-brand { font-size: 1rem; }
+            .navbar-brand i { font-size: 1rem; }
+            .user-avatar { width: 20px; height: 20px; font-size: 0.7rem; }
+            .nav-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+            .page-title { font-size: 1.2rem; }
+            .page-subtitle { font-size: 0.8rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+            .stat-card { padding: 0.5rem; min-height: 80px; }
+            .stat-icon { width: 25px; height: 25px; font-size: 0.8rem; }
+            .stat-value { font-size: 1rem; }
+            .stat-label { font-size: 0.6rem; }
+            .checker-section, .generator-section { padding: 0.75rem; }
+            .checker-title, .generator-title { font-size: 1rem; }
+            .checker-title i, .generator-title i { font-size: 0.8rem; }
+            .settings-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+            .input-label { font-size: 0.8rem; }
+            .card-textarea { min-height: 100px; padding: 0.5rem; font-size: 0.8rem; }
+            .btn { padding: 0.4rem 0.8rem; min-width: 80px; font-size: 0.8rem; }
+            .results-section { padding: 0.75rem; }
+            .results-title { font-size: 1rem; }
+            .results-title i { font-size: 0.8rem; }
+            .filter-btn { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
+            .generated-cards-container { max-height: 200px; font-size: 0.7rem; padding: 0.5rem; }
+            .copy-all-btn, .clear-all-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+            .form-row { flex-direction: column; gap: 0.5rem; }
+            .form-col { min-width: 100%; }
         }
     </style>
 </head>
@@ -862,9 +884,14 @@ try {
                     <div class="results-title">
                         <i class="fas fa-list"></i> Generated Cards
                     </div>
-                    <button class="copy-all-btn" id="copyAllBtn" style="display: none;">
-                        <i class="fas fa-copy"></i> Copy All
-                    </button>
+                    <div class="results-actions">
+                        <button class="copy-all-btn" id="copyAllBtn" style="display: none;">
+                            <i class="fas fa-copy"></i> Copy All
+                        </button>
+                        <button class="clear-all-btn" id="clearAllBtn" style="display: none;">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
                 </div>
                 <div id="generatedCardsList" class="empty-state">
                     <i class="fas fa-inbox"></i>
@@ -1149,29 +1176,30 @@ try {
             }
         }
 
-        function addGeneratedCard(card) {
+        function displayGeneratedCards(cards) {
             const cardsList = document.getElementById('generatedCardsList');
             if (!cardsList) return;
             
             if (cardsList.classList.contains('empty-state')) {
                 cardsList.classList.remove('empty-state');
                 cardsList.innerHTML = '';
-                document.getElementById('copyAllBtn').style.display = 'flex';
             }
             
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'generated-card';
-            cardDiv.innerHTML = `
-                <div class="generated-card-text">${card}</div>
-                <div class="generated-card-actions">
-                    <button class="card-copy-btn" onclick="copyToClipboard('${card}')"><i class="fas fa-copy"></i></button>
-                    <button class="card-check-btn" onclick="checkGeneratedCard('${card}')"><i class="fas fa-check-circle"></i></button>
-                </div>
-            `;
-            cardsList.appendChild(cardDiv);
+            // Create a single container for all cards
+            const cardsContainer = document.createElement('div');
+            cardsContainer.className = 'generated-cards-container';
+            cardsContainer.textContent = cards.join('\n');
             
-            // Add to generated cards data array
-            generatedCardsData.push(card);
+            // Clear previous cards and add the new container
+            cardsList.innerHTML = '';
+            cardsList.appendChild(cardsContainer);
+            
+            // Show action buttons
+            document.getElementById('copyAllBtn').style.display = 'flex';
+            document.getElementById('clearAllBtn').style.display = 'flex';
+            
+            // Store the cards data
+            generatedCardsData = cards;
         }
 
         function copyToClipboard(text) {
@@ -1202,6 +1230,28 @@ try {
                 });
             }).catch(err => {
                 console.error('Failed to copy: ', err);
+            });
+        }
+
+        function clearAllGeneratedCards() {
+            const cardsList = document.getElementById('generatedCardsList');
+            if (cardsList) {
+                cardsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Cards Generated Yet</h3>
+                        <p>Generate cards to see them here</p>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('copyAllBtn').style.display = 'none';
+            document.getElementById('clearAllBtn').style.display = 'none';
+            generatedCardsData = [];
+            
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success',
+                title: 'Cleared!', showConfirmButton: false, timer: 1500
             });
         }
 
@@ -1526,9 +1576,6 @@ try {
             // Show loader
             $('#genLoader').show();
             $('#genStatusLog').text('Generating cards...');
-            $('#generatedCardsList').html('');
-            generatedCardsData = [];
-            document.getElementById('copyAllBtn').style.display = 'none';
             
             // Make AJAX request
             $.ajax({
@@ -1547,10 +1594,8 @@ try {
                     if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
                         $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
                         
-                        // Add cards to the list
-                        response.cards.forEach(card => {
-                            addGeneratedCard(card);
-                        });
+                        // Display all cards in a single box
+                        displayGeneratedCards(response.cards);
                         
                         Swal.fire({
                             title: 'Success!',
@@ -1594,6 +1639,7 @@ try {
         $('#startBtn').on('click', processCards);
         $('#generateBtn').on('click', generateCards);
         $('#copyAllBtn').on('click', copyAllGeneratedCards);
+        $('#clearAllBtn').on('click', clearAllGeneratedCards);
 
         $('#stopBtn').on('click', function() {
             if (!isProcessing || isStopping) return;
@@ -1646,6 +1692,7 @@ try {
             $('#genStatusLog').text('');
             generatedCardsData = [];
             document.getElementById('copyAllBtn').style.display = 'none';
+            document.getElementById('clearAllBtn').style.display = 'none';
             Swal.fire({
                 toast: true, position: 'top-end', icon: 'success',
                 title: 'Cleared!', showConfirmButton: false, timer: 1500
