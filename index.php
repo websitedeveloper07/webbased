@@ -12,7 +12,7 @@ error_log("Checking session in index.php: " . json_encode($_SESSION));
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     error_log("Redirecting to login.php: Session missing or invalid auth_provider");
-    header('Location: https://cardxchk.onrender.com/login.php');
+    header('Location: http://cxchk.site/login.php');
     exit;
 }
 
