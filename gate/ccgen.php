@@ -1,5 +1,11 @@
 <?php
 
+// Set a higher execution time limit for generating many cards
+set_time_limit(300); // 5 minutes
+
+// Increase memory limit if needed
+ini_set('memory_limit', '512M');
+
 // Function to perform Luhn checksum validation
 function luhn_checksum($number) {
     $number = strrev(preg_replace('/[^0-9]/', '', $number));
@@ -45,7 +51,9 @@ function generate_cards($input, $num_cards = 10, $format_index = 0) {
 
     // Generate cards
     $attempts = 0;
-    $max_attempts = $num_cards * 100;
+    // Adjust max_attempts based on the number of cards requested
+    $max_attempts = max($num_cards * 20, 200000); // Increased multiplier for more attempts with larger numbers
+    
     while (count($cards) < $num_cards && $attempts < $max_attempts) {
         $attempts++;
         $suffix_len = $card_length - strlen($card_base);
@@ -74,6 +82,11 @@ function generate_cards($input, $num_cards = 10, $format_index = 0) {
         ];
 
         $cards[] = $card_formats[$format_index];
+        
+        // Periodically check if we've reached the target to avoid unnecessary iterations
+        if (count($cards) >= $num_cards) {
+            break;
+        }
     }
 
     if (count($cards) == 0) {
@@ -91,6 +104,13 @@ function generate_cards($input, $num_cards = 10, $format_index = 0) {
 if (empty($input)) {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['error' => "Please provide BIN or sequence (at least 6 digits). Usage: ccgen.php?bin=414740&num=10&format=0"]);
+    exit;
+}
+
+// Validate number of cards (updated to 5000)
+if ($num_cards < 1 || $num_cards > 5000) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['error' => "Number of cards must be between 1 and 5000."]);
     exit;
 }
 
