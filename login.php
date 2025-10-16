@@ -313,30 +313,39 @@ if (isset($_SESSION['user'])) {
             margin-bottom: 30px;
         }
         
-        /* Telegram Widget */
-        .telegram-widget-container {
-            margin: 25px 0;
+        /* Telegram Button */
+        .telegram-button {
+            background: linear-gradient(135deg, #0088cc, #0088cc);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
+            align-items: center;
             justify-content: center;
-            position: relative;
+            gap: 12px;
+            width: 100%;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+            text-decoration: none;
         }
         
-        .telegram-widget-container::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            right: -8px;
-            bottom: -8px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            border-radius: 10px;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .telegram-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.4);
+            background: linear-gradient(135deg, #0099ee, #0099ee);
         }
         
-        .telegram-widget-container:hover::before {
-            opacity: 1;
+        .telegram-button:active {
+            transform: translateY(0);
+        }
+        
+        .telegram-button i {
+            font-size: 20px;
         }
         
         /* Error Message */
@@ -380,20 +389,6 @@ if (isset($_SESSION['user'])) {
             -webkit-text-fill-color: transparent;
             background-clip: text;
             text-fill-color: transparent;
-        }
-        
-        /* Loader */
-        .loader {
-            width: 24px;
-            height: 24px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: #3b82f6;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
         
         /* Mobile optimizations */
@@ -454,6 +449,11 @@ if (isset($_SESSION['user'])) {
             .footer {
                 font-size: 10px;
             }
+            
+            .telegram-button {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
         }
         
         /* Small mobile devices */
@@ -472,6 +472,11 @@ if (isset($_SESSION['user'])) {
                 width: 44px;
                 height: 44px;
                 font-size: 18px;
+            }
+            
+            .telegram-button {
+                padding: 11px 18px;
+                font-size: 14px;
             }
         }
     </style>
@@ -503,71 +508,17 @@ if (isset($_SESSION['user'])) {
             </div>
         <?php endif; ?>
         
-        <div class="telegram-widget-container">
-            <div id="telegram-loader" class="loader"></div>
-            <div id="telegram-widget" style="display: none;">
-                <script async src="https://telegram.org/js/telegram-widget.js?22"
-                        data-telegram-login="CardXchk_LOGBOT"
-                        data-size="large"
-                        data-auth-url="<?= $baseUrl ?>/login.php"
-                        data-request-access="write"
-                        data-userpic="false"
-                        onload="widgetLoaded()"
-                        onerror="widgetError()"></script>
-            </div>
-        </div>
+        <!-- Simple Telegram Login Button -->
+        <a href="https://oauth.telegram.org/auth?bot_id=<?= $telegramBotUsername ?>&origin=<?= urlencode($baseUrl) ?>&return_to=<?= urlencode($baseUrl) ?>/login.php&request_access=write" 
+           class="telegram-button">
+            <i class="fab fa-telegram"></i>
+            Login with Telegram
+        </a>
         
         <div class="footer">
             <div class="footer-divider">𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</div>
             <div>Powered by <span class="footer-brand">kคli liຖนxx</span></div>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function widgetLoaded() {
-            document.getElementById('telegram-loader').style.display = 'none';
-            document.getElementById('telegram-widget').style.display = 'block';
-        }
-        
-        function widgetError() {
-            document.getElementById('telegram-loader').style.display = 'none';
-            
-            Swal.fire({
-                title: 'Login Issue',
-                text: 'Telegram login failed to load. Please check your connection and try again.',
-                icon: 'warning',
-                confirmButtonText: 'Retry',
-                confirmButtonColor: '#3b82f6'
-            }).then(() => {
-                location.reload();
-            });
-        }
-        
-        // Check if widget loaded after timeout
-        setTimeout(() => {
-            const widget = document.querySelector('#telegram-widget iframe');
-            if (!widget) {
-                widgetError();
-            }
-        }, 5000);
-        
-        // Add subtle parallax effect on mouse move (desktop only)
-        if (window.innerWidth > 768) {
-            document.addEventListener('mousemove', (e) => {
-                const orbs = document.querySelectorAll('.orb');
-                const x = e.clientX / window.innerWidth;
-                const y = e.clientY / window.innerHeight;
-                
-                orbs.forEach((orb, index) => {
-                    const speed = (index + 1) * 10;
-                    const xPos = (x - 0.5) * speed;
-                    const yPos = (y - 0.5) * speed;
-                    
-                    orb.style.transform = `translate(${xPos}px, ${yPos}px)`;
-                });
-            });
-        }
-    </script>
 </body>
 </html>
