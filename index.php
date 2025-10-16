@@ -548,6 +548,24 @@ try {
             background: rgba(59, 130, 246, 0.1);
             color: var(--accent-blue);
         }
+        .copy-all-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .copy-all-btn:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
         @media (min-width: 769px) {
             .navbar { padding: 1rem 2rem; }
             .navbar-brand { font-size: 1.5rem; }
@@ -599,6 +617,7 @@ try {
             .custom-select select { padding: 1rem; font-size: 1rem; }
             .custom-input-group input { padding: 1rem; font-size: 1rem; }
             .custom-input-group .input-group-text { padding: 0 1rem; font-size: 1rem; }
+            .copy-all-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -664,7 +683,7 @@ try {
     <main class="main-content">
         <section class="page-section active" id="page-home">
             <h1 class="page-title">𝐃𝐚𝐬𝐡𝐛𝐨𝐚𝐫𝐝</h1>
-            <p class="page-subtitle">𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐛𝐚𝐜𝐤! 𝐇𝐞𝐫𝐞’𝐬 𝐲𝐨𝐮𝐫 𝐜𝐮𝐫𝐫𝐞𝐧𝐭 𝐬𝐭𝐚𝐭𝐬.</p>
+            <p class="page-subtitle">𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐛𝐚𝐜𝐤! 𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐜𝐮𝐫𝐫𝐞𝐧𝐭 𝐬𝐭𝐚𝐭𝐬.</p>
 
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
@@ -843,6 +862,9 @@ try {
                     <div class="results-title">
                         <i class="fas fa-list"></i> Generated Cards
                     </div>
+                    <button class="copy-all-btn" id="copyAllBtn" style="display: none;">
+                        <i class="fas fa-copy"></i> Copy All
+                    </button>
                 </div>
                 <div id="generatedCardsList" class="empty-state">
                     <i class="fas fa-inbox"></i>
@@ -968,6 +990,7 @@ try {
         let declinedCards = [];
         let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         let sidebarOpen = false;
+        let generatedCardsData = [];
 
         window.addEventListener('load', function() {
             const movingLogo = document.getElementById('movingLogo');
@@ -1133,6 +1156,7 @@ try {
             if (cardsList.classList.contains('empty-state')) {
                 cardsList.classList.remove('empty-state');
                 cardsList.innerHTML = '';
+                document.getElementById('copyAllBtn').style.display = 'flex';
             }
             
             const cardDiv = document.createElement('div');
@@ -1145,6 +1169,9 @@ try {
                 </div>
             `;
             cardsList.appendChild(cardDiv);
+            
+            // Add to generated cards data array
+            generatedCardsData.push(card);
         }
 
         function copyToClipboard(text) {
@@ -1152,6 +1179,26 @@ try {
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'success',
                     title: 'Copied!', showConfirmButton: false, timer: 1500
+                });
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function copyAllGeneratedCards() {
+            if (generatedCardsData.length === 0) {
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'warning',
+                    title: 'No cards to copy', showConfirmButton: false, timer: 1500
+                });
+                return;
+            }
+            
+            const allCardsText = generatedCardsData.join('\n');
+            navigator.clipboard.writeText(allCardsText).then(() => {
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success',
+                    title: 'All cards copied!', showConfirmButton: false, timer: 1500
                 });
             }).catch(err => {
                 console.error('Failed to copy: ', err);
@@ -1480,10 +1527,12 @@ try {
             $('#genLoader').show();
             $('#genStatusLog').text('Generating cards...');
             $('#generatedCardsList').html('');
+            generatedCardsData = [];
+            document.getElementById('copyAllBtn').style.display = 'none';
             
             // Make AJAX request
             $.ajax({
-                url: 'ccgen.php',
+                url: '/gate/ccgen.php',  // Updated path
                 method: 'GET',
                 data: {
                     bin: params,
@@ -1555,6 +1604,7 @@ try {
 
         $('#startBtn').on('click', processCards);
         $('#generateBtn').on('click', generateCards);
+        $('#copyAllBtn').on('click', copyAllGeneratedCards);
 
         $('#stopBtn').on('click', function() {
             if (!isProcessing || isStopping) return;
@@ -1605,6 +1655,8 @@ try {
             $('#numCardsInput').val('10');
             $('#generatedCardsList').html('<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Cards Generated Yet</h3><p>Generate cards to see them here</p></div>');
             $('#genStatusLog').text('');
+            generatedCardsData = [];
+            document.getElementById('copyAllBtn').style.display = 'none';
             Swal.fire({
                 toast: true, position: 'top-end', icon: 'success',
                 title: 'Cleared!', showConfirmButton: false, timer: 1500
