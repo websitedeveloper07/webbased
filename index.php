@@ -102,6 +102,9 @@ try {
             align-items: center; z-index: 1000; border-bottom: 1px solid var(--border-color);
             height: 50px;
         }
+        [data-theme="light"] .navbar {
+            background: rgba(255,255,255,0.85);
+        }
         .navbar-brand {
             display: flex; align-items: center; gap: 0.5rem;
             font-size: 1.2rem; font-weight: 700;
@@ -136,10 +139,16 @@ try {
             border: 2px solid var(--accent-blue);
             flex-shrink: 0;
         }
+        [data-theme="light"] .user-avatar {
+            border: 2px solid #ffffff;
+        }
         .user-name {
             font-weight: 600; color: var(--text-primary);
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap; font-size: 0.85rem;
+        }
+        [data-theme="light"] .user-name {
+            color: #ffffff !important;
         }
         .menu-toggle {
             color: #ffffff !important; font-size: 1.2rem; 
@@ -550,9 +559,9 @@ try {
             color: white;
         }
         .results-actions {
-            display: flex,
-            gap: 0.5rem,
-            flex-wrap: wrap,
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
         
         /* Mobile-specific styles */
@@ -601,28 +610,28 @@ try {
             .gateway-option-desc { font-size: 0.65rem; }
             .menu-toggle {
                 position: absolute;
-                left: 0.5rem,
-                top: 50%,
-                transform: translateY(-50%),
-                width: 32px,
-                height: 32px,
+                left: 0.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 32px;
+                height: 32px;
             }
             .navbar-brand {
-                margin-left: 2.2rem,
+                margin-left: 2.2rem;
             }
             .theme-toggle {
-                width: 32px,
-                height: 16px,
+                width: 32px;
+                height: 16px;
             }
             .theme-toggle-slider {
-                width: 12px,
-                height: 12px,
-                left: 2px,
+                width: 12px;
+                height: 12px;
+                left: 2px;
             }
             [data-theme="light"] .theme-toggle-slider { transform: translateX(14px); }
             .user-info {
-                padding: 0.1rem 0.3rem,
-                gap: 0.3rem,
+                padding: 0.1rem 0.3rem;
+                gap: 0.3rem;
             }
         }
         
