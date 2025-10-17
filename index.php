@@ -885,13 +885,13 @@ try {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal1$.php">
+                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                                <span class="gateway-badge badge-charge">0.1$ Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Popular online payment system</div>
+                            <div class="gateway-option-desc">Popular online payment system with minimal charge</div>
                         </div>
                     </label>
                     <label class="gateway-option">
