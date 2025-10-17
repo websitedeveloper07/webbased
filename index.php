@@ -97,13 +97,10 @@ try {
         }
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10,14,39,0.85); backdrop-filter: blur(10px);
+            background: rgba(10,14,39,0.95); backdrop-filter: blur(10px);
             padding: 0.5rem 1rem; display: flex; justify-content: space-between;
-            align-items: center; z-index: 1000; border-bottom: 1px solid var(--border-color);
+            align-items: center; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);
             height: 50px;
-        }
-        [data-theme="light"] .navbar {
-            background: rgba(255,255,255,0.85);
         }
         .navbar-brand {
             display: flex; align-items: center; gap: 0.5rem;
@@ -127,11 +124,8 @@ try {
         [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
             display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.05);
-            border-radius: 8px; border: 1px solid var(--border-color);
-        }
-        [data-theme="light"] .user-info {
-            background: rgba(0,0,0,0.05);
+            padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.1);
+            border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
         }
         .user-avatar {
             width: 28px; height: 28px; border-radius: 50%;
@@ -139,29 +133,18 @@ try {
             border: 2px solid var(--accent-blue);
             flex-shrink: 0;
         }
-        [data-theme="light"] .user-avatar {
-            border: 2px solid #ffffff;
-        }
         .user-name {
-            font-weight: 600; color: var(--text-primary);
+            font-weight: 600; color: #ffffff;
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap; font-size: 0.85rem;
-        }
-        [data-theme="light"] .user-name {
-            color: #ffffff !important;
         }
         .menu-toggle {
             color: #ffffff !important; font-size: 1.2rem; 
             transition: all 0.3s; display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.05);
+            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.1);
             flex-shrink: 0; cursor: pointer;
         }
-        [data-theme="light"] .menu-toggle {
-            color: #000000 !important;
-            background: rgba(0,0,0,0.05);
-        }
-        .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.1); }
-        [data-theme="light"] .menu-toggle:hover { background: rgba(0,0,0,0.1); }
+        .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.2); }
         .sidebar {
             position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
