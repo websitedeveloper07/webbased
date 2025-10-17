@@ -905,16 +905,6 @@ try {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify23$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">23$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">E-commerce payment processing with $23 charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/razorpay0.10$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
