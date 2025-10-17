@@ -113,7 +113,8 @@ try {
             position: fixed; top: 0; left: 0; right: 0;
             background: rgba(10,14,39,0.85); backdrop-filter: blur(10px);
             padding: 0.5rem 1rem; display: flex; justify-content: space-between;
-            z-index: 1000; border-bottom: 1px solid var(--border-color);
+            align-items: center; z-index: 1000; border-bottom: 1px solid var(--border-color);
+            height: 50px;
         }
         .navbar-brand {
             display: flex; align-items: center; gap: 0.5rem;
@@ -138,25 +139,28 @@ try {
         }
         [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
-            display: flex; align-items: center; gap: 0.3rem;
+            display: flex; align-items: center; gap: 0.5rem;
             padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.05);
             border-radius: 8px; border: 1px solid var(--border-color);
         }
         .user-avatar {
-            width: 25px; height: 25px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-purple), #ec4899);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 600; color: white; font-size: 0.8rem;
+            width: 28px; height: 28px; border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-blue);
+            flex-shrink: 0;
         }
-        .nav-btn {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
-            padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer;
-            display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem;
+        .user-name {
+            font-weight: 600; color: var(--text-primary);
+            max-width: 80px; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; font-size: 0.85rem;
         }
-        .nav-btn.primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            border: none; color: white;
+        .menu-toggle {
+            color: #ffffff !important; font-size: 1.2rem; padding: 0.3rem; cursor: pointer; 
+            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.05);
+            flex-shrink: 0;
         }
+        .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.1); }
         .sidebar {
             position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
@@ -430,8 +434,6 @@ try {
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
-        .menu-toggle { color: #ffffff !important; font-size: 1.2rem; padding: 0.3rem; cursor: pointer; transition: all 0.3s; }
-        .menu-toggle:hover { transform: scale(1.1); }
         .sidebar-link.logout {
             color: var(--error);
             background: rgba(239, 68, 68, 0.1);
@@ -564,12 +566,22 @@ try {
         /* Mobile-specific styles */
         @media (max-width: 768px) {
             body { font-size: 14px; }
-            .navbar { padding: 0.4rem 0.8rem; }
-            .navbar-brand { font-size: 1rem; }
+            .navbar { 
+                padding: 0.4rem 0.6rem; 
+                height: 48px;
+            }
+            .navbar-brand { 
+                font-size: 1rem; 
+                margin-left: 0.5rem;
+            }
             .navbar-brand i { font-size: 1rem; }
-            .user-avatar { width: 20px; height: 20px; font-size: 0.7rem; }
-            .nav-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
-            .sidebar { width: 80vw; }
+            .user-avatar { width: 24px; height: 24px; }
+            .user-name { 
+                max-width: 60px; 
+                font-size: 0.75rem;
+                display: none; /* Hide name on very small screens */
+            }
+            .sidebar { width: 75vw; }
             .page-title { font-size: 1.2rem; }
             .page-subtitle { font-size: 0.8rem; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
@@ -596,6 +608,46 @@ try {
             .gateway-option { padding: 0.5rem; }
             .gateway-option-name { font-size: 0.8rem; }
             .gateway-option-desc { font-size: 0.65rem; }
+            .menu-toggle {
+                position: absolute;
+                left: 0.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 32px;
+                height: 32px;
+            }
+            .navbar-brand {
+                margin-left: 2.2rem;
+            }
+            .theme-toggle {
+                width: 32px;
+                height: 16px;
+            }
+            .theme-toggle-slider {
+                width: 12px;
+                height: 12px;
+                left: 2px;
+            }
+            [data-theme="light"] .theme-toggle-slider { transform: translateX(14px); }
+            .user-info {
+                padding: 0.1rem 0.3rem;
+                gap: 0.3rem;
+            }
+        }
+        
+        /* For very small screens */
+        @media (max-width: 480px) {
+            .navbar { padding: 0.3rem 0.5rem; }
+            .navbar-brand { font-size: 0.9rem; }
+            .user-avatar { width: 22px; height: 22px; }
+            .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
+            .sidebar { width: 85vw; }
+            .page-title { font-size: 1.1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+            .stat-card { padding: 0.4rem; min-height: 70px; }
+            .stat-value { font-size: 0.9rem; }
+            .stat-label { font-size: 0.55rem; }
+            .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -604,6 +656,9 @@ try {
     <i class="fas fa-credit-card moving-logo" id="movingLogo"></i>
 
     <nav class="navbar">
+        <div class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </div>
         <div class="navbar-brand">
             <i class="fas fa-credit-card" id="navbarLogo"></i>
             <span class="brand-text" id="brandText">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
@@ -613,16 +668,24 @@ try {
                 <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
             </div>
             <div class="user-info">
-                <div class="user-avatar">
-                    <?php echo strtoupper(substr($_SESSION['user']['first_name'] ?? 'U', 0, 1)); ?>
-                </div>
-                <span><?php echo htmlspecialchars($_SESSION['user']['first_name'] ?? 'User'); ?></span>
-            </div>
-            <button class="nav-btn primary">
-                <i class="fas fa-crown"></i><span>10 Days Left</span>
-            </button>
-            <div class="menu-toggle" id="menuToggle">
-                <i class="fas fa-bars"></i>
+                <img src="<?php 
+                    // Use Telegram profile photo if available, otherwise generate avatar
+                    if (!empty($_SESSION['user']['photo_url'])) {
+                        echo htmlspecialchars($_SESSION['user']['photo_url']);
+                    } else {
+                        // Generate avatar with initials
+                        $initials = substr($_SESSION['user']['first_name'], 0, 1);
+                        if (!empty($_SESSION['user']['last_name'])) {
+                            $initials .= substr($_SESSION['user']['last_name'], 0, 1);
+                        }
+                        echo 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
+                    }
+                ?>" alt="Profile" class="user-avatar">
+                <span class="user-name"><?php 
+                    // Display user's real name from Telegram
+                    $fullName = trim($_SESSION['user']['first_name'] . ' ' . ($_SESSION['user']['last_name'] ?? ''));
+                    echo htmlspecialchars($fullName ?: 'User');
+                ?></span>
             </div>
         </div>
     </nav>
