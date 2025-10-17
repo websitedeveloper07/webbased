@@ -95,20 +95,6 @@ try {
             font-family: Inter, sans-serif; background: var(--primary-bg);
             color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
         }
-        .blur-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            backdrop-filter: blur(5px); z-index: 9998; opacity: 0; display: none;
-        }
-        .blur-overlay.active { opacity: 1; display: block; }
-        .moving-logo {
-            position: fixed; font-size: 3rem; z-index: 10000;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            transition: all 1.2s ease-in-out;
-        }
-        .moving-logo.in-position { font-size: 1.2rem; top: 1rem; left: 1rem; transform: translate(0,0); }
-        .moving-logo.hidden { opacity: 0; }
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
             background: rgba(10,14,39,0.85); backdrop-filter: blur(10px);
@@ -116,15 +102,16 @@ try {
             align-items: center; z-index: 1000; border-bottom: 1px solid var(--border-color);
             height: 50px;
         }
+        [data-theme="light"] .navbar {
+            background: rgba(255,255,255,0.85);
+        }
         .navbar-brand {
             display: flex; align-items: center; gap: 0.5rem;
             font-size: 1.2rem; font-weight: 700;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .navbar-brand i { opacity: 0; font-size: 1.2rem; transition: opacity 0.5s; }
-        .navbar-brand i.visible, .brand-text.visible { opacity: 1; }
-        .brand-text { opacity: 0; transition: opacity 0.5s; }
+        .navbar-brand i { font-size: 1.2rem; }
         .navbar-actions { display: flex; align-items: center; gap: 0.5rem; }
         .theme-toggle {
             width: 40px; height: 20px; background: var(--secondary-bg);
@@ -143,6 +130,9 @@ try {
             padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.05);
             border-radius: 8px; border: 1px solid var(--border-color);
         }
+        [data-theme="light"] .user-info {
+            background: rgba(0,0,0,0.05);
+        }
         .user-avatar {
             width: 28px; height: 28px; border-radius: 50%;
             object-fit: cover;
@@ -155,12 +145,17 @@ try {
             white-space: nowrap; font-size: 0.85rem;
         }
         .menu-toggle {
-            color: #ffffff !important; font-size: 1.2rem; padding: 0.3rem; cursor: pointer; 
+            color: #ffffff !important; font-size: 1.2rem; 
             transition: all 0.3s; display: flex; align-items: center; justify-content: center;
             width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.05);
-            flex-shrink: 0;
+            flex-shrink: 0; cursor: pointer;
+        }
+        [data-theme="light"] .menu-toggle {
+            color: #000000 !important;
+            background: rgba(0,0,0,0.05);
         }
         .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.1); }
+        [data-theme="light"] .menu-toggle:hover { background: rgba(0,0,0,0.1); }
         .sidebar {
             position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
@@ -579,7 +574,6 @@ try {
             .user-name { 
                 max-width: 60px; 
                 font-size: 0.75rem;
-                display: none; /* Hide name on very small screens */
             }
             .sidebar { width: 75vw; }
             .page-title { font-size: 1.2rem; }
@@ -640,6 +634,10 @@ try {
             .navbar { padding: 0.3rem 0.5rem; }
             .navbar-brand { font-size: 0.9rem; }
             .user-avatar { width: 22px; height: 22px; }
+            .user-name { 
+                max-width: 50px; 
+                font-size: 0.7rem;
+            }
             .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
             .sidebar { width: 85vw; }
             .page-title { font-size: 1.1rem; }
@@ -652,16 +650,13 @@ try {
     </style>
 </head>
 <body data-theme="light">
-    <div class="blur-overlay" id="blurOverlay"></div>
-    <i class="fas fa-credit-card moving-logo" id="movingLogo"></i>
-
     <nav class="navbar">
         <div class="menu-toggle" id="menuToggle">
             <i class="fas fa-bars"></i>
         </div>
         <div class="navbar-brand">
-            <i class="fas fa-credit-card" id="navbarLogo"></i>
-            <span class="brand-text" id="brandText">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
+            <i class="fas fa-credit-card"></i>
+            <span class="brand-text">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
         </div>
         <div class="navbar-actions">
             <div class="theme-toggle" onclick="toggleTheme()">
@@ -1037,29 +1032,6 @@ try {
         let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         let sidebarOpen = false;
         let generatedCardsData = [];
-
-        window.addEventListener('load', function() {
-            const movingLogo = document.getElementById('movingLogo');
-            const navbarLogo = document.getElementById('navbarLogo');
-            const brandText = document.getElementById('brandText');
-            const blurOverlay = document.getElementById('blurOverlay');
-
-            setTimeout(function() {
-                movingLogo.classList.add('in-position');
-                blurOverlay.classList.add('active');
-                setTimeout(function() {
-                    navbarLogo.classList.add('visible');
-                    brandText.classList.add('visible');
-                    setTimeout(function() {
-                        movingLogo.classList.add('hidden');
-                        blurOverlay.classList.remove('active');
-                    }, 200);
-                    setTimeout(function() {
-                        blurOverlay.style.display = 'none';
-                    }, 400);
-                }, 1200);
-            }, 800);
-        });
 
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
         document.addEventListener('contextmenu', e => {
