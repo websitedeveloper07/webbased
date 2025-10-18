@@ -335,19 +335,16 @@ try {
             letter-spacing: 0.5px;
         }
         
-        .stat-card.total .stat-value { color: #764ba2; }
-        .stat-card.charged .stat-value { color: #f5576c; }
-        .stat-card.approved .stat-value { color: #00f2fe; }
-        .stat-card.threeds .stat-value { color: #38f9d7; }
-        .stat-card.declined .stat-value { color: #fee140; }
-        .stat-card.checked .stat-value { color: #30cfd0; }
+        /* Fixed: Changed color for declined cards to red */
+        .stat-card.declined .stat-value { color: var(--declined-red); }
+        .stat-card.charged .stat-value { color: var(--success-green); }
+        .stat-card.approved .stat-value { color: var(--success-green); }
+        .stat-card.threeds .stat-value { color: var(--success-green); }
         
-        [data-theme="light"] .stat-card.total .stat-value { color: #764ba2; }
-        [data-theme="light"] .stat-card.charged .stat-value { color: #f5576c; }
-        [data-theme="light"] .stat-card.approved .stat-value { color: #0099cc; }
-        [data-theme="light"] .stat-card.threeds .stat-value { color: #00cc99; }
-        [data-theme="light"] .stat-card.declined .stat-value { color: #ff9900; }
-        [data-theme="light"] .stat-card.checked .stat-value { color: #30cfd0; }
+        [data-theme="light"] .stat-card.declined .stat-value { color: var(--declined-red); }
+        [data-theme="light"] .stat-card.charged .stat-value { color: var(--success-green); }
+        [data-theme="light"] .stat-card.approved .stat-value { color: var(--success-green); }
+        [data-theme="light"] .stat-card.threeds .stat-value { color: var(--success-green); }
         
         .stat-indicator {
             position: absolute;
@@ -363,7 +360,7 @@ try {
         .stat-card.charged .stat-indicator { background: rgba(245, 87, 108, 0.7); }
         .stat-card.approved .stat-indicator { background: rgba(0, 242, 254, 0.7); }
         .stat-card.threeds .stat-indicator { background: rgba(56, 249, 215, 0.7); }
-        .stat-card.declined .stat-indicator { background: rgba(254, 225, 64, 0.7); }
+        .stat-card.declined .stat-indicator { background: rgba(239, 68, 68, 0.7); }
         .stat-card.checked .stat-indicator { background: rgba(48, 207, 208, 0.7); }
         
         .recent-activity {
@@ -440,10 +437,11 @@ try {
             color: var(--text-secondary);
         }
         
-        .activity-item.charged .activity-status { color: #f5576c; }
-        .activity-item.approved .activity-status { color: #00f2fe; }
-        .activity-item.threeds .activity-status { color: #38f9d7; }
-        .activity-item.declined .activity-status { color: #fee140; }
+        /* Fixed: Changed color for declined cards to red in activity feed */
+        .activity-item.charged .activity-status { color: var(--success-green); }
+        .activity-item.approved .activity-status { color: var(--success-green); }
+        .activity-item.threeds .activity-status { color: var(--success-green); }
+        .activity-item.declined .activity-status { color: var(--declined-red); }
         
         .activity-time {
             font-size: 0.7rem;
@@ -648,8 +646,11 @@ try {
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
+        
+        /* Fixed: Changed color for declined cards to red in results */
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
+        
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
