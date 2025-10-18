@@ -598,70 +598,6 @@ if (isset($_SESSION['user'])) {
             text-align: center;
         }
 
-        .telegram-fallback {
-            display: none;
-            width: 100%;
-            padding: 16px;
-            background: rgba(120, 20, 180, 0.1);
-            border: 1px solid rgba(120, 20, 180, 0.3);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .telegram-fallback.show {
-            display: block;
-        }
-
-        .fallback-title {
-            color: #a855f7;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .fallback-message {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 10px;
-            margin-bottom: 12px;
-        }
-
-        .manual-login-btn {
-            background: linear-gradient(135deg, #a855f7, #3b82f6);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .manual-login-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .manual-login-btn:hover::before {
-            left: 100%;
-        }
-
-        .manual-login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(120, 20, 180, 0.4);
-        }
-
         /* Security Badges */
         .security {
             display: flex;
@@ -852,7 +788,7 @@ if (isset($_SESSION['user'])) {
 
             <div class="telegram-section">
                 <div class="telegram-widget-container">
-                    <div class="telegram-widget" id="telegramWidget">
+                    <div class="telegram-widget">
                         <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="<?= htmlspecialchars($telegramBotUsername) ?>"
@@ -861,14 +797,6 @@ if (isset($_SESSION['user'])) {
                                 data-request-access="write"
                                 onload="console.log('Telegram widget loaded')"
                                 onerror="console.error('Telegram widget failed to load')"></script>
-                    </div>
-                    
-                    <div class="telegram-fallback" id="telegramFallback">
-                        <div class="fallback-title">⚡ Alternative Login</div>
-                        <div class="fallback-message">Click below to authenticate with Telegram</div>
-                        <button class="manual-login-btn" onclick="window.open('https://t.me/<?= htmlspecialchars($telegramBotUsername) ?>?start=auth', '_blank')">
-                            Continue with Telegram
-                        </button>
                     </div>
                 </div>
             </div>
@@ -971,18 +899,13 @@ if (isset($_SESSION['user'])) {
                 }
             }, 2000);
             
-            // Handle Telegram Widget Loading - Using the logic from the reference code
+            // Handle Telegram Widget Loading - No fallback, just error notification
             const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
-            const telegramFallback = document.getElementById('telegramFallback');
             
             // Check if widget loaded after a delay
             setTimeout(() => {
                 if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
                     console.error('Telegram widget not loaded');
-                    
-                    // Show fallback UI
-                    telegramWidget.parentElement.style.display = 'none';
-                    telegramFallback.classList.add('show');
                     
                     // Show error notification
                     Swal.fire({
