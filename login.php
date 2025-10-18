@@ -138,7 +138,7 @@ if (isset($_SESSION['user'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card X Chk • Portal</title>
+    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 • Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -162,7 +162,7 @@ if (isset($_SESSION['user'])) {
             overflow: hidden;
         }
 
-        /* Subtle Background */
+        /* Futuristic Background */
         .bg-container {
             position: fixed;
             top: 0;
@@ -171,168 +171,194 @@ if (isset($_SESSION['user'])) {
             height: 100%;
             z-index: 0;
             background: 
-                radial-gradient(circle at 20% 20%, rgba(40, 40, 60, 0.4) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(60, 60, 80, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(50, 50, 70, 0.2) 0%, transparent 70%),
+                radial-gradient(circle at 20% 20%, rgba(120, 20, 180, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(20, 120, 220, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(180, 20, 120, 0.2) 0%, transparent 70%),
                 linear-gradient(135deg, #000 0%, #0a0a0a 50%, #121212 100%);
         }
 
-        /* Energy Grid */
-        .energy-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            animation: gridPulse 8s ease-in-out infinite;
-            opacity: 0.3;
-        }
-
-        @keyframes gridPulse {
-            0%, 100% { opacity: 0.2; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(1.02); }
-        }
-
-        /* Energy Waves */
-        .energy-wave {
-            position: absolute;
-            border-radius: 50%;
-            border: 2px solid;
-            animation: waveExpand 4s linear infinite;
-        }
-
-        .wave-1 {
-            width: 300px;
-            height: 300px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-color: rgba(255, 255, 255, 0.1);
-            animation-delay: 0s;
-        }
-
-        .wave-2 {
-            width: 300px;
-            height: 300px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-color: rgba(255, 255, 255, 0.08);
-            animation-delay: 1s;
-        }
-
-        .wave-3 {
-            width: 300px;
-            height: 300px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-color: rgba(255, 255, 255, 0.06);
-            animation-delay: 2s;
-        }
-
-        @keyframes waveExpand {
-            0% {
-                width: 0;
-                height: 0;
-                opacity: 1;
-            }
-            100% {
-                width: 600px;
-                height: 600px;
-                opacity: 0;
-            }
-        }
-
-        /* Floating Particles */
-        .particles {
+        /* Animated Grid */
+        .grid-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            z-index: 1;
+        }
+
+        .grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(120, 20, 180, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(120, 20, 180, 0.2) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            transform: translate(-25%, -25%);
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(-25%, -25%); }
+            100% { transform: translate(0%, 0%); }
+        }
+
+        /* Hexagon Pattern */
+        .hex-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 2;
+            opacity: 0.1;
+        }
+
+        .hex {
+            position: absolute;
+            width: 60px;
+            height: 34.64px;
+            background-color: transparent;
+            margin: 17.32px 0;
+            border-left: solid 2px rgba(120, 20, 180, 0.5);
+            border-right: solid 2px rgba(120, 20, 180, 0.5);
+        }
+
+        .hex:before,
+        .hex:after {
+            content: "";
+            position: absolute;
+            width: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+        }
+
+        .hex:before {
+            bottom: 100%;
+            border-bottom: 17.32px solid rgba(120, 20, 180, 0.5);
+        }
+
+        .hex:after {
+            top: 100%;
+            border-top: 17.32px solid rgba(120, 20, 180, 0.5);
+        }
+
+        /* Particles */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            overflow: hidden;
         }
 
         .particle {
             position: absolute;
-            width: 3px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.7);
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
-        .particle:nth-child(1) { top: 15%; left: 25%; animation: float1 10s infinite; }
-        .particle:nth-child(2) { top: 65%; left: 75%; animation: float2 12s infinite; }
-        .particle:nth-child(3) { top: 35%; left: 55%; animation: float3 15s infinite; }
-        .particle:nth-child(4) { top: 75%; left: 35%; animation: float4 11s infinite; }
-        .particle:nth-child(5) { top: 25%; left: 65%; animation: float5 14s infinite; }
-        .particle:nth-child(6) { top: 45%; left: 15%; animation: float6 13s infinite; }
-        .particle:nth-child(7) { top: 85%; left: 85%; animation: float7 16s infinite; }
-        .particle:nth-child(8) { top: 5%; left: 45%; animation: float8 9s infinite; }
-
-        @keyframes float1 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(80px, -120px) scale(1.5); }
+        /* Scanlines */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(255, 255, 255, 0.03) 50%
+            );
+            background-size: 100% 4px;
+            animation: scanlines 8s linear infinite;
         }
 
-        @keyframes float2 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(-100px, -90px) scale(1.3); }
+        @keyframes scanlines {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 10px; }
         }
 
-        @keyframes float3 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(-60px, -140px) scale(1.8); }
+        /* Glitch Effect */
+        .glitch {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 6;
+            pointer-events: none;
+            animation: glitch 5s infinite;
         }
 
-        @keyframes float4 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(90px, -100px) scale(1.4); }
+        @keyframes glitch {
+            0%, 100% { opacity: 0; }
+            5% { opacity: 0.1; transform: translateX(-5px); }
+            5.1% { transform: translateX(5px); }
+            5.2% { transform: translateX(-5px); }
+            5.3% { transform: translateX(0); }
+            10% { opacity: 0; }
         }
 
-        @keyframes float5 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(-80px, -110px) scale(1.6); }
+        /* Binary Rain */
+        .binary-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 7;
+            overflow: hidden;
+            opacity: 0.2;
         }
 
-        @keyframes float6 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(70px, -130px) scale(1.2); }
+        .binary-column {
+            position: absolute;
+            top: -100%;
+            font-family: monospace;
+            font-size: 14px;
+            color: rgba(120, 20, 180, 0.8);
+            animation: binaryFall linear infinite;
         }
 
-        @keyframes float7 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(-90px, -80px) scale(1.7); }
+        @keyframes binaryFall {
+            0% { top: -100%; }
+            100% { top: 100%; }
         }
 
-        @keyframes float8 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            50% { transform: translate(60px, -150px) scale(1.5); }
+        /* Lightning Effect */
+        .lightning {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 8;
+            pointer-events: none;
         }
 
-        /* Main Container - Compact */
+        .lightning-flash {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.8), transparent);
+            transform: rotate(45deg);
+            opacity: 0;
+            filter: blur(1px);
+        }
+
+        /* Main Container */
         .auth-container {
             position: relative;
             z-index: 100;
@@ -361,7 +387,7 @@ if (isset($_SESSION['user'])) {
             left: -8px;
             right: -8px;
             bottom: -8px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(120, 20, 180, 0.3);
             border-radius: 50%;
             animation: logoGlow 3s linear infinite;
             filter: blur(12px);
@@ -379,7 +405,7 @@ if (isset($_SESSION['user'])) {
             width: 45px;
             height: 45px;
             background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(120, 20, 180, 0.5);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -401,11 +427,12 @@ if (isset($_SESSION['user'])) {
             color: #fff;
             letter-spacing: 1px;
             animation: textGlow 2s ease-in-out infinite alternate;
+            text-shadow: 0 0 10px rgba(120, 20, 180, 0.8);
         }
 
         @keyframes textGlow {
-            0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3)); }
-            100% { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5)); }
+            0% { filter: drop-shadow(0 0 5px rgba(120, 20, 180, 0.5)); }
+            100% { filter: drop-shadow(0 0 15px rgba(120, 20, 180, 0.8)); }
         }
 
         /* Login Card */
@@ -413,15 +440,15 @@ if (isset($_SESSION['user'])) {
             background: rgba(10, 10, 20, 0.95);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(120, 20, 180, 0.3);
             border-radius: 24px;
             padding: 28px;
             position: relative;
             overflow: hidden;
             box-shadow: 
                 0 25px 50px rgba(0, 0, 0, 0.6),
-                0 0 120px rgba(255, 255, 255, 0.05),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+                0 0 120px rgba(120, 20, 180, 0.1),
+                inset 0 0 0 1px rgba(120, 20, 180, 0.1);
         }
 
         .login-card::before {
@@ -431,7 +458,7 @@ if (isset($_SESSION['user'])) {
             left: -2px;
             right: -2px;
             bottom: -2px;
-            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1));
+            background: linear-gradient(45deg, rgba(120, 20, 180, 0.3), rgba(20, 120, 220, 0.2), rgba(180, 20, 120, 0.3));
             border-radius: 24px;
             opacity: 0.6;
             z-index: -1;
@@ -451,12 +478,23 @@ if (isset($_SESSION['user'])) {
         }
 
         .welcome h2 {
-            font-size: 18px;
+            font-size: 24px;
             font-weight: 800;
             margin-bottom: 4px;
             color: #fff;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #fff, #a855f7, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradientShift 3s ease infinite;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .welcome p {
@@ -479,7 +517,7 @@ if (isset($_SESSION['user'])) {
             gap: 8px;
         }
 
-        /* Telegram Widget - Using exact logic from provided script */
+        /* Telegram Widget */
         .telegram-section {
             display: flex;
             justify-content: center;
@@ -514,22 +552,86 @@ if (isset($_SESSION['user'])) {
             flex-shrink: 0;
         }
 
-        /* Footer */
+        /* Footer - Enhanced */
         .footer {
             text-align: center;
-            margin-top: 18px;
-            font-size: 9px;
-            color: rgba(255, 255, 255, 0.4);
-            letter-spacing: 3px;
-            text-transform: uppercase;
+            margin-top: 25px;
+            position: relative;
+            padding: 15px 0;
+        }
+
+        .footer-text {
             font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.3),
+                rgba(255, 255, 255, 0.8),
+                rgba(255, 255, 255, 0.3)
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: footerGlow 3s ease-in-out infinite;
+            position: relative;
+            display: inline-block;
+        }
+
+        @keyframes footerGlow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+                transform: scale(1);
+            }
+            50% { 
+                filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.6));
+                transform: scale(1.05);
+            }
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: footerLine 4s ease-in-out infinite;
+        }
+
+        @keyframes footerLine {
+            0%, 100% { opacity: 0.3; width: 60%; }
+            50% { opacity: 0.8; width: 80%; }
+        }
+
+        .footer::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: footerLine 4s ease-in-out infinite reverse;
         }
 
         /* Retry Button */
         .retry-btn {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(120, 20, 180, 0.3);
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(120, 20, 180, 0.5);
             border-radius: 8px;
             padding: 8px 16px;
             font-size: 11px;
@@ -542,7 +644,7 @@ if (isset($_SESSION['user'])) {
         }
 
         .retry-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(120, 20, 180, 0.5);
             transform: translateY(-2px);
         }
 
@@ -559,26 +661,32 @@ if (isset($_SESSION['user'])) {
             .brand-text {
                 font-size: 18px;
             }
+            
+            .footer-text {
+                font-size: 9px;
+                letter-spacing: 3px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="bg-container">
-        <div class="energy-grid"></div>
-        <div class="energy-wave wave-1"></div>
-        <div class="energy-wave wave-2"></div>
-        <div class="energy-wave wave-3"></div>
-        <div class="particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-        </div>
+    <div class="bg-container"></div>
+    
+    <div class="grid-container">
+        <div class="grid"></div>
     </div>
+    
+    <div class="hex-container" id="hexContainer"></div>
+    
+    <div class="particles-container" id="particlesContainer"></div>
+    
+    <div class="scanlines"></div>
+    
+    <div class="glitch"></div>
+    
+    <div class="binary-rain" id="binaryRain"></div>
+    
+    <div class="lightning" id="lightning"></div>
 
     <div class="auth-container">
         <div class="logo-section">
@@ -588,12 +696,12 @@ if (isset($_SESSION['user'])) {
                     <img src="https://cxchk.site/assets/branding/cardxchk-mark.png" alt="Card X Chk">
                 </div>
             </div>
-            <div class="brand-text">Card X Chk</div>
+            <div class="brand-text">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</div>
         </div>
 
         <div class="login-card">
             <div class="welcome">
-                <h2>System Access</h2>
+                <h2>Secure Sign In</h2>
                 <p>Authenticate via Telegram</p>
             </div>
 
@@ -632,26 +740,94 @@ if (isset($_SESSION['user'])) {
                     </svg>
                     <span>Private</span>
                 </div>
-                <div class="security-item">
-                    <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                    <span>API</span>
-                </div>
             </div>
         </div>
 
         <div class="footer">
-            THE NEW ERA BEGINS
+            <div class="footer-text">THE NEW ERA BEGINS</div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Create hexagons
+            const hexContainer = document.getElementById('hexContainer');
+            for (let i = 0; i < 20; i++) {
+                const hex = document.createElement('div');
+                hex.className = 'hex';
+                hex.style.left = `${Math.random() * 100}%`;
+                hex.style.top = `${Math.random() * 100}%`;
+                hexContainer.appendChild(hex);
+            }
+            
+            // Create particles
+            const particlesContainer = document.getElementById('particlesContainer');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation
+                const duration = 10 + Math.random() * 20;
+                const delay = Math.random() * 5;
+                particle.style.animation = `float${(i % 8) + 1} ${duration}s ${delay}s infinite`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            // Create binary rain
+            const binaryRain = document.getElementById('binaryRain');
+            for (let i = 0; i < 10; i++) {
+                const column = document.createElement('div');
+                column.className = 'binary-column';
+                column.style.left = `${Math.random() * 100}%`;
+                column.style.animationDuration = `${5 + Math.random() * 10}s`;
+                column.style.animationDelay = `${Math.random() * 5}s`;
+                
+                // Generate random binary string
+                let binary = '';
+                for (let j = 0; j < 20; j++) {
+                    binary += Math.random() > 0.5 ? '1' : '0';
+                }
+                column.textContent = binary;
+                
+                binaryRain.appendChild(column);
+            }
+            
+            // Create lightning effect
+            const lightning = document.getElementById('lightning');
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    const flash = document.createElement('div');
+                    flash.className = 'lightning-flash';
+                    flash.style.left = `${Math.random() * 100}%`;
+                    flash.style.top = `${Math.random() * 100}%`;
+                    flash.style.height = `${50 + Math.random() * 150}px`;
+                    flash.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    flash.style.opacity = '0';
+                    flash.style.transition = 'opacity 0.2s';
+                    
+                    lightning.appendChild(flash);
+                    
+                    setTimeout(() => {
+                        flash.style.opacity = '0.8';
+                    }, 10);
+                    
+                    setTimeout(() => {
+                        flash.style.opacity = '0';
+                    }, 200);
+                    
+                    setTimeout(() => {
+                        lightning.removeChild(flash);
+                    }, 400);
+                }
+            }, 2000);
+            
+            // Check Telegram widget
             const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
             if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
                 console.error('Telegram widget not loaded');
-                error_log('Telegram widget not loaded in DOM');
                 
                 // Fallback UI if widget fails to load
                 const widgetContainer = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
