@@ -268,6 +268,63 @@ if (isset($_SESSION['user'])) {
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
+        /* Particle animations */
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(80px, -120px) scale(1.5); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-100px, -90px) scale(1.3); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-60px, -140px) scale(1.8); }
+        }
+
+        @keyframes float4 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(90px, -100px) scale(1.4); }
+        }
+
+        @keyframes float5 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-80px, -110px) scale(1.6); }
+        }
+
+        @keyframes float6 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(70px, -130px) scale(1.2); }
+        }
+
+        @keyframes float7 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-90px, -80px) scale(1.7); }
+        }
+
+        @keyframes float8 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(60px, -150px) scale(1.5); }
+        }
+
         /* Scanlines */
         .scanlines {
             position: absolute;
