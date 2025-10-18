@@ -1609,6 +1609,7 @@ try {
             });
         }
 
+        // FIXED: Process card function to properly handle JSON responses
         async function processCard(card, controller, retryCount = 0) {
             if (!isProcessing) return null;
 
@@ -1634,37 +1635,36 @@ try {
                     contentType: false,
                     timeout: 300000,
                     signal: controller.signal,
+                    dataType: 'json', // Add this to ensure jQuery parses the response as JSON
                     success: function(response) {
                         let status = 'DECLINED';
-                        let message = response;
-                        try {
-                            const jsonResponse = JSON.parse(response);
-                            if (jsonResponse.status) {
-                                status = jsonResponse.status.toUpperCase();
-                            }
-                            message = jsonResponse.message || jsonResponse.response || response;
-                            // Normalize status
-                            if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
-                                status = '3DS';
-                            } else if (status === 'CHARGED' || status.includes('CHARGED')) {
-                                status = 'CHARGED';
-                            } else if (status === 'APPROVED' || status.includes('APPROVED')) {
-                                status = 'APPROVED';
-                            } else {
-                                status = 'DECLINED';
-                            }
-                        } catch (e) {
-                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS') || response.includes('3D')) {
-                                status = '3DS';
-                            } else if (response.includes('CHARGED')) {
-                                status = 'CHARGED';
-                            } else if (response.includes('APPROVED')) {
-                                status = 'APPROVED';
-                            } else {
-                                status = 'DECLINED';
-                            }
-                            message = response;
+                        let message = '';
+                        
+                        // The response is already a JSON object because we set dataType: 'json'
+                        if (response && response.status) {
+                            status = response.status.toUpperCase();
                         }
+                        
+                        // Get the message from the response
+                        if (response && response.message) {
+                            message = response.message;
+                        } else if (response && response.response) {
+                            message = response.response;
+                        } else {
+                            message = 'No response message';
+                        }
+                        
+                        // Normalize status
+                        if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
+                            status = '3DS';
+                        } else if (status === 'CHARGED' || status.includes('CHARGED')) {
+                            status = 'CHARGED';
+                        } else if (status === 'APPROVED' || status.includes('APPROVED')) {
+                            status = 'APPROVED';
+                        } else {
+                            status = 'DECLINED';
+                        }
+                        
                         console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
                         resolve({
                             status: status,
@@ -1676,14 +1676,26 @@ try {
                     error: function(xhr) {
                         $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                         console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                        
                         if (xhr.statusText === 'abort') {
                             resolve(null);
                         } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
                             setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                         } else {
+                            // Try to parse error response as JSON
+                            let errorMessage = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
+                            try {
+                                const errorResponse = JSON.parse(xhr.responseText);
+                                if (errorResponse && errorResponse.message) {
+                                    errorMessage = errorResponse.message;
+                                }
+                            } catch (e) {
+                                // If parsing fails, use the default error message
+                            }
+                            
                             resolve({
                                 status: 'DECLINED',
-                                response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`,
+                                response: errorMessage,
                                 card: card,
                                 displayCard: card.displayCard
                             });
@@ -1752,11 +1764,12 @@ try {
             $('#startBtn').prop('disabled', true);
             $('#stopBtn').prop('disabled', false);
             $('#loader').show();
-            $('#checkingResultsList').innerHTML = '';
+            $('#checkingResultsList').html('');
             $('#statusLog').text('Starting processing...');
 
             let requestIndex = 0;
 
+            // Process all cards in the queue
             while (cardQueue.length > 0 && isProcessing) {
                 while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                     const card = cardQueue.shift();
@@ -1764,14 +1777,24 @@ try {
                     const controller = new AbortController();
                     abortControllers.push(controller);
 
+                    // Add a small delay between requests to avoid overwhelming the server
                     await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
                     requestIndex++;
 
+                    // Process the card and handle the response
                     processCard(card, controller).then(result => {
                         if (result === null) return;
 
+                        // Decrement the active requests counter
                         activeRequests--;
-                        const cardEntry = { response: result.response, displayCard: result.displayCard };
+                        
+                        // Create a card entry with the response
+                        const cardEntry = { 
+                            response: result.response, 
+                            displayCard: result.displayCard 
+                        };
+                        
+                        // Categorize the card based on its status
                         if (result.status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
@@ -1786,14 +1809,30 @@ try {
                             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
 
+                        // Add the result to the UI
                         addResult(card, result.status, result.response);
+                        
+                        // Update the statistics
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
 
-                        if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
+                        // Check if all cards have been processed
+                        const processedCards = chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length;
+                        if (processedCards >= totalCards || !isProcessing) {
+                            finishProcessing();
+                        }
+                    }).catch(error => {
+                        console.error('Error processing card:', error);
+                        activeRequests--;
+                        
+                        // Make sure we finish processing even if there's an error
+                        const processedCards = chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length;
+                        if (processedCards >= totalCards || !isProcessing) {
                             finishProcessing();
                         }
                     });
                 }
+                
+                // Wait a bit before checking the queue again
                 if (isProcessing) {
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
