@@ -899,7 +899,7 @@ if (isset($_SESSION['user'])) {
                 }
             }, 2000);
             
-            // Handle Telegram Widget Loading - No fallback, just error notification
+            // Handle Telegram Widget Loading - No fallback, no auto-retry, just error notification
             const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
             
             // Check if widget loaded after a delay
@@ -907,18 +907,13 @@ if (isset($_SESSION['user'])) {
                 if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
                     console.error('Telegram widget not loaded');
                     
-                    // Show error notification
+                    // Show error notification only
                     Swal.fire({
                         title: 'Configuration Error',
                         text: 'Telegram Login Widget failed to load. Check bot settings, network, or CSP settings.',
                         icon: 'error',
                         confirmButtonColor: '#6ab7d8'
                     });
-                    
-                    // Auto-retry after delay
-                    setTimeout(() => {
-                        location.reload();
-                    }, 5000);
                 }
             }, 3000);
         });
