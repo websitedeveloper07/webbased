@@ -1430,9 +1430,49 @@ try {
             document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
         }
 
+        // Function to clean card number from response text
+        function cleanCardFromResponse(response, cardNumber) {
+            // Format card number with spaces
+            const formattedCard = cardNumber.replace(/(.{4})/g, '$1 ').trim();
+            // Create masked versions
+            const maskedCard = `**** **** **** ${cardNumber.slice(-4)}`;
+            const maskedCardNoSpaces = `************${cardNumber.slice(-4)}`;
+            
+            // Create array of patterns to remove
+            const patterns = [
+                cardNumber,
+                formattedCard,
+                maskedCard,
+                maskedCardNoSpaces,
+                // Add more patterns if needed
+            ];
+            
+            let cleanResponse = response;
+            
+            // Remove each pattern from the response
+            patterns.forEach(pattern => {
+                // Escape special regex characters
+                const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Create regex to match the pattern globally
+                const regex = new RegExp(escapedPattern, 'g');
+                // Replace all occurrences with empty string
+                cleanResponse = cleanResponse.replace(regex, '');
+            });
+            
+            // Clean up extra spaces and commas that might be left after removal
+            cleanResponse = cleanResponse.replace(/,\s*,/g, ',').replace(/,\s*$/, '').replace(/^\s*,\s*/, '');
+            cleanResponse = cleanResponse.replace(/\s{2,}/g, ' ').trim();
+            
+            return cleanResponse;
+        }
+
         function addResult(card, status, response) {
             const resultsList = document.getElementById('checkingResultsList');
             if (!resultsList) return;
+            
+            // Clean the response by removing any occurrence of the card number
+            const cleanResponse = cleanCardFromResponse(response, card.number);
+            
             const cardClass = status.toLowerCase();
             const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
             const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
@@ -1445,7 +1485,7 @@ try {
                 <div class="stat-content">
                     <div>
                         <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
-                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
+                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${cleanResponse}</div>
                     </div>
                     <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
                 </div>
