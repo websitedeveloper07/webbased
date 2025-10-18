@@ -593,11 +593,9 @@ if (isset($_SESSION['user'])) {
         }
 
         .telegram-widget {
-            display: none;
-        }
-
-        .telegram-widget.loaded {
             display: block;
+            width: 100%;
+            text-align: center;
         }
 
         .telegram-fallback {
@@ -765,19 +763,25 @@ if (isset($_SESSION['user'])) {
             animation: footerLine 4s ease-in-out infinite reverse;
         }
 
-        /* Loading Spinner */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #a855f7;
-            animation: spin 1s ease-in-out infinite;
+        /* Retry Button */
+        .retry-btn {
+            background: rgba(120, 20, 180, 0.3);
+            color: #fff;
+            border: 1px solid rgba(120, 20, 180, 0.5);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .retry-btn:hover {
+            background: rgba(120, 20, 180, 0.5);
+            transform: translateY(-2px);
         }
 
         /* Responsive */
@@ -849,7 +853,14 @@ if (isset($_SESSION['user'])) {
             <div class="telegram-section">
                 <div class="telegram-widget-container">
                     <div class="telegram-widget" id="telegramWidget">
-                        <div class="loading-spinner"></div>
+                        <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
+                        <script async src="https://telegram.org/js/telegram-widget.js?22"
+                                data-telegram-login="<?= htmlspecialchars($telegramBotUsername) ?>"
+                                data-size="large"
+                                data-auth-url="<?= $baseUrl ?>/login.php"
+                                data-request-access="write"
+                                onload="console.log('Telegram widget loaded')"
+                                onerror="console.error('Telegram widget failed to load')"></script>
                     </div>
                     
                     <div class="telegram-fallback" id="telegramFallback">
@@ -960,42 +971,33 @@ if (isset($_SESSION['user'])) {
                 }
             }, 2000);
             
-            // Handle Telegram Widget Loading
-            const telegramWidget = document.getElementById('telegramWidget');
+            // Handle Telegram Widget Loading - Using the logic from the reference code
+            const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
             const telegramFallback = document.getElementById('telegramFallback');
             
-            // Create script element for Telegram widget
-            const script = document.createElement('script');
-            script.async = true;
-            script.src = 'https://telegram.org/js/telegram-widget.js?22';
-            script.setAttribute('data-telegram-login', '<?= htmlspecialchars($telegramBotUsername) ?>');
-            script.setAttribute('data-size', 'large');
-            script.setAttribute('data-auth-url', '<?= $baseUrl ?>/login.php');
-            script.setAttribute('data-request-access', 'write');
-            
-            script.onload = () => {
-                // Widget loaded successfully
-                telegramWidget.innerHTML = '';
-                telegramWidget.appendChild(script);
-                telegramWidget.classList.add('loaded');
-            };
-            
-            script.onerror = () => {
-                // Widget failed to load, show fallback
-                telegramWidget.style.display = 'none';
-                telegramFallback.classList.add('show');
-            };
-            
-            // Add timeout fallback
+            // Check if widget loaded after a delay
             setTimeout(() => {
-                if (!telegramWidget.classList.contains('loaded')) {
-                    telegramWidget.style.display = 'none';
+                if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
+                    console.error('Telegram widget not loaded');
+                    
+                    // Show fallback UI
+                    telegramWidget.parentElement.style.display = 'none';
                     telegramFallback.classList.add('show');
+                    
+                    // Show error notification
+                    Swal.fire({
+                        title: 'Configuration Error',
+                        text: 'Telegram Login Widget failed to load. Check bot settings, network, or CSP settings.',
+                        icon: 'error',
+                        confirmButtonColor: '#6ab7d8'
+                    });
+                    
+                    // Auto-retry after delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 5000);
                 }
-            }, 5000);
-            
-            // Start loading the widget
-            telegramWidget.appendChild(script);
+            }, 3000);
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
