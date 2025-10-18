@@ -43,8 +43,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );");
 } catch (Exception $e) {
-    error_log("Database connection failed: " . $e->getMessage());
-    $dbError = true;
+    die("Database connection failed: " . $e->getMessage());
 }
 
 // -------------------------------
@@ -95,26 +94,21 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
         $photoUrl = $_GET['photo_url'] ?? '';
 
         // Save or update user in database
-        if (isset($pdo)) {
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
-            $stmt->execute([$telegramId]);
-            if ($stmt->rowCount() === 0) {
-                $insert = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
-                $insert->execute([$telegramId, $firstName]);
-            }
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE telegram_id = ?");
+        $stmt->execute([$telegramId]);
+        if ($stmt->rowCount() === 0) {
+            $insert = $pdo->prepare("INSERT INTO users (telegram_id, name, auth_provider) VALUES (?, ?, 'telegram')");
+            $insert->execute([$telegramId, $firstName]);
         }
 
-        // Set session with the exact structure expected by index.php
+        // Set session
         $_SESSION['user'] = [
             'telegram_id' => $telegramId,
-            'name' => trim("$firstName $lastName"),
+            'name' => "$firstName $lastName",
             'username' => $username,
             'photo_url' => $photoUrl,
             'auth_provider' => 'telegram'
         ];
-
-        // Log successful authentication
-        error_log("User authenticated: " . json_encode($_SESSION['user']));
 
         // Redirect to index
         echo '<script>
@@ -127,7 +121,6 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
         exit;
 
     } catch (Exception $e) {
-        error_log("Authentication error: " . $e->getMessage());
         $error = $e->getMessage();
     }
 }
@@ -135,7 +128,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
 // -------------------------------
 // AUTO-REDIRECT IF LOGGED IN
 // -------------------------------
-if (isset($_SESSION['user']) && $_SESSION['user']['auth_provider'] === 'telegram') {
+if (isset($_SESSION['user'])) {
     header('Location: ' . $baseUrl . '/index.php');
     exit;
 }
@@ -148,8 +141,7 @@ if (isset($_SESSION['user']) && $_SESSION['user']['auth_provider'] === 'telegram
     <title>Card X Chk • Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="icon" href="https://cxchk.site/assets/branding/cardxchk-mark.png">
     <style>
         * {
@@ -164,13 +156,13 @@ if (isset($_SESSION['user']) && $_SESSION['user']['auth_provider'] === 'telegram
             color: #fff;
             min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
-            overflow: hidden;
+            justify-content: center;
             position: relative;
+            overflow: hidden;
         }
 
-        /* Enhanced Background */
+        /* Subtle Background */
         .bg-container {
             position: fixed;
             top: 0;
@@ -178,95 +170,85 @@ if (isset($_SESSION['user']) && $_SESSION['user']['auth_provider'] === 'telegram
             width: 100%;
             height: 100%;
             z-index: 0;
-            overflow: hidden;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a0033 50%, #001122 100%);
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(40, 40, 60, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(60, 60, 80, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(50, 50, 70, 0.2) 0%, transparent 70%),
+                linear-gradient(135deg, #000 0%, #0a0a0a 50%, #121212 100%);
         }
 
-        /* Animated gradient overlay */
-        .gradient-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 70%, rgba(0, 128, 255, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 70%);
-            animation: gradientShift 15s ease infinite;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { opacity: 0.7; transform: scale(1) rotate(0deg); }
-            50% { opacity: 1; transform: scale(1.1) rotate(5deg); }
-        }
-
-        /* Circuit grid pattern */
-        .circuit-grid {
+        /* Energy Grid */
+        .energy-grid {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-image: 
-                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
             background-size: 40px 40px;
-            animation: gridMove 20s linear infinite;
+            animation: gridPulse 8s ease-in-out infinite;
+            opacity: 0.3;
         }
 
-        @keyframes gridMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(40px, 40px); }
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.02); }
         }
 
-        /* Moving Text Background */
-        .moving-text {
+        /* Energy Waves */
+        .energy-wave {
             position: absolute;
-            font-family: 'Orbitron', monospace;
-            font-weight: 700;
-            font-size: 120px;
-            color: rgba(0, 255, 255, 0.03);
-            white-space: nowrap;
-            user-select: none;
-            pointer-events: none;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            border-radius: 50%;
+            border: 2px solid;
+            animation: waveExpand 4s linear infinite;
         }
 
-        .text-1 {
-            top: 10%;
-            left: -50%;
-            animation: moveRight 30s linear infinite;
+        .wave-1 {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-color: rgba(255, 255, 255, 0.1);
+            animation-delay: 0s;
         }
 
-        .text-2 {
-            top: 30%;
-            right: -50%;
-            animation: moveLeft 35s linear infinite;
+        .wave-2 {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-color: rgba(255, 255, 255, 0.08);
+            animation-delay: 1s;
         }
 
-        .text-3 {
-            bottom: 30%;
-            left: -50%;
-            animation: moveRight 40s linear infinite;
+        .wave-3 {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-color: rgba(255, 255, 255, 0.06);
+            animation-delay: 2s;
         }
 
-        .text-4 {
-            bottom: 10%;
-            right: -50%;
-            animation: moveLeft 45s linear infinite;
+        @keyframes waveExpand {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 600px;
+                height: 600px;
+                opacity: 0;
+            }
         }
 
-        @keyframes moveRight {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(200%); }
-        }
-
-        @keyframes moveLeft {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-200%); }
-        }
-
-        /* Floating particles */
+        /* Floating Particles */
         .particles {
             position: absolute;
             top: 0;
@@ -278,556 +260,418 @@ if (isset($_SESSION['user']) && $_SESSION['user']['auth_provider'] === 'telegram
 
         .particle {
             position: absolute;
-            background: rgba(0, 255, 255, 0.5);
-            border-radius: 50%;
-            filter: blur(2px);
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
-        }
-
-        .particle:nth-child(1) {
-            width: 5px;
-            height: 5px;
-            top: 20%;
-            left: 10%;
-            animation: float 15s infinite linear;
-        }
-
-        .particle:nth-child(2) {
-            width: 8px;
-            height: 8px;
-            top: 60%;
-            left: 70%;
-            animation: float 20s infinite linear;
-        }
-
-        .particle:nth-child(3) {
-            width: 4px;
-            height: 4px;
-            top: 40%;
-            left: 30%;
-            animation: float 18s infinite linear;
-        }
-
-        .particle:nth-child(4) {
-            width: 6px;
-            height: 6px;
-            top: 80%;
-            left: 50%;
-            animation: float 22s infinite linear;
-        }
-
-        .particle:nth-child(5) {
             width: 3px;
             height: 3px;
-            top: 30%;
-            left: 80%;
-            animation: float 25s infinite linear;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
-        @keyframes float {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
+        .particle:nth-child(1) { top: 15%; left: 25%; animation: float1 10s infinite; }
+        .particle:nth-child(2) { top: 65%; left: 75%; animation: float2 12s infinite; }
+        .particle:nth-child(3) { top: 35%; left: 55%; animation: float3 15s infinite; }
+        .particle:nth-child(4) { top: 75%; left: 35%; animation: float4 11s infinite; }
+        .particle:nth-child(5) { top: 25%; left: 65%; animation: float5 14s infinite; }
+        .particle:nth-child(6) { top: 45%; left: 15%; animation: float6 13s infinite; }
+        .particle:nth-child(7) { top: 85%; left: 85%; animation: float7 16s infinite; }
+        .particle:nth-child(8) { top: 5%; left: 45%; animation: float8 9s infinite; }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+            50% { transform: translate(80px, -120px) scale(1.5); }
         }
 
-        /* Glowing orbs */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(40px);
-            opacity: 0.4;
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-100px, -90px) scale(1.3); }
         }
 
-        .orb-1 {
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(0, 255, 255, 0.4) 0%, transparent 70%);
-            top: -150px;
-            left: -150px;
-            animation: orbFloat 20s infinite alternate ease-in-out;
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-60px, -140px) scale(1.8); }
         }
 
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(138, 43, 226, 0.3) 0%, transparent 70%);
-            bottom: -200px;
-            right: -200px;
-            animation: orbFloat 25s infinite alternate-reverse ease-in-out;
+        @keyframes float4 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(90px, -100px) scale(1.4); }
         }
 
-        .orb-3 {
-            width: 250px;
-            height: 250px;
-            background: radial-gradient(circle, rgba(0, 128, 255, 0.3) 0%, transparent 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: orbPulse 15s infinite ease-in-out;
+        @keyframes float5 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-80px, -110px) scale(1.6); }
         }
 
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(50px, 50px) scale(1.1); }
+        @keyframes float6 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(70px, -130px) scale(1.2); }
         }
 
-        @keyframes orbPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+        @keyframes float7 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(-90px, -80px) scale(1.7); }
         }
 
-        /* Main Container */
+        @keyframes float8 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            50% { transform: translate(60px, -150px) scale(1.5); }
+        }
+
+        /* Main Container - Compact */
         .auth-container {
             position: relative;
             z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
+            width: 340px;
+            max-width: 90vw;
         }
 
-        /* Header with Logo and Text */
-        .auth-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 5px;
-        }
-
-        /* Logo - Enhanced with glow */
-        .logo-container {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+        /* Logo Section */
+        .logo-section {
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo-wrapper {
             position: relative;
+            width: 45px;
+            height: 45px;
+        }
+
+        .logo-glow {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: logoGlow 3s linear infinite;
+            filter: blur(12px);
+            opacity: 0.8;
+        }
+
+        @keyframes logoGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .logo {
+            position: relative;
+            z-index: 1;
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
         }
 
-        .logo-container::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                45deg,
-                transparent,
-                rgba(0, 255, 255, 0.1),
-                transparent
-            );
-            transform: rotate(45deg);
-            animation: logoShine 3s infinite;
-        }
-
-        @keyframes logoShine {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
-        .logo-container img {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
+        .logo img {
+            width: 32px;
+            height: 32px;
             object-fit: cover;
-            position: relative;
-            z-index: 1;
+            border-radius: 50%;
         }
 
-        /* Secure Sign In Text - Enhanced with glow */
-        .secure-signin {
-            font-family: 'Caveat', cursive;
-            font-size: 24px;
-            font-weight: 600;
-            color: #00ffff;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            animation: textGlow 2s infinite alternate;
+        .brand-text {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 22px;
+            color: #fff;
+            letter-spacing: 1px;
+            animation: textGlow 2s ease-in-out infinite alternate;
         }
 
         @keyframes textGlow {
-            0% { text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
-            100% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.4); }
+            0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3)); }
+            100% { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5)); }
         }
 
-        /* Compact Login Box - Enhanced with glassmorphism */
-        .login-box {
-            width: 280px;
-            background: rgba(10, 10, 20, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 25px 20px;
+        /* Login Card */
+        .login-card {
+            background: rgba(10, 10, 20, 0.95);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 28px;
             position: relative;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
-                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
             overflow: hidden;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.6),
+                0 0 120px rgba(255, 255, 255, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
 
-        .login-box::before {
+        .login-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent);
-            animation: scanLine 3s infinite;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1));
+            border-radius: 24px;
+            opacity: 0.6;
+            z-index: -1;
+            animation: borderGlow 4s linear infinite;
         }
 
-        @keyframes scanLine {
-            0% { transform: translateY(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(300px); opacity: 0; }
+        @keyframes borderGlow {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+            100% { opacity: 0.3; }
         }
 
-        /* Title */
-        .brand-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 16px;
-            font-weight: 700;
+        /* Welcome Text */
+        .welcome {
             text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .welcome h2 {
+            font-size: 18px;
+            font-weight: 800;
             margin-bottom: 4px;
-            background: linear-gradient(135deg, #00ffff, #0080ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #fff;
+            text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .brand-subtitle {
-            font-size: 10px;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        .welcome p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
         }
 
-        /* Telegram Widget */
-        .telegram-section {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
-            position: relative;
-            min-height: 40px;
-        }
-
-        /* Error Messages */
-        .error-box {
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px solid rgba(255, 0, 0, 0.3);
-            border-radius: 6px;
-            padding: 8px 10px;
-            margin-bottom: 12px;
-            font-size: 11px;
+        /* Error Message */
+        .error {
+            background: rgba(255, 0, 0, 0.15);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 12px;
             color: #ff6b6b;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .warning-box {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            border-radius: 6px;
-            padding: 8px 10px;
-            margin-bottom: 12px;
-            font-size: 11px;
-            color: #ffc107;
+        /* Telegram Widget - Using exact logic from provided script */
+        .telegram-section {
             display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Fallback Button */
-        .fallback-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #0088cc, #005580);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 6px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            margin-top: 10px;
+            margin: 18px 0;
+            min-height: 40px;
+            position: relative;
         }
 
-        .fallback-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        /* Security Badges */
+        .security {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Security Badge */
-        .security-badge {
+        .security-item {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 5px;
-            margin-top: 15px;
-            font-size: 9px;
-            color: rgba(0, 255, 0, 0.7);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .security-icon {
+            width: 12px;
+            height: 12px;
+            color: #00ff88;
+            flex-shrink: 0;
         }
 
         /* Footer */
-        .footer-text {
+        .footer {
+            text-align: center;
+            margin-top: 18px;
             font-size: 9px;
             color: rgba(255, 255, 255, 0.4);
-            text-align: center;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             text-transform: uppercase;
+            font-family: 'Orbitron', monospace;
         }
 
-        /* Loading State */
-        .widget-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-        }
-
-        .loader {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(0, 255, 255, 0.2);
-            border-radius: 50%;
-            border-top-color: #00ffff;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loader-text {
-            margin-top: 4px;
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        /* Error State */
-        .error-state {
-            display: none;
-            text-align: center;
-            padding: 12px;
-            background: rgba(255, 0, 0, 0.05);
-            border-radius: 6px;
-            margin: 8px 0;
-        }
-
-        .error-icon {
-            font-size: 18px;
-            color: #ff4444;
-            margin-bottom: 4px;
-        }
-
-        .error-message {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 6px;
-        }
-
+        /* Retry Button */
         .retry-btn {
-            background: #00ffff;
-            color: #000;
-            border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            font-size: 10px;
-            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .retry-btn:hover {
-            background: #00cccc;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         /* Responsive */
         @media (max-width: 380px) {
-            .login-box {
-                width: 260px;
-                padding: 20px 15px;
+            .auth-container {
+                width: 300px;
             }
             
-            .secure-signin {
-                font-size: 20px;
+            .login-card {
+                padding: 24px 20px;
+            }
+            
+            .brand-text {
+                font-size: 18px;
             }
         }
     </style>
 </head>
 <body>
     <div class="bg-container">
-        <div class="gradient-overlay"></div>
-        <div class="circuit-grid"></div>
-        
-        <!-- Glowing Orbs -->
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-        
-        <!-- Moving Text -->
-        <div class="moving-text text-1">CARD X CHK</div>
-        <div class="moving-text text-2">CARD X CHK</div>
-        <div class="moving-text text-3">CARD X CHK</div>
-        <div class="moving-text text-4">CARD X CHK</div>
-        
-        <!-- Floating Particles -->
+        <div class="energy-grid"></div>
+        <div class="energy-wave wave-1"></div>
+        <div class="energy-wave wave-2"></div>
+        <div class="energy-wave wave-3"></div>
         <div class="particles">
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
         </div>
     </div>
-    
+
     <div class="auth-container">
-        <div class="auth-header">
-            <div class="logo-container">
-                <img src="https://cxchk.site/assets/branding/cardxchk-mark.png" alt="Card X Chk">
+        <div class="logo-section">
+            <div class="logo-wrapper">
+                <div class="logo-glow"></div>
+                <div class="logo">
+                    <img src="https://cxchk.site/assets/branding/cardxchk-mark.png" alt="Card X Chk">
+                </div>
             </div>
-            <div class="secure-signin">Secure Sign In</div>
+            <div class="brand-text">Card X Chk</div>
         </div>
-        
-        <div class="login-box">
-            <h1 class="brand-title">Card X Chk</h1>
-            <p class="brand-subtitle">The New Era Begins</p>
-            
+
+        <div class="login-card">
+            <div class="welcome">
+                <h2>System Access</h2>
+                <p>Authenticate via Telegram</p>
+            </div>
+
             <?php if (!empty($error)): ?>
-                <div class="error-box">
-                    <i class="fas fa-exclamation-circle"></i>
+                <div class="error">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
                     <span><?php echo htmlspecialchars($error); ?></span>
                 </div>
             <?php endif; ?>
-            
-            <?php if (!empty($dbError)): ?>
-                <div class="warning-box">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Database issue. You can still sign in.</span>
-                </div>
-            <?php endif; ?>
-            
+
             <div class="telegram-section">
-                <div id="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
-                <div class="widget-loader" id="widgetLoader">
-                    <div class="loader"></div>
-                    <div class="loader-text">Loading...</div>
-                </div>
+                <!-- Using exact Telegram widget logic from provided script -->
+                <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
                 <script async src="https://telegram.org/js/telegram-widget.js?22"
                         data-telegram-login="<?= htmlspecialchars($telegramBotUsername) ?>"
-                        data-size="medium"
+                        data-size="large"
                         data-auth-url="<?= $baseUrl ?>/login.php"
                         data-request-access="write"
-                        onload="document.getElementById('widgetLoader').style.display='none'"
+                        onload="console.log('Telegram widget loaded')"
                         onerror="console.error('Telegram widget failed to load')"></script>
             </div>
-            
-            <div class="error-state" id="errorState">
-                <i class="fas fa-exclamation-triangle error-icon"></i>
-                <p class="error-message">Telegram login failed</p>
-                <button class="retry-btn" onclick="location.reload()">
-                    <i class="fas fa-redo mr-1"></i> Retry
-                </button>
-            </div>
-            
-            <div class="fallback-section" id="fallbackSection" style="display: none;">
-                <a href="https://t.me/<?= htmlspecialchars($telegramBotUsername) ?>?start=auth" target="_blank" class="fallback-btn">
-                    <i class="fab fa-telegram"></i>
-                    <span>Open Telegram</span>
-                </a>
-            </div>
-            
-            <div class="security-badge">
-                <i class="fas fa-shield-alt"></i>
-                <span>Secure • Telegram Auth</span>
+
+            <div class="security">
+                <div class="security-item">
+                    <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Secure</span>
+                </div>
+                <div class="security-item">
+                    <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                    </svg>
+                    <span>Private</span>
+                </div>
+                <div class="security-item">
+                    <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>API</span>
+                </div>
             </div>
         </div>
-        
-        <div class="footer-text">𝐓𝐇𝐄 𝐍𝐄𝐖 𝐄𝐑𝐀 𝐁𝐄𝐆𝐈𝐍𝐒</div>
+
+        <div class="footer">
+            THE NEW ERA BEGINS
+        </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        // Check Telegram widget
-        setTimeout(() => {
-            const telegramWidget = document.querySelector('#telegram-login-<?= htmlspecialchars($telegramBotUsername) ?> iframe');
-            if (!telegramWidget) {
-                document.getElementById('errorState').style.display = 'block';
-                document.getElementById('fallbackSection').style.display = 'block';
-                document.getElementById('widgetLoader').style.display = 'none';
-            }
-        }, 4000);
-        
-        // Handle widget errors
-        window.addEventListener('error', (e) => {
-            if (e.message.includes('telegram-widget.js')) {
-                document.getElementById('errorState').style.display = 'block';
-                document.getElementById('fallbackSection').style.display = 'block';
-                document.getElementById('widgetLoader').style.display = 'none';
-            }
-        });
-        
-        // Add interactive particles on mouse move
-        document.addEventListener('mousemove', (e) => {
-            if (Math.random() > 0.98) {
-                createParticle(e.clientX, e.clientY);
-            }
-        });
-        
-        function createParticle(x, y) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = x + 'px';
-            particle.style.top = y + 'px';
-            particle.style.width = Math.random() * 5 + 2 + 'px';
-            particle.style.height = particle.style.width;
-            
-            document.querySelector('.particles').appendChild(particle);
-            
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = Math.random() * 2 + 1;
-            const lifetime = Math.random() * 1000 + 500;
-            
-            let opacity = 1;
-            let posX = x;
-            let posY = y;
-            
-            const animation = setInterval(() => {
-                posX += Math.cos(angle) * velocity;
-                posY += Math.sin(angle) * velocity;
-                opacity -= 0.01;
+        document.addEventListener('DOMContentLoaded', () => {
+            const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
+            if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
+                console.error('Telegram widget not loaded');
+                error_log('Telegram widget not loaded in DOM');
                 
-                particle.style.left = posX + 'px';
-                particle.style.top = posY + 'px';
-                particle.style.opacity = opacity;
-                
-                if (opacity <= 0) {
-                    clearInterval(animation);
-                    particle.remove();
+                // Fallback UI if widget fails to load
+                const widgetContainer = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
+                if (widgetContainer) {
+                    widgetContainer.innerHTML = `
+                        <div style="padding: 16px; background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 12px; text-align: center;">
+                            <p style="color: #ff6b6b; font-size: 12px; margin-bottom: 6px;">Telegram widget failed to load</p>
+                            <p style="color: rgba(255, 255, 255, 0.6); font-size: 10px; margin-bottom: 10px;">Please check your connection and try again</p>
+                            <button onclick="location.reload()" class="retry-btn">Retry</button>
+                        </div>
+                    `;
                 }
-            }, 20);
-        }
+                
+                // Auto-retry after delay
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+            }
+        });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>
