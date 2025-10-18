@@ -149,13 +149,13 @@ if (isset($apx1["failureType"])) {
     $apl = $apx1["failureType"];
     echo json_encode([
         'status' => 'DECLINED',
-        'message' => $apl,
+        'message' => 'Your card was declined',
         'response' => $apl
     ]);
 } else {
     echo json_encode([
         'status' => 'CHARGED',
-        'message' => 'PAYMENT_SUCCESS',
+        'message' => 'Charged $1 successfully',
         'response' => 'CHARGED'
     ]);
 }
