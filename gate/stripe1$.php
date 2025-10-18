@@ -3,10 +3,16 @@
 header('Content-Type: application/json');
 
 // Get card details from POST request
- $cardNumber = $_POST['card[number]'] ?? '';
- $expMonth = $_POST['card[exp_month]'] ?? '';
- $expYear = $_POST['card[exp_year]'] ?? '';
- $cvc = $_POST['card[cvc]'] ?? '';
+ $cardNumber = $_POST['card']['number'] ?? '';
+ $expMonth = $_POST['card']['exp_month'] ?? '';
+ $expYear = $_POST['card']['exp_year'] ?? '';
+ $cvc = $_POST['card']['cvc'] ?? '';
+
+// Debug: Log received data (remove in production)
+error_log("Card Number: " . $cardNumber);
+error_log("Exp Month: " . $expMonth);
+error_log("Exp Year: " . $expYear);
+error_log("CVC: " . $cvc);
 
 // Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
