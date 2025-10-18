@@ -80,842 +80,2069 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        
         :root {
-            --primary-bg: #0a0e27; --secondary-bg: #131937; --card-bg: #1a1f3a;
-            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
-            --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
-            --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
-            --success-green: #22c55e; --declined-red: #ef4444;
+            /* Dark Theme Colors */
+            --primary-bg: #0f0f23;
+            --secondary-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --accent-bg: #0f3460;
+            --text-primary: #ffffff;
+            --text-secondary: #a8b2d1;
+            --border-color: #2a2a4a;
+            --shadow: rgba(0, 0, 0, 0.4);
+            
+            /* Accent Colors */
+            --primary-accent: #00d9ff;
+            --secondary-accent: #ee00ff;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff0055;
+            --info: #0099ff;
+            
+            /* Stat Colors */
+            --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
         }
+        
         [data-theme="light"] {
-            --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
-            --text-primary: #0f172a; --text-secondary: #475569; --border-color: #e2e8f0;
+            /* Light Theme Colors */
+            --primary-bg: #f8f9fa;
+            --secondary-bg: #ffffff;
+            --card-bg: #ffffff;
+            --accent-bg: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: rgba(0, 0, 0, 0.1);
+            
+            /* Adjusted stat colors for light mode */
+            --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --stat-approved: linear-gradient(135deg, #4facfe 0%, #0099cc 100%);
+            --stat-threeds: linear-gradient(135deg, #43e97b 0%, #00cc99 100%);
+            --stat-declined: linear-gradient(135deg, #fa709a 0%, #ff9900 100%);
+            --stat-checked: linear-gradient(135deg, #30cfd0 0%, #0066cc 100%);
         }
+        
         body {
-            font-family: Inter, sans-serif; background: var(--primary-bg);
-            color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
+            font-family: Inter, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
+        
+        /* Layout Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Navbar Styles */
         .navbar {
-            position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10,14,39,0.95); backdrop-filter: blur(10px);
-            padding: 0.5rem 1rem; display: flex; justify-content: space-between;
-            align-items: center; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);
-            height: 50px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--secondary-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 10px var(--shadow);
         }
+        
         .navbar-brand {
-            display: flex; align-items: center; gap: 0.5rem;
-            font-size: 1.2rem; font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
         }
-        .navbar-brand i { font-size: 1.2rem; }
-        .navbar-actions { display: flex; align-items: center; gap: 0.5rem; }
+        
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: var(--primary-accent);
+        }
+        
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .theme-toggle {
-            width: 40px; height: 20px; background: var(--secondary-bg);
-            border-radius: 10px; cursor: pointer; border: 1px solid var(--border-color);
-            position: relative; transition: all 0.3s;
+            width: 50px;
+            height: 24px;
+            background: var(--accent-bg);
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            position: relative;
+            transition: all 0.3s;
         }
+        
         .theme-toggle-slider {
-            position: absolute; width: 16px; height: 16px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            left: 2px; transition: transform 0.3s; display: flex;
-            align-items: center; justify-content: center; color: white; font-size: 0.5rem;
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            left: 2px;
+            top: 2px;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.6rem;
         }
-        [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
+        
+        [data-theme="light"] .theme-toggle-slider {
+            transform: translateX(24px);
+        }
+        
         .user-info {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.1);
-            border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--accent-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
+        
         .user-avatar {
-            width: 28px; height: 28px; border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--accent-blue);
-            flex-shrink: 0;
+            border: 2px solid var(--primary-accent);
         }
+        
         .user-name {
-            font-weight: 600; color: #ffffff;
-            max-width: 80px; overflow: hidden; text-overflow: ellipsis;
-            white-space: nowrap; font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.9rem;
         }
+        
         .menu-toggle {
-            color: #ffffff !important; font-size: 1.2rem; 
-            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.1);
-            flex-shrink: 0; cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
         }
-        .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.2); }
+        
+        .menu-toggle:hover {
+            background: var(--primary-accent);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        /* Sidebar Styles */
         .sidebar {
-            position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
-            background: var(--card-bg); border-right: 1px solid var(--border-color);
-            padding: 1rem 0; z-index: 999; overflow-y: auto;
-            transform: translateX(-100%); transition: transform 0.3s ease;
+            width: 260px;
+            background: var(--secondary-bg);
+            border-right: 1px solid var(--border-color);
+            min-height: 100vh;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            z-index: 999;
+            box-shadow: 2px 0 10px var(--shadow);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
         }
-        .sidebar.open {
-            transform: translateX(0);
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
-        .sidebar-menu { list-style: none; }
-        .sidebar-item { margin: 0.3rem 0.5rem; }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .sidebar-logo i {
+            font-size: 1.3rem;
+            color: var(--primary-accent);
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-item {
+            margin: 0.25rem 0.75rem;
+        }
+        
         .sidebar-link {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 0.75rem; color: var(--text-secondary);
-            border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-accent);
+            transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+        
         .sidebar-link:hover {
-            background: rgba(59,130,246,0.1); color: var(--accent-blue);
+            background: var(--accent-bg);
+            color: var(--primary-accent);
             transform: translateX(5px);
         }
+        
         .sidebar-link.active {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(238, 0, 255, 0.1));
+            color: var(--primary-accent);
+            font-weight: 600;
         }
-        .sidebar-link i { width: 15px; text-align: center; font-size: 0.9rem; }
-        .sidebar-divider { height: 1px; background: var(--border-color); margin: 1rem 0.5rem; }
+        
+        .sidebar-link.active::before {
+            transform: scaleY(1);
+        }
+        
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 1rem 1.5rem;
+        }
+        
+        .sidebar-link.logout {
+            color: var(--error);
+            margin-top: 1rem;
+        }
+        
+        .sidebar-link.logout:hover {
+            background: rgba(255, 0, 85, 0.1);
+            color: var(--error);
+        }
+        
+        /* Main Content */
         .main-content {
-            margin-left: 0; margin-top: 50px; padding: 1rem;
-            min-height: calc(100vh - 50px); position: relative; z-index: 1;
-            transition: margin-left 0.3s ease;
+            flex: 1;
+            margin-left: 260px;
+            margin-top: 60px;
+            padding: 1.5rem;
+            min-height: calc(100vh - 60px);
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .main-content.sidebar-open { margin-left: 70vw; }
-        .page-section { display: none; }
-        .page-section.active { display: block; }
+        
+        .page-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .page-title {
-            font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 0.75rem; margin-bottom: 1rem;
+        
+        .page-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            font-weight: 400;
         }
-        .stat-card {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 0.75rem; position: relative;
-            transition: all 0.3s; box-shadow: 0 2px 4px var(--shadow); min-height: 100px;
-            display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
+        
+        /* Dashboard Styles */
+        .dashboard-container {
+            display: grid;
+            gap: 1.5rem;
         }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 20px var(--shadow); }
-        .stat-card::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-        }
-        .stat-card.approved::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); }
-        .stat-card.charged::before { background: linear-gradient(90deg, var(--warning), #ec4899); }
-        .stat-card.declined::before { background: linear-gradient(90deg, var(--error), #ec4899); }
-        .stat-icon {
-            width: 30px; height: 30px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; margin-bottom: 0.5rem;
-            background: rgba(59,130,246,0.15); color: var(--accent-blue);
-        }
-        .stat-card.approved .stat-icon { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
-        .stat-card.charged .stat-icon { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .stat-card.declined .stat-icon { background: rgba(239,68,68,0.15); color: var(--error); }
-        .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
-        .stat-label {
-            color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
-        }
-        .checker-section, .generator-section {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
-        }
-        .checker-header, .generator-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
-        }
-        .checker-title, .generator-title {
-            font-size: 1.2rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .checker-title i, .generator-title i { color: var(--accent-cyan); font-size: 1rem; }
-        .settings-btn {
-            padding: 0.3rem 0.6rem; border-radius: 8px;
+        
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--accent-bg), var(--card-bg));
+            border-radius: 20px;
+            padding: 2rem;
             border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.05); color: var(--text-primary);
-            cursor: pointer; font-weight: 500; display: flex;
-            align-items: center; gap: 0.3rem; font-size: 0.8rem;
+            box-shadow: 0 10px 30px var(--shadow);
+            position: relative;
+            overflow: hidden;
         }
-        .settings-btn:hover {
-            border-color: var(--accent-blue); color: var(--accent-blue);
-            transform: translateY(-2px);
+        
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
         }
-        .input-section { margin-bottom: 1rem; }
-        .input-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
         }
-        .input-label { font-weight: 600; font-size: 0.9rem; }
-        .card-textarea {
-            width: 100%; min-height: 150px; background: var(--secondary-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            padding: 0.75rem; color: var(--text-primary);
-            font-family: 'Courier New', monospace; resize: vertical;
-            font-size: 0.9rem; transition: all 0.3s;
+        
+        .welcome-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1;
         }
-        .card-textarea:focus {
-            outline: none; border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        
+        .welcome-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.3);
         }
-        .form-group {
+        
+        .welcome-text h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .welcome-text p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+        }
+        
+        .stat-card.total::before { background: var(--stat-total); }
+        .stat-card.charged::before { background: var(--stat-charged); }
+        .stat-card.approved::before { background: var(--stat-approved); }
+        .stat-card.threeds::before { background: var(--stat-threeds); }
+        .stat-card.declined::before { background: var(--stat-declined); }
+        .stat-card.checked::before { background: var(--stat-checked); }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--shadow);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 1rem;
         }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card.total .stat-icon { background: var(--stat-total); }
+        .stat-card.charged .stat-icon { background: var(--stat-charged); }
+        .stat-card.approved .stat-icon { background: var(--stat-approved); }
+        .stat-card.threeds .stat-icon { background: var(--stat-threeds); }
+        .stat-card.declined .stat-icon { background: var(--stat-declined); }
+        .stat-card.checked .stat-icon { background: var(--stat-checked); }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+        
+        .stat-card.total .stat-value { color: #764ba2; }
+        .stat-card.charged .stat-value { color: #f5576c; }
+        .stat-card.approved .stat-value { color: #00f2fe; }
+        .stat-card.threeds .stat-value { color: #38f9d7; }
+        .stat-card.declined .stat-value { color: #fee140; }
+        .stat-card.checked .stat-value { color: #30cfd0; }
+        
+        [data-theme="light"] .stat-card.total .stat-value { color: #764ba2; }
+        [data-theme="light"] .stat-card.charged .stat-value { color: #f5576c; }
+        [data-theme="light"] .stat-card.approved .stat-value { color: #0099cc; }
+        [data-theme="light"] .stat-card.threeds .stat-value { color: #00cc99; }
+        [data-theme="light"] .stat-card.declined .stat-value { color: #ff9900; }
+        [data-theme="light"] .stat-card.checked .stat-value { color: #0066cc; }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .stat-indicator {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .stat-card.total .stat-indicator { background: rgba(118, 75, 162, 0.7); }
+        .stat-card.charged .stat-indicator { background: rgba(245, 87, 108, 0.7); }
+        .stat-card.approved .stat-indicator { background: rgba(0, 242, 254, 0.7); }
+        .stat-card.threeds .stat-indicator { background: rgba(56, 249, 215, 0.7); }
+        .stat-card.declined .stat-indicator { background: rgba(254, 225, 64, 0.7); }
+        .stat-card.checked .stat-indicator { background: rgba(48, 207, 208, 0.7); }
+        
+        .recent-activity {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px var(--shadow);
+            margin-top: 1.5rem;
+        }
+        
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .activity-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .activity-title i {
+            color: var(--primary-accent);
+        }
+        
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--accent-bg);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        .activity-item:hover {
+            transform: translateX(5px);
+            border-color: var(--primary-accent);
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .activity-item.charged .activity-icon { background: var(--stat-charged); }
+        .activity-item.approved .activity-icon { background: var(--stat-approved); }
+        .activity-item.threeds .activity-icon { background: var(--stat-threeds); }
+        .activity-item.declined .activity-icon { background: var(--stat-declined); }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-card {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            color: var(--text-primary);
+        }
+        
+        .activity-status {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .activity-item.charged .activity-status { color: #f5576c; }
+        .activity-item.approved .activity-status { color: #00f2fe; }
+        .activity-item.threeds .activity-status { color: #38f9d7; }
+        .activity-item.declined .activity-status { color: #fee140; }
+        
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        /* Checker Section */
+        .checker-section, .generator-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+        
+        .checker-header, .generator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .checker-title, .generator-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .checker-title i, .generator-title i {
+            color: var(--primary-accent);
+            font-size: 1.3rem;
+        }
+        
+        .settings-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--accent-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .settings-btn:hover {
+            border-color: var(--primary-accent);
+            color: var(--primary-accent);
+            transform: translateY(-2px);
+        }
+        
+        .input-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .input-label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .card-count {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .card-textarea {
+            width: 100%;
+            min-height: 150px;
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        
+        .card-textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
         .form-control {
-            width: 100%; padding: 0.75rem; background: var(--secondary-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            color: var(--text-primary); font-size: 0.9rem; transition: all 0.3s;
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s;
         }
+        
         .form-control:focus {
-            outline: none; border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
         }
+        
         .form-row {
-            display: flex; gap: 1rem; flex-wrap: wrap;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
+        
         .form-col {
-            flex: 1; min-width: 120px;
+            flex: 1;
+            min-width: 150px;
         }
-        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
         .btn {
-            padding: 0.5rem 1rem; border-radius: 8px; border: none;
-            font-weight: 600; cursor: pointer; display: flex;
-            align-items: center; gap: 0.3rem; min-width: 100px;
-            font-size: 0.9rem; transition: all 0.3s;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 120px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            justify-content: center;
         }
+        
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 217, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+            transform: translateY(-2px);
+        }
+        
+        .results-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .results-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .results-title i {
+            color: var(--success);
+            font-size: 1.3rem;
+        }
+        
+        .results-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--accent-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary-accent);
+            color: var(--primary-accent);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
             color: white;
         }
-        .btn-primary:hover { transform: translateY(-2px); }
-        .btn-secondary {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color); color: var(--text-primary);
-        }
-        .results-section {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
-        }
-        .results-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
-        }
-        .results-title {
-            font-size: 1.2rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .results-title i { color: var(--accent-green); font-size: 1rem; }
-        .results-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-        .filter-btn {
-            padding: 0.3rem 0.6rem; border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.03); color: var(--text-secondary);
-            cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
-        }
-        .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
-        .filter-btn.active {
-            background: var(--accent-blue); border-color: var(--accent-blue); color: white;
-        }
+        
         .empty-state {
-            text-align: center; padding: 1.5rem 0.5rem; color: var(--text-secondary);
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
         }
-        .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3; }
-        .empty-state h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        /* Settings Popup */
         .settings-popup {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center; z-index: 10000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
         }
-        .settings-popup.active { display: flex; }
+        
+        .settings-popup.active {
+            display: flex;
+        }
+        
         .settings-content {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; max-width: 90vw; width: 90%;
-            max-height: 80vh; overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            max-width: 90vw;
+            width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             animation: slideUp 0.3s ease;
         }
+        
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
         .settings-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-color);
         }
+        
         .settings-title {
-            font-size: 1.1rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+        
         .settings-close {
-            width: 25px; height: 25px; border-radius: 6px; border: none;
-            background: rgba(255,255,255,0.05); color: var(--text-secondary);
-            cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 0.9rem; transition: all 0.3s;
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
+        
         .settings-close:hover {
-            background: var(--error); color: white; transform: rotate(90deg);
+            background: var(--error);
+            color: white;
+            transform: rotate(90deg);
         }
-        .gateway-group { margin-bottom: 1rem; }
+        
+        .gateway-group {
+            margin-bottom: 1.5rem;
+        }
+        
         .gateway-group-title {
-            font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
-            display: flex; align-items: center; gap: 0.3rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
         }
-        .gateway-options { display: grid; gap: 0.5rem; }
+        
+        .gateway-options {
+            display: grid;
+            gap: 1rem;
+        }
+        
         .gateway-option {
-            display: flex; align-items: center; padding: 0.5rem;
-            background: var(--secondary-bg); border: 1px solid var(--border-color);
-            border-radius: 8px; cursor: pointer; transition: all 0.3s;
-        }
-        .gateway-option:hover {
-            border-color: var(--accent-blue); transform: translateX(3px);
-        }
-        .gateway-option input[type="radio"] {
-            width: 15px; height: 15px; margin-right: 0.5rem;
-            cursor: pointer; accent-color: var(--accent-blue);
-        }
-        .gateway-option-content { flex: 1; }
-        .gateway-option-name {
-            font-weight: 600; display: flex; align-items: center;
-            gap: 0.3rem; margin-bottom: 0.2rem; font-size: 0.9rem;
-        }
-        .gateway-option-desc { font-size: 0.7rem; color: var(--text-secondary); }
-        .gateway-badge {
-            padding: 0.2rem 0.5rem; border-radius: 4px;
-            font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
-        }
-        .badge-charge { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .badge-auth { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
-        .settings-footer {
-            display: flex; gap: 0.5rem; margin-top: 1rem;
-            padding-top: 0.5rem; border-top: 1px solid var(--border-color);
-        }
-        .btn-save {
-            flex: 1; padding: 0.5rem; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
-        }
-        .btn-save:hover { transform: translateY(-2px); }
-        .btn-cancel {
-            flex: 1; padding: 0.5rem; border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--accent-bg);
             border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.05); color: var(--text-primary);
-            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #ec4899;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
-            display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
-        .result-item.declined .stat-label { color: var(--declined-red); }
-        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
-        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
-        .copy-btn:hover { color: var(--accent-purple); }
-        .stat-content { display: flex; align-items: center; justify-content: space-between; }
-        .sidebar-link.logout {
-            color: var(--error);
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--error);
-        }
-        .sidebar-link.logout:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--error);
+        
+        .gateway-option:hover {
+            border-color: var(--primary-accent);
             transform: translateX(5px);
         }
-        .generated-cards-container {
-            background: var(--secondary-bg);
+        
+        .gateway-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 1rem;
+            cursor: pointer;
+            accent-color: var(--primary-accent);
+        }
+        
+        .gateway-option-content {
+            flex: 1;
+        }
+        
+        .gateway-option-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .gateway-option-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .gateway-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-charge {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+        
+        .badge-auth {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--info);
+        }
+        
+        .settings-footer {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .btn-save {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-cancel {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
+            background: var(--accent-bg);
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--primary-accent);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 15px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #statusLog, #genStatusLog {
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .result-item {
+            background: var(--accent-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+        
+        .result-item.declined {
+            border-left: 4px solid var(--error);
+        }
+        
+        .result-item.approved, .result-item.charged, .result-item.threeds {
+            border-left: 4px solid var(--success);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .result-card {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .result-status {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        
+        .result-item.declined .result-status {
+            background: rgba(255, 0, 85, 0.1);
+            color: var(--error);
+        }
+        
+        .result-item.approved .result-status,
+        .result-item.charged .result-status,
+        .result-item.threeds .result-status {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--success);
+        }
+        
+        .result-response {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        
+        .copy-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-accent);
+            font-size: 0.9rem;
+            margin-left: auto;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            color: var(--secondary-accent);
+            transform: scale(1.1);
+        }
+        
+        .sidebar-link.logout {
+            color: var(--error);
+            background: rgba(255, 0, 85, 0.1);
+            border: 1px solid var(--error);
+        }
+        
+        .sidebar-link.logout:hover {
+            background: rgba(255, 0, 85, 0.2);
+            color: var(--error);
+        }
+        
+        .generated-cards-container {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
             max-height: 300px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             white-space: pre-wrap;
             word-break: break-all;
             color: var(--text-primary);
             margin-bottom: 1rem;
         }
+        
         .custom-select {
             position: relative;
             display: flex;
             width: 100%;
         }
+        
         .custom-select select {
             appearance: none;
             width: 100%;
-            padding: 0.75rem;
-            background: var(--secondary-bg);
+            padding: 0.9rem;
+            background: var(--accent-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             color: var(--text-primary);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.3s;
         }
+        
         .custom-select select:focus {
             outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
         }
+        
         .custom-select::after {
             content: '\f078';
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             position: absolute;
             top: 50%;
-            right: 0.75rem;
+            right: 1rem;
             transform: translateY(-50%);
             pointer-events: none;
             color: var(--text-secondary);
         }
+        
         .custom-input-group {
             display: flex;
             width: 100%;
         }
+        
         .custom-input-group input {
             flex: 1;
-            padding: 0.75rem;
-            background: var(--secondary-bg);
+            padding: 0.9rem;
+            background: var(--accent-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px 0 0 8px;
+            border-radius: 12px 0 0 12px;
             color: var(--text-primary);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             transition: all 0.3s;
         }
+        
         .custom-input-group input:focus {
             outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
         }
+        
         .custom-input-group .input-group-append {
             display: flex;
         }
+        
         .custom-input-group .input-group-text {
             display: flex;
             align-items: center;
-            padding: 0 0.75rem;
-            background: var(--secondary-bg);
+            padding: 0 1rem;
+            background: var(--accent-bg);
             border: 1px solid var(--border-color);
             border-left: none;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 12px 12px 0;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.3s;
         }
+        
         .custom-input-group .input-group-text:hover {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-blue);
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--primary-accent);
         }
+        
         .copy-all-btn, .clear-all-btn {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid var(--accent-blue);
-            color: var(--accent-blue);
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid var(--primary-accent);
+            color: var(--primary-accent);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.5rem;
         }
+        
         .copy-all-btn:hover, .clear-all-btn:hover {
-            background: var(--accent-blue);
+            background: var(--primary-accent);
             color: white;
         }
+        
         .clear-all-btn {
             border-color: var(--error);
             color: var(--error);
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(255, 0, 85, 0.1);
         }
+        
         .clear-all-btn:hover {
             background: var(--error);
             color: white;
         }
+        
         .results-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 1rem;
             flex-wrap: wrap;
         }
         
         /* Mobile-specific styles */
         @media (max-width: 768px) {
-            body { font-size: 14px; }
-            .navbar { 
-                padding: 0.4rem 0.6rem; 
-                height: 48px;
+            body {
+                font-size: 14px;
             }
-            .navbar-brand { 
-                font-size: 1rem; 
-                margin-left: 0.5rem;
+            
+            .navbar {
+                height: 56px;
+                padding: 0 0.75rem;
             }
-            .navbar-brand i { font-size: 1rem; }
-            .user-avatar { width: 24px; height: 24px; }
-            .user-name { 
-                max-width: 60px; 
-                font-size: 0.75rem;
+            
+            .navbar-brand {
+                font-size: 1.2rem;
             }
-            .sidebar { width: 75vw; }
-            .page-title { font-size: 1.2rem; }
-            .page-subtitle { font-size: 0.8rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-            .stat-card { padding: 0.5rem; min-height: 80px; }
-            .stat-icon { width: 25px; height: 25px; font-size: 0.8rem; }
-            .stat-value { font-size: 1rem; }
-            .stat-label { font-size: 0.6rem; }
-            .checker-section, .generator-section { padding: 0.75rem; }
-            .checker-title, .generator-title { font-size: 1rem; }
-            .checker-title i, .generator-title i { font-size: 0.8rem; }
-            .settings-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
-            .input-label { font-size: 0.8rem; }
-            .card-textarea { min-height: 100px; padding: 0.5rem; font-size: 0.8rem; }
-            .btn { padding: 0.4rem 0.8rem; min-width: 80px; font-size: 0.8rem; }
-            .results-section { padding: 0.75rem; }
-            .results-title { font-size: 1rem; }
-            .results-title i { font-size: 0.8rem; }
-            .filter-btn { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
-            .generated-cards-container { max-height: 200px; font-size: 0.7rem; padding: 0.5rem; }
-            .copy-all-btn, .clear-all-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
-            .form-row { flex-direction: column; gap: 0.5rem; }
-            .form-col { min-width: 100%; }
-            .settings-content { max-width: 95vw; }
-            .gateway-option { padding: 0.5rem; }
-            .gateway-option-name { font-size: 0.8rem; }
-            .gateway-option-desc { font-size: 0.65rem; }
+            
+            .navbar-brand i {
+                font-size: 1.3rem;
+            }
+            
+            .user-avatar {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .user-name {
+                max-width: 60px;
+                font-size: 0.8rem;
+            }
+            
             .menu-toggle {
-                position: absolute;
-                left: 0.5rem;
-                top: 50%;
-                transform: translateY(-50%);
+                display: flex;
+            }
+            
+            .sidebar {
+                width: 280px;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .sidebar-header {
+                padding: 1rem;
+            }
+            
+            .sidebar-logo {
+                font-size: 1rem;
+            }
+            
+            .sidebar-logo i {
+                font-size: 1.2rem;
+            }
+            
+            .sidebar-item {
+                margin: 0.25rem 0.75rem;
+            }
+            
+            .sidebar-link {
+                padding: 0.75rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .sidebar-link i {
+                font-size: 1rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+                margin-top: 56px;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .page-subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .welcome-banner {
+                padding: 1.5rem;
+            }
+            
+            .welcome-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .welcome-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .welcome-text h2 {
+                font-size: 1.4rem;
+            }
+            
+            .welcome-text p {
+                font-size: 0.9rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1.2rem;
+            }
+            
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .stat-value {
+                font-size: 2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            .activity-header {
+                margin-bottom: 1rem;
+            }
+            
+            .activity-title {
+                font-size: 1.1rem;
+            }
+            
+            .activity-item {
+                padding: 0.75rem;
+            }
+            
+            .activity-icon {
                 width: 32px;
                 height: 32px;
+                font-size: 0.9rem;
             }
-            .navbar-brand {
-                margin-left: 2.2rem;
+            
+            .activity-card {
+                font-size: 0.9rem;
             }
-            .theme-toggle {
-                width: 32px;
+            
+            .activity-status {
+                font-size: 0.8rem;
+            }
+            
+            .checker-section, .generator-section {
+                padding: 1.2rem;
+            }
+            
+            .checker-header, .generator-header {
+                margin-bottom: 1.2rem;
+            }
+            
+            .checker-title, .generator-title {
+                font-size: 1.2rem;
+            }
+            
+            .checker-title i, .generator-title i {
+                font-size: 1.1rem;
+            }
+            
+            .settings-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .input-label {
+                font-size: 0.9rem;
+            }
+            
+            .card-textarea {
+                min-height: 120px;
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                padding: 0.7rem 1.2rem;
+                min-width: 100px;
+                font-size: 0.9rem;
+            }
+            
+            .results-section {
+                padding: 1.2rem;
+            }
+            
+            .results-header {
+                margin-bottom: 1.2rem;
+            }
+            
+            .results-title {
+                font-size: 1.2rem;
+            }
+            
+            .results-title i {
+                font-size: 1.1rem;
+            }
+            
+            .filter-btn {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.75rem;
+            }
+            
+            .empty-state {
+                padding: 2rem 0.5rem;
+            }
+            
+            .empty-state i {
+                font-size: 2.5rem;
+            }
+            
+            .empty-state h3 {
+                font-size: 1rem;
+            }
+            
+            .generated-cards-container {
+                max-height: 200px;
+                font-size: 0.8rem;
+                padding: 0.75rem;
+            }
+            
+            .copy-all-btn, .clear-all-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .form-col {
+                min-width: 100%;
+            }
+            
+            .settings-content {
+                max-width: 95vw;
+                width: 100%;
+                border-radius: 16px;
+                padding: 1.2rem;
+            }
+            
+            .settings-header {
+                margin-bottom: 1.2rem;
+                padding-bottom: 0.8rem;
+            }
+            
+            .settings-title {
+                font-size: 1.1rem;
+            }
+            
+            .settings-close {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .gateway-group {
+                margin-bottom: 1.2rem;
+            }
+            
+            .gateway-group-title {
+                font-size: 0.9rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .gateway-option {
+                padding: 0.8rem;
+            }
+            
+            .gateway-option input[type="radio"] {
+                width: 16px;
                 height: 16px;
+                margin-right: 0.8rem;
             }
+            
+            .gateway-option-name {
+                font-size: 0.9rem;
+            }
+            
+            .gateway-option-desc {
+                font-size: 0.8rem;
+            }
+            
+            .settings-footer {
+                margin-top: 1.2rem;
+                padding-top: 0.8rem;
+            }
+            
+            .btn-save, .btn-cancel {
+                padding: 0.7rem;
+                font-size: 0.9rem;
+            }
+            
+            .theme-toggle {
+                width: 40px;
+                height: 20px;
+            }
+            
             .theme-toggle-slider {
-                width: 12px;
-                height: 12px;
+                width: 16px;
+                height: 16px;
                 left: 2px;
             }
-            [data-theme="light"] .theme-toggle-slider { transform: translateX(14px); }
+            
+            [data-theme="light"] .theme-toggle-slider {
+                transform: translateX(20px);
+            }
+            
             .user-info {
-                padding: 0.1rem 0.3rem;
-                gap: 0.3rem;
+                padding: 0.3rem 0.6rem;
+                gap: 0.5rem;
             }
         }
         
         /* For very small screens */
         @media (max-width: 480px) {
-            .navbar { padding: 0.3rem 0.5rem; }
-            .navbar-brand { font-size: 0.9rem; }
-            .user-avatar { width: 22px; height: 22px; }
-            .user-name { 
-                max-width: 50px; 
-                font-size: 0.7rem;
+            .navbar {
+                padding: 0 0.5rem;
             }
-            .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
-            .sidebar { width: 85vw; }
-            .page-title { font-size: 1.1rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
-            .stat-card { padding: 0.4rem; min-height: 70px; }
-            .stat-value { font-size: 0.9rem; }
-            .stat-label { font-size: 0.55rem; }
-            .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .navbar-brand i {
+                font-size: 1.1rem;
+            }
+            
+            .user-avatar {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .user-name {
+                max-width: 50px;
+                font-size: 0.75rem;
+            }
+            
+            .menu-toggle {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+            
+            .sidebar {
+                width: 85vw;
+            }
+            
+            .page-title {
+                font-size: 1.3rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.8rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 1rem;
+                min-width: 90px;
+                font-size: 0.85rem;
+            }
+            
+            .welcome-banner {
+                padding: 1.2rem;
+            }
+            
+            .welcome-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+            
+            .welcome-text h2 {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
 <body data-theme="light">
-    <nav class="navbar">
-        <div class="menu-toggle" id="menuToggle">
-            <i class="fas fa-bars"></i>
-        </div>
-        <div class="navbar-brand">
-            <i class="fas fa-credit-card"></i>
-            <span class="brand-text">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
-        </div>
-        <div class="navbar-actions">
-            <div class="theme-toggle" onclick="toggleTheme()">
-                <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
+    <div class="app-container">
+        <nav class="navbar">
+            <div class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
             </div>
-            <div class="user-info">
-                <img src="<?php 
-                    // Use Telegram profile photo if available, otherwise generate avatar
-                    if (!empty($_SESSION['user']['photo_url'])) {
-                        echo htmlspecialchars($_SESSION['user']['photo_url']);
-                    } else {
-                        // Generate avatar with initials
-                        $name = $_SESSION['user']['name'] ?? 'User';
-                        $initials = '';
-                        $words = explode(' ', trim($name));
-                        foreach ($words as $word) {
-                            if (!empty($word)) {
-                                $initials .= strtoupper(substr($word, 0, 1));
-                                if (strlen($initials) >= 2) break;
+            <div class="navbar-brand">
+                <i class="fas fa-credit-card"></i>
+                <span class="brand-text">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
+            </div>
+            <div class="navbar-actions">
+                <div class="theme-toggle" onclick="toggleTheme()">
+                    <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
+                </div>
+                <div class="user-info">
+                    <img src="<?php 
+                        // Use Telegram profile photo if available, otherwise generate avatar
+                        if (!empty($_SESSION['user']['photo_url'])) {
+                            echo htmlspecialchars($_SESSION['user']['photo_url']);
+                        } else {
+                            // Generate avatar with initials
+                            $name = $_SESSION['user']['name'] ?? 'User';
+                            $initials = '';
+                            $words = explode(' ', trim($name));
+                            foreach ($words as $word) {
+                                if (!empty($word)) {
+                                    $initials .= strtoupper(substr($word, 0, 1));
+                                    if (strlen($initials) >= 2) break;
+                                }
                             }
+                            if (empty($initials)) $initials = 'U';
+                            echo 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=00d9ff&color=fff&size=64';
                         }
-                        if (empty($initials)) $initials = 'U';
-                        echo 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
-                    }
-                ?>" alt="Profile" class="user-avatar">
-                <span class="user-name"><?php 
-                    // Display user's real name from Telegram
-                    $name = $_SESSION['user']['name'] ?? 'User';
-                    echo htmlspecialchars($name);
-                ?></span>
-            </div>
-        </div>
-    </nav>
-
-    <aside class="sidebar" id="sidebar">
-        <ul class="sidebar-menu">
-            <li class="sidebar-item">
-                <a class="sidebar-link active" onclick="showPage('home'); closeSidebar()">
-                    <i class="fas fa-home"></i><span>Home</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('checking'); closeSidebar()">
-                    <i class="fas fa-credit-card"></i><span>Card Checking</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('generator'); closeSidebar()">
-                    <i class="fas fa-magic"></i><span>Card Generator</span>
-                </a>
-            </li>
-            <div class="sidebar-divider"></div>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
-                    <i class="fas fa-plus"></i><span>More Coming Soon</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link logout" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-                </a>
-            </li>
-        </ul>
-    </aside>
-
-    <main class="main-content">
-        <section class="page-section active" id="page-home">
-            <h1 class="page-title">𝐃𝐚𝐬𝐡𝐛𝐨𝐚𝐫𝐝</h1>
-            <p class="page-subtitle">𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐛𝐚𝐜𝐤! 𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐜𝐮𝐫𝐫𝐞𝐧𝐭 𝐬𝐭𝐚𝐭𝐬.</p>
-
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
-                    <div id="total-value" class="stat-value">0</div>
-                    <div class="stat-label">TOTAL</div>
-                </div>
-                <div class="stat-card charged">
-                    <div class="stat-icon"><i class="fas fa-bolt"></i></div>
-                    <div id="charged-value" class="stat-value">0</div>
-                    <div class="stat-label">HIT|CHARGED</div>
-                </div>
-                <div class="stat-card approved">
-                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <div id="approved-value" class="stat-value">0</div>
-                    <div class="stat-label">LIVE|APPROVED</div>
-                </div>
-                <div class="stat-card threeDS">
-                    <div class="stat-icon"><i class="fas fa-lock"></i></div>
-                    <div id="threed-value" class="stat-value">0</div>
-                    <div class="stat-label">3DS</div>
-                </div>
-                <div class="stat-card declined">
-                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
-                    <div id="declined-value" class="stat-value">0</div>
-                    <div class="stat-label">DEAD|DECLINED</div>
-                </div>
-                <div class="stat-card checked">
-                    <div class="stat-icon"><i class="fas fa-check-double"></i></div>
-                    <div id="checked-value" class="stat-value">0 / 0</div>
-                    <div class="stat-label">CHECKED</div>
+                    ?>" alt="Profile" class="user-avatar">
+                    <span class="user-name"><?php 
+                        // Display user's real name from Telegram
+                        $name = $_SESSION['user']['name'] ?? 'User';
+                        echo htmlspecialchars($name);
+                    ?></span>
                 </div>
             </div>
-        </section>
+        </nav>
 
-        <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
-
-            <div class="checker-section">
-                <div class="checker-header">
-                    <div class="checker-title">
-                        <i class="fas fa-shield-alt"></i> Card Checker
-                    </div>
-                    <button class="settings-btn" onclick="openGatewaySettings()">
-                        <i class="fas fa-cog"></i> Gateway Settings
-                    </button>
-                </div>
-
-                <div class="input-section">
-                    <div class="input-header">
-                        <label class="input-label">Enter Card Details</label>
-                        <span class="card-count" id="cardCount">
-                            <i class="fas fa-list"></i> 0 valid cards detected
-                        </span>
-                    </div>
-                    <textarea id="cardInput" class="card-textarea" 
-                        placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="startBtn">
-                        <i class="fas fa-play"></i> Start Check
-                    </button>
-                    <button class="btn btn-secondary" id="stopBtn" disabled>
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                    <button class="btn btn-secondary" id="clearBtn">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                    <button class="btn btn-secondary" id="exportBtn">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-                <div class="loader" id="loader"></div>
-                <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
-            </div>
-
-            <div class="results-section" id="checkingResults">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list-check"></i> Recent Results
-                    </div>
-                    <div class="results-filters">
-                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
-                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
-                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
-                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
-                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
-                    </div>
-                </div>
-                <div id="checkingResultsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-credit-card"></i>
+                    <span>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
                 </div>
             </div>
-        </section>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <a class="sidebar-link active" onclick="showPage('home'); closeSidebar()">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" onclick="showPage('checking'); closeSidebar()">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Card Checker</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" onclick="showPage('generator'); closeSidebar()">
+                        <i class="fas fa-magic"></i>
+                        <span>Card Generator</span>
+                    </a>
+                </li>
+                <div class="sidebar-divider"></div>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More features coming soon','info'); closeSidebar()">
+                        <i class="fas fa-plus"></i>
+                        <span>More Features</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
 
-        <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑻𝑶𝑹</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞 𝐯𝐚𝐥𝐢𝐝 𝐜𝐫𝐞𝐝𝐢𝐭 𝐜𝐚𝐫𝐝𝐬 𝐰𝐢𝐭𝐡 𝐋𝐮𝐡𝐧 𝐜𝐡𝐞𝐜𝐤𝐬𝐮𝐦</p>
-
-            <div class="generator-section">
-                <div class="generator-header">
-                    <div class="generator-title">
-                        <i class="fas fa-magic"></i> Card Generator
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="input-label">BIN (6-8 digits)</label>
-                    <input type="text" id="binInput" class="form-control" placeholder="Enter BIN (e.g., 414740)" maxlength="8">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="input-label">Month</label>
-                        <div class="custom-select">
-                            <select id="monthSelect" class="form-control">
-                                <option value="rnd">rnd</option>
-                                <option value="01">01</option>
-                                <option value="02">02</option>
-                                <option value="03">03</option>
-                                <option value="04">04</option>
-                                <option value="05">05</option>
-                                <option value="06">06</option>
-                                <option value="07">07</option>
-                                <option value="08">08</option>
-                                <option value="09">09</option>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <label class="input-label">Year</label>
-                        <div class="custom-input-group">
-                            <input type="text" id="yearInput" class="form-control" placeholder="Year (e.g., 30, 2030)" maxlength="4">
-                            <div class="input-group-append">
-                                <span class="input-group-text" onclick="setYearRnd()">rnd</span>
+        <main class="main-content">
+            <section class="page-section active" id="page-home">
+                <div class="dashboard-container">
+                    <div class="welcome-banner">
+                        <div class="welcome-content">
+                            <div class="welcome-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h2>Dashboard Overview</h2>
+                                <p>Track your card checking performance and statistics</p>
                             </div>
                         </div>
                     </div>
-                    <div class="form-col">
-                        <label class="input-label">CVV</label>
-                        <div class="custom-input-group">
-                            <input type="text" id="cvvInput" class="form-control" placeholder="CVV (e.g., 123)" maxlength="4">
-                            <div class="input-group-append">
-                                <span class="input-group-text" onclick="setCvvRnd()">rnd</span>
+
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card total">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                            </div>
+                            <div id="total-value" class="stat-value">0</div>
+                            <div class="stat-label">TOTAL</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card charged">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                            </div>
+                            <div id="charged-value" class="stat-value">0</div>
+                            <div class="stat-label">HIT|CHARGED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card approved">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div id="approved-value" class="stat-value">0</div>
+                            <div class="stat-label">LIVE|APPROVED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card threeds">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                            <div id="threed-value" class="stat-value">0</div>
+                            <div class="stat-label">3DS</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card declined">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </div>
+                            <div id="declined-value" class="stat-value">0</div>
+                            <div class="stat-label">DEAD|DECLINED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card checked">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
+                            </div>
+                            <div id="checked-value" class="stat-value">0 / 0</div>
+                            <div class="stat-label">CHECKED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                    </div>
+
+                    <div class="recent-activity">
+                        <div class="activity-header">
+                            <div class="activity-title">
+                                <i class="fas fa-history"></i>
+                                Recent Activity
+                            </div>
+                        </div>
+                        <div class="activity-list" id="activityList">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <h3>No Activity Yet</h3>
+                                <p>Start checking cards to see activity here</p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <div class="form-group">
-                    <label class="input-label">Number of Cards</label>
-                    <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="5000">
-                </div>
+            <section class="page-section" id="page-checking">
+                <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
+                <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
 
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="generateBtn">
-                        <i class="fas fa-magic"></i> Generate Cards
-                    </button>
-                    <button class="btn btn-secondary" id="clearGenBtn">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                </div>
-                <div class="loader" id="genLoader"></div>
-                <div id="genStatusLog" class="text-sm text-gray-500 mt-2"></div>
-            </div>
-
-            <div class="results-section" id="generatorResults">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list"></i> Generated Cards
-                    </div>
-                    <div class="results-actions">
-                        <button class="copy-all-btn" id="copyAllBtn" style="display: none;">
-                            <i class="fas fa-copy"></i> Copy All
-                        </button>
-                        <button class="clear-all-btn" id="clearAllBtn" style="display: none;">
-                            <i class="fas fa-trash"></i> Clear
+                <div class="checker-section">
+                    <div class="checker-header">
+                        <div class="checker-title">
+                            <i class="fas fa-shield-alt"></i>
+                            Card Checker
+                        </div>
+                        <button class="settings-btn" onclick="openGatewaySettings()">
+                            <i class="fas fa-cog"></i>
+                            Gateway Settings
                         </button>
                     </div>
+
+                    <div class="input-section">
+                        <div class="input-header">
+                            <label class="input-label">Enter Card Details</label>
+                            <span class="card-count" id="cardCount">
+                                <i class="fas fa-list"></i>
+                                0 valid cards detected
+                            </span>
+                        </div>
+                        <textarea id="cardInput" class="card-textarea" 
+                            placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="startBtn">
+                            <i class="fas fa-play"></i>
+                            Start Check
+                        </button>
+                        <button class="btn btn-secondary" id="stopBtn" disabled>
+                            <i class="fas fa-stop"></i>
+                            Stop
+                        </button>
+                        <button class="btn btn-secondary" id="clearBtn">
+                            <i class="fas fa-trash"></i>
+                            Clear
+                        </button>
+                        <button class="btn btn-secondary" id="exportBtn">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                    <div class="loader" id="loader"></div>
+                    <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
                 </div>
-                <div id="generatedCardsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Cards Generated Yet</h3>
-                    <p>Generate cards to see them here</p>
+
+                <div class="results-section" id="checkingResults">
+                    <div class="results-header">
+                        <div class="results-title">
+                            <i class="fas fa-list-check"></i>
+                            Recent Results
+                        </div>
+                        <div class="results-filters">
+                            <button class="filter-btn active" onclick="filterResults('all')">All</button>
+                            <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
+                            <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
+                            <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
+                            <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
+                        </div>
+                    </div>
+                    <div id="checkingResultsList" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Results Yet</h3>
+                        <p>Start checking cards to see results here</p>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </main>
+            </section>
+
+            <section class="page-section" id="page-generator">
+                <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑻𝑶𝑹</h1>
+                <p class="page-subtitle">𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞 𝐯𝐚𝐥𝐢𝐝 𝐜𝐫𝐞𝐝𝐢𝐭 𝐜𝐚𝐫𝐝𝐬 𝐰𝐢𝐭𝐡 𝐋𝐮𝐡𝐧 𝐜𝐡𝐞𝐜𝐤𝐬𝐮𝐦</p>
+
+                <div class="generator-section">
+                    <div class="generator-header">
+                        <div class="generator-title">
+                            <i class="fas fa-magic"></i>
+                            Card Generator
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label">BIN (6-8 digits)</label>
+                        <input type="text" id="binInput" class="form-control" placeholder="Enter BIN (e.g., 414740)" maxlength="8">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="input-label">Month</label>
+                            <div class="custom-select">
+                                <select id="monthSelect" class="form-control">
+                                    <option value="rnd">rnd</option>
+                                    <option value="01">01</option>
+                                    <option value="02">02</option>
+                                    <option value="03">03</option>
+                                    <option value="04">04</option>
+                                    <option value="05">05</option>
+                                    <option value="06">06</option>
+                                    <option value="07">07</option>
+                                    <option value="08">08</option>
+                                    <option value="09">09</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <label class="input-label">Year</label>
+                            <div class="custom-input-group">
+                                <input type="text" id="yearInput" class="form-control" placeholder="Year (e.g., 30, 2030)" maxlength="4">
+                                <div class="input-group-append">
+                                    <span class="input-group-text" onclick="setYearRnd()">rnd</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <label class="input-label">CVV</label>
+                            <div class="custom-input-group">
+                                <input type="text" id="cvvInput" class="form-control" placeholder="CVV (e.g., 123)" maxlength="4">
+                                <div class="input-group-append">
+                                    <span class="input-group-text" onclick="setCvvRnd()">rnd</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label">Number of Cards</label>
+                        <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="5000">
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="generateBtn">
+                            <i class="fas fa-magic"></i>
+                            Generate Cards
+                        </button>
+                        <button class="btn btn-secondary" id="clearGenBtn">
+                            <i class="fas fa-trash"></i>
+                            Clear
+                        </button>
+                    </div>
+                    <div class="loader" id="genLoader"></div>
+                    <div id="genStatusLog" class="text-sm text-gray-500 mt-2"></div>
+                </div>
+
+                <div class="results-section" id="generatorResults">
+                    <div class="results-header">
+                        <div class="results-title">
+                            <i class="fas fa-list"></i>
+                            Generated Cards
+                        </div>
+                        <div class="results-actions">
+                            <button class="copy-all-btn" id="copyAllBtn" style="display: none;">
+                                <i class="fas fa-copy"></i>
+                                Copy All
+                            </button>
+                            <button class="clear-all-btn" id="clearAllBtn" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div id="generatedCardsList" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Cards Generated Yet</h3>
+                        <p>Generate cards to see them here</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <div class="settings-popup" id="gatewaySettings">
         <div class="settings-content">
             <div class="settings-header">
                 <div class="settings-title">
-                    <i class="fas fa-cog"></i> Gateway Settings
+                    <i class="fas fa-cog"></i>
+                    Gateway Settings
                 </div>
                 <button class="settings-close" onclick="closeGatewaySettings()">
                     <i class="fas fa-times"></i>
@@ -924,14 +2151,16 @@ try {
 
             <div class="gateway-group">
                 <div class="gateway-group-title">
-                    <i class="fas fa-bolt"></i> Charge Gateways
+                    <i class="fas fa-bolt"></i>
+                    Charge Gateways
                 </div>
                 <div class="gateway-options">
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/stripe5$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
+                                <i class="fab fa-stripe"></i>
+                                Stripe
                                 <span class="gateway-badge badge-charge">5$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Payment processing with $5 charge</div>
@@ -941,7 +2170,8 @@ try {
                         <input type="radio" name="gateway" value="gate/paypal0.1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
+                                <i class="fab fa-paypal"></i>
+                                PayPal
                                 <span class="gateway-badge badge-charge">0.1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Popular online payment system with minimal charge</div>
@@ -951,7 +2181,8 @@ try {
                         <input type="radio" name="gateway" value="gate/shopify1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
+                                <i class="fab fa-shopify"></i>
+                                Shopify
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">E-commerce payment processing</div>
@@ -962,7 +2193,8 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                    style="width:15px; height:15px; object-fit:contain;">
+                                Razorpay
                                 <span class="gateway-badge badge-charge">0.10$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Indian payment gateway</div>
@@ -972,7 +2204,8 @@ try {
                         <input type="radio" name="gateway" value="gate/authnet1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Authnet
+                                <i class="fas fa-credit-card"></i>
+                                Authnet
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Authorize.net payment gateway</div>
@@ -983,14 +2216,16 @@ try {
 
             <div class="gateway-group">
                 <div class="gateway-group-title">
-                    <i class="fas fa-shield-alt"></i> Auth Gateways
+                    <i class="fas fa-shield-alt"></i>
+                    Auth Gateways
                 </div>
                 <div class="gateway-options">
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/stripeauth.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
+                                <i class="fab fa-stripe"></i>
+                                Stripe
                                 <span class="gateway-badge badge-auth">Auth</span>
                             </div>
                             <div class="gateway-option-desc">Authorization only, no charge</div>
@@ -1001,10 +2236,12 @@ try {
 
             <div class="settings-footer">
                 <button class="btn-save" onclick="saveGatewaySettings()">
-                    <i class="fas fa-check"></i> Save Settings
+                    <i class="fas fa-check"></i>
+                    Save Settings
                 </button>
                 <button class="btn-cancel" onclick="closeGatewaySettings()">
-                    <i class="fas fa-times"></i> Cancel
+                    <i class="fas fa-times"></i>
+                    Cancel
                 </button>
             </div>
         </div>
@@ -1067,9 +2304,12 @@ try {
             localStorage.setItem('theme', theme);
             document.querySelector('.theme-toggle-slider i').className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
+                toast: true, 
+                position: 'top-end', 
+                icon: 'success',
                 title: `${theme === 'light' ? 'Light' : 'Dark'} Mode`,
-                showConfirmButton: false, timer: 1500
+                showConfirmButton: false, 
+                timer: 1500
             });
         }
 
@@ -1083,7 +2323,6 @@ try {
         function closeSidebar() {
             sidebarOpen = false;
             document.getElementById('sidebar').classList.remove('open');
-            document.querySelector('.main-content').classList.remove('sidebar-open');
         }
 
         function openGatewaySettings() {
@@ -1102,15 +2341,18 @@ try {
                 selectedGateway = selected.value;
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name').textContent.trim();
                 Swal.fire({
-                    icon: 'success', title: 'Gateway Updated!',
+                    icon: 'success', 
+                    title: 'Gateway Updated!',
                     text: `Now using: ${gatewayName}`,
-                    confirmButtonColor: '#10b981'
+                    confirmButtonColor: '#00d9ff'
                 });
                 closeGatewaySettings();
             } else {
                 Swal.fire({
-                    icon: 'warning', title: 'No Gateway Selected',
-                    text: 'Please select a gateway', confirmButtonColor: '#f59e0b'
+                    icon: 'warning', 
+                    title: 'No Gateway Selected',
+                    text: 'Please select a gateway', 
+                    confirmButtonColor: '#ffaa00'
                 });
             }
         }
@@ -1137,28 +2379,70 @@ try {
         function addResult(card, status, response) {
             const resultsList = document.getElementById('checkingResultsList');
             if (!resultsList) return;
-            const cardClass = status.toLowerCase();
-            const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
-            const resultDiv = document.createElement('div');
-            resultDiv.className = `stat-card ${cardClass} result-item`;
-            resultDiv.innerHTML = `
-                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
-                    <i class="${icon}"></i>
-                </div>
-                <div class="stat-content">
-                    <div>
-                        <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
-                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
-                    </div>
-                    <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
-                </div>
-            `;
-            resultsList.insertBefore(resultDiv, resultsList.firstChild);
+            
+            // Remove empty state if it exists
             if (resultsList.classList.contains('empty-state')) {
                 resultsList.classList.remove('empty-state');
                 resultsList.innerHTML = '';
-                resultsList.appendChild(resultDiv);
+            }
+            
+            const cardClass = status.toLowerCase();
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result-item ${cardClass}`;
+            
+            resultDiv.innerHTML = `
+                <div class="result-header">
+                    <div class="result-card">${card.displayCard}</div>
+                    <div class="result-status">${status}</div>
+                </div>
+                <div class="result-response">${response}</div>
+                <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            `;
+            
+            resultsList.insertBefore(resultDiv, resultsList.firstChild);
+            
+            // Add to activity feed
+            addActivityItem(card, status);
+        }
+
+        function addActivityItem(card, status) {
+            const activityList = document.getElementById('activityList');
+            if (!activityList) return;
+            
+            // Remove empty state if it exists
+            if (activityList.querySelector('.empty-state')) {
+                activityList.innerHTML = '';
+            }
+            
+            const activityItem = document.createElement('div');
+            activityItem.className = `activity-item ${status.toLowerCase()}`;
+            
+            // Format time
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            activityItem.innerHTML = `
+                <div class="activity-icon">
+                    ${status === 'CHARGED' ? '<i class="fas fa-bolt"></i>' : 
+                      status === 'APPROVED' ? '<i class="fas fa-check-circle"></i>' :
+                      status === '3DS' ? '<i class="fas fa-lock"></i>' :
+                      '<i class="fas fa-times-circle"></i>'}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-card">${card.displayCard}</div>
+                    <div class="activity-status">${status}</div>
+                </div>
+                <div class="activity-time">${timeString}</div>
+            `;
+            
+            // Add to the top of the list
+            activityList.insertBefore(activityItem, activityList.firstChild);
+            
+            // Keep only the last 5 activities
+            while (activityList.children.length > 5) {
+                activityList.removeChild(activityList.lastChild);
             }
         }
 
@@ -1191,8 +2475,12 @@ try {
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 Swal.fire({
-                    toast: true, position: 'top-end', icon: 'success',
-                    title: 'Copied!', showConfirmButton: false, timer: 1500
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'success',
+                    title: 'Copied!', 
+                    showConfirmButton: false, 
+                    timer: 1500
                 });
             }).catch(err => {
                 console.error('Failed to copy: ', err);
@@ -1202,8 +2490,12 @@ try {
         function copyAllGeneratedCards() {
             if (generatedCardsData.length === 0) {
                 Swal.fire({
-                    toast: true, position: 'top-end', icon: 'warning',
-                    title: 'No cards to copy', showConfirmButton: false, timer: 1500
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'warning',
+                    title: 'No cards to copy', 
+                    showConfirmButton: false, 
+                    timer: 1500
                 });
                 return;
             }
@@ -1211,8 +2503,12 @@ try {
             const allCardsText = generatedCardsData.join('\n');
             navigator.clipboard.writeText(allCardsText).then(() => {
                 Swal.fire({
-                    toast: true, position: 'top-end', icon: 'success',
-                    title: 'All cards copied!', showConfirmButton: false, timer: 1500
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'success',
+                    title: 'All cards copied!', 
+                    showConfirmButton: false, 
+                    timer: 1500
                 });
             }).catch(err => {
                 console.error('Failed to copy: ', err);
@@ -1236,8 +2532,12 @@ try {
             generatedCardsData = [];
             
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'Cleared!', showConfirmButton: false, timer: 1500
+                toast: true, 
+                position: 'top-end', 
+                icon: 'success',
+                title: 'Cleared!', 
+                showConfirmButton: false, 
+                timer: 1500
             });
         }
 
@@ -1251,8 +2551,12 @@ try {
             document.getElementById('page-checking').scrollIntoView({ behavior: 'smooth' });
             
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'info',
-                title: 'Card added to checker', showConfirmButton: false, timer: 1500
+                toast: true, 
+                position: 'top-end', 
+                icon: 'info',
+                title: 'Card added to checker', 
+                showConfirmButton: false, 
+                timer: 1500
             });
         }
 
@@ -1265,9 +2569,12 @@ try {
                 item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
             });
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'info',
+                toast: true, 
+                position: 'top-end', 
+                icon: 'info',
                 title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
-                showConfirmButton: false, timer: 1500
+                showConfirmButton: false, 
+                timer: 1500
             });
         }
 
@@ -1361,7 +2668,7 @@ try {
                     title: 'Processing in progress',
                     text: 'Please wait until current process completes',
                     icon: 'warning',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ff0055'
                 });
                 return;
             }
@@ -1381,7 +2688,7 @@ try {
                     title: 'No valid cards!',
                     text: 'Please check your card format',
                     icon: 'error',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ff0055'
                 });
                 return;
             }
@@ -1391,7 +2698,7 @@ try {
                     title: 'Limit exceeded!',
                     text: 'Maximum 1000 cards allowed',
                     icon: 'error',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ff0055'
                 });
                 return;
             }
@@ -1478,7 +2785,7 @@ try {
                 title: 'Processing complete!',
                 text: 'All cards have been checked. See the results below.',
                 icon: 'success',
-                confirmButtonColor: '#ec4899'
+                confirmButtonColor: '#00d9ff'
             });
         }
 
@@ -1503,7 +2810,7 @@ try {
                     title: 'Invalid BIN!',
                     text: 'Please enter a valid 6-8 digit BIN',
                     icon: 'error',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ff0055'
                 });
                 return;
             }
@@ -1514,7 +2821,7 @@ try {
                     title: 'Invalid Number!',
                     text: 'Please enter a number between 1 and 5000',
                     icon: 'error',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ff0055'
                 });
                 return;
             }
@@ -1526,8 +2833,8 @@ try {
                     text: `You are about to generate ${numCards} cards. This may take a while and use significant resources. Continue?`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#10b981',
-                    cancelButtonColor: '#ef4444',
+                    confirmButtonColor: '#00d9ff',
+                    cancelButtonColor: '#ff0055',
                     confirmButtonText: 'Yes, generate'
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -1557,7 +2864,7 @@ try {
                         title: 'Invalid Year!',
                         text: 'Please enter a valid year (e.g., 2025, 30, or "rnd")',
                         icon: 'error',
-                        confirmButtonColor: '#ec4899'
+                        confirmButtonColor: '#ff0055'
                     });
                     return;
                 }
@@ -1569,7 +2876,7 @@ try {
                     title: 'Invalid CVV!',
                     text: 'Please enter a valid 3-4 digit CVV or "rnd"',
                     icon: 'error',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ff0055'
                 });
                 return;
             }
@@ -1608,7 +2915,7 @@ try {
                             title: 'Success!',
                             text: `Generated ${response.cards.length} cards`,
                             icon: 'success',
-                            confirmButtonColor: '#10b981'
+                            confirmButtonColor: '#00d9ff'
                         });
                     } else if (response.error) {
                         // Handle error response
@@ -1616,7 +2923,7 @@ try {
                             title: 'Error!',
                             text: response.error,
                             icon: 'error',
-                            confirmButtonColor: '#ec4899'
+                            confirmButtonColor: '#ff0055'
                         });
                         $('#genStatusLog').text('Error: ' + response.error);
                     } else {
@@ -1626,7 +2933,7 @@ try {
                             title: 'No Cards!',
                             text: 'Could not generate cards with the provided parameters',
                             icon: 'warning',
-                            confirmButtonColor: '#f59e0b'
+                            confirmButtonColor: '#ffaa00'
                         });
                     }
                 },
@@ -1637,7 +2944,7 @@ try {
                         title: 'Error!',
                         text: 'Failed to generate cards: ' + xhr.statusText,
                         icon: 'error',
-                        confirmButtonColor: '#ec4899'
+                        confirmButtonColor: '#ff0055'
                     });
                 }
             });
@@ -1666,23 +2973,30 @@ try {
                 title: 'Stopped!',
                 text: 'Processing has been stopped',
                 icon: 'warning',
-                confirmButtonColor: '#ec4899'
+                confirmButtonColor: '#ffaa00'
             });
         });
 
         $('#clearBtn').on('click', function() {
             if ($('#cardInput').val().trim()) {
                 Swal.fire({
-                    title: 'Clear Input?', text: 'Remove all entered cards',
-                    icon: 'warning', showCancelButton: true,
-                    confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                    title: 'Clear Input?', 
+                    text: 'Remove all entered cards',
+                    icon: 'warning', 
+                    showCancelButton: true,
+                    confirmButtonColor: '#ff0055', 
+                    confirmButtonText: 'Yes, clear'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $('#cardInput').val('');
                         updateCardCount();
                         Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success',
-                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                            toast: true, 
+                            position: 'top-end', 
+                            icon: 'success',
+                            title: 'Cleared!', 
+                            showConfirmButton: false, 
+                            timer: 1500
                         });
                     }
                 });
@@ -1701,8 +3015,12 @@ try {
             document.getElementById('copyAllBtn').style.display = 'none';
             document.getElementById('clearAllBtn').style.display = 'none';
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'Cleared!', showConfirmButton: false, timer: 1500
+                toast: true, 
+                position: 'top-end', 
+                icon: 'success',
+                title: 'Cleared!', 
+                showConfirmButton: false, 
+                timer: 1500
             });
         });
 
@@ -1713,7 +3031,7 @@ try {
                     title: 'No data to export!',
                     text: 'Please check some cards first.',
                     icon: 'warning',
-                    confirmButtonColor: '#ec4899'
+                    confirmButtonColor: '#ffaa00'
                 });
                 return;
             }
@@ -1733,8 +3051,12 @@ try {
             link.click();
             document.body.removeChild(link);
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'Exported!', showConfirmButton: false, timer: 1500
+                toast: true, 
+                position: 'top-end', 
+                icon: 'success',
+                title: 'Exported!', 
+                showConfirmButton: false, 
+                timer: 1500
             });
         });
 
@@ -1750,7 +3072,17 @@ try {
         document.getElementById('menuToggle').addEventListener('click', function() {
             sidebarOpen = !sidebarOpen;
             document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
-            document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            if (sidebarOpen && window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebar');
+                const menuToggle = document.getElementById('menuToggle');
+                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    closeSidebar();
+                }
+            }
         });
 
         function logout() {
@@ -1759,8 +3091,8 @@ try {
                 text: 'You will be logged out and returned to the login page.',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#d1d5db',
+                confirmButtonColor: '#ff0055',
+                cancelButtonColor: '#00d9ff',
                 confirmButtonText: 'Yes, logout'
             }).then((result) => {
                 if (result.isConfirmed) {
