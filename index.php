@@ -1274,6 +1274,16 @@ try {
                             <div class="gateway-option-desc">Authorize.net payment gateway</div>
                         </div>
                     </label>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/b37$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-braintree"></i> Braintree
+                                <span class="gateway-badge badge-charge">7.5$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">Payment processing with $7.5 charge</div>
+                        </div>
+                    </label>
                 </div>
             </div>
 
