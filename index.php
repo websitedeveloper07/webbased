@@ -524,6 +524,16 @@ try {
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            color: white;
+        }
+        .btn-danger:hover { transform: translateY(-2px); }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
@@ -1215,6 +1225,9 @@ try {
                     <button class="btn btn-primary" id="startBtn">
                         <i class="fas fa-play"></i> Start Check
                     </button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
                     <button class="btn btn-secondary" id="clearBtn">
                         <i class="fas fa-trash"></i> Clear
                     </button>
@@ -1612,6 +1625,10 @@ try {
                 formattedCard,
                 maskedCard,
                 maskedCardNoSpaces,
+                // Add patterns for partial card numbers like |08|27|153
+                `|${cardNumber.slice(0, 2)}|${cardNumber.slice(2, 4)}|${cardNumber.slice(4, 7)}`,
+                `|${cardNumber.slice(0, 2)}|${cardNumber.slice(2, 4)}|${cardNumber.slice(4, 7)}|${cardNumber.slice(7, 11)}`,
+                `|${cardNumber.slice(0, 2)}|${cardNumber.slice(2, 4)}|${cardNumber.slice(4, 7)}|${cardNumber.slice(7, 11)}|${cardNumber.slice(11, 15)}`,
                 // Add more patterns if needed
             ];
             
@@ -2031,7 +2048,9 @@ try {
             document.getElementById('totalCount').textContent = totalCards;
             document.getElementById('progressFill').style.width = '0%';
             
+            // Update button states
             $('#startBtn').prop('disabled', true);
+            $('#stopBtn').prop('disabled', false);
             $('#checkingResultsList').html('');
 
             let requestIndex = 0;
@@ -2089,7 +2108,9 @@ try {
             // Hide processing indicator
             document.getElementById('processingIndicator').classList.remove('active');
             
+            // Update button states
             $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
             $('#cardInput').val('');
             updateCardCount();
             
@@ -2097,6 +2118,34 @@ try {
                 title: 'Processing complete!',
                 text: 'All cards have been checked. See the results below.',
                 icon: 'success',
+                confirmButtonColor: '#ec4899'
+            });
+        }
+
+        function stopProcessing() {
+            if (!isProcessing || isStopping) return;
+
+            isProcessing = false;
+            isStopping = true;
+            cardQueue = [];
+            abortControllers.forEach(controller => controller.abort());
+            abortControllers = [];
+            activeRequests = 0;
+            
+            // Hide processing indicator
+            document.getElementById('processingIndicator').classList.remove('active');
+            
+            // Update button states
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
+            
+            // Update stats with current progress
+            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+            
+            Swal.fire({
+                title: 'Stopped!',
+                text: 'Processing has been stopped',
+                icon: 'warning',
                 confirmButtonColor: '#ec4899'
             });
         }
@@ -2263,6 +2312,7 @@ try {
         }
 
         $('#startBtn').on('click', processCards);
+        $('#stopBtn').on('click', stopProcessing);
         $('#generateBtn').on('click', generateCards);
         $('#copyAllBtn').on('click', copyAllGeneratedCards);
         $('#clearAllBtn').on('click', clearAllGeneratedCards);
