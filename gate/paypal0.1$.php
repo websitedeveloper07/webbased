@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Optional file-based logging for debugging (disable in production)
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
+$log_file = __DIR__ . '/paypal0.1$_debug.log';
 function log_message($message) {
     global $log_file;
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
@@ -49,19 +49,19 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         // Parse JSON response
         $result = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
-            log_message("Invalid JSON for $card_details: " . substr($response, 0, 200));
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($result) || !isset($result['status']) || !isset($result['response'])) {
+            log_message("Invalid JSON or missing fields for $card_details: " . substr($response, 0, 200));
             return "DECLINED [Invalid API response: " . substr($response, 0, 200) . "] $card_details";
         }
 
-        $status = $result['status'];
+        $status = strtolower($result['status']); // Case-insensitive status check
         $message = $result['response'] ?? 'Unknown error';
 
         // Map API response to status
         $final_status = 'DECLINED';
-        if ($status === 'charged') {
+        if ($status === 'charged' || $message === 'CARD ADDED') {
             $final_status = 'CHARGED';
-        } elseif ($status === 'approved') {
+        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         } elseif ($status === 'declined') {
             $final_status = 'DECLINED';
@@ -155,19 +155,19 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
 
         // Parse JSON response
         $result = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($result) || !isset($result['status']) || !isset($result['response'])) {
             $results[$index] = "DECLINED [Invalid parallel API response: " . substr($response, 0, 200) . "]";
             log_message("Invalid JSON in parallel check for card $index: " . substr($response, 0, 200));
             continue;
         }
 
-        $status = $result['status'];
+        $status = strtolower($result['status']); // Case-insensitive status check
         $message = $result['response'] ?? 'Unknown error';
 
         $final_status = 'DECLINED';
-        if ($status === 'charged') {
+        if ($status === 'charged' || $message === 'CARD ADDED') {
             $final_status = 'CHARGED';
-        } elseif ($status === 'approved') {
+        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         }
 
