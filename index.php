@@ -12,7 +12,7 @@ error_log("Checking session in index.php: " . json_encode($_SESSION));
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     error_log("Redirecting to login.php: Session missing or invalid auth_provider");
-    header('Location: http://cxchk.site/login.php');
+    header('Location: login.php');
     exit;
 }
 
@@ -335,19 +335,16 @@ try {
             letter-spacing: 0.5px;
         }
         
-        .stat-card.total .stat-value { color: #764ba2; }
-        .stat-card.charged .stat-value { color: #f5576c; }
-        .stat-card.approved .stat-value { color: #00f2fe; }
-        .stat-card.threeds .stat-value { color: #38f9d7; }
-        .stat-card.declined .stat-value { color: #fee140; }
-        .stat-card.checked .stat-value { color: #30cfd0; }
+        /* Fixed: Changed color for declined cards to red */
+        .stat-card.declined .stat-value { color: var(--declined-red); }
+        .stat-card.charged .stat-value { color: var(--success-green); }
+        .stat-card.approved .stat-value { color: var(--success-green); }
+        .stat-card.threeds .stat-value { color: var(--success-green); }
         
-        [data-theme="light"] .stat-card.total .stat-value { color: #764ba2; }
-        [data-theme="light"] .stat-card.charged .stat-value { color: #f5576c; }
-        [data-theme="light"] .stat-card.approved .stat-value { color: #0099cc; }
-        [data-theme="light"] .stat-card.threeds .stat-value { color: #00cc99; }
-        [data-theme="light"] .stat-card.declined .stat-value { color: #ff9900; }
-        [data-theme="light"] .stat-card.checked .stat-value { color: #30cfd0; }
+        [data-theme="light"] .stat-card.declined .stat-value { color: var(--declined-red); }
+        [data-theme="light"] .stat-card.charged .stat-value { color: var(--success-green); }
+        [data-theme="light"] .stat-card.approved .stat-value { color: var(--success-green); }
+        [data-theme="light"] .stat-card.threeds .stat-value { color: var(--success-green); }
         
         .stat-indicator {
             position: absolute;
@@ -363,7 +360,7 @@ try {
         .stat-card.charged .stat-indicator { background: rgba(245, 87, 108, 0.7); }
         .stat-card.approved .stat-indicator { background: rgba(0, 242, 254, 0.7); }
         .stat-card.threeds .stat-indicator { background: rgba(56, 249, 215, 0.7); }
-        .stat-card.declined .stat-indicator { background: rgba(254, 225, 64, 0.7); }
+        .stat-card.declined .stat-indicator { background: rgba(239, 68, 68, 0.7); }
         .stat-card.checked .stat-indicator { background: rgba(48, 207, 208, 0.7); }
         
         .recent-activity {
@@ -440,10 +437,11 @@ try {
             color: var(--text-secondary);
         }
         
-        .activity-item.charged .activity-status { color: #f5576c; }
-        .activity-item.approved .activity-status { color: #00f2fe; }
-        .activity-item.threeds .activity-status { color: #38f9d7; }
-        .activity-item.declined .activity-status { color: #fee140; }
+        /* Fixed: Changed color for declined cards to red in activity feed */
+        .activity-item.charged .activity-status { color: var(--success-green); }
+        .activity-item.approved .activity-status { color: var(--success-green); }
+        .activity-item.threeds .activity-status { color: var(--success-green); }
+        .activity-item.declined .activity-status { color: var(--declined-red); }
         
         .activity-time {
             font-size: 0.7rem;
@@ -648,8 +646,11 @@ try {
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
+        
+        /* Fixed: Changed color for declined cards to red in results */
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
+        
         .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
@@ -1633,15 +1634,16 @@ try {
                     contentType: false,
                     timeout: 300000,
                     signal: controller.signal,
+                    dataType: 'json',  // Add this to expect JSON response
                     success: function(response) {
                         let status = 'DECLINED';
-                        let message = response;
-                        try {
-                            const jsonResponse = JSON.parse(response);
-                            if (jsonResponse.status) {
-                                status = jsonResponse.status.toUpperCase();
-                            }
-                            message = jsonResponse.message || jsonResponse.response || response;
+                        let message = 'Card declined';
+                        
+                        // Handle the JSON response properly
+                        if (response && typeof response === 'object') {
+                            status = response.status ? response.status.toUpperCase() : 'DECLINED';
+                            message = response.message || response.response || 'Card declined';
+                            
                             // Normalize status
                             if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
                                 status = '3DS';
@@ -1652,18 +1654,21 @@ try {
                             } else {
                                 status = 'DECLINED';
                             }
-                        } catch (e) {
-                            if (response.includes('3D_AUTHENTICATION') || response.includes('3DS') || response.includes('3D')) {
+                        } else {
+                            // Fallback for non-JSON responses
+                            const responseStr = String(response);
+                            if (responseStr.includes('3D_AUTHENTICATION') || responseStr.includes('3DS') || responseStr.includes('3D')) {
                                 status = '3DS';
-                            } else if (response.includes('CHARGED')) {
+                            } else if (responseStr.includes('CHARGED')) {
                                 status = 'CHARGED';
-                            } else if (response.includes('APPROVED')) {
+                            } else if (responseStr.includes('APPROVED')) {
                                 status = 'APPROVED';
                             } else {
                                 status = 'DECLINED';
                             }
-                            message = response;
+                            message = responseStr;
                         }
+                        
                         console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
                         resolve({
                             status: status,
@@ -1675,6 +1680,18 @@ try {
                     error: function(xhr) {
                         $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                         console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                        
+                        // Try to parse error response as JSON
+                        let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
+                        try {
+                            const errorJson = JSON.parse(xhr.responseText);
+                            if (errorJson && errorJson.message) {
+                                errorResponse = errorJson.message;
+                            }
+                        } catch (e) {
+                            // Not JSON, use default error message
+                        }
+                        
                         if (xhr.statusText === 'abort') {
                             resolve(null);
                         } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
@@ -1682,7 +1699,7 @@ try {
                         } else {
                             resolve({
                                 status: 'DECLINED',
-                                response: `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`,
+                                response: errorResponse,
                                 card: card,
                                 displayCard: card.displayCard
                             });
@@ -2103,10 +2120,15 @@ try {
                 if (result.isConfirmed) {
                     // Perform logout action (e.g., clear session and redirect)
                     sessionStorage.clear();
-                    window.location.href = 'http://cxchk.site/login.php';
+                    window.location.href = 'login.php';
                 }
             });
         }
+        
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.querySelector('.theme-toggle-slider i').className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
     </script>
 </body>
 </html>
