@@ -885,10 +885,13 @@ try {
         .result-card.declined .result-status { color: var(--declined-red); }
         .result-response {
             font-size: 0.75rem;
-            color: var(--text-secondary);
             line-height: 1.4;
             word-break: break-word;
         }
+        .result-card.charged .result-response { color: var(--success-green); }
+        .result-card.approved .result-response { color: var(--success-green); }
+        .result-card.threeds .result-response { color: var(--success-green); }
+        .result-card.declined .result-response { color: var(--declined-red); }
         .result-actions {
             display: flex;
             gap: 0.5rem;
@@ -1233,9 +1236,6 @@ try {
                         </div>
                     </div>
                 </div>
-                
-                <div class="loader" id="loader"></div>
-                <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
             </div>
 
             <div class="results-section" id="checkingResults">
@@ -1907,9 +1907,6 @@ try {
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvc);
 
-                // Update status log
-                $('#statusLog').text(`Processing card: ${card.displayCard}`);
-
                 console.log(`Starting request for card: ${card.displayCard}`);
 
                 $.ajax({
@@ -2035,8 +2032,6 @@ try {
             document.getElementById('progressFill').style.width = '0%';
             
             $('#startBtn').prop('disabled', true);
-            $('#loader').show();
-            $('#statusLog').text('Starting processing...');
             $('#checkingResultsList').html('');
 
             let requestIndex = 0;
@@ -2095,10 +2090,8 @@ try {
             document.getElementById('processingIndicator').classList.remove('active');
             
             $('#startBtn').prop('disabled', false);
-            $('#loader').hide();
             $('#cardInput').val('');
             updateCardCount();
-            $('#statusLog').text('Processing completed.');
             
             Swal.fire({
                 title: 'Processing complete!',
