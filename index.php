@@ -524,16 +524,6 @@ try {
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
-        .btn-danger {
-            background: linear-gradient(135deg, var(--error), #dc2626);
-            color: white;
-        }
-        .btn-danger:hover { transform: translateY(-2px); }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
@@ -793,138 +783,6 @@ try {
             flex-wrap: wrap;
         }
         
-        /* Simple Processing Indicator */
-        .processing-indicator {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin-top: 1rem;
-        }
-        .processing-indicator.active {
-            display: flex;
-        }
-        .processing-text {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-        .processing-spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(59, 130, 246, 0.3);
-            border-top: 2px solid var(--accent-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        .processing-stats {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        .processing-progress {
-            width: 100px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .processing-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-            border-radius: 3px;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        /* Result Card Improvements */
-        .result-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: all 0.3s;
-        }
-        .result-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px var(--shadow);
-        }
-        .result-status-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-        .result-card.charged .result-status-icon { background: var(--stat-charged); }
-        .result-card.approved .result-status-icon { background: var(--stat-approved); }
-        .result-card.threeds .result-status-icon { background: var(--stat-threeds); }
-        .result-card.declined .result-status-icon { background: var(--stat-declined); }
-        .result-content {
-            flex: 1;
-        }
-        .result-card-number {
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 0.3rem;
-            color: var(--text-primary);
-        }
-        .result-status {
-            font-size: 0.8rem;
-            font-weight: 500;
-            margin-bottom: 0.3rem;
-        }
-        .result-card.charged .result-status { color: var(--success-green); }
-        .result-card.approved .result-status { color: var(--success-green); }
-        .result-card.threeds .result-status { color: var(--success-green); }
-        .result-card.declined .result-status { color: var(--declined-red); }
-        .result-response {
-            font-size: 0.75rem;
-            line-height: 1.4;
-            word-break: break-word;
-        }
-        .result-card.charged .result-response { color: var(--success-green); }
-        .result-card.approved .result-response { color: var(--success-green); }
-        .result-card.threeds .result-response { color: var(--success-green); }
-        .result-card.declined .result-response { color: var(--declined-red); }
-        .result-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .result-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .result-action-btn:hover {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-blue);
-            border-color: var(--accent-blue);
-        }
-        
         /* Mobile-specific styles */
         @media (max-width: 768px) {
             body { font-size: 14px; }
@@ -997,14 +855,6 @@ try {
             .user-info {
                 padding: 0.1rem 0.3rem;
                 gap: 0.3rem;
-            }
-            .processing-indicator {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            .processing-stats {
-                width: 100%;
-                justify-content: space-between;
             }
         }
         
@@ -1225,7 +1075,7 @@ try {
                     <button class="btn btn-primary" id="startBtn">
                         <i class="fas fa-play"></i> Start Check
                     </button>
-                    <button class="btn btn-danger" id="stopBtn" disabled>
+                    <button class="btn btn-secondary" id="stopBtn" disabled>
                         <i class="fas fa-stop"></i> Stop
                     </button>
                     <button class="btn btn-secondary" id="clearBtn">
@@ -1235,20 +1085,8 @@ try {
                         <i class="fas fa-download"></i> Export
                     </button>
                 </div>
-                
-                <!-- Simple Processing Indicator -->
-                <div class="processing-indicator" id="processingIndicator">
-                    <div class="processing-text">
-                        <div class="processing-spinner"></div>
-                        <span>Processing</span>
-                    </div>
-                    <div class="processing-stats">
-                        <span id="processedCount">0</span> / <span id="totalCount">0</span>
-                        <div class="processing-progress">
-                            <div class="processing-progress-fill" id="progressFill"></div>
-                        </div>
-                    </div>
-                </div>
+                <div class="loader" id="loader"></div>
+                <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
             </div>
 
             <div class="results-section" id="checkingResults">
@@ -1402,7 +1240,7 @@ try {
                                 <i class="fab fa-paypal"></i> PayPal
                                 <span class="gateway-badge badge-charge">0.1$ Charge</span>
                             </div>
-                            <div class="gateway-option-desc">Popular online payment system with minimal charge</div>
+                            <div class="gateway-option-desc">Popular online payment system </div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -1413,6 +1251,16 @@ try {
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">E-commerce payment processing</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/b37$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-paypal"></i> Braintree
+                                <span class="gateway-badge badge-charge">7.5$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">An paypal's service</div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -1434,16 +1282,6 @@ try {
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
                             <div class="gateway-option-desc">Authorize.net payment gateway</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/b37$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-braintree"></i> Braintree
-                                <span class="gateway-badge badge-charge">7.5$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $7.5 charge</div>
                         </div>
                     </label>
                 </div>
@@ -1484,7 +1322,6 @@ try {
         let isStopping = false;
         let activeRequests = 0;
         let cardQueue = [];
-        const MAX_CONCURRENT = 2;
         const MAX_RETRIES = 2;
         let abortControllers = [];
         let totalCards = 0;
@@ -1600,18 +1437,9 @@ try {
             document.getElementById('threed-value').textContent = threeDS;
             document.getElementById('declined-value').textContent = declined;
             document.getElementById('checked-value').textContent = `${charged + approved + threeDS + declined} / ${total}`;
-            
-            // Update processing indicator
-            if (isProcessing) {
-                const processed = charged + approved + threeDS + declined;
-                const progressPercent = total > 0 ? (processed / total) * 100 : 0;
-                document.getElementById('processedCount').textContent = processed;
-                document.getElementById('totalCount').textContent = total;
-                document.getElementById('progressFill').style.width = `${progressPercent}%`;
-            }
         }
 
-        // Enhanced function to clean card number from response text
+        // Function to clean card number from response text
         function cleanCardFromResponse(response, cardNumber) {
             // Format card number with spaces
             const formattedCard = cardNumber.replace(/(.{4})/g, '$1 ').trim();
@@ -1625,10 +1453,6 @@ try {
                 formattedCard,
                 maskedCard,
                 maskedCardNoSpaces,
-                // Add patterns for partial card numbers like |08|27|153
-                `|${cardNumber.slice(0, 2)}|${cardNumber.slice(2, 4)}|${cardNumber.slice(4, 7)}`,
-                `|${cardNumber.slice(0, 2)}|${cardNumber.slice(2, 4)}|${cardNumber.slice(4, 7)}|${cardNumber.slice(7, 11)}`,
-                `|${cardNumber.slice(0, 2)}|${cardNumber.slice(2, 4)}|${cardNumber.slice(4, 7)}|${cardNumber.slice(7, 11)}|${cardNumber.slice(11, 15)}`,
                 // Add more patterns if needed
             ];
             
@@ -1658,38 +1482,29 @@ try {
             // Clean the response by removing any occurrence of the card number
             const cleanResponse = cleanCardFromResponse(response, card.number);
             
-            // Remove empty state if it exists
-            if (resultsList.querySelector('.empty-state')) {
-                resultsList.innerHTML = '';
-            }
-            
             const cardClass = status.toLowerCase();
+            const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
             const resultDiv = document.createElement('div');
-            resultDiv.className = `result-card ${cardClass}`;
-            
-            // Determine icon based on status
-            let iconClass = 'fas fa-times-circle';
-            if (status === 'CHARGED') iconClass = 'fas fa-bolt';
-            else if (status === 'APPROVED') iconClass = 'fas fa-check-circle';
-            else if (status === '3DS') iconClass = 'fas fa-lock';
-            
+            resultDiv.className = `stat-card ${cardClass} result-item`;
             resultDiv.innerHTML = `
-                <div class="result-status-icon">
-                    <i class="${iconClass}"></i>
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
+                    <i class="${icon}"></i>
                 </div>
-                <div class="result-content">
-                    <div class="result-card-number">${card.displayCard}</div>
-                    <div class="result-status">${status}</div>
-                    <div class="result-response">${cleanResponse}</div>
-                </div>
-                <div class="result-actions">
-                    <button class="result-action-btn" onclick="copyToClipboard('${card.displayCard}')" title="Copy Card">
-                        <i class="fas fa-copy"></i>
-                    </button>
+                <div class="stat-content">
+                    <div>
+                        <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
+                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${cleanResponse}</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
                 </div>
             `;
-            
             resultsList.insertBefore(resultDiv, resultsList.firstChild);
+            if (resultsList.classList.contains('empty-state')) {
+                resultsList.classList.remove('empty-state');
+                resultsList.innerHTML = '';
+                resultsList.appendChild(resultDiv);
+            }
             
             // Add to activity feed
             addActivityItem(card, status);
@@ -1831,7 +1646,7 @@ try {
         function filterResults(filter) {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            const items = document.querySelectorAll('.result-card');
+            const items = document.querySelectorAll('.result-item');
             items.forEach(item => {
                 const status = item.className.split(' ')[1];
                 item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
@@ -1924,6 +1739,7 @@ try {
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvc);
 
+                $('#statusLog').text(`Processing card: ${card.displayCard}`);
                 console.log(`Starting request for card: ${card.displayCard}`);
 
                 $.ajax({
@@ -1948,6 +1764,7 @@ try {
                         });
                     },
                     error: function(xhr) {
+                        $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                         console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
                         
                         // Try to parse error response
@@ -2041,22 +1858,22 @@ try {
             sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
             updateStats(totalCards, 0, 0, 0, 0);
-            
-            // Show processing indicator
-            document.getElementById('processingIndicator').classList.add('active');
-            document.getElementById('processedCount').textContent = '0';
-            document.getElementById('totalCount').textContent = totalCards;
-            document.getElementById('progressFill').style.width = '0%';
-            
-            // Update button states
             $('#startBtn').prop('disabled', true);
             $('#stopBtn').prop('disabled', false);
+            $('#loader').show();
             $('#checkingResultsList').html('');
+            $('#statusLog').text('Starting processing...');
+
+            // Set concurrent requests based on gateway
+            let maxConcurrent = 2; // Default for most gateways
+            if (selectedGateway === 'gate/paypal0.1$.php') {
+                maxConcurrent = 5; // Increased for PayPal
+            }
 
             let requestIndex = 0;
 
             while (cardQueue.length > 0 && isProcessing) {
-                while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+                while (activeRequests < maxConcurrent && cardQueue.length > 0 && isProcessing) {
                     const card = cardQueue.shift();
                     activeRequests++;
                     const controller = new AbortController();
@@ -2104,48 +1921,16 @@ try {
             activeRequests = 0;
             cardQueue = [];
             abortControllers = [];
-            
-            // Hide processing indicator
-            document.getElementById('processingIndicator').classList.remove('active');
-            
-            // Update button states
             $('#startBtn').prop('disabled', false);
             $('#stopBtn').prop('disabled', true);
+            $('#loader').hide();
             $('#cardInput').val('');
             updateCardCount();
-            
+            $('#statusLog').text('Processing completed.');
             Swal.fire({
                 title: 'Processing complete!',
                 text: 'All cards have been checked. See the results below.',
                 icon: 'success',
-                confirmButtonColor: '#ec4899'
-            });
-        }
-
-        function stopProcessing() {
-            if (!isProcessing || isStopping) return;
-
-            isProcessing = false;
-            isStopping = true;
-            cardQueue = [];
-            abortControllers.forEach(controller => controller.abort());
-            abortControllers = [];
-            activeRequests = 0;
-            
-            // Hide processing indicator
-            document.getElementById('processingIndicator').classList.remove('active');
-            
-            // Update button states
-            $('#startBtn').prop('disabled', false);
-            $('#stopBtn').prop('disabled', true);
-            
-            // Update stats with current progress
-            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-            
-            Swal.fire({
-                title: 'Stopped!',
-                text: 'Processing has been stopped',
-                icon: 'warning',
                 confirmButtonColor: '#ec4899'
             });
         }
@@ -2312,10 +2097,31 @@ try {
         }
 
         $('#startBtn').on('click', processCards);
-        $('#stopBtn').on('click', stopProcessing);
         $('#generateBtn').on('click', generateCards);
         $('#copyAllBtn').on('click', copyAllGeneratedCards);
         $('#clearAllBtn').on('click', clearAllGeneratedCards);
+
+        $('#stopBtn').on('click', function() {
+            if (!isProcessing || isStopping) return;
+
+            isProcessing = false;
+            isStopping = true;
+            cardQueue = [];
+            abortControllers.forEach(controller => controller.abort());
+            abortControllers = [];
+            activeRequests = 0;
+            updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+            $('#startBtn').prop('disabled', false);
+            $('#stopBtn').prop('disabled', true);
+            $('#loader').hide();
+            $('#statusLog').text('Processing stopped.');
+            Swal.fire({
+                title: 'Stopped!',
+                text: 'Processing has been stopped',
+                icon: 'warning',
+                confirmButtonColor: '#ec4899'
+            });
+        });
 
         $('#clearBtn').on('click', function() {
             if ($('#cardInput').val().trim()) {
