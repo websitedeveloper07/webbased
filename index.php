@@ -12,7 +12,7 @@ error_log("Checking session in index.php: " . json_encode($_SESSION));
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     error_log("Redirecting to login.php: Session missing or invalid auth_provider");
-    header('Location: http://cxchk.site/login.php');
+    header('Location: login.php');
     exit;
 }
 
@@ -1609,7 +1609,73 @@ try {
             });
         }
 
-        // FIXED: Process card function to properly handle JSON responses
+        // Improved function to parse API responses from different gateways
+        function parseGatewayResponse(response) {
+            let status = 'DECLINED';
+            let message = 'Card declined';
+            
+            // Handle different response types
+            if (typeof response === 'string') {
+                // Try to parse as JSON first
+                try {
+                    response = JSON.parse(response);
+                } catch (e) {
+                    // Not JSON, continue with string processing
+                    const responseStr = response.toUpperCase();
+                    
+                    if (responseStr.includes('CHARGED')) {
+                        status = 'CHARGED';
+                    } else if (responseStr.includes('APPROVED')) {
+                        status = 'APPROVED';
+                    } else if (responseStr.includes('3D_AUTHENTICATION') || 
+                              responseStr.includes('3DS') || 
+                              responseStr.includes('THREE_D_SECURE') ||
+                              responseStr.includes('REDIRECT')) {
+                        status = '3DS';
+                    }
+                    
+                    message = response;
+                    return { status, message };
+                }
+            }
+            
+            // Now we have a JSON object
+            if (typeof response === 'object') {
+                // Check for status field in various formats
+                if (response.status) {
+                    status = String(response.status).toUpperCase();
+                } else if (response.result) {
+                    status = String(response.result).toUpperCase();
+                } else if (response.response) {
+                    // Try to extract status from response field
+                    const responseStr = String(response.response).toUpperCase();
+                    if (responseStr.includes('CHARGED')) {
+                        status = 'CHARGED';
+                    } else if (responseStr.includes('APPROVED')) {
+                        status = 'APPROVED';
+                    } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
+                        status = '3DS';
+                    }
+                }
+                
+                // Get message from various possible fields
+                message = response.message || 
+                         response.response || 
+                         response.result || 
+                         response.error || 
+                         response.description ||
+                         response.reason ||
+                         JSON.stringify(response);
+            }
+            
+            // Normalize status to one of our standard values
+            if (status !== 'CHARGED' && status !== 'APPROVED' && status !== '3DS') {
+                status = 'DECLINED';
+            }
+            
+            return { status, message };
+        }
+
         async function processCard(card, controller, retryCount = 0) {
             if (!isProcessing) return null;
 
@@ -1635,40 +1701,15 @@ try {
                     contentType: false,
                     timeout: 300000,
                     signal: controller.signal,
-                    dataType: 'json', // Add this to ensure jQuery parses the response as JSON
+                    // Remove dataType: 'json' to handle both JSON and non-JSON responses
                     success: function(response) {
-                        let status = 'DECLINED';
-                        let message = '';
+                        // Use our improved response parser
+                        const parsedResponse = parseGatewayResponse(response);
                         
-                        // The response is already a JSON object because we set dataType: 'json'
-                        if (response && response.status) {
-                            status = response.status.toUpperCase();
-                        }
-                        
-                        // Get the message from the response
-                        if (response && response.message) {
-                            message = response.message;
-                        } else if (response && response.response) {
-                            message = response.response;
-                        } else {
-                            message = 'No response message';
-                        }
-                        
-                        // Normalize status
-                        if (status === '3D_AUTHENTICATION' || status.includes('3D') || status.includes('3DS')) {
-                            status = '3DS';
-                        } else if (status === 'CHARGED' || status.includes('CHARGED')) {
-                            status = 'CHARGED';
-                        } else if (status === 'APPROVED' || status.includes('APPROVED')) {
-                            status = 'APPROVED';
-                        } else {
-                            status = 'DECLINED';
-                        }
-                        
-                        console.log(`Completed request for card: ${card.displayCard}, Status: ${status}, Response: ${message}`);
+                        console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
                         resolve({
-                            status: status,
-                            response: message,
+                            status: parsedResponse.status,
+                            response: parsedResponse.message,
                             card: card,
                             displayCard: card.displayCard
                         });
@@ -1677,25 +1718,32 @@ try {
                         $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                         console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
                         
+                        // Try to parse error response
+                        let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
+                        
+                        if (xhr.responseText) {
+                            try {
+                                // Try to parse as JSON first
+                                const errorJson = JSON.parse(xhr.responseText);
+                                if (errorJson) {
+                                    // Use our improved parser for error responses too
+                                    const parsedError = parseGatewayResponse(errorJson);
+                                    errorResponse = parsedError.message;
+                                }
+                            } catch (e) {
+                                // Not JSON, use the raw response text
+                                errorResponse = xhr.responseText;
+                            }
+                        }
+                        
                         if (xhr.statusText === 'abort') {
                             resolve(null);
                         } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
                             setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                         } else {
-                            // Try to parse error response as JSON
-                            let errorMessage = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
-                            try {
-                                const errorResponse = JSON.parse(xhr.responseText);
-                                if (errorResponse && errorResponse.message) {
-                                    errorMessage = errorResponse.message;
-                                }
-                            } catch (e) {
-                                // If parsing fails, use the default error message
-                            }
-                            
                             resolve({
                                 status: 'DECLINED',
-                                response: errorMessage,
+                                response: errorResponse,
                                 card: card,
                                 displayCard: card.displayCard
                             });
@@ -1769,7 +1817,6 @@ try {
 
             let requestIndex = 0;
 
-            // Process all cards in the queue
             while (cardQueue.length > 0 && isProcessing) {
                 while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                     const card = cardQueue.shift();
@@ -1777,24 +1824,14 @@ try {
                     const controller = new AbortController();
                     abortControllers.push(controller);
 
-                    // Add a small delay between requests to avoid overwhelming the server
                     await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
                     requestIndex++;
 
-                    // Process the card and handle the response
                     processCard(card, controller).then(result => {
                         if (result === null) return;
 
-                        // Decrement the active requests counter
                         activeRequests--;
-                        
-                        // Create a card entry with the response
-                        const cardEntry = { 
-                            response: result.response, 
-                            displayCard: result.displayCard 
-                        };
-                        
-                        // Categorize the card based on its status
+                        const cardEntry = { response: result.response, displayCard: result.displayCard };
                         if (result.status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
@@ -1809,30 +1846,14 @@ try {
                             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
 
-                        // Add the result to the UI
                         addResult(card, result.status, result.response);
-                        
-                        // Update the statistics
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
 
-                        // Check if all cards have been processed
-                        const processedCards = chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length;
-                        if (processedCards >= totalCards || !isProcessing) {
-                            finishProcessing();
-                        }
-                    }).catch(error => {
-                        console.error('Error processing card:', error);
-                        activeRequests--;
-                        
-                        // Make sure we finish processing even if there's an error
-                        const processedCards = chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length;
-                        if (processedCards >= totalCards || !isProcessing) {
+                        if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
                             finishProcessing();
                         }
                     });
                 }
-                
-                // Wait a bit before checking the queue again
                 if (isProcessing) {
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
@@ -2143,10 +2164,15 @@ try {
                 if (result.isConfirmed) {
                     // Perform logout action (e.g., clear session and redirect)
                     sessionStorage.clear();
-                    window.location.href = 'http://cxchk.site/login.php';
+                    window.location.href = 'login.php';
                 }
             });
         }
+        
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.querySelector('.theme-toggle-slider i').className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
     </script>
 </body>
 </html>
