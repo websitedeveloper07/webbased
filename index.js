@@ -750,6 +750,66 @@ function logout() {
     });
 }
 
+// Function to update user activity and get online users
+function updateUserActivity() {
+    $.ajax({
+        url: 'update_activity.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Update the online count in the UI
+                document.getElementById('onlineCount').textContent = response.count;
+                
+                // Update the online users list
+                displayOnlineUsers(response.users);
+            } else {
+                console.error('Error updating activity:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Activity update error:', error);
+        }
+    });
+}
+
+// Function to display online users in the UI
+function displayOnlineUsers(users) {
+    const onlineUsersList = document.getElementById('onlineUsersList');
+    
+    // Filter out the current user
+    const otherUsers = users.filter(user => !user.is_current_user);
+    
+    if (otherUsers.length === 0) {
+        onlineUsersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-slash"></i>
+                <h3>No Users Online</h3>
+                <p>No other users are currently online</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let usersHtml = '';
+    otherUsers.forEach(user => {
+        usersHtml += `
+            <div class="online-user-item">
+                <img src="${user.photo_url}" alt="${user.name}" class="online-user-avatar">
+                <div class="online-user-info">
+                    <div class="online-user-name">${user.name}</div>
+                    <div class="online-user-status">
+                        <span class="status-indicator"></span>
+                        Active ${user.time_ago}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    onlineUsersList.innerHTML = usersHtml;
+}
+
 // Document ready event handlers
  $(document).ready(function() {
     $('#startBtn').on('click', processCards);
@@ -866,4 +926,19 @@ function logout() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
     document.querySelector('.theme-toggle-slider i').className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+    
+    // Update user activity when the page loads
+    updateUserActivity();
+    
+    // Set up interval to refresh every 3 minutes (180000 milliseconds)
+    setInterval(updateUserActivity, 180000);
+    
+    // Update activity when user interacts with the page (throttled to once every 30 seconds)
+    $(document).on('click mousemove keypress scroll', function() {
+        // Throttle the activity updates to avoid too many requests
+        if (!this.lastActivityUpdate || new Date() - this.lastActivityUpdate > 30000) {
+            updateUserActivity();
+            this.lastActivityUpdate = new Date();
+        }
+    });
 });
