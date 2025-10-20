@@ -261,7 +261,7 @@ if (is_array($_POST['card']) && isset($_POST['card']['number'])) {
     echo checkCard($card_number, $exp_month, $exp_year, $cvc);
 } elseif (is_array($_POST['card']) && count($_POST['card']) > 1) {
     // Multiple cards - process in parallel (3 at a time)
-    echo checkCardsParallel($_POST['card'], 5);
+    echo checkCardsParallel($_POST['card'], 3);
 } else {
     log_message("Invalid card data format");
     echo "DECLINED [Invalid card data format]";
