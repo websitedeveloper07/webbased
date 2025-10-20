@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Optional file-based logging for debugging (disable in production)
-$log_file = __DIR__ . '/paypal0.1$_debug.log';
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
 function log_message($message) {
     global $log_file;
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
@@ -59,9 +59,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         // Map API response to status
         $final_status = 'DECLINED';
-        if ($status === 'charged' || $message === 'CARD ADDED') {
+        if ($status === 'charged') {
             $final_status = 'CHARGED';
-        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
+        } elseif ($status === 'approved' || $message === 'CARD ADDED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         } elseif ($status === 'declined') {
             $final_status = 'DECLINED';
@@ -165,9 +165,9 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         $message = $result['response'] ?? 'Unknown error';
 
         $final_status = 'DECLINED';
-        if ($status === 'approved' || $message === 'CARD ADDED') {
-            $final_status = 'APPROVED';
-        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
+        if ($status === 'charged') {
+            $final_status = 'CHARGED';
+        } elseif ($status === 'approved' || $message === 'CARD ADDED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         }
 
