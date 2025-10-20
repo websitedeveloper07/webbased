@@ -146,10 +146,13 @@ try {
             $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
         }
         
+        // Format username with @ symbol
+        $formattedUsername = $user['username'] ? '@' . $user['username'] : null;
+        
         // Create user data array
         $userData = [
             'name' => $user['name'],
-            'username' => $user['username'], // Include username in response
+            'username' => $formattedUsername, // Include formatted username in response
             'photo_url' => $avatarUrl,
             'is_current_user' => ($user['session_id'] == $sessionId)
         ];
