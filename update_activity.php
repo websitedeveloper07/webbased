@@ -40,11 +40,12 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
-    // Update current user's last_activity timestamp
+    // Get current user information
     $telegramId = $_SESSION['user']['id'];
     $name = $_SESSION['user']['name'];
     $photoUrl = $_SESSION['user']['photo_url'] ?? null;
     
+    // Update current user's last_activity timestamp
     $updateStmt = $pdo->prepare("
         INSERT INTO online_users (telegram_id, name, photo_url, last_activity)
         VALUES (?, ?, ?, CURRENT_TIMESTAMP)
@@ -55,24 +56,81 @@ try {
     ");
     $updateStmt->execute([$telegramId, $name, $photoUrl]);
     
-    // Clean up users not active in the last 10 minutes
+    // Clean up users not active in the last 3 minutes
     $cleanupStmt = $pdo->prepare("
         DELETE FROM online_users
-        WHERE last_activity < NOW() - INTERVAL '10 minutes'
+        WHERE last_activity < NOW() - INTERVAL '3 minutes'
     ");
     $cleanupStmt->execute();
     
-    // Get count of online users
+    // Get all online users (active in the last 3 minutes)
+    $usersStmt = $pdo->prepare("
+        SELECT telegram_id, name, photo_url, last_activity
+        FROM online_users
+        WHERE last_activity >= NOW() - INTERVAL '3 minutes'
+        ORDER BY last_activity DESC
+    ");
+    $usersStmt->execute();
+    $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Format user data for response
+    $formattedUsers = [];
+    foreach ($users as $user) {
+        // Generate avatar URL if not available
+        $avatarUrl = $user['photo_url'];
+        if (empty($avatarUrl)) {
+            // Generate initials from name
+            $initials = '';
+            $words = explode(' ', trim($user['name']));
+            foreach ($words as $word) {
+                if (!empty($word)) {
+                    $initials .= strtoupper(substr($word, 0, 1));
+                    if (strlen($initials) >= 2) break;
+                }
+            }
+            if (empty($initials)) $initials = 'U';
+            $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
+        }
+        
+        // Format last activity time
+        $lastActivity = new DateTime($user['last_activity']);
+        $now = new DateTime();
+        $interval = $now->diff($lastActivity);
+        
+        if ($interval->days > 0) {
+            $timeAgo = $interval->days . ' day' . ($interval->days > 1 ? 's' : '') . ' ago';
+        } elseif ($interval->h > 0) {
+            $timeAgo = $interval->h . ' hour' . ($interval->h > 1 ? 's' : '') . ' ago';
+        } elseif ($interval->i > 0) {
+            $timeAgo = $interval->i . ' minute' . ($interval->i > 1 ? 's' : '') . ' ago';
+        } else {
+            $timeAgo = 'just now';
+        }
+        
+        $formattedUsers[] = [
+            'telegram_id' => $user['telegram_id'],
+            'name' => $user['name'],
+            'photo_url' => $avatarUrl,
+            'time_ago' => $timeAgo,
+            'is_current_user' => ($user['telegram_id'] == $telegramId)
+        ];
+    }
+    
+    // Get count of online users excluding current user
     $countStmt = $pdo->prepare("
         SELECT COUNT(*) as count
         FROM online_users
-        WHERE last_activity >= NOW() - INTERVAL '10 minutes'
+        WHERE telegram_id != ? AND last_activity >= NOW() - INTERVAL '3 minutes'
     ");
-    $countStmt->execute();
+    $countStmt->execute([$telegramId]);
     $count = $countStmt->fetch(PDO::FETCH_ASSOC)['count'];
     
     header('Content-Type: application/json');
-    echo json_encode(['success' => true, 'count' => $count]);
+    echo json_encode([
+        'success' => true, 
+        'users' => $formattedUsers,
+        'count' => $count
+    ]);
     
 } catch (Exception $e) {
     error_log("Database error in update_activity.php: " . $e->getMessage());
