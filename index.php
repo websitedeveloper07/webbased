@@ -1234,13 +1234,13 @@ try {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1$.php">
+                        <input type="radio" name="gateway" value="gate/shopify1$.php" checked>
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-shopify"></i> Shopify
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
+                            <div class="gateway-option-desc">E-commerce payment processing with site rotation</div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -1307,7 +1307,7 @@ try {
     </div>
 
     <script>
-        let selectedGateway = 'gate/stripe1$.php';
+        let selectedGateway = 'gate/shopify1$.php'; // Default to Shopify
         let isProcessing = false;
         let isStopping = false;
         let activeRequests = 0;
@@ -1623,9 +1623,12 @@ try {
                     // Not JSON, continue with string processing
                     const responseStr = response.toUpperCase();
                     
-                    if (responseStr.includes('CHARGED')) {
+                    if (responseStr.includes('CHARGED') || responseStr.includes('ORDER_PLACED')) {
                         status = 'CHARGED';
-                    } else if (responseStr.includes('APPROVED')) {
+                    } else if (responseStr.includes('APPROVED') || 
+                              responseStr.includes('INCORRECT_ZIP') || 
+                              responseStr.includes('INCORRECT_CVV') || 
+                              responseStr.includes('INSUFFICIENT_FUNDS')) {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D_AUTHENTICATION') || 
                               responseStr.includes('3DS') || 
@@ -1649,9 +1652,12 @@ try {
                 } else if (response.response) {
                     // Try to extract status from response field
                     const responseStr = String(response.response).toUpperCase();
-                    if (responseStr.includes('CHARGED')) {
+                    if (responseStr.includes('CHARGED') || responseStr.includes('ORDER_PLACED')) {
                         status = 'CHARGED';
-                    } else if (responseStr.includes('APPROVED')) {
+                    } else if (responseStr.includes('APPROVED') || 
+                              responseStr.includes('INCORRECT_ZIP') || 
+                              responseStr.includes('INCORRECT_CVV') || 
+                              responseStr.includes('INSUFFICIENT_FUNDS')) {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                         status = '3DS';
