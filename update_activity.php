@@ -8,27 +8,12 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
     exit;
 }
 
-// Load environment variables manually
- $envFile = __DIR__ . '/.env';
- $_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-}
+// Hardcoded database connection information
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
 // Database connection
 try {
-    if (!isset($_ENV['DATABASE_URL'])) {
-        throw new Exception("DATABASE_URL not set in .env file");
-    }
-    
-    $dbUrl = parse_url($_ENV['DATABASE_URL']);
+    $dbUrl = parse_url($databaseUrl);
     if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
         throw new Exception("Invalid DATABASE_URL format");
     }
