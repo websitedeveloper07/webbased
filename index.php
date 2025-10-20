@@ -1277,7 +1277,7 @@ try {
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-auth">Auth</span>
+                                <span class="gateway-badge badge-auth">0.1$ Auth</span>
                             </div>
                             <div class="gateway-option-desc">Authorization only, no charge</div>
                         </div>
