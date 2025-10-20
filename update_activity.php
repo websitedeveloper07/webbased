@@ -92,6 +92,10 @@ try {
     $telegramId = $_SESSION['user']['id'] ?? null; // Get Telegram ID from session
     $username = $_SESSION['user']['username'] ?? null; // Get Telegram username from session
     
+    // Debugging: Log the current user's Telegram ID
+    error_log("Current user Telegram ID: " . $telegramId);
+    error_log("Owner Telegram ID: " . $OWNER_TELEGRAM_ID);
+    
     // Validate required fields
     if (empty($name)) {
         throw new Exception("User name cannot be empty");
@@ -156,6 +160,11 @@ try {
             'photo_url' => $avatarUrl,
             'is_current_user' => ($user['session_id'] == $sessionId)
         ];
+        
+        // Debugging: Log each user's Telegram ID and role assignment
+        error_log("User: " . $user['name'] . ", Telegram ID: " . $user['telegram_id'] . 
+                 ", Owner ID: " . $OWNER_TELEGRAM_ID . 
+                 ", Is Owner: " . ($user['telegram_id'] == $OWNER_TELEGRAM_ID ? 'Yes' : 'No'));
         
         // Add role based on telegram_id
         if ($user['telegram_id'] == $OWNER_TELEGRAM_ID) {
