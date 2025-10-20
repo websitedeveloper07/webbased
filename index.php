@@ -368,7 +368,7 @@ try {
             border-radius: 16px;
             padding: 1.5rem;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
+            box-shadow: 0 4px 20px var(--shadow});
         }
         
         .activity-header {
@@ -1312,8 +1312,8 @@ try {
         let isStopping = false;
         let activeRequests = 0;
         let cardQueue = [];
-        const MAX_CONCURRENT = 5;
-        const MAX_RETRIES = 2;
+        const MAX_CONCURRENT = 3; // Changed from 5 to 3 to reduce 504 errors
+        const MAX_RETRIES = 2; // Increased from 1 to 2 for better error handling
         let abortControllers = [];
         let totalCards = 0;
         let chargedCards = [];
@@ -1705,9 +1705,8 @@ try {
                     data: formData,
                     processData: false,
                     contentType: false,
-                    timeout: 300000,
+                    timeout: 65000, // Increased timeout to 65 seconds (slightly more than backend)
                     signal: controller.signal,
-                    // Remove dataType: 'json' to handle both JSON and non-JSON responses
                     success: function(response) {
                         // Use our improved response parser
                         const parsedResponse = parseGatewayResponse(response);
@@ -1723,6 +1722,15 @@ try {
                     error: function(xhr) {
                         $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                         console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                        
+                        // Special handling for 504 errors
+                        if (xhr.status === 504) {
+                            $('#statusLog').text(`Gateway timeout for card: ${card.displayCard}, retrying...`);
+                            if (retryCount < MAX_RETRIES && isProcessing) {
+                                setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                                return;
+                            }
+                        }
                         
                         // Try to parse error response
                         let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
