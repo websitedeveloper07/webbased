@@ -459,7 +459,7 @@ async function processCards() {
     const lines = cardText.split('\n').filter(line => line.trim());
     const validCards = lines
         .map(line => line.trim())
-        .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line))
+        .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()))
         .map(line => {
             const [number, exp_month, exp_year, cvc] = line.split('|');
             return { number, exp_month, exp_year, cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
@@ -820,14 +820,18 @@ function displayOnlineUsers(users) {
     
     let usersHtml = '';
     otherUsers.forEach(user => {
+        // Create role badge with appropriate styling
+        const roleBadgeClass = user.role === 'Owner' ? 'owner-badge' : 'free-badge';
+        const roleBadgeText = user.role;
+        
         usersHtml += `
             <div class="online-user-item">
                 <img src="${user.photo_url}" alt="${user.name}" class="online-user-avatar">
                 <div class="online-user-info">
                     <div class="online-user-name">${user.name}</div>
-                    <div class="online-user-status">
-                        <span class="status-indicator"></span>
-                        Active ${user.time_ago}
+                    <div class="online-user-username">${user.username || ''}</div>
+                    <div class="online-user-role">
+                        <span class="role-badge ${roleBadgeClass}">${roleBadgeText}</span>
                     </div>
                 </div>
             </div>
