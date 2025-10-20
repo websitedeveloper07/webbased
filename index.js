@@ -755,9 +755,12 @@ function updateUserActivity() {
     console.log("Updating user activity...");
     
     $.ajax({
-        url: 'update_activity.php',
+        url: '/update_activity.php',  // Use absolute path
         method: 'GET',
         dataType: 'json',
+        xhrFields: {
+            withCredentials: true  // Important for session cookies
+        },
         success: function(response) {
             console.log("Response received:", response);
             
@@ -840,6 +843,12 @@ function displayOnlineUsers(users) {
     
     onlineUsersList.innerHTML = usersHtml;
     console.log("Updated online users list HTML");
+}
+
+// Test function to manually update user activity (for debugging)
+function testUpdateActivity() {
+    console.log("Manually triggering user activity update...");
+    updateUserActivity();
 }
 
 // Document ready event handlers
@@ -976,4 +985,20 @@ function displayOnlineUsers(users) {
             this.lastActivityUpdate = new Date();
         }
     });
+    
+    // Create a test button for debugging (remove in production)
+    const testButton = document.createElement('button');
+    testButton.textContent = 'Test Update Activity';
+    testButton.style.position = 'fixed';
+    testButton.style.bottom = '10px';
+    testButton.style.right = '10px';
+    testButton.style.zIndex = '9999';
+    testButton.style.padding = '5px 10px';
+    testButton.style.backgroundColor = '#3b82f6';
+    testButton.style.color = 'white';
+    testButton.style.border = 'none';
+    testButton.style.borderRadius = '5px';
+    testButton.style.cursor = 'pointer';
+    testButton.onclick = testUpdateActivity;
+    document.body.appendChild(testButton);
 });
