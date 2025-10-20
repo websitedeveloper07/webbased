@@ -11,6 +11,9 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 // Hardcoded database connection information
  $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
+// Owner's Telegram ID
+ $OWNER_TELEGRAM_ID = 8278658138;
+
 // Database connection
 try {
     // Parse the database URL
@@ -74,6 +77,7 @@ try {
                 session_id VARCHAR(255) NOT NULL,
                 name VARCHAR(255) NOT NULL,
                 photo_url VARCHAR(255),
+                telegram_id BIGINT,
                 last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(session_id)
             );
@@ -84,6 +88,7 @@ try {
     $sessionId = session_id(); // Use session ID as unique identifier
     $name = $_SESSION['user']['name'] ?? 'Unknown User';
     $photoUrl = $_SESSION['user']['photo_url'] ?? null;
+    $telegramId = $_SESSION['user']['id'] ?? null; // Get Telegram ID from session
     
     // Validate required fields
     if (empty($name)) {
@@ -92,14 +97,15 @@ try {
     
     // Update current user's last_activity timestamp using session_id
     $updateStmt = $pdo->prepare("
-        INSERT INTO online_users (session_id, name, photo_url, last_activity)
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO online_users (session_id, name, photo_url, telegram_id, last_activity)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT (session_id) DO UPDATE SET
             name = EXCLUDED.name,
             photo_url = EXCLUDED.photo_url,
+            telegram_id = EXCLUDED.telegram_id,
             last_activity = CURRENT_TIMESTAMP
     ");
-    $updateStmt->execute([$sessionId, $name, $photoUrl]);
+    $updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId]);
     
     // Clean up users not active in the last 10 seconds
     $cleanupStmt = $pdo->prepare("
@@ -110,7 +116,7 @@ try {
     
     // Get all online users (active in the last 10 seconds)
     $usersStmt = $pdo->prepare("
-        SELECT session_id, name, photo_url, last_activity
+        SELECT session_id, name, photo_url, telegram_id, last_activity
         FROM online_users
         WHERE last_activity >= NOW() - INTERVAL '10 seconds'
         ORDER BY last_activity DESC
@@ -137,47 +143,29 @@ try {
             $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
         }
         
-        // Format last activity time
-        $lastActivity = new DateTime($user['last_activity']);
-        $now = new DateTime();
-        $interval = $now->diff($lastActivity);
-        
-        if ($interval->s < 10) {
-            $timeAgo = 'just now';
-        } elseif ($interval->i > 0) {
-            $timeAgo = $interval->i . ' minute' . ($interval->i > 1 ? 's' : '') . ' ago';
-        } elseif ($interval->h > 0) {
-            $timeAgo = $interval->h . ' hour' . ($interval->h > 1 ? 's' : '') . ' ago';
-        } elseif ($interval->d > 0) {
-            $timeAgo = $interval->d . ' day' . ($interval->d > 1 ? 's' : '') . ' ago';
-        } else {
-            $timeAgo = 'just now';
-        }
-        
-        $formattedUsers[] = [
+        // Create user data array
+        $userData = [
             'name' => $user['name'],
             'photo_url' => $avatarUrl,
-            'time_ago' => $timeAgo,
             'is_current_user' => ($user['session_id'] == $sessionId)
         ];
+        
+        // Add "Owner" role if this is the owner
+        if ($user['telegram_id'] == $OWNER_TELEGRAM_ID) {
+            $userData['role'] = 'Owner';
+        }
+        
+        $formattedUsers[] = $userData;
     }
     
-    // Get count of online users excluding current user
-    $countStmt = $pdo->prepare("
-        SELECT COUNT(*) as count
-        FROM online_users
-        WHERE session_id != ? AND last_activity >= NOW() - INTERVAL '10 seconds'
-    ");
-    $countStmt->execute([$sessionId]);
-    $count = $countStmt->fetch(PDO::FETCH_ASSOC)['count'];
+    // Get total count of online users (including current user)
+    $totalCount = count($formattedUsers);
     
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true, 
-        'users' => $formattedUsers,
-        'count' => $count,
-        'timestamp' => date('Y-m-d H:i:s'),
-        'interval' => '10 seconds'
+        'count' => $totalCount,
+        'users' => $formattedUsers
     ]);
     
 } catch (Exception $e) {
