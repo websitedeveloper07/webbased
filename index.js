@@ -752,14 +752,24 @@ function logout() {
 
 // Function to update user activity and get online users
 function updateUserActivity() {
+    console.log("Updating user activity...");
+    
     $.ajax({
         url: 'update_activity.php',
         method: 'GET',
         dataType: 'json',
         success: function(response) {
+            console.log("Response received:", response);
+            
             if (response.success) {
                 // Update the online count in the UI
-                document.getElementById('onlineCount').textContent = response.count;
+                const onlineCountElement = document.getElementById('onlineCount');
+                if (onlineCountElement) {
+                    onlineCountElement.textContent = response.count;
+                    console.log("Updated online count to:", response.count);
+                } else {
+                    console.error("Online count element not found");
+                }
                 
                 // Update the online users list
                 displayOnlineUsers(response.users);
@@ -768,17 +778,34 @@ function updateUserActivity() {
             }
         },
         error: function(xhr, status, error) {
-            console.error('Activity update error:', error);
+            console.error('Activity update error:', status, error);
+            console.error('Response text:', xhr.responseText);
+            console.error('Status code:', xhr.status);
+            
+            // Try to parse the response as JSON to see if there's a useful error message
+            try {
+                const errorResponse = JSON.parse(xhr.responseText);
+                console.error('Parsed error response:', errorResponse);
+            } catch (e) {
+                console.error('Could not parse error response as JSON');
+            }
         }
     });
 }
 
 // Function to display online users in the UI
 function displayOnlineUsers(users) {
+    console.log("Displaying online users:", users);
+    
     const onlineUsersList = document.getElementById('onlineUsersList');
+    if (!onlineUsersList) {
+        console.error("Online users list element not found");
+        return;
+    }
     
     // Filter out the current user
     const otherUsers = users.filter(user => !user.is_current_user);
+    console.log("Other users (excluding current user):", otherUsers);
     
     if (otherUsers.length === 0) {
         onlineUsersList.innerHTML = `
@@ -808,6 +835,7 @@ function displayOnlineUsers(users) {
     });
     
     onlineUsersList.innerHTML = usersHtml;
+    console.log("Updated online users list HTML");
 }
 
 // Document ready event handlers
@@ -928,15 +956,18 @@ function displayOnlineUsers(users) {
     document.querySelector('.theme-toggle-slider i').className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
     
     // Update user activity when the page loads
+    console.log("Page loaded, updating user activity...");
     updateUserActivity();
     
-    // Set up interval to refresh every 3 minutes (180000 milliseconds)
-    setInterval(updateUserActivity, 180000);
+    // Set up interval to refresh every 10 seconds (10000 milliseconds)
+    console.log("Setting up interval for user activity updates every 10 seconds...");
+    setInterval(updateUserActivity, 10000);
     
-    // Update activity when user interacts with the page (throttled to once every 30 seconds)
+    // Update activity when user interacts with the page (throttled to once every 10 seconds)
     $(document).on('click mousemove keypress scroll', function() {
         // Throttle the activity updates to avoid too many requests
-        if (!this.lastActivityUpdate || new Date() - this.lastActivityUpdate > 30000) {
+        if (!this.lastActivityUpdate || new Date() - this.lastActivityUpdate > 10000) {
+            console.log("User interaction detected, updating activity...");
             updateUserActivity();
             this.lastActivityUpdate = new Date();
         }
