@@ -1312,7 +1312,7 @@ try {
         let isStopping = false;
         let activeRequests = 0;
         let cardQueue = [];
-        const MAX_CONCURRENT = 2;
+        const MAX_CONCURRENT = 5;
         const MAX_RETRIES = 2;
         let abortControllers = [];
         let totalCards = 0;
