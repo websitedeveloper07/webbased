@@ -40,6 +40,18 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
+    // Create online_users table if it doesn't exist
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS online_users (
+            id SERIAL PRIMARY KEY,
+            telegram_id BIGINT NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            photo_url VARCHAR(255),
+            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(telegram_id)
+        );
+    ");
+    
     // Get current user information
     $telegramId = $_SESSION['user']['id'];
     $name = $_SESSION['user']['name'];
@@ -56,18 +68,18 @@ try {
     ");
     $updateStmt->execute([$telegramId, $name, $photoUrl]);
     
-    // Clean up users not active in the last 3 minutes
+    // Clean up users not active in the last 10 seconds
     $cleanupStmt = $pdo->prepare("
         DELETE FROM online_users
-        WHERE last_activity < NOW() - INTERVAL '3 minutes'
+        WHERE last_activity < NOW() - INTERVAL '10 seconds'
     ");
     $cleanupStmt->execute();
     
-    // Get all online users (active in the last 3 minutes)
+    // Get all online users (active in the last 10 seconds)
     $usersStmt = $pdo->prepare("
         SELECT telegram_id, name, photo_url, last_activity
         FROM online_users
-        WHERE last_activity >= NOW() - INTERVAL '3 minutes'
+        WHERE last_activity >= NOW() - INTERVAL '10 seconds'
         ORDER BY last_activity DESC
     ");
     $usersStmt->execute();
@@ -97,12 +109,14 @@ try {
         $now = new DateTime();
         $interval = $now->diff($lastActivity);
         
-        if ($interval->days > 0) {
-            $timeAgo = $interval->days . ' day' . ($interval->days > 1 ? 's' : '') . ' ago';
-        } elseif ($interval->h > 0) {
-            $timeAgo = $interval->h . ' hour' . ($interval->h > 1 ? 's' : '') . ' ago';
+        if ($interval->s < 10) {
+            $timeAgo = 'just now';
         } elseif ($interval->i > 0) {
             $timeAgo = $interval->i . ' minute' . ($interval->i > 1 ? 's' : '') . ' ago';
+        } elseif ($interval->h > 0) {
+            $timeAgo = $interval->h . ' hour' . ($interval->h > 1 ? 's' : '') . ' ago';
+        } elseif ($interval->d > 0) {
+            $timeAgo = $interval->d . ' day' . ($interval->d > 1 ? 's' : '') . ' ago';
         } else {
             $timeAgo = 'just now';
         }
@@ -120,7 +134,7 @@ try {
     $countStmt = $pdo->prepare("
         SELECT COUNT(*) as count
         FROM online_users
-        WHERE telegram_id != ? AND last_activity >= NOW() - INTERVAL '3 minutes'
+        WHERE telegram_id != ? AND last_activity >= NOW() - INTERVAL '10 seconds'
     ");
     $countStmt->execute([$telegramId]);
     $count = $countStmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -129,12 +143,14 @@ try {
     echo json_encode([
         'success' => true, 
         'users' => $formattedUsers,
-        'count' => $count
+        'count' => $count,
+        'timestamp' => date('Y-m-d H:i:s'),
+        'interval' => '10 seconds'
     ]);
     
 } catch (Exception $e) {
     error_log("Database error in update_activity.php: " . $e->getMessage());
     header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }
 ?>
