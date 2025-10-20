@@ -38,17 +38,47 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
-    // Create online_users table if it doesn't exist - modified to not require telegram_id
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS online_users (
-            id SERIAL PRIMARY KEY,
-            session_id VARCHAR(255) NOT NULL,
-            name VARCHAR(255) NOT NULL,
-            photo_url VARCHAR(255),
-            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(session_id)
-        );
-    ");
+    // Check if table exists and has the old structure
+    $tableExists = false;
+    $hasTelegramId = false;
+    
+    try {
+        $stmt = $pdo->query("SELECT to_regclass('public.online_users')");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result && $result['to_regclass']) {
+            $tableExists = true;
+            
+            // Check if telegram_id column exists
+            $stmt = $pdo->query("SELECT column_name FROM information_schema.columns 
+                                WHERE table_name = 'online_users' AND column_name = 'telegram_id'");
+            if ($stmt->fetch()) {
+                $hasTelegramId = true;
+            }
+        }
+    } catch (Exception $e) {
+        // Table doesn't exist or other error
+    }
+    
+    // Recreate table with new structure if needed
+    if ($tableExists && $hasTelegramId) {
+        // Drop the old table
+        $pdo->exec("DROP TABLE online_users");
+        $tableExists = false;
+    }
+    
+    // Create table with new structure if it doesn't exist
+    if (!$tableExists) {
+        $pdo->exec("
+            CREATE TABLE online_users (
+                id SERIAL PRIMARY KEY,
+                session_id VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                photo_url VARCHAR(255),
+                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(session_id)
+            );
+        ");
+    }
     
     // Get current user information
     $sessionId = session_id(); // Use session ID as unique identifier
