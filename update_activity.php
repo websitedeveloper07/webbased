@@ -11,9 +11,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 // Hardcoded database connection information
  $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
-// Owner's Telegram ID
- $OWNER_TELEGRAM_ID = 8278658138;
-
 // Database connection
 try {
     // Parse the database URL
@@ -92,10 +89,6 @@ try {
     $telegramId = $_SESSION['user']['id'] ?? null; // Get Telegram ID from session
     $username = $_SESSION['user']['username'] ?? null; // Get Telegram username from session
     
-    // Debugging: Log the current user's Telegram ID
-    error_log("Current user Telegram ID: " . $telegramId);
-    error_log("Owner Telegram ID: " . $OWNER_TELEGRAM_ID);
-    
     // Validate required fields
     if (empty($name)) {
         throw new Exception("User name cannot be empty");
@@ -161,13 +154,8 @@ try {
             'is_current_user' => ($user['session_id'] == $sessionId)
         ];
         
-        // Debugging: Log each user's Telegram ID and role assignment
-        error_log("User: " . $user['name'] . ", Telegram ID: " . $user['telegram_id'] . 
-                 ", Owner ID: " . $OWNER_TELEGRAM_ID . 
-                 ", Is Owner: " . ($user['telegram_id'] == $OWNER_TELEGRAM_ID ? 'Yes' : 'No'));
-        
-        // Add role based on telegram_id
-        if ($user['telegram_id'] == $OWNER_TELEGRAM_ID) {
+        // Add role based on username (without @ symbol)
+        if ($user['username'] === 'K4LNX') {
             $userData['role'] = 'Owner';
         } else {
             $userData['role'] = 'Free';
