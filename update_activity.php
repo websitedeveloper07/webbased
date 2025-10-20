@@ -16,14 +16,6 @@ try {
     // Parse the database URL
     $dbUrl = parse_url($databaseUrl);
     
-    // Debug: Log parsed URL components
-    error_log("Parsed URL: " . print_r($dbUrl, true));
-    
-    // Check if URL was parsed correctly
-    if (!$dbUrl) {
-        throw new Exception("Failed to parse database URL");
-    }
-    
     // Extract components with defaults
     $host = $dbUrl['host'] ?? null;
     $port = $dbUrl['port'] ?? 5432; // Default PostgreSQL port
@@ -33,18 +25,11 @@ try {
     
     // Validate required components
     if (!$host || !$user || !$pass || !$path) {
-        throw new Exception("Missing required database connection parameters. Host: " . 
-                          ($host ? 'set' : 'missing') . 
-                          ", User: " . ($user ? 'set' : 'missing') . 
-                          ", Password: " . ($pass ? 'set' : 'missing') . 
-                          ", Path: " . ($path ? 'set' : 'missing'));
+        throw new Exception("Missing required database connection parameters");
     }
     
     // Remove leading slash from path to get database name
     $dbName = ltrim($path, '/');
-    
-    // Debug: Log connection parameters
-    error_log("Connecting to: host=$host, port=$port, dbname=$dbName, user=$user");
     
     $pdo = new PDO(
         "pgsql:host=$host;port=$port;dbname=$dbName",
@@ -53,33 +38,38 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
-    // Create online_users table if it doesn't exist
+    // Create online_users table if it doesn't exist - modified to not require telegram_id
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS online_users (
             id SERIAL PRIMARY KEY,
-            telegram_id BIGINT NOT NULL,
+            session_id VARCHAR(255) NOT NULL,
             name VARCHAR(255) NOT NULL,
             photo_url VARCHAR(255),
             last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(telegram_id)
+            UNIQUE(session_id)
         );
     ");
     
     // Get current user information
-    $telegramId = $_SESSION['user']['id'];
-    $name = $_SESSION['user']['name'];
+    $sessionId = session_id(); // Use session ID as unique identifier
+    $name = $_SESSION['user']['name'] ?? 'Unknown User';
     $photoUrl = $_SESSION['user']['photo_url'] ?? null;
     
-    // Update current user's last_activity timestamp
+    // Validate required fields
+    if (empty($name)) {
+        throw new Exception("User name cannot be empty");
+    }
+    
+    // Update current user's last_activity timestamp using session_id
     $updateStmt = $pdo->prepare("
-        INSERT INTO online_users (telegram_id, name, photo_url, last_activity)
+        INSERT INTO online_users (session_id, name, photo_url, last_activity)
         VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT (telegram_id) DO UPDATE SET
+        ON CONFLICT (session_id) DO UPDATE SET
             name = EXCLUDED.name,
             photo_url = EXCLUDED.photo_url,
             last_activity = CURRENT_TIMESTAMP
     ");
-    $updateStmt->execute([$telegramId, $name, $photoUrl]);
+    $updateStmt->execute([$sessionId, $name, $photoUrl]);
     
     // Clean up users not active in the last 10 seconds
     $cleanupStmt = $pdo->prepare("
@@ -90,7 +80,7 @@ try {
     
     // Get all online users (active in the last 10 seconds)
     $usersStmt = $pdo->prepare("
-        SELECT telegram_id, name, photo_url, last_activity
+        SELECT session_id, name, photo_url, last_activity
         FROM online_users
         WHERE last_activity >= NOW() - INTERVAL '10 seconds'
         ORDER BY last_activity DESC
@@ -135,11 +125,10 @@ try {
         }
         
         $formattedUsers[] = [
-            'telegram_id' => $user['telegram_id'],
             'name' => $user['name'],
             'photo_url' => $avatarUrl,
             'time_ago' => $timeAgo,
-            'is_current_user' => ($user['telegram_id'] == $telegramId)
+            'is_current_user' => ($user['session_id'] == $sessionId)
         ];
     }
     
@@ -147,9 +136,9 @@ try {
     $countStmt = $pdo->prepare("
         SELECT COUNT(*) as count
         FROM online_users
-        WHERE telegram_id != ? AND last_activity >= NOW() - INTERVAL '10 seconds'
+        WHERE session_id != ? AND last_activity >= NOW() - INTERVAL '10 seconds'
     ");
-    $countStmt->execute([$telegramId]);
+    $countStmt->execute([$sessionId]);
     $count = $countStmt->fetch(PDO::FETCH_ASSOC)['count'];
     
     header('Content-Type: application/json');
