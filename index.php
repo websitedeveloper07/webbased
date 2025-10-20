@@ -67,29 +67,35 @@ try {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS online_users (
                 id SERIAL PRIMARY KEY,
-                telegram_id BIGINT NOT NULL,
+                session_id VARCHAR(255) NOT NULL,
                 name VARCHAR(255) NOT NULL,
                 photo_url VARCHAR(255),
+                telegram_id BIGINT,
+                username VARCHAR(255),
                 last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(telegram_id)
+                UNIQUE(session_id)
             );
         ");
         error_log("Online users table ready");
         
         // Update current user's online status
-        $telegramId = $_SESSION['user']['id'];
+        $sessionId = session_id();
+        $telegramId = $_SESSION['user']['id'] ?? null;
         $name = $_SESSION['user']['name'];
         $photoUrl = $_SESSION['user']['photo_url'] ?? null;
+        $username = $_SESSION['user']['username'] ?? null;
         
         $updateStmt = $pdo->prepare("
-            INSERT INTO online_users (telegram_id, name, photo_url, last_activity)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT (telegram_id) DO UPDATE SET
+            INSERT INTO online_users (session_id, name, photo_url, telegram_id, username, last_activity)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (session_id) DO UPDATE SET
                 name = EXCLUDED.name,
                 photo_url = EXCLUDED.photo_url,
+                telegram_id = EXCLUDED.telegram_id,
+                username = EXCLUDED.username,
                 last_activity = CURRENT_TIMESTAMP
         ");
-        $updateStmt->execute([$telegramId, $name, $photoUrl]);
+        $updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId, $username]);
         
         // Clean up users not active in the last 3 minutes
         $cleanupStmt = $pdo->prepare("
@@ -596,19 +602,34 @@ try {
             text-overflow: ellipsis;
         }
         
-        .online-user-status {
-            font-size: 0.7rem;
+        .online-user-username {
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
+            margin-bottom: 0.3rem;
         }
         
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success-green);
+        .online-user-role {
+            margin-top: 0.2rem;
+        }
+        
+        /* Role badge styles */
+        .role-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .owner-badge {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        .free-badge {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #10b981;
         }
         
         .checker-section, .generator-section {
