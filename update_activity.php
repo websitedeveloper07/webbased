@@ -41,35 +41,19 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
-    // Check if table exists and has the old structure
+    // Check if table exists
     $tableExists = false;
-    $hasTelegramId = false;
-    
     try {
         $stmt = $pdo->query("SELECT to_regclass('public.online_users')");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($result && $result['to_regclass']) {
             $tableExists = true;
-            
-            // Check if telegram_id column exists
-            $stmt = $pdo->query("SELECT column_name FROM information_schema.columns 
-                                WHERE table_name = 'online_users' AND column_name = 'telegram_id'");
-            if ($stmt->fetch()) {
-                $hasTelegramId = true;
-            }
         }
     } catch (Exception $e) {
-        // Table doesn't exist or other error
+        // Table doesn't exist
     }
     
-    // Recreate table with new structure if needed
-    if ($tableExists && $hasTelegramId) {
-        // Drop the old table
-        $pdo->exec("DROP TABLE online_users");
-        $tableExists = false;
-    }
-    
-    // Create table with new structure if it doesn't exist
+    // Create table if it doesn't exist
     if (!$tableExists) {
         $pdo->exec("
             CREATE TABLE online_users (
@@ -78,10 +62,27 @@ try {
                 name VARCHAR(255) NOT NULL,
                 photo_url VARCHAR(255),
                 telegram_id BIGINT,
+                username VARCHAR(255),
                 last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(session_id)
             );
         ");
+    } else {
+        // Check if columns exist and add them if they don't
+        $columns = $pdo->query("SELECT column_name FROM information_schema.columns 
+                               WHERE table_name = 'online_users'")->fetchAll(PDO::FETCH_COLUMN);
+        
+        $columnNames = array_flip($columns);
+        
+        // Add telegram_id column if it doesn't exist
+        if (!isset($columnNames['telegram_id'])) {
+            $pdo->exec("ALTER TABLE online_users ADD COLUMN telegram_id BIGINT");
+        }
+        
+        // Add username column if it doesn't exist
+        if (!isset($columnNames['username'])) {
+            $pdo->exec("ALTER TABLE online_users ADD COLUMN username VARCHAR(255)");
+        }
     }
     
     // Get current user information
@@ -89,6 +90,7 @@ try {
     $name = $_SESSION['user']['name'] ?? 'Unknown User';
     $photoUrl = $_SESSION['user']['photo_url'] ?? null;
     $telegramId = $_SESSION['user']['id'] ?? null; // Get Telegram ID from session
+    $username = $_SESSION['user']['username'] ?? null; // Get Telegram username from session
     
     // Validate required fields
     if (empty($name)) {
@@ -97,15 +99,16 @@ try {
     
     // Update current user's last_activity timestamp using session_id
     $updateStmt = $pdo->prepare("
-        INSERT INTO online_users (session_id, name, photo_url, telegram_id, last_activity)
-        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO online_users (session_id, name, photo_url, telegram_id, username, last_activity)
+        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT (session_id) DO UPDATE SET
             name = EXCLUDED.name,
             photo_url = EXCLUDED.photo_url,
             telegram_id = EXCLUDED.telegram_id,
+            username = EXCLUDED.username,
             last_activity = CURRENT_TIMESTAMP
     ");
-    $updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId]);
+    $updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId, $username]);
     
     // Clean up users not active in the last 10 seconds
     $cleanupStmt = $pdo->prepare("
@@ -116,7 +119,7 @@ try {
     
     // Get all online users (active in the last 10 seconds)
     $usersStmt = $pdo->prepare("
-        SELECT session_id, name, photo_url, telegram_id, last_activity
+        SELECT session_id, name, photo_url, telegram_id, username, last_activity
         FROM online_users
         WHERE last_activity >= NOW() - INTERVAL '10 seconds'
         ORDER BY last_activity DESC
@@ -146,13 +149,16 @@ try {
         // Create user data array
         $userData = [
             'name' => $user['name'],
+            'username' => $user['username'], // Include username in response
             'photo_url' => $avatarUrl,
             'is_current_user' => ($user['session_id'] == $sessionId)
         ];
         
-        // Add "Owner" role if this is the owner
+        // Add role based on telegram_id
         if ($user['telegram_id'] == $OWNER_TELEGRAM_ID) {
             $userData['role'] = 'Owner';
+        } else {
+            $userData['role'] = 'Free';
         }
         
         $formattedUsers[] = $userData;
