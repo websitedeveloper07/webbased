@@ -368,7 +368,7 @@ try {
             border-radius: 16px;
             padding: 1.5rem;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow});
+            box-shadow: 0 4px 20px var(--shadow);
         }
         
         .activity-header {
@@ -1234,13 +1234,13 @@ try {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1$.php" checked>
+                        <input type="radio" name="gateway" value="gate/shopify1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-shopify"></i> Shopify
                                 <span class="gateway-badge badge-charge">1$ Charge</span>
                             </div>
-                            <div class="gateway-option-desc">E-commerce payment processing with site rotation</div>
+                            <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
                     <label class="gateway-option">
@@ -1307,13 +1307,13 @@ try {
     </div>
 
     <script>
-        let selectedGateway = 'gate/shopify1$.php'; // Default to Shopify
+        let selectedGateway = 'gate/stripe1$.php';
         let isProcessing = false;
         let isStopping = false;
         let activeRequests = 0;
         let cardQueue = [];
-        const MAX_CONCURRENT = 3; // Changed from 5 to 3 to reduce 504 errors
-        const MAX_RETRIES = 2; // Increased from 1 to 2 for better error handling
+        const MAX_CONCURRENT = 5;
+        const MAX_RETRIES = 2;
         let abortControllers = [];
         let totalCards = 0;
         let chargedCards = [];
@@ -1623,12 +1623,9 @@ try {
                     // Not JSON, continue with string processing
                     const responseStr = response.toUpperCase();
                     
-                    if (responseStr.includes('CHARGED') || responseStr.includes('ORDER_PLACED')) {
+                    if (responseStr.includes('CHARGED')) {
                         status = 'CHARGED';
-                    } else if (responseStr.includes('APPROVED') || 
-                              responseStr.includes('INCORRECT_ZIP') || 
-                              responseStr.includes('INCORRECT_CVV') || 
-                              responseStr.includes('INSUFFICIENT_FUNDS')) {
+                    } else if (responseStr.includes('APPROVED')) {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D_AUTHENTICATION') || 
                               responseStr.includes('3DS') || 
@@ -1652,12 +1649,9 @@ try {
                 } else if (response.response) {
                     // Try to extract status from response field
                     const responseStr = String(response.response).toUpperCase();
-                    if (responseStr.includes('CHARGED') || responseStr.includes('ORDER_PLACED')) {
+                    if (responseStr.includes('CHARGED')) {
                         status = 'CHARGED';
-                    } else if (responseStr.includes('APPROVED') || 
-                              responseStr.includes('INCORRECT_ZIP') || 
-                              responseStr.includes('INCORRECT_CVV') || 
-                              responseStr.includes('INSUFFICIENT_FUNDS')) {
+                    } else if (responseStr.includes('APPROVED')) {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                         status = '3DS';
@@ -1705,8 +1699,9 @@ try {
                     data: formData,
                     processData: false,
                     contentType: false,
-                    timeout: 65000, // Increased timeout to 65 seconds (slightly more than backend)
+                    timeout: 300000,
                     signal: controller.signal,
+                    // Remove dataType: 'json' to handle both JSON and non-JSON responses
                     success: function(response) {
                         // Use our improved response parser
                         const parsedResponse = parseGatewayResponse(response);
@@ -1722,15 +1717,6 @@ try {
                     error: function(xhr) {
                         $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                         console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                        
-                        // Special handling for 504 errors
-                        if (xhr.status === 504) {
-                            $('#statusLog').text(`Gateway timeout for card: ${card.displayCard}, retrying...`);
-                            if (retryCount < MAX_RETRIES && isProcessing) {
-                                setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                                return;
-                            }
-                        }
                         
                         // Try to parse error response
                         let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
