@@ -13,15 +13,43 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 
 // Database connection
 try {
+    // Parse the database URL
     $dbUrl = parse_url($databaseUrl);
-    if (!$dbUrl || !isset($dbUrl['host'], $dbUrl['port'], $dbUrl['user'], $dbUrl['pass'], $dbUrl['path'])) {
-        throw new Exception("Invalid DATABASE_URL format");
+    
+    // Debug: Log parsed URL components
+    error_log("Parsed URL: " . print_r($dbUrl, true));
+    
+    // Check if URL was parsed correctly
+    if (!$dbUrl) {
+        throw new Exception("Failed to parse database URL");
     }
     
+    // Extract components with defaults
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432; // Default PostgreSQL port
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+    
+    // Validate required components
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing required database connection parameters. Host: " . 
+                          ($host ? 'set' : 'missing') . 
+                          ", User: " . ($user ? 'set' : 'missing') . 
+                          ", Password: " . ($pass ? 'set' : 'missing') . 
+                          ", Path: " . ($path ? 'set' : 'missing'));
+    }
+    
+    // Remove leading slash from path to get database name
+    $dbName = ltrim($path, '/');
+    
+    // Debug: Log connection parameters
+    error_log("Connecting to: host=$host, port=$port, dbname=$dbName, user=$user");
+    
     $pdo = new PDO(
-        "pgsql:host={$dbUrl['host']};port={$dbUrl['port']};dbname=" . ltrim($dbUrl['path'], '/'),
-        $dbUrl['user'],
-        $dbUrl['pass'],
+        "pgsql:host=$host;port=$port;dbname=$dbName",
+        $user,
+        $pass,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
