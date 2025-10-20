@@ -62,6 +62,41 @@ try {
             );
         ");
         error_log("Results table ready");
+        
+        // Create online_users table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS online_users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                photo_url VARCHAR(255),
+                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(telegram_id)
+            );
+        ");
+        error_log("Online users table ready");
+        
+        // Update current user's online status
+        $telegramId = $_SESSION['user']['id'];
+        $name = $_SESSION['user']['name'];
+        $photoUrl = $_SESSION['user']['photo_url'] ?? null;
+        
+        $updateStmt = $pdo->prepare("
+            INSERT INTO online_users (telegram_id, name, photo_url, last_activity)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (telegram_id) DO UPDATE SET
+                name = EXCLUDED.name,
+                photo_url = EXCLUDED.photo_url,
+                last_activity = CURRENT_TIMESTAMP
+        ");
+        $updateStmt->execute([$telegramId, $name, $photoUrl]);
+        
+        // Clean up users not active in the last 3 minutes
+        $cleanupStmt = $pdo->prepare("
+            DELETE FROM online_users
+            WHERE last_activity < NOW() - INTERVAL '3 minutes'
+        ");
+        $cleanupStmt->execute();
     }
 } catch (Exception $e) {
     error_log("Database connection failed in index.php: " . $e->getMessage());
@@ -250,6 +285,22 @@ try {
         .welcome-text p {
             color: var(--text-secondary);
             font-size: 0.9rem;
+        }
+        
+        .dashboard-content {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .dashboard-main {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .dashboard-sidebar {
+            width: 300px;
+            flex-shrink: 0;
         }
         
         .stats-grid {
@@ -447,6 +498,117 @@ try {
             font-size: 0.7rem;
             color: var(--text-secondary);
             white-space: nowrap;
+        }
+        
+        /* Online Users Section */
+        .online-users-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px var(--shadow);
+            height: fit-content;
+        }
+        
+        .online-users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .online-users-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .online-users-count {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            background: rgba(59, 130, 246, 0.1);
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+        }
+        
+        .online-users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        
+        /* Custom scrollbar */
+        .online-users-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .online-users-list::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+            border-radius: 3px;
+        }
+        
+        .online-users-list::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+            border-radius: 3px;
+        }
+        
+        .online-user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        .online-user-item:hover {
+            transform: translateX(5px);
+            border-color: var(--accent-blue);
+        }
+        
+        .online-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-blue);
+            flex-shrink: 0;
+        }
+        
+        .online-user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .online-user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .online-user-status {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-green);
         }
         
         .checker-section, .generator-section {
@@ -803,6 +965,12 @@ try {
             .sidebar { width: 75vw; }
             .page-title { font-size: 1.2rem; }
             .page-subtitle { font-size: 0.8rem; }
+            .dashboard-content {
+                flex-direction: column;
+            }
+            .dashboard-sidebar {
+                width: 100%;
+            }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
             .stat-card { padding: 1rem; min-height: 100px; }
             .stat-icon { width: 32px; height: 32px; font-size: 1rem; }
@@ -855,6 +1023,19 @@ try {
             .user-info {
                 padding: 0.1rem 0.3rem;
                 gap: 0.3rem;
+            }
+            .online-users-section {
+                margin-top: 1rem;
+            }
+            .online-users-list {
+                max-height: 200px;
+            }
+            .online-user-avatar {
+                width: 32px;
+                height: 32px;
+            }
+            .online-user-name {
+                font-size: 0.8rem;
             }
         }
         
@@ -966,80 +1147,104 @@ try {
                     </div>
                 </div>
 
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat-card total">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-credit-card"></i>
+                <div class="dashboard-content">
+                    <div class="dashboard-main">
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-card total">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                </div>
+                                <div id="total-value" class="stat-value">0</div>
+                                <div class="stat-label">TOTAL</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card charged">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                </div>
+                                <div id="charged-value" class="stat-value">0</div>
+                                <div class="stat-label">HIT|CHARGED</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card approved">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+                                <div id="approved-value" class="stat-value">0</div>
+                                <div class="stat-label">LIVE|APPROVED</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card threeds">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                </div>
+                                <div id="threed-value" class="stat-value">0</div>
+                                <div class="stat-label">3DS</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card declined">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                </div>
+                                <div id="declined-value" class="stat-value">0</div>
+                                <div class="stat-label">DEAD|DECLINED</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card checked">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                </div>
+                                <div id="checked-value" class="stat-value">0 / 0</div>
+                                <div class="stat-label">CHECKED</div>
+                                <div class="stat-indicator"></div>
                             </div>
                         </div>
-                        <div id="total-value" class="stat-value">0</div>
-                        <div class="stat-label">TOTAL</div>
-                        <div class="stat-indicator"></div>
-                    </div>
-                    <div class="stat-card charged">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-bolt"></i>
-                            </div>
-                        </div>
-                        <div id="charged-value" class="stat-value">0</div>
-                        <div class="stat-label">HIT|CHARGED</div>
-                        <div class="stat-indicator"></div>
-                    </div>
-                    <div class="stat-card approved">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                        <div id="approved-value" class="stat-value">0</div>
-                        <div class="stat-label">LIVE|APPROVED</div>
-                        <div class="stat-indicator"></div>
-                    </div>
-                    <div class="stat-card threeds">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-lock"></i>
-                            </div>
-                        </div>
-                        <div id="threed-value" class="stat-value">0</div>
-                        <div class="stat-label">3DS</div>
-                        <div class="stat-indicator"></div>
-                    </div>
-                    <div class="stat-card declined">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-times-circle"></i>
-                            </div>
-                        </div>
-                        <div id="declined-value" class="stat-value">0</div>
-                        <div class="stat-label">DEAD|DECLINED</div>
-                        <div class="stat-indicator"></div>
-                    </div>
-                    <div class="stat-card checked">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-double"></i>
-                            </div>
-                        </div>
-                        <div id="checked-value" class="stat-value">0 / 0</div>
-                        <div class="stat-label">CHECKED</div>
-                        <div class="stat-indicator"></div>
-                    </div>
-                </div>
 
-                <div class="recent-activity">
-                    <div class="activity-header">
-                        <div class="activity-title">
-                            <i class="fas fa-history"></i> Recent Activity
+                        <div class="recent-activity">
+                            <div class="activity-header">
+                                <div class="activity-title">
+                                    <i class="fas fa-history"></i> Recent Activity
+                                </div>
+                            </div>
+                            <div class="activity-list" id="activityList">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <h3>No Activity Yet</h3>
+                                    <p>Start checking cards to see activity here</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="activity-list" id="activityList">
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <h3>No Activity Yet</h3>
-                            <p>Start checking cards to see activity here</p>
+                    
+                    <div class="dashboard-sidebar">
+                        <div class="online-users-section">
+                            <div class="online-users-header">
+                                <div class="online-users-title">
+                                    <i class="fas fa-users"></i> Online Users
+                                </div>
+                                <div class="online-users-count" id="onlineUsersCount">
+                                    <span id="onlineCount">0</span> online
+                                </div>
+                            </div>
+                            <div class="online-users-list" id="onlineUsersList">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-slash"></i>
+                                    <h3>No Users Online</h3>
+                                    <p>No other users are currently online</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
