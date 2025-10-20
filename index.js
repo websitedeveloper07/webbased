@@ -392,9 +392,7 @@ async function processCard(card, controller, retryCount = 0) {
             contentType: false,
             timeout: 300000,
             signal: controller.signal,
-            // Remove dataType: 'json' to handle both JSON and non-JSON responses
             success: function(response) {
-                // Use our improved response parser
                 const parsedResponse = parseGatewayResponse(response);
                 
                 console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
@@ -409,20 +407,16 @@ async function processCard(card, controller, retryCount = 0) {
                 $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                 console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
                 
-                // Try to parse error response
                 let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
                 
                 if (xhr.responseText) {
                     try {
-                        // Try to parse as JSON first
                         const errorJson = JSON.parse(xhr.responseText);
                         if (errorJson) {
-                            // Use our improved parser for error responses too
                             const parsedError = parseGatewayResponse(errorJson);
                             errorResponse = parsedError.message;
                         }
                     } catch (e) {
-                        // Not JSON, use the raw response text
                         errorResponse = xhr.responseText;
                     }
                 }
@@ -586,7 +580,6 @@ function generateCards() {
     const cvv = $('#cvvInput').val().trim();
     const numCards = parseInt($('#numCardsInput').val());
     
-    // Validate BIN
     if (!/^\d{6,8}$/.test(bin)) {
         Swal.fire({
             title: 'Invalid BIN!',
@@ -597,7 +590,6 @@ function generateCards() {
         return;
     }
     
-    // Validate number of cards
     if (isNaN(numCards) || numCards < 1 || numCards > 5000) {
         Swal.fire({
             title: 'Invalid Number!',
@@ -608,7 +600,6 @@ function generateCards() {
         return;
     }
     
-    // Show warning for large number of cards
     if (numCards > 1000) {
         Swal.fire({
             title: 'Large Number of Cards',
@@ -629,18 +620,14 @@ function generateCards() {
 }
 
 function continueGenerateCards(bin, month, year, cvv, numCards) {
-    // Validate year if not random
     if (year !== 'rnd') {
-        // Convert two-digit year to four-digit
         if (year.length === 2) {
             const currentYear = new Date().getFullYear();
             const currentCentury = Math.floor(currentYear / 100) * 100;
             const twoDigitYear = parseInt(year);
-            // If the two-digit year is less than 50, assume current century, otherwise previous century
             year = (twoDigitYear < 50 ? currentCentury : currentCentury - 100) + twoDigitYear;
         }
         
-        // Validate year is a number and between 2000 and 2099
         if (!/^\d{4}$/.test(year) || parseInt(year) < 2000 || parseInt(year) > 2099) {
             Swal.fire({
                 title: 'Invalid Year!',
@@ -652,7 +639,6 @@ function continueGenerateCards(bin, month, year, cvv, numCards) {
         }
     }
     
-    // Validate CVV if not random
     if (cvv !== 'rnd' && !/^\d{3,4}$/.test(cvv)) {
         Swal.fire({
             title: 'Invalid CVV!',
@@ -663,36 +649,29 @@ function continueGenerateCards(bin, month, year, cvv, numCards) {
         return;
     }
     
-    // Prepare parameters
     let params = bin;
     if (month !== 'rnd') params += '|' + month;
     if (year !== 'rnd') params += '|' + year;
     if (cvv !== 'rnd') params += '|' + cvv;
     
-    // Show loader
     $('#genLoader').show();
     $('#genStatusLog').text('Generating cards...');
     
-    // Make AJAX request
     $.ajax({
-        url: '/gate/ccgen.php',  // Updated path
+        url: '/gate/ccgen.php',
         method: 'GET',
         data: {
             bin: params,
             num: numCards,
             format: 0
         },
-        dataType: 'json',  // Specify that we expect JSON response
+        dataType: 'json',
         success: function(response) {
             $('#genLoader').hide();
             
-            // Check if response has cards property
             if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
                 $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
-                
-                // Display all cards in a single box
                 displayGeneratedCards(response.cards);
-                
                 Swal.fire({
                     title: 'Success!',
                     text: `Generated ${response.cards.length} cards`,
@@ -700,7 +679,6 @@ function continueGenerateCards(bin, month, year, cvv, numCards) {
                     confirmButtonColor: '#10b981'
                 });
             } else if (response.error) {
-                // Handle error response
                 Swal.fire({
                     title: 'Error!',
                     text: response.error,
@@ -709,7 +687,6 @@ function continueGenerateCards(bin, month, year, cvv, numCards) {
                 });
                 $('#genStatusLog').text('Error: ' + response.error);
             } else {
-                // Handle case where no cards were generated
                 $('#genStatusLog').text('No cards generated');
                 Swal.fire({
                     title: 'No Cards!',
@@ -743,49 +720,47 @@ function logout() {
         confirmButtonText: 'Yes, logout'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Perform logout action (e.g., clear session and redirect)
             sessionStorage.clear();
             window.location.href = 'login.php';
         }
     });
 }
 
-// Function to update user activity and get online users
 function updateUserActivity() {
-    console.log("Updating user activity...");
+    console.log("Updating user activity at", new Date().toISOString());
     
     $.ajax({
-        url: '/update_activity.php',  // Use absolute path
+        url: 'https://cxchk.site/update_activity.php',
         method: 'GET',
         dataType: 'json',
         xhrFields: {
-            withCredentials: true  // Important for session cookies
+            withCredentials: true
         },
+        timeout: 5000,
         success: function(response) {
-            console.log("Response received:", response);
+            console.log("Activity update response:", response);
             
             if (response.success) {
-                // Update the online count in the UI
                 const onlineCountElement = document.getElementById('onlineCount');
                 if (onlineCountElement) {
                     onlineCountElement.textContent = response.count;
                     console.log("Updated online count to:", response.count);
                 } else {
-                    console.error("Online count element not found");
+                    console.error("Element #onlineCount not found");
                 }
                 
-                // Update the online users list
                 displayOnlineUsers(response.users);
             } else {
-                console.error('Error updating activity:', response.message);
+                console.error('Activity update failed:', response.message || 'No error message provided');
             }
         },
         error: function(xhr, status, error) {
-            console.error('Activity update error:', status, error);
-            console.error('Response text:', xhr.responseText);
-            console.error('Status code:', xhr.status);
-            
-            // Try to parse the response as JSON to see if there's a useful error message
+            console.error('Activity update error:', {
+                status: status,
+                error: error,
+                statusCode: xhr.status,
+                responseText: xhr.responseText
+            });
             try {
                 const errorResponse = JSON.parse(xhr.responseText);
                 console.error('Parsed error response:', errorResponse);
@@ -796,19 +771,17 @@ function updateUserActivity() {
     });
 }
 
-// Function to display online users in the UI
 function displayOnlineUsers(users) {
     console.log("Displaying online users:", users);
     
     const onlineUsersList = document.getElementById('onlineUsersList');
     if (!onlineUsersList) {
-        console.error("Online users list element not found");
+        console.error("Element #onlineUsersList not found");
         return;
     }
     
-    // Filter out the current user
     const otherUsers = users.filter(user => !user.is_current_user);
-    console.log("Other users (excluding current user):", otherUsers);
+    console.log("Other users:", otherUsers);
     
     if (otherUsers.length === 0) {
         onlineUsersList.innerHTML = `
@@ -823,7 +796,6 @@ function displayOnlineUsers(users) {
     
     let usersHtml = '';
     otherUsers.forEach(user => {
-        // Create role badge with appropriate styling
         const roleBadgeClass = user.role === 'Owner' ? 'owner-badge' : 'free-badge';
         const roleBadgeText = user.role;
         
@@ -842,17 +814,10 @@ function displayOnlineUsers(users) {
     });
     
     onlineUsersList.innerHTML = usersHtml;
-    console.log("Updated online users list HTML");
+    console.log("Updated online users list");
 }
 
-// Test function to manually update user activity (for debugging)
-function testUpdateActivity() {
-    console.log("Manually triggering user activity update...");
-    updateUserActivity();
-}
-
-// Document ready event handlers
- $(document).ready(function() {
+$(document).ready(function() {
     $('#startBtn').on('click', processCards);
     $('#generateBtn').on('click', generateCards);
     $('#copyAllBtn').on('click', copyAllGeneratedCards);
@@ -956,49 +921,53 @@ function testUpdateActivity() {
         }
     });
 
-    // Mobile sidebar toggle
     document.getElementById('menuToggle').addEventListener('click', function() {
         sidebarOpen = !sidebarOpen;
         document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
         document.querySelector('.main-content').classList.toggle('sidebar-open', sidebarOpen);
     });
     
-    // Initialize theme from localStorage
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
     document.querySelector('.theme-toggle-slider i').className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
     
-    // Update user activity when the page loads
-    console.log("Page loaded, updating user activity...");
+    console.log("Page loaded, initializing user activity update...");
     updateUserActivity();
     
-    // Set up interval to refresh every 10 seconds (10000 milliseconds)
-    console.log("Setting up interval for user activity updates every 10 seconds...");
-    setInterval(updateUserActivity, 10000);
+    console.log("Setting up interval for user activity updates every 7 seconds...");
+    const activityInterval = setInterval(updateUserActivity, 7000);
     
-    // Update activity when user interacts with the page (throttled to once every 10 seconds)
+    let lastActivityUpdate = 0;
     $(document).on('click mousemove keypress scroll', function() {
-        // Throttle the activity updates to avoid too many requests
-        if (!this.lastActivityUpdate || new Date() - this.lastActivityUpdate > 10000) {
+        const now = new Date().getTime();
+        if (now - lastActivityUpdate >= 7000) {
             console.log("User interaction detected, updating activity...");
             updateUserActivity();
-            this.lastActivityUpdate = new Date();
+            lastActivityUpdate = now;
         }
     });
     
-    // Create a test button for debugging (remove in production)
-    const testButton = document.createElement('button');
-    testButton.textContent = 'Test Update Activity';
-    testButton.style.position = 'fixed';
-    testButton.style.bottom = '10px';
-    testButton.style.right = '10px';
-    testButton.style.zIndex = '9999';
-    testButton.style.padding = '5px 10px';
-    testButton.style.backgroundColor = '#3b82f6';
-    testButton.style.color = 'white';
-    testButton.style.border = 'none';
-    testButton.style.borderRadius = '5px';
-    testButton.style.cursor = 'pointer';
-    testButton.onclick = testUpdateActivity;
-    document.body.appendChild(testButton);
+    $(window).on('unload', function() {
+        clearInterval(activityInterval);
+        console.log("Cleared activity update interval on page unload");
+    });
+
+    // // Debugging: Test button (uncomment for testing)
+    // const testButton = document.createElement('button');
+    // testButton.textContent = 'Test Update Activity';
+    // testButton.style.position = 'fixed';
+    // testButton.style.bottom = '10px';
+    // testButton.style.right = '10px';
+    // testButton.style.zIndex = '9999';
+    // testButton.style.padding = '5px 10px';
+    // testButton.style.backgroundColor = '#3b82f6';
+    // testButton.style.color = 'white';
+    // testButton.style.border = 'none';
+    // testButton.style.borderRadius = '5px';
+    // testButton.style.cursor = 'pointer';
+    // testButton.onclick = function() {
+    //     console.log("Manually triggering user activity update...");
+    //     updateUserActivity();
+    // };
+    // document.body.appendChild(testButton);
 });
