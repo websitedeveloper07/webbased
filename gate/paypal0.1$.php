@@ -166,7 +166,7 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
 
         $final_status = 'DECLINED';
         if ($status === 'approved' || $message === 'CARD ADDED') {
-            $final_status = 'CHARGED';
+            $final_status = 'APPROVED';
         } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         }
