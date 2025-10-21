@@ -6,9 +6,33 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(0);
 
-// Start session if not already started
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
+// Start session with secure settings
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 1); // Enable if using HTTPS
+ini_set('session.cookie_samesite', 'Strict');
+session_start();
+
+// Regenerate session ID for security
+if (!isset($_SESSION['initiated'])) {
+    session_regenerate_id(true);
+    $_SESSION['initiated'] = true;
+}
+
+// Generate security token if not exists
+if (!isset($_SESSION['security_token'])) {
+    $_SESSION['security_token'] = bin2hex(random_bytes(32));
+}
+
+// Add CORS headers
+header('Access-Control-Allow-Origin: https://' . $_SERVER['HTTP_HOST']);
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
 }
 
 // Security check to prevent unauthorized access
@@ -19,36 +43,69 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
     exit;
 }
 
-// Validate security token
-if (!isset($_POST['security_token']) || $_POST['security_token'] !== $_SESSION['security_token']) {
+// Validate security token with logging
+if (!isset($_POST['security_token'])) {
+    error_log("Security token missing in POST request");
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Security token missing']);
+    exit;
+}
+
+if (!isset($_SESSION['security_token'])) {
+    error_log("Security token not set in session");
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Session token not set']);
+    exit;
+}
+
+if ($_POST['security_token'] !== $_SESSION['security_token']) {
+    error_log("Token mismatch. POST: " . $_POST['security_token'] . " SESSION: " . $_SESSION['security_token']);
     http_response_code(403);
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Invalid security token']);
     exit;
 }
 
-// Validate domain
-if (!isset($_POST['domain']) || $_POST['domain'] !== $_SERVER['HTTP_HOST']) {
+// Validate domain with normalization
+ $posted_domain = isset($_POST['domain']) ? strtolower($_POST['domain']) : '';
+ $server_host = strtolower($_SERVER['HTTP_HOST']);
+
+// Remove www. prefix if present
+ $posted_domain = preg_replace('/^www\./', '', $posted_domain);
+ $server_host = preg_replace('/^www\./', '', $server_host);
+
+if ($posted_domain !== $server_host) {
+    error_log("Domain validation failed. Posted: $posted_domain, Server: $server_host");
     http_response_code(403);
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Domain validation failed']);
     exit;
 }
 
-// Validate request ID (optional, for additional security)
+// Validate request ID
 if (!isset($_POST['request_id']) || empty($_POST['request_id'])) {
     http_response_code(403);
     header('Content-Type: application/json');
-    echo json_encode(['error' => 'Invalid request']);
+    echo json_encode(['error' => 'Invalid request ID']);
     exit;
 }
 
-// Add rate limiting check
+// Optional: Validate request ID format
+if (!preg_match('/^\d+-[a-z0-9]+$/', $_POST['request_id'])) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid request ID format']);
+    exit;
+}
+
+// Fixed rate limiting code
  $rate_limit_key = 'authnet_rate_limit_' . ($_SESSION['user']['id'] ?? 'unknown');
  $rate_limit_time = 60; // 60 seconds
  $rate_limit_max = 30; // 30 requests per minute
 
-// Check if rate limit data exists
+// Initialize rate limit if not exists
 if (!isset($_SESSION[$rate_limit_key])) {
     $_SESSION[$rate_limit_key] = [
         'count' => 0,
@@ -115,7 +172,7 @@ function makeRequest($url) {
     return $error ? false : $response;
 }
 
-// Create 3 parallel requests with slight variations (e.g., adding random delay to simulate different attempts)
+// Create 3 parallel requests with slight variations
  $responses = [];
  $multi_handle = curl_multi_init();
 
