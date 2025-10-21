@@ -1,7 +1,9 @@
 <?php
+// Allow access to gate files
+define('ALLOWED_ACCESS', true);
 require_once __DIR__ . '/gate_init.php';
-// Rest of your existing code
-?>
+
+// Set plain text output
 header('Content-Type: text/plain');
 
 // Enable error reporting for debugging (remove in production)
