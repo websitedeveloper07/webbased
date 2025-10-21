@@ -858,7 +858,10 @@ function displayOnlineUsers(users) {
         
         usersHtml += `
             <div class="online-user-item" data-user-id="${user.username || 'unknown-' + index}">
-                <img src="${photoUrl}" alt="${name}" class="online-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64';">
+                <div class="online-user-avatar-container">
+                    <img src="${photoUrl}" alt="${name}" class="online-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64';">
+                    <div class="online-indicator"></div>
+                </div>
                 <div class="online-user-info">
                     <div class="online-user-name">${name}</div>
                     ${username ? `<div class="online-user-username">${username}</div>` : ''}
