@@ -2,7 +2,7 @@
 session_start();
 
 // Admin access key (change this to your secure key)
-define('ADMIN_ACCESS_KEY', 'iloveyoupayalalways');
+define('ADMIN_ACCESS_KEY', 'YOUR_SECURE_ADMIN_KEY_123');
 
 // Maintenance flag file path
 define('MAINTENANCE_FLAG', 'maintenance.flag');
