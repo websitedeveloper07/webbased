@@ -1630,6 +1630,6 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-    <script src="index.js"></script>
+    <script src="index.js" defer></script>
 </body>
 </html>
