@@ -14,6 +14,8 @@ let declinedCards = [];
 let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 let sidebarOpen = false;
 let generatedCardsData = [];
+let activityUpdateInterval = null;
+let lastActivityUpdate = 0;
 
 // Disable copy, context menu, and dev tools, but allow pasting in the textarea
 document.addEventListener('contextmenu', e => {
@@ -725,91 +727,122 @@ function logout() {
     });
 }
 
+// Updated updateUserActivity function with proper error handling
 function updateUserActivity() {
     console.log("Updating user activity at", new Date().toISOString());
     
-    $.ajax({
-        url: 'https://cxchk.site/update_activity.php',
+    // Cancel any previous request if still pending
+    if (window.activityRequest) {
+        window.activityRequest.abort();
+    }
+    
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    window.activityRequest = controller;
+    
+    // Set a timeout to abort the request after 10 seconds
+    const timeoutId = setTimeout(() => {
+        if (window.activityRequest === controller) {
+            controller.abort();
+            window.activityRequest = null;
+        }
+    }, 10000);
+    
+    fetch('https://cxchk.site/update_activity.php', {
         method: 'GET',
-        dataType: 'json',
-        xhrFields: {
-            withCredentials: true
-        },
-        timeout: 5000,
-        success: function(response) {
-            console.log("Activity update response:", response);
-            
-            if (response.success) {
-                // Update online count
-                const onlineCountElement = document.getElementById('onlineCount');
-                if (onlineCountElement) {
-                    onlineCountElement.textContent = response.count;
-                    console.log("Updated online count to:", response.count);
-                } else {
-                    console.error("Element #onlineCount not found");
-                }
-                
-                // Update current user profile
-                const currentUser = response.users.find(user => user.is_online);
-                if (currentUser) {
-                    // Update profile picture
-                    const profilePicElement = document.querySelector('.user-avatar');
-                    if (profilePicElement) {
-                        profilePicElement.src = currentUser.photo_url || 
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
-                        console.log("Updated profile picture");
-                    } else {
-                        console.error("Element .user-avatar not found");
-                    }
-                    
-                    // Update user name
-                    const userNameElement = document.querySelector('.user-name');
-                    if (userNameElement) {
-                        userNameElement.textContent = currentUser.name || 'Unknown User';
-                        console.log("Updated user name to:", currentUser.name);
-                    } else {
-                        console.error("Element .user-name not found");
-                    }
-                } else {
-                    console.error("Current user not found in response");
-                }
-                
-                // Display online users
-                displayOnlineUsers(response.users);
-                
+        signal: controller.signal,
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
+        }
+    })
+    .then(response => {
+        // Clear the timeout
+        clearTimeout(timeoutId);
+        window.activityRequest = null;
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        console.log("Activity update response:", data);
+        
+        if (data.success) {
+            // Update online count
+            const onlineCountElement = document.getElementById('onlineCount');
+            if (onlineCountElement) {
+                onlineCountElement.textContent = data.count;
+                console.log("Updated online count to:", data.count);
             } else {
-                console.error('Activity update failed:', response.message || 'No error message provided');
+                console.error("Element #onlineCount not found");
+            }
+            
+            // Update current user profile
+            const currentUser = data.users.find(user => user.is_online);
+            if (currentUser) {
+                // Update profile picture
+                const profilePicElement = document.querySelector('.user-avatar');
+                if (profilePicElement) {
+                    profilePicElement.src = currentUser.photo_url || 
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
+                    console.log("Updated profile picture");
+                } else {
+                    console.error("Element .user-avatar not found");
+                }
+                
+                // Update user name
+                const userNameElement = document.querySelector('.user-name');
+                if (userNameElement) {
+                    userNameElement.textContent = currentUser.name || 'Unknown User';
+                    console.log("Updated user name to:", currentUser.name);
+                } else {
+                    console.error("Element .user-name not found");
+                }
+            } else {
+                console.error("Current user not found in response");
+            }
+            
+            // Display online users
+            displayOnlineUsers(data.users);
+            
+        } else {
+            console.error('Activity update failed:', data.message || 'No error message provided');
+            // Don't show error toast for normal operation
+        }
+    })
+    .catch(error => {
+        // Clear the timeout
+        clearTimeout(timeoutId);
+        window.activityRequest = null;
+        
+        console.error('Activity update error:', error);
+        
+        // Only show error message if it's not an abort
+        if (error.name !== 'AbortError') {
+            // Show user-friendly error message
+            let errorMessage = 'Error fetching online users';
+            
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage = 'Network error - please check your connection';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = 'Server error - please try again later';
+            }
+            
+            // Only show error toast if user is on the home page
+            if (document.getElementById('page-home').classList.contains('active')) {
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
                     icon: 'error',
-                    title: 'Failed to update online users',
+                    title: errorMessage,
                     showConfirmButton: false,
-                    timer: 1500
+                    timer: 3000
                 });
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Activity update error:', {
-                status: status,
-                error: error,
-                statusCode: xhr.status,
-                responseText: xhr.responseText
-            });
-            try {
-                const errorResponse = JSON.parse(xhr.responseText);
-                console.error('Parsed error response:', errorResponse);
-            } catch (e) {
-                console.error('Could not parse error response as JSON');
-            }
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'error',
-                title: 'Error fetching online users',
-                showConfirmButton: false,
-                timer: 1500
-            });
         }
     });
 }
@@ -820,14 +853,6 @@ function displayOnlineUsers(users) {
     const onlineUsersList = document.getElementById('onlineUsersList');
     if (!onlineUsersList) {
         console.error("Element #onlineUsersList not found in DOM");
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: 'Online users list element missing',
-            showConfirmButton: false,
-            timer: 2000
-        });
         return;
     }
     
@@ -849,44 +874,113 @@ function displayOnlineUsers(users) {
     
     console.log("Rendering", users.length, "users");
     
-    let usersHtml = '';
+    // Create a document fragment to improve performance
+    const fragment = document.createDocumentFragment();
+    
     users.forEach((user, index) => {
         console.log(`Processing user ${index + 1}:`, user);
-        const name = user.name ? user.name.trim() : 'Unknown';
-        const username = user.username || '';
-        const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
         
-        usersHtml += `
-            <div class="online-user-item" data-user-id="${user.username || 'unknown-' + index}">
-                <div class="online-user-avatar-container">
-                    <img src="${photoUrl}" alt="${name}" class="online-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64';">
-                    <div class="online-indicator"></div>
-                </div>
-                <div class="online-user-info">
-                    <div class="online-user-name">${name}</div>
-                    ${username ? `<div class="online-user-username">${username}</div>` : ''}
-                </div>
-            </div>
-        `;
+        // Safely extract user data with defaults
+        const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+        const username = (user.username && typeof user.username === 'string') ? user.username : '';
+        const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+            user.photo_url : 
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+        
+        // Create user item element
+        const userItem = document.createElement('div');
+        userItem.className = 'online-user-item';
+        userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+        
+        // Create avatar container
+        const avatarContainer = document.createElement('div');
+        avatarContainer.className = 'online-user-avatar-container';
+        
+        // Create avatar image
+        const avatar = document.createElement('img');
+        avatar.src = photoUrl;
+        avatar.alt = name;
+        avatar.className = 'online-user-avatar';
+        avatar.onerror = function() {
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+        };
+        
+        // Create online indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'online-indicator';
+        
+        // Assemble avatar container
+        avatarContainer.appendChild(avatar);
+        avatarContainer.appendChild(indicator);
+        
+        // Create user info container
+        const userInfo = document.createElement('div');
+        userInfo.className = 'online-user-info';
+        
+        // Create name element
+        const nameElement = document.createElement('div');
+        nameElement.className = 'online-user-name';
+        nameElement.textContent = name;
+        
+        // Create username element only if username exists
+        if (username) {
+            const usernameElement = document.createElement('div');
+            usernameElement.className = 'online-user-username';
+            usernameElement.textContent = username;
+            userInfo.appendChild(nameElement);
+            userInfo.appendChild(usernameElement);
+        } else {
+            userInfo.appendChild(nameElement);
+        }
+        
+        // Assemble user item
+        userItem.appendChild(avatarContainer);
+        userItem.appendChild(userInfo);
+        
+        // Add to fragment
+        fragment.appendChild(userItem);
     });
     
-    onlineUsersList.innerHTML = usersHtml;
-    console.log("Updated online users list with HTML:", usersHtml);
+    // Clear the list and add all users at once
+    onlineUsersList.innerHTML = '';
+    onlineUsersList.appendChild(fragment);
     
-    // Verify DOM update
-    const renderedItems = onlineUsersList.querySelectorAll('.online-user-item');
-    console.log("Rendered", renderedItems.length, "user items in DOM");
-    if (renderedItems.length !== users.length) {
-        console.warn("Mismatch: Expected", users.length, "users, but rendered", renderedItems.length);
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'warning',
-            title: 'User list rendering issue',
-            showConfirmButton: false,
-            timer: 2000
-        });
+    console.log("Successfully rendered online users list");
+}
+
+// Initialize activity updates when the page loads
+function initializeActivityUpdates() {
+    // Clear any existing interval
+    if (activityUpdateInterval) {
+        clearInterval(activityUpdateInterval);
     }
+    
+    // Initial update
+    updateUserActivity();
+    
+    // Set up interval to update every 25 seconds
+    activityUpdateInterval = setInterval(updateUserActivity, 25000);
+    
+    // Update on user interaction, but not more than once every 25 seconds
+    $(document).on('click mousemove keypress scroll', function() {
+        const now = new Date().getTime();
+        if (now - lastActivityUpdate >= 25000) {
+            console.log("User interaction detected, updating activity...");
+            updateUserActivity();
+            lastActivityUpdate = now;
+        }
+    });
+    
+    // Clean up on page unload
+    $(window).on('unload', function() {
+        if (activityUpdateInterval) {
+            clearInterval(activityUpdateInterval);
+        }
+        if (window.activityRequest) {
+            window.activityRequest.abort();
+        }
+        console.log("Cleared activity update interval on page unload");
+    });
 }
 
  $(document).ready(function() {
@@ -911,7 +1005,7 @@ function displayOnlineUsers(users) {
         $('#statusLog').text('Processing stopped.');
         Swal.fire({
             title: 'Stopped!',
-            text: 'Processing has been stopped',
+            text: 'Coning has been stopped',
             icon: 'warning',
             confirmButtonColor: '#ec4899'
         });
@@ -928,7 +1022,7 @@ function displayOnlineUsers(users) {
                     $('#cardInput').val('');
                     updateCardCount();
                     Swal.fire({
-                        toast: true, position: 'top-end', icon: 'success',
+                        toast: true, position: 'timeout: 'top-end', icon: 'success',
                         title: 'Cleared!', showConfirmButton: false, timer: 1500
                     });
                 }
@@ -948,7 +1042,7 @@ function displayOnlineUsers(users) {
         document.getElementById('copyAllBtn').style.display = 'none';
         document.getElementById('clearAllBtn').style.display = 'none';
         Swal.fire({
-            toast: true, position: 'top-end', icon: 'success',
+            toast: true, position: 'timeout: 'top-end', icon: 'success',
             title: 'Cleared!', showConfirmButton: false, timer: 1500
         });
     });
@@ -967,7 +1061,7 @@ function displayOnlineUsers(users) {
         let csvContent = "Card,Status,Response\n";
         allCards.forEach(card => {
             const status = card.response.includes('CHARGED') ? 'CHARGED' :
-                         card.response.includes('APPROVED') ? 'APPROVED' :
+                         card.response.includes('APPROVED') ? 'PROVED' :
                          card.response.includes('3DS') ? '3DS' : 'DECLINED';
             csvContent += `${card.displayCard},${status},${card.response}\n`;
         });
@@ -980,7 +1074,7 @@ function displayOnlineUsers(users) {
         link.click();
         document.body.removeChild(link);
         Swal.fire({
-            toast: true, position: 'top-end', icon: 'success',
+            toast: true, position: 'timeout: 'top-end', icon: 'success',
             title: 'Exported!', showConfirmButton: false, timer: 1500
         });
     });
@@ -1004,23 +1098,7 @@ function displayOnlineUsers(users) {
     document.querySelector('.theme-toggle-slider i').className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
     
     console.log("Page loaded, initializing user activity update...");
-    updateUserActivity();
     
-    console.log("Setting up interval for user activity updates every 10 seconds...");
-    const activityInterval = setInterval(updateUserActivity, 10000);
-    
-    let lastActivityUpdate = 0;
-    $(document).on('click mousemove keypress scroll', function() {
-        const now = new Date().getTime();
-        if (now - lastActivityUpdate >= 10000) {
-            console.log("User interaction detected, updating activity...");
-            updateUserActivity();
-            lastActivityUpdate = now;
-        }
-    });
-    
-    $(window).on('unload', function() {
-        clearInterval(activityInterval);
-        console.log("Cleared activity update interval on page unload");
-    });
+    // Initialize activity updates
+    initializeActivityUpdates();
 });
