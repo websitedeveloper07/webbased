@@ -280,7 +280,7 @@ if (empty($userPhotoUrl)) {
         
         .dashboard-content {
             display: flex;
-            flex-direction: column,
+            flex-direction: column;
             gap: 1.5rem;
         }
         
@@ -401,7 +401,7 @@ if (empty($userPhotoUrl)) {
         .stat-card.online .stat-indicator { background: rgba(79, 172, 254, 0.7); }
         
         .dashboard-bottom {
-            display: grid,
+            display: grid;
             grid-template-columns: 1fr 380px;
             gap: 1.5rem;
         }
@@ -415,7 +415,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-header {
-            display: flex,
+            display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.2rem;
@@ -435,8 +435,8 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-list {
-            display: flex,
-            flex-direction: column,
+            display: flex;
+            flex-direction: column;
             gap: 0.8rem;
             max-height: 400px;
             overflow-y: auto;
@@ -459,13 +459,13 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-item {
-            display: flex,
-            align-items: center,
-            gap: 0.8rem,
-            padding: 0.8rem,
-            background: var(--secondary-bg),
-            border-radius: 12px,
-            border: 1px solid var(--border-color),
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
             transition: all 0.3s;
         }
         
@@ -475,13 +475,13 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-icon {
-            width: 36px,
-            height: 36px,
-            border-radius: 10px,
-            display: flex,
-            align-items: center,
-            justify-content: center,
-            color: white,
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-size: 0.9rem;
         }
         
@@ -540,9 +540,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-users-header {
-            display: flex,
-            justify-content: space-between,
-            align-items: center,
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1.5rem;
         }
         
@@ -550,8 +550,8 @@ if (empty($userPhotoUrl)) {
             font-size: 1.3rem;
             font-weight: 700;
             color: var(--text-primary);
-            display: flex,
-            align-items: center,
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
         }
         
@@ -565,8 +565,8 @@ if (empty($userPhotoUrl)) {
             background: rgba(59, 130, 246, 0.1);
             padding: 0.3rem 0.6rem;
             border-radius: 20px;
-            display: flex,
-            align-items: center,
+            display: flex;
+            align-items: center;
             gap: 0.3rem;
         }
         
@@ -577,10 +577,10 @@ if (empty($userPhotoUrl)) {
         
         .online-users-list {
             display: flex;
-            flex-direction: column-reverse; /* Changed to column-reverse for upside down scrolling */
+            flex-direction: column,
             gap: 0.8rem;
             max-height: 400px;
-            overflow-y: auto; /* Changed from overflow-x to overflow-y */
+            overflow-y: auto;
             padding-right: 0.5rem;
         }
         
@@ -600,14 +600,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-item {
-            display: flex,
-            align-items: center,
-            gap: 0.8rem,
-            padding: 0.8rem,
-            background: var(--secondary-bg),
-            border-radius: 12px,
-            border: 1px solid var(--border-color),
-            transition: all 0.3s,
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
             position: relative;
         }
         
@@ -1084,10 +1084,10 @@ if (empty($userPhotoUrl)) {
             .gateway-option-desc { font-size: 0.65rem; }
             .menu-toggle {
                 position: absolute;
-                left: 0.5rem,
-                top: 50%,
-                transform: translateY(-50%),
-                width: 32px,
+                left: 0.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 32px;
                 height: 32px;
             }
             .navbar-brand {
