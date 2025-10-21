@@ -454,7 +454,7 @@ async function processCards() {
         .map(line => line.trim())
         .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()))
         .map(line => {
-            const [number, exp_month, exp_year, cvv] = line.split('|');
+            const [number, exp_month, exp_year, cvc] = line.split('|');
             return { number, exp_month, exp_year, cvv, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
         });
 
@@ -749,7 +749,7 @@ function updateUserActivity() {
                     console.error("Element #onlineCount not found");
                 }
                 
-                // ===== NEW CODE: Update current user profile =====
+                // Update current user profile
                 const currentUser = response.users.find(user => user.is_current_user);
                 if (currentUser) {
                     // Update profile picture
@@ -771,24 +771,18 @@ function updateUserActivity() {
                         console.error("Element #userName not found");
                     }
                     
-                    // Update user role
+                    // Update user role - all users are now "Free"
                     const userRoleElement = document.getElementById('userRole');
                     if (userRoleElement) {
-                        userRoleElement.textContent = currentUser.role || 'Free';
-                        // Update role styling
-                        if (currentUser.role && currentUser.role.toLowerCase() === 'owner') {
-                            userRoleElement.className = 'role-badge owner-badge';
-                        } else {
-                            userRoleElement.className = 'role-badge free-badge';
-                        }
-                        console.log("Updated user role to:", currentUser.role);
+                        userRoleElement.textContent = 'Free';
+                        userRoleElement.className = 'role-badge free-badge';
+                        console.log("Updated user role to: Free");
                     } else {
                         console.error("Element #userRole not found");
                     }
                 } else {
                     console.error("Current user not found in response");
                 }
-                // ===== END OF NEW CODE =====
                 
                 // Display online users
                 displayOnlineUsers(response.users);
@@ -871,8 +865,10 @@ function displayOnlineUsers(users) {
         const name = user.name ? user.name.trim() : 'Unknown';
         const username = user.username || '';
         const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
-        const roleBadgeClass = user.role && user.role.toLowerCase() === 'owner' ? 'owner-badge' : 'free-badge';
-        const roleBadgeText = user.role || 'Free';
+        
+        // All users are now "Free" - no special roles
+        const roleBadgeClass = 'free-badge';
+        const roleBadgeText = 'Free';
         const isCurrentUser = user.is_current_user ? ' (You)' : '';
         
         usersHtml += `
