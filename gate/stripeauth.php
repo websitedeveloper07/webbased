@@ -1,6 +1,75 @@
 <?php
 header('Content-Type: text/plain');
 
+// Start session if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security check to prevent unauthorized access
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Unauthorized access']);
+    exit;
+}
+
+// Validate security token
+if (!isset($_POST['security_token']) || $_POST['security_token'] !== $_SESSION['security_token']) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid security token']);
+    exit;
+}
+
+// Validate domain
+if (!isset($_POST['domain']) || $_POST['domain'] !== $_SERVER['HTTP_HOST']) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Domain validation failed']);
+    exit;
+}
+
+// Validate request ID (optional, for additional security)
+if (!isset($_POST['request_id']) || empty($_POST['request_id'])) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid request']);
+    exit;
+}
+
+// Add rate limiting check
+ $rate_limit_key = 'stripeauth_rate_limit_' . ($_SESSION['user']['id'] ?? 'unknown');
+ $rate_limit_time = 60; // 60 seconds
+ $rate_limit_max = 30; // 30 requests per minute
+
+// Check if rate limit data exists
+if (!isset($_SESSION[$rate_limit_key])) {
+    $_SESSION[$rate_limit_key] = [
+        'count' => 0,
+        'reset_time' => time() + $rate_limit_time
+    ];
+}
+
+// Check if rate limit reset time has passed
+if (time() > $_SESSION[$rate_limit_key]['reset_time']) {
+    $_SESSION[$rate_limit_key] = [
+        'count' => 1,
+        'reset_time' => time() + $rate_limit_time
+    ];
+} else {
+    // Increment count
+    $_SESSION[$rate_limit_key]['count']++;
+    
+    // Check if rate limit exceeded
+    if ($_SESSION[$rate_limit_key]['count'] > $rate_limit_max) {
+        http_response_code(429);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Rate limit exceeded. Please try again later.']);
+        exit;
+    }
+}
+
 // Enable error reporting for debugging (remove in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
@@ -20,7 +89,8 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; consider enabling in production with proper SSL
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification in production
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
     // Execute request
     $response = curl_exec($ch);
@@ -58,8 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array
     exit;
 }
 
-$card = $_POST['card'];
-$required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
+ $card = $_POST['card'];
+ $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 
 // Validate card data
 foreach ($required_fields as $field) {
@@ -70,13 +140,13 @@ foreach ($required_fields as $field) {
 }
 
 // Sanitize inputs
-$card_number = preg_replace('/[^0-9]/', '', $card['number']);
-$exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
-$exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
-$cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
+ $card_number = preg_replace('/[^0-9]/', '', $card['number']);
+ $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
+ $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
+ $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
 
 // Normalize exp_month to 2 digits
-$exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
+ $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
 if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
     echo "DECLINED [Invalid exp_month format]";
     exit;
@@ -110,8 +180,8 @@ if (!preg_match('/^\d{3,4}$/', $cvc)) {
 }
 
 // Validate logical expiry
-$expiry_timestamp = strtotime("$exp_year-$exp_month-01");
-$current_timestamp = strtotime('first day of this month');
+ $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
+ $current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
     echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc";
     exit;
