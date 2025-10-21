@@ -2,8 +2,8 @@
 session_start();
 
 // MAINTENANCE MODE CHECK
-// Maintenance flag file path
-define('MAINTENANCE_FLAG', 'maintenance.flag');
+// Maintenance flag file path - using absolute path for consistency
+define('MAINTENANCE_FLAG', __DIR__ . '/maintenance.flag');
 
 // Check if maintenance mode is active
 if (file_exists(MAINTENANCE_FLAG)) {
@@ -16,7 +16,8 @@ if (file_exists(MAINTENANCE_FLAG)) {
     } else {
         // Check if admin is logged in
         if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
-            // Admin can continue
+            // Admin can continue - bypass normal user authentication
+            $adminBypass = true;
         } else {
             // Redirect to maintenance page
             header("Location: /maintenance.php");
@@ -33,8 +34,9 @@ error_reporting(E_ALL);
 // Log session state
 error_log("Checking session in index.php: " . json_encode($_SESSION));
 
-// Check if user is authenticated
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+// Check if user is authenticated OR if admin is authenticated during maintenance
+ $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
+if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
     error_log("Redirecting to login.php: Session missing or invalid auth_provider");
     header('Location: login.php');
     exit;
@@ -575,7 +577,7 @@ if (empty($userPhotoUrl)) {
         
         .online-users-list {
             display: flex;
-            flex-direction: column;
+            flex-direction: column,
             gap: 0.8rem;
             max-height: 400px;
             overflow-y: auto;
