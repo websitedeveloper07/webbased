@@ -1,8 +1,8 @@
 <?php
-// session_config.php - Full-featured secure session management
+// security_config.php - Full-featured secure session management
 
 // Prevent direct file access
-if (!defined('SECURITY_INCLUDED')) {
+if (!defined('SECURITY_CONFIG_LOADED') && !defined('ALLOWED_ACCESS')) {
     header('HTTP/1.0 403 Forbidden');
     exit('Direct access denied');
 }
@@ -18,7 +18,9 @@ ini_set('session.gc_probability', 1);
 ini_set('session.gc_divisor', 100);
 
 // Start secure session
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Regenerate session ID periodically
 if (!isset($_SESSION['created'])) {
@@ -333,5 +335,5 @@ if ($_SESSION['request_count'] > 100 && $_SESSION['request_count'] % 50 === 0) {
 }
 
 // Define constant to prevent direct access
-define('SECURITY_INCLUDED', true);
+define('SECURITY_CONFIG_LOADED', true);
 ?>
