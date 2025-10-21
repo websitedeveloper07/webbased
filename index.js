@@ -1,8 +1,9 @@
+// Wrap everything in a DOMContentLoaded event to ensure the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    let selectedGateway = 'stripe1$'; // Store endpoint name only (e.g., 'stripe1$', not 'gate/stripe1$.php')
+    let selectedGateway = 'gate/stripe1$.php';
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
@@ -97,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const selected = document.querySelector('input[name="gateway"]:checked');
         if (selected) {
             selectedGateway = selected.value;
-            console.log('Selected gateway:', selectedGateway); // Debug log
             const gatewayName = selected.parentElement.querySelector('.gateway-option-name').textContent.trim();
             Swal.fire({
                 icon: 'success', title: 'Gateway Updated!',
@@ -375,24 +375,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isProcessing) return null;
 
         return new Promise((resolve) => {
-            const data = {
-                card: {
-                    number: card.number,
-                    exp_month: card.exp_month,
-                    exp_year: card.exp_year,
-                    cvc: card.cvv
-                }
-            };
+            const formData = new FormData();
+            let normalizedYear = card.exp_year;
+            if (normalizedYear.length === 2) {
+                normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+            }
+            formData.append('card[number]', card.number);
+            formData.append('card[exp_month]', card.exp_month);
+            formData.append('card[exp_year]', normalizedYear);
+            formData.append('card[cvc]', card.cvv);
 
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
-            console.log(`Starting request for card: ${card.displayCard}, Gateway: ${selectedGateway}, URL: /gate/proxy.php?endpoint=${selectedGateway}`); // Debug log
+            console.log(`Starting request for card: ${card.displayCard}`);
 
             $.ajax({
-                url: `/gate/proxy.php?endpoint=${selectedGateway}`,
+                url: selectedGateway,
                 method: 'POST',
-                data: JSON.stringify(data),
-                contentType: 'application/json',
+                data: formData,
                 processData: false,
+                contentType: false,
                 timeout: 300000,
                 xhr: function() {
                     const xhr = new window.XMLHttpRequest();
@@ -403,12 +404,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }, false);
                     return xhr;
-                },
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                xhrFields: {
-                    withCredentials: true // Include PHPSESSID cookie
                 },
                 success: function(response) {
                     const parsedResponse = parseGatewayResponse(response);
@@ -433,13 +428,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (errorJson) {
                                 const parsedError = parseGatewayResponse(errorJson);
                                 errorResponse = parsedError.message;
-                                if (xhr.status === 401 && errorJson.error === 'Invalid API key') {
-                                    errorResponse = 'Authentication failed: Invalid API key';
-                                } else if (xhr.status === 403 && errorJson.error === 'Invalid referer') {
-                                    errorResponse = 'Access denied: Invalid referer';
-                                } else if (xhr.status === 429 && errorJson.error === 'Rate limit exceeded') {
-                                    errorResponse = 'Rate limit exceeded: Too many requests';
-                                }
                             }
                         } catch (e) {
                             errorResponse = xhr.responseText;
@@ -749,14 +737,8 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmButtonText: 'Yes, logout'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Clear session on server
-                fetch('https://cxchk.site/gate/logout.php', {
-                    method: 'POST',
-                    credentials: 'include'
-                }).then(() => {
-                    sessionStorage.clear();
-                    window.location.href = 'login.php';
-                });
+                sessionStorage.clear();
+                window.location.href = 'login.php';
             }
         });
     }
