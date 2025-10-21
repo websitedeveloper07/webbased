@@ -898,103 +898,142 @@ function loadDashboardData() {
     updateActivityFeed();
 }
 
-// Load online users
-function loadOnlineUsers() {
-    const onlineUsersList = document.getElementById('onlineUsersList');
-    const onlineCount = document.getElementById('onlineCount');
-    
-    // Show loading state
-    onlineUsersList.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-spinner fa-spin"></i>
-            <h3>Loading Users</h3>
-            <p>Fetching online users...</p>
-        </div>
-    `;
-    
-    // Fetch online users from API
-    fetch('https://cxchk.site/update_activity.php', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        mode: 'cors'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('API Response:', data); // Debug log
+    // Display online users function
+    function displayOnlineUsers(users) {
+        console.log("displayOnlineUsers called with users:", users);
         
-        if (data.success) {
-            // Update online count
-            onlineCount.textContent = data.count;
-            
-            // Clear previous users
-            onlineUsersList.innerHTML = '';
-            
-            if (data.count === 0 || !data.users || data.users.length === 0) {
-                onlineUsersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <h3>No Users Online</h3>
-                        <p>No other users are currently online</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Add users to the list
-            data.users.forEach(user => {
-                const userItem = document.createElement('div');
-                userItem.className = 'online-user-item';
-                
-                // Use provided photo_url or generate avatar
-                const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64`;
-                
-                // Format username
-                const username = user.username ? (user.username.startsWith('@') ? user.username : '@' + user.username) : '';
-                
-                userItem.innerHTML = `
-                    <div class="online-user-avatar-container">
-                        <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar" onerror="this.src='https://ui-users.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64'">
-                            <div class="online-indicator"></div>
-                        </div>
-                        <div class="online-user-info">
-                            <div class="online-user-name">${user.name}</div>
-                            ${username ? `<div class="online-user-username">${username}</div>` : ''}
-                        </div>
-                    `;
-                
-                onlineUsersList.appendChild(userItem);
-            });
-        } else {
-            // Handle API error
-            console.error('API returned error:', data);
+        const onlineUsersList = document.getElementById('onlineUsersList');
+        if (!onlineUsersList) {
+            console.error("Element #onlineUsersList not found in DOM");
+            return;
+        }
+        
+        console.log("onlineUsersList element found:", onlineUsersList);
+        
+        // Clear existing content
+        onlineUsersList.innerHTML = '';
+        
+        if (!Array.isArray(users) || users.length === 0) {
+            console.log("No users to display or invalid users array");
             onlineUsersList.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error Loading Users</h3>
-                    <p>Unable to load online users at this time</p>
-                </div>
-            `;
+                    <i class="fas fa-user-slash"></i>
+                    <h3>No Users Online</h3>
+                    <p>No users are currently online</p>
+                </div>`;
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error fetching online users:', error);
-        onlineUsersList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Error Loading Users</h3>
-                <p>Unable to load online users at this time</p>
-            </div>
-        `;
-    });
-}
+        
+        console.log("Rendering", users.length, "users");
+        
+        // Create a document fragment to improve performance
+        const fragment = document.createDocumentFragment();
+        
+        users.forEach((user, index) => {
+            console.log(`Processing user ${index + 1}:`, user);
+            
+            // Safely extract user data with defaults
+            const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+            const username = (user.username && typeof user.username === 'string') ? user.username : '';
+            const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+                user.photo_url : 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+            
+            // Create user item element
+            const userItem = document.createElement('div');
+            userItem.className = 'online-user-item';
+            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+            
+            // Create avatar container
+            const avatarContainer = document.createElement('div');
+            avatarContainer.className = 'online-user-avatar-container';
+            
+            // Create avatar image
+            const avatar = document.createElement('img');
+            avatar.src = photoUrl;
+            avatar.alt = name;
+            avatar.className = 'online-user-avatar';
+            avatar.onerror = function() {
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+            };
+            
+            // Create online indicator
+            const indicator = document.createElement('div');
+            indicator.className = 'online-indicator';
+            
+            // Assemble avatar container
+            avatarContainer.appendChild(avatar);
+            avatarContainer.appendChild(indicator);
+            
+            // Create user info container
+            const userInfo = document.createElement('div');
+            userInfo.className = 'online-user-info';
+            
+            // Create name element
+            const nameElement = document.createElement('div');
+            nameElement.className = 'online-user-name';
+            nameElement.textContent = name;
+            
+            // Create username element only if username exists
+            if (username) {
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'online-user-username';
+                usernameElement.textContent = username;
+                userInfo.appendChild(nameElement);
+                userInfo.appendChild(usernameElement);
+            } else {
+                userInfo.appendChild(nameElement);
+            }
+            
+            // Assemble user item
+            userItem.appendChild(avatarContainer);
+            userItem.appendChild(userInfo);
+            
+            // Add to fragment
+            fragment.appendChild(userItem);
+        });
+        
+        // Clear the list and add all users at once
+        onlineUsersList.innerHTML = '';
+        onlineUsersList.appendChild(fragment);
+        
+        console.log("Successfully rendered online users list");
+    }
+
+    // Initialize activity updates when the page loads
+    function initializeActivityUpdates() {
+        // Clear any existing interval
+        if (activityUpdateInterval) {
+            clearInterval(activityUpdateInterval);
+        }
+        
+        // Initial update
+        updateUserActivity();
+        
+        // Set up interval to update every 25 seconds
+        activityUpdateInterval = setInterval(updateUserActivity, 25000);
+        
+        // Update on user interaction, but not more than once every 25 seconds
+        $(document).on('click mousemove keypress scroll', function() {
+            const now = new Date().getTime();
+            if (now - lastActivityUpdate >= 25000) {
+                console.log("User interaction detected, updating activity...");
+                updateUserActivity();
+                lastActivityUpdate = now;
+            }
+        });
+        
+        // Clean up on page unload
+        $(window).on('unload', function() {
+            if (activityUpdateInterval) {
+                clearInterval(activityUpdateInterval);
+            }
+            if (window.activityRequest) {
+                window.activityRequest.abort();
+            }
+            console.log("Cleared activity update interval on page unload");
+        });
+    }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
