@@ -962,7 +962,7 @@ if (empty($userPhotoUrl)) {
         }
         .custom-select {
             position: relative;
-            display: flex;
+            display: flex,
             width: 100%;
         }
         .custom-select select {
@@ -1060,7 +1060,7 @@ if (empty($userPhotoUrl)) {
             color: white;
         }
         .results-actions {
-            display: flex;
+            display: flex,
             gap: 0.5rem;
             flex-wrap: wrap;
         }
