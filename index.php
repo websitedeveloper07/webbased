@@ -1553,6 +1553,6 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-    <script src="index.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
