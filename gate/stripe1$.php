@@ -1,75 +1,12 @@
 <?php
+// Include security configuration
+require_once 'security_config.php';
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
-// Start session if not already started
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Security check to prevent unauthorized access
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    http_response_code(403);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Unauthorized access']);
-    exit;
-}
-
-// Validate security token
-if (!isset($_POST['security_token']) || $_POST['security_token'] !== $_SESSION['security_token']) {
-    http_response_code(403);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Invalid security token']);
-    exit;
-}
-
-// Validate domain
-if (!isset($_POST['domain']) || $_POST['domain'] !== $_SERVER['HTTP_HOST']) {
-    http_response_code(403);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Domain validation failed']);
-    exit;
-}
-
-// Validate request ID (optional, for additional security)
-if (!isset($_POST['request_id']) || empty($_POST['request_id'])) {
-    http_response_code(403);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Invalid request']);
-    exit;
-}
-
-// Add rate limiting check
- $rate_limit_key = 'stripe_rate_limit_' . ($_SESSION['user']['id'] ?? 'unknown');
- $rate_limit_time = 60; // 60 seconds
- $rate_limit_max = 30; // 30 requests per minute
-
-// Check if rate limit data exists
-if (!isset($_SESSION[$rate_limit_key])) {
-    $_SESSION[$rate_limit_key] = [
-        'count' => 0,
-        'reset_time' => time() + $rate_limit_time
-    ];
-}
-
-// Check if rate limit reset time has passed
-if (time() > $_SESSION[$rate_limit_key]['reset_time']) {
-    $_SESSION[$rate_limit_key] = [
-        'count' => 1,
-        'reset_time' => time() + $rate_limit_time
-    ];
-} else {
-    // Increment count
-    $_SESSION[$rate_limit_key]['count']++;
-    
-    // Check if rate limit exceeded
-    if ($_SESSION[$rate_limit_key]['count'] > $rate_limit_max) {
-        http_response_code(429);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Rate limit exceeded. Please try again later.']);
-        exit;
-    }
-}
+// Validate the API request using the centralized security function
+validateApiRequest();
 
 // Get card details from POST request
  $cardNumber = $_POST['card']['number'] ?? '';
