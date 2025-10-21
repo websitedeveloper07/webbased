@@ -1,6 +1,30 @@
 <?php
 session_start();
 
+// MAINTENANCE MODE CHECK
+// Maintenance flag file path
+define('MAINTENANCE_FLAG', 'maintenance.flag');
+
+// Check if maintenance mode is active
+if (file_exists(MAINTENANCE_FLAG)) {
+    // Get the current script name
+    $current_page = basename($_SERVER['PHP_SELF']);
+    
+    // Allow access to maintenance page and admin panel
+    if ($current_page === 'maintenance.php' || $current_page === 'adminaccess_panel.php') {
+        // Continue with normal execution
+    } else {
+        // Check if admin is logged in
+        if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
+            // Admin can continue
+        } else {
+            // Redirect to maintenance page
+            header("Location: /maintenance.php");
+            exit();
+        }
+    }
+}
+
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
@@ -65,6 +89,7 @@ if (empty($userPhotoUrl)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* All your existing CSS styles remain the same */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
             --primary-bg: #0a0e27; --secondary-bg: #131937; --card-bg: #1a1f3a;
@@ -1358,7 +1383,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑻𝑶𝑹</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑯𝑶𝑹</h1>
             <p class="page-subtitle">𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞 𝐯𝐚𝐥𝐢𝐝 𝐜𝐫𝐞𝐝𝐢𝐭 𝐜𝐚𝐫𝐝𝐬 𝐰𝐢𝐭𝐡 𝐋𝐮𝐡𝐧 𝐜𝐡𝐞𝐜𝐤𝐬𝐮𝐦</p>
 
             <div class="generator-section">
