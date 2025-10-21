@@ -750,35 +750,25 @@ function updateUserActivity() {
                 }
                 
                 // Update current user profile
-                const currentUser = response.users.find(user => user.is_current_user);
+                const currentUser = response.users.find(user => user.is_online);
                 if (currentUser) {
                     // Update profile picture
-                    const profilePicElement = document.getElementById('profilePic');
+                    const profilePicElement = document.querySelector('.user-avatar');
                     if (profilePicElement) {
                         profilePicElement.src = currentUser.photo_url || 
                             `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
                         console.log("Updated profile picture");
                     } else {
-                        console.error("Element #profilePic not found");
+                        console.error("Element .user-avatar not found");
                     }
                     
                     // Update user name
-                    const userNameElement = document.getElementById('userName');
+                    const userNameElement = document.querySelector('.user-name');
                     if (userNameElement) {
                         userNameElement.textContent = currentUser.name || 'Unknown User';
                         console.log("Updated user name to:", currentUser.name);
                     } else {
-                        console.error("Element #userName not found");
-                    }
-                    
-                    // Update user role - all users are now "Free"
-                    const userRoleElement = document.getElementById('userRole');
-                    if (userRoleElement) {
-                        userRoleElement.textContent = 'Free';
-                        userRoleElement.className = 'role-badge free-badge';
-                        console.log("Updated user role to: Free");
-                    } else {
-                        console.error("Element #userRole not found");
+                        console.error("Element .user-name not found");
                     }
                 } else {
                     console.error("Current user not found in response");
@@ -866,20 +856,12 @@ function displayOnlineUsers(users) {
         const username = user.username || '';
         const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
         
-        // All users are now "Free" - no special roles
-        const roleBadgeClass = 'free-badge';
-        const roleBadgeText = 'Free';
-        const isCurrentUser = user.is_current_user ? ' (You)' : '';
-        
         usersHtml += `
             <div class="online-user-item" data-user-id="${user.username || 'unknown-' + index}">
                 <img src="${photoUrl}" alt="${name}" class="online-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64';">
                 <div class="online-user-info">
-                    <div class="online-user-name">${name}${isCurrentUser}</div>
+                    <div class="online-user-name">${name}</div>
                     ${username ? `<div class="online-user-username">${username}</div>` : ''}
-                    <div class="online-user-role">
-                        <span class="role-badge ${roleBadgeClass}">${roleBadgeText}</span>
-                    </div>
                 </div>
             </div>
         `;
@@ -1021,13 +1003,13 @@ function displayOnlineUsers(users) {
     console.log("Page loaded, initializing user activity update...");
     updateUserActivity();
     
-    console.log("Setting up interval for user activity updates every 7 seconds...");
-    const activityInterval = setInterval(updateUserActivity, 7000);
+    console.log("Setting up interval for user activity updates every 10 seconds...");
+    const activityInterval = setInterval(updateUserActivity, 10000);
     
     let lastActivityUpdate = 0;
     $(document).on('click mousemove keypress scroll', function() {
         const now = new Date().getTime();
-        if (now - lastActivityUpdate >= 7000) {
+        if (now - lastActivityUpdate >= 10000) {
             console.log("User interaction detected, updating activity...");
             updateUserActivity();
             lastActivityUpdate = now;
@@ -1038,29 +1020,4 @@ function displayOnlineUsers(users) {
         clearInterval(activityInterval);
         console.log("Cleared activity update interval on page unload");
     });
-
-    // Debugging: Test button for manual activity update
-    const testButton = document.createElement('button');
-    testButton.textContent = 'Test Update Activity';
-    testButton.style.position = 'fixed';
-    testButton.style.bottom = '10px';
-    testButton.style.right = '10px';
-    testButton.style.zIndex = '9999';
-    testButton.style.padding = '5px 10px';
-    testButton.style.backgroundColor = '#3b82f6';
-    testButton.style.color = 'white';
-    testButton.style.border = 'none';
-    testButton.style.borderRadius = '5px';
-    testButton.style.cursor = 'pointer';
-    testButton.onclick = function() {
-        console.log("Manually triggering user activity update...");
-        updateUserActivity();
-    };
-    document.body.appendChild(testButton);
-    
-    // Debug: Check if profile elements exist
-    console.log("Profile elements check:");
-    console.log("profilePic:", document.getElementById('profilePic'));
-    console.log("userName:", document.getElementById('userName'));
-    console.log("userRole:", document.getElementById('userRole'));
 });
