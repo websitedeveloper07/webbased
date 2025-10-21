@@ -1,0 +1,72 @@
+# Prevent directory listing
+Options -Indexes
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Protect sensitive files
+<FilesMatch "^security_config\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^security_header\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect PHP files in includes directory if it exists
+<Files ~ "\.php$">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Allow access to specific files
+<FilesMatch "^(index\.php|login\.php|logout\.php|refresh_tokens\.php|update_activity\.php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Allow access to gateway files
+<FilesMatch "^(.*\.php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Enable rewrite engine for clean URLs
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect to HTTPS if not already
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Remove .php extension from URLs
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^([^\.]+)$ $1.php [NC,L]
+</IfModule>
+
+# Set security headers
+<IfModule mod_headers.c>
+    # Protect against clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+
+    # Prevent MIME-type sniffing
+    Header set X-Content-Type-Options "nosniff"
+
+    # Enable XSS protection
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Referrer policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Set PHP settings
+<IfModule mod_php.c>
+    # Enable session cookies
+    php_flag session.cookie_httponly on
+    php_flag session.cookie_secure on
+    php_flag session.cookie_samesite Strict
+    php_flag session.use_only_cookies on
+</IfModule>
