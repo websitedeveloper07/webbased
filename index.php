@@ -337,7 +337,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .dashboard-sidebar {
-            width: 300px;
+            width: 380px;
             flex-shrink: 0;
         }
         
@@ -538,7 +538,7 @@ if (empty($userPhotoUrl)) {
             white-space: nowrap;
         }
         
-        /* Online Users Section */
+        /* Enhanced Online Users Section */
         .online-users-section {
             background: var(--card-bg);
             border-radius: 16px;
@@ -546,22 +546,38 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color);
             box-shadow: 0 4px 20px var(--shadow);
             height: fit-content;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .online-users-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
         }
         
         .online-users-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .online-users-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+        
+        .online-users-title i {
+            color: var(--accent-cyan);
         }
         
         .online-users-count {
@@ -570,13 +586,21 @@ if (empty($userPhotoUrl)) {
             background: rgba(59, 130, 246, 0.1);
             padding: 0.3rem 0.6rem;
             border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .online-users-count i {
+            color: var(--success-green);
+            font-size: 0.8rem;
         }
         
         .online-users-list {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
             padding-right: 0.5rem;
         }
@@ -605,20 +629,50 @@ if (empty($userPhotoUrl)) {
             border-radius: 12px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
+            position: relative;
         }
         
         .online-user-item:hover {
             transform: translateX(5px);
             border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+        
+        .online-user-avatar-container {
+            position: relative;
         }
         
         .online-user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-blue);
             flex-shrink: 0;
+        }
+        
+        .online-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 14px;
+            height: 14px;
+            background-color: var(--success-green);
+            border: 2px solid var(--card-bg);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
         }
         
         .online-user-info {
@@ -628,16 +682,17 @@ if (empty($userPhotoUrl)) {
         
         .online-user-name {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: var(--text-primary);
         }
         
         .online-user-username {
             font-size: 0.8rem;
             color: var(--text-secondary);
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.2rem;
         }
         
         .checker-section, .generator-section {
@@ -903,7 +958,7 @@ if (empty($userPhotoUrl)) {
             color: var(--text-secondary);
         }
         .custom-input-group {
-            display: flex;
+            display: flex,
             width: 100%;
         }
         .custom-input-group input {
@@ -1061,14 +1116,14 @@ if (empty($userPhotoUrl)) {
                 margin-top: 1rem;
             }
             .online-users-list {
-                max-height: 200px;
+                max-height: 250px;
             }
             .online-user-avatar {
-                width: 32px;
-                height: 32px;
+                width: 38px;
+                height: 38px;
             }
             .online-user-name {
-                font-size: 0.8rem;
+                font-size: 0.85rem;
             }
         }
         
@@ -1255,6 +1310,7 @@ if (empty($userPhotoUrl)) {
                                     <i class="fas fa-users"></i> Online Users
                                 </div>
                                 <div class="online-users-count" id="onlineUsersCount">
+                                    <i class="fas fa-circle"></i>
                                     <span id="onlineCount">0</span> online
                                 </div>
                             </div>
