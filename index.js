@@ -751,6 +751,14 @@ function updateUserActivity() {
                 displayOnlineUsers(response.users);
             } else {
                 console.error('Activity update failed:', response.message || 'No error message provided');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Failed to update online users',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
             }
         },
         error: function(xhr, status, error) {
@@ -766,20 +774,42 @@ function updateUserActivity() {
             } catch (e) {
                 console.error('Could not parse error response as JSON');
             }
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Error fetching online users',
+                showConfirmButton: false,
+                timer: 1500
+            });
         }
     });
 }
 
 function displayOnlineUsers(users) {
-    console.log("Displaying online users:", users);
+    console.log("displayOnlineUsers called with users:", users);
     
     const onlineUsersList = document.getElementById('onlineUsersList');
     if (!onlineUsersList) {
-        console.error("Element #onlineUsersList not found");
+        console.error("Element #onlineUsersList not found in DOM");
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Online users list element missing',
+            showConfirmButton: false,
+            timer: 2000
+        });
         return;
     }
     
-    if (users.length === 0) {
+    console.log("onlineUsersList element found:", onlineUsersList);
+    
+    // Clear existing content
+    onlineUsersList.innerHTML = '';
+    
+    if (!Array.isArray(users) || users.length === 0) {
+        console.log("No users to display or invalid users array");
         onlineUsersList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-user-slash"></i>
@@ -789,19 +819,24 @@ function displayOnlineUsers(users) {
         return;
     }
     
+    console.log("Rendering", users.length, "users");
+    
     let usersHtml = '';
-    users.forEach(user => {
-        const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
-        const roleBadgeClass = user.role.toLowerCase() === 'owner' ? 'owner-badge' : 'free-badge';
+    users.forEach((user, index) => {
+        console.log(`Processing user ${index + 1}:`, user);
+        const name = user.name ? user.name.trim() : 'Unknown';
+        const username = user.username || '';
+        const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
+        const roleBadgeClass = user.role && user.role.toLowerCase() === 'owner' ? 'owner-badge' : 'free-badge';
         const roleBadgeText = user.role || 'Free';
         const isCurrentUser = user.is_current_user ? ' (You)' : '';
         
         usersHtml += `
-            <div class="online-user-item">
-                <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar">
+            <div class="online-user-item" data-user-id="${user.username || 'unknown-' + index}">
+                <img src="${photoUrl}" alt="${name}" class="online-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || 'U')}&background=3b82f6&color=fff&size=64';">
                 <div class="online-user-info">
-                    <div class="online-user-name">${user.name}${isCurrentUser}</div>
-                    ${user.username ? `<div class="online-user-username">${user.username}</div>` : ''}
+                    <div class="online-user-name">${name}${isCurrentUser}</div>
+                    ${username ? `<div class="online-user-username">${username}</div>` : ''}
                     <div class="online-user-role">
                         <span class="role-badge ${roleBadgeClass}">${roleBadgeText}</span>
                     </div>
@@ -811,7 +846,22 @@ function displayOnlineUsers(users) {
     });
     
     onlineUsersList.innerHTML = usersHtml;
-    console.log("Updated online users list with", users.length, "users");
+    console.log("Updated online users list with HTML:", usersHtml);
+    
+    // Verify DOM update
+    const renderedItems = onlineUsersList.querySelectorAll('.online-user-item');
+    console.log("Rendered", renderedItems.length, "user items in DOM");
+    if (renderedItems.length !== users.length) {
+        console.warn("Mismatch: Expected", users.length, "users, but rendered", renderedItems.length);
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            title: 'User list rendering issue',
+            showConfirmButton: false,
+            timer: 2000
+        });
+    }
 }
 
 $(document).ready(function() {
@@ -948,4 +998,23 @@ $(document).ready(function() {
         clearInterval(activityInterval);
         console.log("Cleared activity update interval on page unload");
     });
+
+    // Debugging: Test button for manual activity update
+    const testButton = document.createElement('button');
+    testButton.textContent = 'Test Update Activity';
+    testButton.style.position = 'fixed';
+    testButton.style.bottom = '10px';
+    testButton.style.right = '10px';
+    testButton.style.zIndex = '9999';
+    testButton.style.padding = '5px 10px';
+    testButton.style.backgroundColor = '#3b82f6';
+    testButton.style.color = 'white';
+    testButton.style.border = 'none';
+    testButton.style.borderRadius = '5px';
+    testButton.style.cursor = 'pointer';
+    testButton.onclick = function() {
+        console.log("Manually triggering user activity update...");
+        updateUserActivity();
+    };
+    document.body.appendChild(testButton);
 });
