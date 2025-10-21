@@ -337,7 +337,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .dashboard-sidebar {
-            width: 380px; /* Increased from 300px */
+            width: 300px;
             flex-shrink: 0;
         }
         
@@ -637,7 +637,7 @@ if (empty($userPhotoUrl)) {
         .online-user-username {
             font-size: 0.8rem;
             color: var(--text-secondary);
-            /* Removed margin-bottom that was creating space for role */
+            margin-bottom: 0.3rem;
         }
         
         .checker-section, .generator-section {
@@ -1059,7 +1059,6 @@ if (empty($userPhotoUrl)) {
             }
             .online-users-section {
                 margin-top: 1rem;
-                width: 100%; /* Full width on mobile */
             }
             .online-users-list {
                 max-height: 200px;
@@ -1532,150 +1531,6 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-    <script>
-        // JavaScript functions for UI interactions
-        function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        }
-
-        // Initialize theme from localStorage
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
-            
-            // Update theme toggle icon
-            const themeIcon = document.querySelector('.theme-toggle-slider i');
-            if (savedTheme === 'dark') {
-                themeIcon.className = 'fas fa-moon';
-            } else {
-                themeIcon.className = 'fas fa-sun';
-            }
-        });
-
-        function showPage(pageId) {
-            // Hide all pages
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Show selected page
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            
-            // Update sidebar active state
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Find and activate the corresponding sidebar link
-            const pageLinks = {
-                'home': 0,
-                'checking': 1,
-                'generator': 2
-            };
-            
-            if (pageLinks[pageId] !== undefined) {
-                document.querySelectorAll('.sidebar-link')[pageLinks[pageId]].classList.add('active');
-            }
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-        }
-
-        function openGatewaySettings() {
-            document.getElementById('gatewaySettings').classList.add('active');
-        }
-
-        function closeGatewaySettings() {
-            document.getElementById('gatewaySettings').classList.remove('active');
-        }
-
-        function saveGatewaySettings() {
-            const selectedGateway = document.querySelector('input[name="gateway"]:checked');
-            if (selectedGateway) {
-                localStorage.setItem('selectedGateway', selectedGateway.value);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Settings Saved',
-                    text: 'Gateway settings have been saved successfully.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                closeGatewaySettings();
-            } else {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'No Gateway Selected',
-                    text: 'Please select a gateway before saving.',
-                    confirmButtonText: 'OK'
-                });
-            }
-        }
-
-        function setYearRnd() {
-            document.getElementById('yearInput').value = 'rnd';
-        }
-
-        function setCvvRnd() {
-            document.getElementById('cvvInput').value = 'rnd';
-        }
-
-        function logout() {
-            Swal.fire({
-                title: 'Logout',
-                text: "Are you sure you want to logout?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3b82f6',
-                cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Yes, logout'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Clear session and redirect to login
-                    window.location.href = 'logout.php';
-                }
-            });
-        }
-
-        // Toggle sidebar
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('open');
-        });
-
-        // Initialize selected gateway from localStorage
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedGateway = localStorage.getItem('selectedGateway');
-            if (savedGateway) {
-                const gatewayRadio = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
-                if (gatewayRadio) {
-                    gatewayRadio.checked = true;
-                }
-            }
-        });
-
-        // Card input validation
-        document.getElementById('cardInput').addEventListener('input', function() {
-            const input = this.value;
-            const lines = input.split('\n').filter(line => line.trim() !== '');
-            let validCards = 0;
-            
-            lines.forEach(line => {
-                const parts = line.split('|');
-                if (parts.length >= 4) {
-                    const cardNumber = parts[0].trim();
-                    // Simple card number validation (Luhn algorithm would be better)
-                    if (/^\d{13,19}$/.test(cardNumber)) {
-                        validCards++;
-                    }
-                }
-            });
-            
-            document.getElementById('cardCount').innerHTML = `<i class="fas fa-list"></i> ${validCards} valid cards detected`;
-        });
-    </script>
+    <script src="index.js"></script>
 </body>
 </html>
