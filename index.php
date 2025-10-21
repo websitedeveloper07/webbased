@@ -108,6 +108,28 @@ try {
     error_log("Database connection failed in index.php: " . $e->getMessage());
     // Continue without DB connection (non-fatal)
 }
+
+// Get user information for display
+ $userName = $_SESSION['user']['name'] ?? 'User';
+ $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
+ $userUsername = $_SESSION['user']['username'] ?? null;
+
+// Generate avatar URL if no photo is available
+if (empty($userPhotoUrl)) {
+    $initials = '';
+    $words = explode(' ', trim($userName));
+    foreach ($words as $word) {
+        if (!empty($word)) {
+            $initials .= strtoupper(substr($word, 0, 1));
+            if (strlen($initials) >= 2) break;
+        }
+    }
+    if (empty($initials)) $initials = 'U';
+    $userPhotoUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
+}
+
+// Format username with @ symbol
+ $formattedUsername = $userUsername ? '@' . $userUsername : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -188,10 +210,32 @@ try {
             border: 2px solid var(--accent-blue);
             flex-shrink: 0;
         }
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
         .user-name {
             font-weight: 600; color: #ffffff;
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap; font-size: 0.85rem;
+        }
+        .user-username {
+            font-size: 0.7rem; color: var(--text-secondary);
+            max-width: 80px; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-role-badge {
+            margin-top: 2px;
+            font-size: 0.65rem;
+            padding: 1px 5px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .free-badge {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #10b981;
         }
         .menu-toggle {
             color: #ffffff !important; font-size: 1.2rem; 
@@ -983,6 +1027,14 @@ try {
                 max-width: 60px; 
                 font-size: 0.75rem;
             }
+            .user-username {
+                max-width: 60px;
+                font-size: 0.65rem;
+            }
+            .user-role-badge {
+                font-size: 0.6rem;
+                padding: 1px 4px;
+            }
             .sidebar { width: 75vw; }
             .page-title { font-size: 1.2rem; }
             .page-subtitle { font-size: 0.8rem; }
@@ -1069,6 +1121,14 @@ try {
                 max-width: 50px; 
                 font-size: 0.7rem;
             }
+            .user-username {
+                max-width: 50px;
+                font-size: 0.6rem;
+            }
+            .user-role-badge {
+                font-size: 0.55rem;
+                padding: 1px 3px;
+            }
             .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
             .sidebar { width: 85vw; }
             .page-title { font-size: 1.1rem; }
@@ -1094,30 +1154,14 @@ try {
                 <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
             </div>
             <div class="user-info">
-                <img src="<?php 
-                    // Use Telegram profile photo if available, otherwise generate avatar
-                    if (!empty($_SESSION['user']['photo_url'])) {
-                        echo htmlspecialchars($_SESSION['user']['photo_url']);
-                    } else {
-                        // Generate avatar with initials
-                        $name = $_SESSION['user']['name'] ?? 'User';
-                        $initials = '';
-                        $words = explode(' ', trim($name));
-                        foreach ($words as $word) {
-                            if (!empty($word)) {
-                                $initials .= strtoupper(substr($word, 0, 1));
-                                if (strlen($initials) >= 2) break;
-                            }
-                        }
-                        if (empty($initials)) $initials = 'U';
-                        echo 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
-                    }
-                ?>" alt="Profile" class="user-avatar">
-                <span class="user-name"><?php 
-                    // Display user's real name from Telegram
-                    $name = $_SESSION['user']['name'] ?? 'User';
-                    echo htmlspecialchars($name);
-                ?></span>
+                <img src="<?php echo htmlspecialchars($userPhotoUrl); ?>" alt="Profile" class="user-avatar">
+                <div class="user-details">
+                    <span class="user-name"><?php echo htmlspecialchars($userName); ?></span>
+                    <?php if (!empty($formattedUsername)): ?>
+                        <span class="user-username"><?php echo htmlspecialchars($formattedUsername); ?></span>
+                    <?php endif; ?>
+                    <span class="user-role-badge free-badge">Free</span>
+                </div>
             </div>
         </div>
     </nav>
