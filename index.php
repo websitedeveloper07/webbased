@@ -1,5 +1,6 @@
 <?php
-session_start();
+// Include security configuration first
+require_once 'security_config.php';
 
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
@@ -141,6 +142,15 @@ if (empty($userPhotoUrl)) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <?php
+    // Define constant to allow access to security header
+    define('ALLOWED_ACCESS', true);
+    
+    // Include security header to set up security parameters
+    require_once 'security_header.php';
+    ?>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
@@ -1630,7 +1640,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-<script>
+    <script>
         // Include the index.js file inline
         let selectedGateway = 'gate/stripe1$.php';
         let isProcessing = false;
@@ -1645,15 +1655,13 @@ if (empty($userPhotoUrl)) {
         let approvedCards = [];
         let threeDSCards = [];
         let declinedCards = [];
-        let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         let sidebarOpen = false;
         let generatedCardsData = [];
         let activityUpdateInterval = null;
         let lastActivityUpdate = 0;
         
-        // Security token - this should be generated server-side for production
-        const securityToken = "<?php echo isset($_SESSION['security_token']) ? $_SESSION['security_token'] : ''; ?>";
-        const siteDomain = window.location.hostname;
+        // Security parameters are now provided by security_header.php
+        // No need to define them here anymore
 
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
         document.addEventListener('contextmenu', e => {
@@ -2020,10 +2028,14 @@ if (empty($userPhotoUrl)) {
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvv);
                 
-                // Add security token and domain validation
-                formData.append('security_token', securityToken);
-                formData.append('domain', siteDomain);
-                formData.append('request_id', sessionId);
+                // Add security parameters using helper function
+                const additionalData = {
+                    card_number: card.number,
+                    exp_month: card.exp_month,
+                    exp_year: normalizedYear,
+                    cvc: card.cvv
+                };
+                addSecurityParams(formData, additionalData);
 
                 $('#statusLog').text(`Processing card: ${card.displayCard}`);
                 console.log(`Starting request for card: ${card.displayCard}`);
@@ -2310,16 +2322,17 @@ if (empty($userPhotoUrl)) {
             $('#genLoader').show();
             $('#genStatusLog').text('Generating cards...');
             
+            // Add security parameters to URL using helper function
+            const additionalData = {
+                bin: params,
+                num: numCards,
+                format: 0
+            };
+            const url = addSecurityParamsToUrl('/gate/ccgen.php', additionalData);
+            
             $.ajax({
-                url: '/gate/ccgen.php',
+                url: url,
                 method: 'GET',
-                data: {
-                    bin: params,
-                    num: numCards,
-                    format: 0,
-                    security_token: securityToken,
-                    domain: siteDomain
-                },
                 dataType: 'json',
                 success: function(response) {
                     $('#genLoader').hide();
@@ -2402,16 +2415,17 @@ if (empty($userPhotoUrl)) {
                 }
             }, 10000);
             
+            // Add security headers using helper function
+            const headers = addSecurityHeaders({
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            });
+            
             fetch('https://cxchk.site/update_activity.php', {
                 method: 'GET',
                 signal: controller.signal,
                 credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'X-Security-Token': securityToken,
-                    'X-Domain': siteDomain
-                }
+                headers: headers
             })
             .then(response => {
                 // Clear the timeout
