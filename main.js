@@ -839,59 +839,77 @@ function loadDashboardData() {
 
 // Load online users
 function loadOnlineUsers() {
-    // This would typically make an API call to get online users
-    // For now, we'll just update the UI with placeholder data
-    
     const onlineUsersList = document.getElementById('onlineUsersList');
     const onlineCount = document.getElementById('onlineCount');
     
-    // Simulate API call
-    setTimeout(() => {
-        // Generate random online users
-        const numUsers = Math.floor(Math.random() * 10) + 1;
-        onlineCount.textContent = numUsers;
-        
-        // Clear previous users
-        onlineUsersList.innerHTML = '';
-        
-        if (numUsers === 0) {
+    // Fetch online users from API
+    fetch('https://cxchk.site/update_activity.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update online count
+                onlineCount.textContent = data.count;
+                
+                // Clear previous users
+                onlineUsersList.innerHTML = '';
+                
+                if (data.count === 0 || !data.users || data.users.length === 0) {
+                    onlineUsersList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No Users Online</h3>
+                            <p>No other users are currently online</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Add users to the list
+                data.users.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'online-user-item';
+                    
+                    // Use provided photo_url or generate avatar
+                    const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64`;
+                    
+                    // Format username
+                    const username = user.username ? (user.username.startsWith('@') ? user.username : '@' + user.username) : '';
+                    
+                    userItem.innerHTML = `
+                        <div class="online-user-avatar-container">
+                            <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar">
+                            <div class="online-indicator"></div>
+                        </div>
+                        <div class="online-user-info">
+                            <div class="online-user-name">${user.name}</div>
+                            ${username ? `<div class="online-user-username">${username}</div>` : ''}
+                        </div>
+                    `;
+                    
+                    onlineUsersList.appendChild(userItem);
+                });
+            } else {
+                // Handle API error
+                console.error('Failed to load online users:', data);
+                onlineUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Users</h3>
+                        <p>Unable to load online users at this time</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching online users:', error);
             onlineUsersList.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-user-slash"></i>
-                    <h3>No Users Online</h3>
-                    <p>No other users are currently online</p>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Loading Users</h3>
+                    <p>Unable to load online users at this time</p>
                 </div>
             `;
-            return;
-        }
-        
-        // Generate random users
-        for (let i = 0; i < numUsers; i++) {
-            const userItem = document.createElement('div');
-            userItem.className = 'online-user-item';
-            
-            // Generate random user data
-            const names = ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown', 'Charlie Wilson', 'Diana Miller', 'Eva Davis', 'Frank Garcia', 'Grace Martinez', 'Henry Rodriguez'];
-            const usernames = ['johndoe', 'janesmith', 'bobjohnson', 'alicebrown', 'charliewilson', 'dianamiller', 'evadavis', 'frankgarcia', 'gracemartinez', 'henryrodriguez'];
-            
-            const randomIndex = Math.floor(Math.random() * names.length);
-            const name = names[randomIndex];
-            const username = usernames[randomIndex];
-            
-            userItem.innerHTML = `
-                <div class="online-user-avatar-container">
-                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&size=64" alt="${name}" class="online-user-avatar">
-                    <div class="online-indicator"></div>
-                </div>
-                <div class="online-user-info">
-                    <div class="online-user-name">${name}</div>
-                    <div class="online-user-username">@${username}</div>
-                </div>
-            `;
-            
-            onlineUsersList.appendChild(userItem);
-        }
-    }, 500);
+        });
 }
 
 // Initialize on page load
