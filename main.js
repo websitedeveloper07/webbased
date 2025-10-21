@@ -102,10 +102,71 @@ function saveGatewaySettings() {
         closeGatewaySettings();
     } else {
         Swal.fire({
-            title: 'No Gateway Selected',
-            text: 'Please select a payment gateway.',
-            icon: 'warning',
-            confirmButtonColor: '#3b82f6'
+            title: 'console.log('API Response:', data); // Debug log
+            
+            if (data.success) {
+                // Update online count
+                onlineCount.textContent = data.count;
+                
+                // Clear previous users
+                onlineUsersList.innerHTML = '';
+                
+                if (data.count === 0 || !data.users || data.users.length === 0) {
+                    onlineUsersList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No Users Online</h3>
+                            <p>No other users are currently online</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Add users to the list
+                data.users.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'online-user-item';
+                    
+                    // Use provided photo_url or generate avatar
+                    const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64`;
+                    
+                    // Format username
+                    const username = user.username ? (user.username.startsWith('@') ? user.username : '@' + user.username) : '';
+                    
+                    userItem.innerHTML = `
+                        <div class="online-user-avatar-container">
+                            <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64'">
+                            <div class="online-indicator"></div>
+                        </div>
+                        <div class="online-user-info">
+                            <div class="online-user-name">${user.name}</div>
+                            ${username ? `<div class="online-user-username">${username}</div>` : ''}
+                        </div>
+                    `;
+                    
+                    onlineUsersList.appendChild(userItem);
+                });
+            } else {
+                // Handle API error
+                console.error('API returned error:', data);
+                onlineUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Users</h3>
+                        <p>Unable to load online users at this time</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching online users:', error);
+            onlineUsersList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Loading Users</h3>
+                    <p>Unable to load online users at this time</p>
+                </div>
+            `;
         });
     }
 }
@@ -414,8 +475,8 @@ function updateActivityFeed() {
     recentResults.forEach(result => {
         const activityItem = document.createElement('div');
         activityItem.className = `activity-item ${result.classList.contains('charged') ? 'charged' : 
-                                                 result.classList.contains('approved') ? 'approved' : 
-                                                 result.classList.contains('3ds') ? 'threeds' : 'declined'}`;
+                                         result.classList.contains('approved') ? 'approved' : 
+                                         result.classList.contains('3ds') ? 'threeds' : 'declined'}`;
         
         const cardElement = result.querySelector('.result-card');
         const statusElement = result.querySelector('.result-status');
@@ -900,14 +961,14 @@ function loadOnlineUsers() {
                 
                 userItem.innerHTML = `
                     <div class="online-user-avatar-container">
-                        <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar">
-                        <div class="online-indicator"></div>
-                    </div>
-                    <div class="online-user-info">
-                        <div class="online-user-name">${user.name}</div>
-                        ${username ? `<div class="online-user-username">${username}</div>` : ''}
-                    </div>
-                `;
+                        <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar" onerror="this.src='https://ui-users.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64'">
+                            <div class="online-indicator"></div>
+                        </div>
+                        <div class="online-user-info">
+                            <div class="online-user-name">${user.name}</div>
+                            ${username ? `<div class="online-user-username">${username}</div>` : ''}
+                        </div>
+                    `;
                 
                 onlineUsersList.appendChild(userItem);
             });
