@@ -15,13 +15,11 @@ if (time() > $_SESSION['token_expires']) {
     $newTokens = refreshSecurityTokens();
     $securityToken = $newTokens['securityToken'];
     $apiKey = $newTokens['apiKey'];
-    $signatureKey = $newTokens['signatureKey'];
     $csrfToken = $newTokens['csrfToken'];
 } else {
     $securityParams = getSecurityParams();
     $securityToken = $securityParams['securityToken'];
     $apiKey = $securityParams['apiKey'];
-    $signatureKey = $securityParams['signatureKey'];
     $csrfToken = $securityParams['csrfToken'];
 }
 
@@ -31,35 +29,12 @@ if (time() > $_SESSION['token_expires']) {
 ?>
 
 <script>
-    // Security parameters
+    // Security parameters (non-sensitive only)
     const securityToken = "<?php echo $securityToken; ?>";
     const apiKey = "<?php echo $apiKey; ?>";
-    const signatureKey = "<?php echo $signatureKey; ?>";
     const csrfToken = "<?php echo $csrfToken; ?>";
     const siteDomain = "<?php echo $siteDomain; ?>";
     const sessionId = "<?php echo $sessionId; ?>";
-    
-    // Function to sign requests
-    function signRequest(data) {
-        // Create a string with all parameters sorted alphabetically
-        const sortedParams = Object.keys(data)
-            .sort()
-            .map(key => `${key}=${data[key]}`)
-            .join('&');
-        
-        // Add the signature key
-        const stringToSign = sortedParams + signatureKey;
-        
-        // Create a simple hash
-        let hash = 0;
-        for (let i = 0; i < stringToSign.length; i++) {
-            const char = stringToSign.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
-        }
-        
-        return Math.abs(hash).toString(16);
-    }
     
     // Function to add security parameters to FormData
     function addSecurityParams(formData, additionalData = {}) {
@@ -69,20 +44,12 @@ if (time() > $_SESSION['token_expires']) {
         formData.append('domain', siteDomain);
         formData.append('session_id', sessionId);
         formData.append('timestamp', Math.floor(Date.now() / 1000));
+        formData.append('csrf_token', csrfToken);
         
-        // Create a data object for signing
-        const requestData = {
-            security_token: securityToken,
-            api_key: apiKey,
-            domain: siteDomain,
-            session_id: sessionId,
-            timestamp: Math.floor(Date.now() / 1000),
-            ...additionalData
-        };
-        
-        // Add signature
-        const signature = signRequest(requestData);
-        formData.append('signature', signature);
+        // Add additional data
+        Object.keys(additionalData).forEach(key => {
+            formData.append(key, additionalData[key]);
+        });
         
         return formData;
     }
@@ -91,19 +58,6 @@ if (time() > $_SESSION['token_expires']) {
     function addSecurityParamsToUrl(baseUrl, additionalData = {}) {
         const timestamp = Math.floor(Date.now() / 1000);
         
-        // Create a data object for signing
-        const requestData = {
-            security_token: securityToken,
-            api_key: apiKey,
-            domain: siteDomain,
-            session_id: sessionId,
-            timestamp: timestamp,
-            ...additionalData
-        };
-        
-        // Add signature
-        const signature = signRequest(requestData);
-        
         // Build URL with parameters
         let url = baseUrl.includes('?') ? baseUrl + '&' : baseUrl + '?';
         url += 'security_token=' + encodeURIComponent(securityToken);
@@ -111,7 +65,7 @@ if (time() > $_SESSION['token_expires']) {
         url += '&domain=' + encodeURIComponent(siteDomain);
         url += '&session_id=' + encodeURIComponent(sessionId);
         url += '&timestamp=' + timestamp;
-        url += '&signature=' + encodeURIComponent(signature);
+        url += '&csrf_token=' + encodeURIComponent(csrfToken);
         
         // Add additional parameters
         Object.keys(additionalData).forEach(key => {
@@ -125,19 +79,6 @@ if (time() > $_SESSION['token_expires']) {
     function addSecurityHeaders(headers = {}, additionalData = {}) {
         const timestamp = Math.floor(Date.now() / 1000);
         
-        // Create a data object for signing
-        const requestData = {
-            security_token: securityToken,
-            api_key: apiKey,
-            domain: siteDomain,
-            session_id: sessionId,
-            timestamp: timestamp,
-            ...additionalData
-        };
-        
-        // Add signature
-        const signature = signRequest(requestData);
-        
         // Add security headers
         const securityHeaders = {
             'X-Security-Token': securityToken,
@@ -145,7 +86,7 @@ if (time() > $_SESSION['token_expires']) {
             'X-Domain': siteDomain,
             'X-Session-ID': sessionId,
             'X-Timestamp': timestamp,
-            'X-Signature': signature
+            'X-CSRF-Token': csrfToken
         };
         
         // Merge with existing headers
@@ -157,14 +98,17 @@ if (time() > $_SESSION['token_expires']) {
         try {
             const response = await fetch('refresh_tokens.php', {
                 method: 'POST',
-                credentials: 'include'
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                }
             });
             const data = await response.json();
             if (data.success) {
                 // Update global variables
                 window.securityToken = data.securityToken;
                 window.apiKey = data.apiKey;
-                window.signatureKey = data.signatureKey;
                 window.csrfToken = data.csrfToken;
                 
                 console.log("Security tokens refreshed successfully");
@@ -211,4 +155,16 @@ if (time() > $_SESSION['token_expires']) {
         // Check token expiration on page load
         checkTokenExpiration();
     });
+    
+    // Secure AJAX setup for jQuery
+    if (typeof $ !== 'undefined') {
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                // Add CSRF token to non-GET requests
+                if (settings.type !== 'GET' && !settings.crossDomain) {
+                    xhr.setRequestHeader('X-CSRF-Token', csrfToken);
+                }
+            }
+        });
+    }
 </script>
