@@ -35,7 +35,7 @@ error_reporting(E_ALL);
 error_log("Checking session in index.php: " . json_encode($_SESSION));
 
 // Check if user is authenticated OR if admin is authenticated during maintenance
- $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
+$isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
 if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
     error_log("Redirecting to login.php: Session missing or invalid auth_provider");
     header('Location: login.php');
@@ -43,8 +43,8 @@ if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user'
 }
 
 // Load environment variables manually
- $envFile = __DIR__ . '/.env';
- $_ENV = [];
+$envFile = __DIR__ . '/.env';
+$_ENV = [];
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -59,9 +59,9 @@ if (file_exists($envFile)) {
 }
 
 // Get user information for display
- $userName = $_SESSION['user']['name'] ?? 'User';
- $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
- $userUsername = $_SESSION['user']['username'] ?? null;
+$userName = $_SESSION['user']['name'] ?? 'User';
+$userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
+$userUsername = $_SESSION['user']['username'] ?? null;
 
 // Generate avatar URL if no photo is available
 if (empty($userPhotoUrl)) {
@@ -78,7 +78,7 @@ if (empty($userPhotoUrl)) {
 }
 
 // Format username with @ symbol
- $formattedUsername = $userUsername ? '@' . $userUsername : '';
+$formattedUsername = $userUsername ? '@' . $userUsername : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -1497,7 +1497,7 @@ if (empty($userPhotoUrl)) {
                 </div>
                 <div class="gateway-options">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripe1$.php">
+                        <input type="radio" name="gateway" value="stripe1$">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
@@ -1507,7 +1507,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1$.php">
+                        <input type="radio" name="gateway" value="shopify1$">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-shopify"></i> Shopify
@@ -1517,7 +1517,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/razorpay0.10$.php">
+                        <input type="radio" name="gateway" value="razorpay0.10$">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
@@ -1528,7 +1528,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/authnet1$.php">
+                        <input type="radio" name="gateway" value="authnet1$">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fas fa-credit-card"></i> Authnet
@@ -1546,7 +1546,7 @@ if (empty($userPhotoUrl)) {
                 </div>
                 <div class="gateway-options">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
+                        <input type="radio" name="gateway" value="paypal0.1$">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
@@ -1556,7 +1556,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripeauth.php">
+                        <input type="radio" name="gateway" value="stripeauth">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
