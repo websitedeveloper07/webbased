@@ -842,66 +842,78 @@ function loadOnlineUsers() {
     const onlineUsersList = document.getElementById('onlineUsersList');
     const onlineCount = document.getElementById('onlineCount');
     
+    // Show loading state
+    onlineUsersList.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>Loading Users</h3>
+            <p>Fetching online users...</p>
+        </div>
+    `;
+    
     // Fetch online users from API
-    fetch('https://cxchk.site/update_activity.php')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update online count
-                onlineCount.textContent = data.count;
-                
-                // Clear previous users
-                onlineUsersList.innerHTML = '';
-                
-                if (data.count === 0 || !data.users || data.users.length === 0) {
-                    onlineUsersList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-user-slash"></i>
-                            <h3>No Users Online</h3>
-                            <p>No other users are currently online</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // Add users to the list
-                data.users.forEach(user => {
-                    const userItem = document.createElement('div');
-                    userItem.className = 'online-user-item';
-                    
-                    // Use provided photo_url or generate avatar
-                    const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64`;
-                    
-                    // Format username
-                    const username = user.username ? (user.username.startsWith('@') ? user.username : '@' + user.username) : '';
-                    
-                    userItem.innerHTML = `
-                        <div class="online-user-avatar-container">
-                            <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar">
-                            <div class="online-indicator"></div>
-                        </div>
-                        <div class="online-user-info">
-                            <div class="online-user-name">${user.name}</div>
-                            ${username ? `<div class="online-user-username">${username}</div>` : ''}
-                        </div>
-                    `;
-                    
-                    onlineUsersList.appendChild(userItem);
-                });
-            } else {
-                // Handle API error
-                console.error('Failed to load online users:', data);
+    fetch('https://cxchk.site/update_activity.php', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        mode: 'cors'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('API Response:', data); // Debug log
+        
+        if (data.success) {
+            // Update online count
+            onlineCount.textContent = data.count;
+            
+            // Clear previous users
+            onlineUsersList.innerHTML = '';
+            
+            if (data.count === 0 || !data.users || data.users.length === 0) {
                 onlineUsersList.innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Error Loading Users</h3>
-                        <p>Unable to load online users at this time</p>
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Users Online</h3>
+                        <p>No other users are currently online</p>
                     </div>
                 `;
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error fetching online users:', error);
+            
+            // Add users to the list
+            data.users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'online-user-item';
+                
+                // Use provided photo_url or generate avatar
+                const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=64`;
+                
+                // Format username
+                const username = user.username ? (user.username.startsWith('@') ? user.username : '@' + user.username) : '';
+                
+                userItem.innerHTML = `
+                    <div class="online-user-avatar-container">
+                        <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar">
+                        <div class="online-indicator"></div>
+                    </div>
+                    <div class="online-user-info">
+                        <div class="online-user-name">${user.name}</div>
+                        ${username ? `<div class="online-user-username">${username}</div>` : ''}
+                    </div>
+                `;
+                
+                onlineUsersList.appendChild(userItem);
+            });
+        } else {
+            // Handle API error
+            console.error('API returned error:', data);
             onlineUsersList.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -909,7 +921,18 @@ function loadOnlineUsers() {
                     <p>Unable to load online users at this time</p>
                 </div>
             `;
-        });
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching online users:', error);
+        onlineUsersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error Loading Users</h3>
+                <p>Unable to load online users at this time</p>
+            </div>
+        `;
+    });
 }
 
 // Initialize on page load
@@ -937,8 +960,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize online users
     loadOnlineUsers();
     
-    // Update online users every 30 seconds
-    setInterval(loadOnlineUsers, 30000);
+    // Update online users every 20 seconds (20000 milliseconds)
+    setInterval(loadOnlineUsers, 20000);
     
     // Set up menu toggle
     document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
