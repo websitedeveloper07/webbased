@@ -278,9 +278,9 @@ if (empty($userPhotoUrl)) {
         /* Enhanced Dashboard Stats */
         .dashboard-container {
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            flex-direction: column,
+            gap: 1.5rem,
+            margin-bottom: 2rem,
         }
         
         /* Welcome banner */
@@ -329,9 +329,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .dashboard-content {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            display: flex,
+            flex-direction: column,
+            gap: 1.5rem,
         }
         
         .stats-grid {
@@ -451,9 +451,9 @@ if (empty($userPhotoUrl)) {
         .stat-card.online .stat-indicator { background: rgba(79, 172, 254, 0.7); }
         
         .dashboard-bottom {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 1.5rem;
+            display: grid,
+            grid-template-columns: 1fr 380px,
+            gap: 1.5rem,
         }
         
         .recent-activity {
@@ -465,10 +465,10 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
+            display: flex,
+            justify-content: space-between,
+            align-items: center,
+            margin-bottom: 1.2rem,
         }
         
         .activity-title {
@@ -485,12 +485,12 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
+            display: flex,
+            flex-direction: column,
+            gap: 0.8rem,
+            max-height: 400px,
+            overflow-y: auto,
+            padding-right: 0.5rem,
         }
         
         /* Custom scrollbar */
@@ -509,14 +509,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
+            display: flex,
+            align-items: center,
+            gap: 0.8rem,
+            padding: 0.8rem,
+            background: var(--secondary-bg),
+            border-radius: 12px,
+            border: 1px solid var(--border-color),
+            transition: all 0.3s,
         }
         
         .activity-item:hover {
@@ -525,14 +525,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9rem;
+            width: 36px,
+            height: 36px,
+            border-radius: 10px,
+            display: flex,
+            align-items: center,
+            justify-content: center,
+            color: white,
+            font-size: 0.9rem,
         }
         
         .activity-item.charged .activity-icon { background: var(--stat-charged); }
@@ -545,14 +545,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .activity-card {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 0.2rem;
+            font-weight: 600,
+            font-size: 0.9rem,
+            margin-bottom: 0.2rem,
         }
         
         .activity-status {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
+            font-size: 0.8rem,
+            color: var(--text-secondary),
         }
         
         /* Fixed: Changed color for declined cards to red in activity feed */
@@ -562,9 +562,9 @@ if (empty($userPhotoUrl)) {
         .activity-item.declined .activity-status { color: var(--declined-red); }
         
         .activity-time {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
+            font-size: 0.7rem,
+            color: var(--text-secondary),
+            white-space: nowrap,
         }
         
         /* Enhanced Online Users Section */
@@ -590,10 +590,10 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-users-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
+            display: flex,
+            justify-content: space-between,
+            align-items: center,
+            margin-bottom: 1.5rem,
         }
         
         .online-users-title {
@@ -626,12 +626,12 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-users-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
+            display: flex,
+            flex-direction: column,
+            gap: 0.8rem,
+            max-height: 400px,
+            overflow-y: auto,
+            padding-right: 0.5rem,
         }
         
         /* Custom scrollbar */
@@ -650,15 +650,15 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-item {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-            position: relative;
+            display: flex,
+            align-items: center,
+            gap: 0.8rem,
+            padding: 0.8rem,
+            background: var(--secondary-bg),
+            border-radius: 12px,
+            border: 1px solid var(--border-color),
+            transition: all 0.3s,
+            position: relative,
         }
         
         .online-user-item:hover {
@@ -672,24 +672,24 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--accent-blue);
-            flex-shrink: 0;
+            width: 45px,
+            height: 45px,
+            border-radius: 50%,
+            object-fit: cover,
+            border: 2px solid var(--accent-blue),
+            flex-shrink: 0,
         }
         
         .online-indicator {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 14px;
-            height: 14px;
-            background-color: var(--success-green);
-            border: 2px solid var(--card-bg);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
+            position: absolute,
+            bottom: 0,
+            right: 0,
+            width: 14px,
+            height: 14px,
+            background-color: var(--success-green),
+            border: 2px solid var(--card-bg),
+            border-radius: 50%,
+            animation: pulse 2s infinite,
         }
         
         @keyframes pulse {
@@ -705,23 +705,23 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-info {
-            flex: 1;
-            min-width: 0;
+            flex: 1,
+            min-width: 0,
         }
         
         .online-user-name {
-            font-weight: 600;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-primary);
+            font-weight: 600,
+            font-size: 0.95rem,
+            white-space: nowrap,
+            overflow: hidden,
+            text-overflow: ellipsis,
+            color: var(--text-primary),
         }
         
         .online-user-username {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.2rem;
+            font-size: 0.8rem,
+            color: var(--text-secondary),
+            margin-bottom: 0.2rem,
         }
         
         /* Hide any potential role elements */
@@ -1060,9 +1060,9 @@ if (empty($userPhotoUrl)) {
             color: white;
         }
         .results-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
+            display: flex,
+            gap: 0.5rem,
+            flex-wrap: wrap,
         }
         
         /* Hide any undefined or empty elements */
@@ -1134,41 +1134,41 @@ if (empty($userPhotoUrl)) {
             .gateway-option-desc { font-size: 0.65rem; }
             .menu-toggle {
                 position: absolute;
-                left: 0.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 32px;
-                height: 32px;
+                left: 0.5rem,
+                top: 50%,
+                transform: translateY(-50%),
+                width: 32px,
+                height: 32px,
             }
             .navbar-brand {
-                margin-left: 2.2rem;
+                margin-left: 2.2rem,
             }
             .theme-toggle {
-                width: 32px;
-                height: 16px;
+                width: 32px,
+                height: 16px,
             }
             .theme-toggle-slider {
-                width: 12px;
-                height: 12px;
-                left: 2px;
+                width: 12px,
+                height: 12px,
+                left: 2px,
             }
             [data-theme="light"] .theme-toggle-slider { transform: translateX(14px); }
             .user-info {
-                padding: 0.1rem 0.3rem;
-                gap: 0.3rem;
+                padding: 0.1rem 0.3rem,
+                gap: 0.3rem,
             }
             .online-users-section {
-                margin-top: 1rem;
+                margin-top: 1rem,
             }
             .online-users-list {
-                max-height: 250px;
+                max-height: 250px,
             }
             .online-user-avatar {
-                width: 38px;
-                height: 38px;
+                width: 38px,
+                height: 38px,
             }
             .online-user-name {
-                font-size: 0.85rem;
+                font-size: 0.85rem,
             }
         }
         
@@ -1206,7 +1206,7 @@ if (empty($userPhotoUrl)) {
             <span class="brand-text">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
         </div>
         <div class="navbar-actions">
-            <div class="theme-toggle" onclick="toggleTheme()">
+            <div class="theme-toggle" id="themeToggle">
                 <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
             </div>
             <div class="user-info">
@@ -1224,28 +1224,28 @@ if (empty($userPhotoUrl)) {
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a class="sidebar-link active" onclick="showPage('home'); closeSidebar()">
+                <a class="sidebar-link active" data-page="home">
                     <i class="fas fa-home"></i><span>Home</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('checking'); closeSidebar()">
+                <a class="sidebar-link" data-page="checking">
                     <i class="fas fa-credit-card"></i><span>Card Checking</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('generator'); closeSidebar()">
+                <a class="sidebar-link" data-page="generator">
                     <i class="fas fa-magic"></i><span>Card Generator</span>
                 </a>
             </li>
             <div class="sidebar-divider"></div>
             <li class="sidebar-item">
-                <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
+                <a class="sidebar-link" id="comingSoonLink">
                     <i class="fas fa-plus"></i><span>More Coming Soon</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a class="sidebar-link logout" onclick="logout()">
+                <a class="sidebar-link logout" id="logoutLink">
                     <i class="fas fa-sign-out-alt"></i><span>Logout</span>
                 </a>
             </li>
@@ -1379,7 +1379,7 @@ if (empty($userPhotoUrl)) {
                     <div class="checker-title">
                         <i class="fas fa-shield-alt"></i> Card Checker
                     </div>
-                    <button class="settings-btn" onclick="openGatewaySettings()">
+                    <button class="settings-btn" id="gatewaySettingsBtn">
                         <i class="fas fa-cog"></i> Gateway Settings
                     </button>
                 </div>
@@ -1419,11 +1419,11 @@ if (empty($userPhotoUrl)) {
                         <i class="fas fa-list-check"></i> Recent Results
                     </div>
                     <div class="results-filters">
-                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
-                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
-                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
-                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
-                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="charged">Charged</button>
+                        <button class="filter-btn" data-filter="approved">Approved</button>
+                        <button class="filter-btn" data-filter="3ds">3D Cards</button>
+                        <button class="filter-btn" data-filter="declined">Declined</button>
                     </div>
                 </div>
                 <div id="checkingResultsList" class="empty-state">
@@ -1476,7 +1476,7 @@ if (empty($userPhotoUrl)) {
                         <div class="custom-input-group">
                             <input type="text" id="yearInput" class="form-control" placeholder="Year (e.g., 30, 2030)" maxlength="4">
                             <div class="input-group-append">
-                                <span class="input-group-text" onclick="setYearRnd()">rnd</span>
+                                <span class="input-group-text" id="yearRndBtn">rnd</span>
                             </div>
                         </div>
                     </div>
@@ -1485,7 +1485,7 @@ if (empty($userPhotoUrl)) {
                         <div class="custom-input-group">
                             <input type="text" id="cvvInput" class="form-control" placeholder="CVV (e.g., 123)" maxlength="4">
                             <div class="input-group-append">
-                                <span class="input-group-text" onclick="setCvvRnd()">rnd</span>
+                                <span class="input-group-text" id="cvvRndBtn">rnd</span>
                             </div>
                         </div>
                     </div>
@@ -1537,7 +1537,7 @@ if (empty($userPhotoUrl)) {
                 <div class="settings-title">
                     <i class="fas fa-cog"></i> Gateway Settings
                 </div>
-                <button class="settings-close" onclick="closeGatewaySettings()">
+                <button class="settings-close" id="closeSettingsBtn">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1620,16 +1620,16 @@ if (empty($userPhotoUrl)) {
             </div>
 
             <div class="settings-footer">
-                <button class="btn-save" onclick="saveGatewaySettings()">
+                <button class="btn-save" id="saveSettingsBtn">
                     <i class="fas fa-check"></i> Save Settings
                 </button>
-                <button class="btn-cancel" onclick="closeGatewaySettings()">
+                <button class="btn-cancel" id="cancelSettingsBtn">
                     <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
         </div>
     </div>
 
-    <script src="index.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
