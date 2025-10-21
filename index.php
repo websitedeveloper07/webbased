@@ -225,18 +225,6 @@ if (empty($userPhotoUrl)) {
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .user-role-badge {
-            margin-top: 2px;
-            font-size: 0.65rem;
-            padding: 1px 5px;
-            border-radius: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .free-badge {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-        }
         .menu-toggle {
             color: #ffffff !important; font-size: 1.2rem; 
             transition: all 0.3s; display: flex; align-items: center; justify-content: center;
@@ -652,30 +640,6 @@ if (empty($userPhotoUrl)) {
             margin-bottom: 0.3rem;
         }
         
-        .online-user-role {
-            margin-top: 0.2rem;
-        }
-        
-        /* Role badge styles */
-        .role-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .owner-badge {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-        
-        .free-badge {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-        }
-        
         .checker-section, .generator-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
@@ -1031,10 +995,6 @@ if (empty($userPhotoUrl)) {
                 max-width: 60px;
                 font-size: 0.65rem;
             }
-            .user-role-badge {
-                font-size: 0.6rem;
-                padding: 1px 4px;
-            }
             .sidebar { width: 75vw; }
             .page-title { font-size: 1.2rem; }
             .page-subtitle { font-size: 0.8rem; }
@@ -1125,10 +1085,6 @@ if (empty($userPhotoUrl)) {
                 max-width: 50px;
                 font-size: 0.6rem;
             }
-            .user-role-badge {
-                font-size: 0.55rem;
-                padding: 1px 3px;
-            }
             .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
             .sidebar { width: 85vw; }
             .page-title { font-size: 1.1rem; }
@@ -1160,7 +1116,6 @@ if (empty($userPhotoUrl)) {
                     <?php if (!empty($formattedUsername)): ?>
                         <span class="user-username"><?php echo htmlspecialchars($formattedUsername); ?></span>
                     <?php endif; ?>
-                    <span class="user-role-badge free-badge">Free</span>
                 </div>
             </div>
         </div>
