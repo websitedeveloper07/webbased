@@ -146,20 +146,13 @@ try {
         // Format username with @ symbol
         $formattedUsername = $user['username'] ? '@' . $user['username'] : null;
         
-        // Create user data array
+        // Create user data array without role assignment
         $userData = [
             'name' => $user['name'],
-            'username' => $formattedUsername, // Include formatted username in response
+            'username' => $formattedUsername,
             'photo_url' => $avatarUrl,
             'is_current_user' => ($user['session_id'] == $sessionId)
         ];
-        
-        // Add role based on username (without @ symbol)
-        if ($user['username'] === 'K4LNX') {
-            $userData['role'] = 'Owner';
-        } else {
-            $userData['role'] = 'Free';
-        }
         
         $formattedUsers[] = $userData;
     }
