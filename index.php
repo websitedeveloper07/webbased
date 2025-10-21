@@ -281,10 +281,11 @@ if (empty($userPhotoUrl)) {
             margin-bottom: 2rem;
         }
         
+        /* Smaller welcome banner */
         .welcome-banner {
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1rem;
             border: 1px solid var(--border-color);
             box-shadow: 0 4px 20px var(--shadow);
             display: flex;
@@ -297,24 +298,24 @@ if (empty($userPhotoUrl)) {
         .welcome-content {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.8rem;
         }
         
         .welcome-icon {
-            width: 60px;
-            height: 60px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
         
         .welcome-text h2 {
-            font-size: 1.4rem;
-            margin-bottom: 0.3rem;
+            font-size: 1.2rem;
+            margin-bottom: 0.2rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -322,7 +323,7 @@ if (empty($userPhotoUrl)) {
         
         .welcome-text p {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
         
         .dashboard-content {
@@ -695,6 +696,13 @@ if (empty($userPhotoUrl)) {
             margin-bottom: 0.2rem;
         }
         
+        /* Hide any potential role elements */
+        .online-user-role,
+        .role-badge,
+        .user-role {
+            display: none !important;
+        }
+        
         .checker-section, .generator-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
@@ -1029,6 +1037,15 @@ if (empty($userPhotoUrl)) {
             flex-wrap: wrap;
         }
         
+        /* Hide any undefined or empty elements */
+        .online-user-info:empty,
+        .online-user-username:empty,
+        .online-user-name:empty,
+        [data-undefined],
+        [undefined] {
+            display: none !important;
+        }
+        
         /* Mobile-specific styles */
         @media (max-width: 768px) {
             body { font-size: 14px; }
@@ -1217,7 +1234,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                         <div class="welcome-text">
                             <h2>Dashboard Overview</h2>
-                            <p>Track your card checking performance and statistics</p>
+                            <p>Track your card checking performance</p>
                         </div>
                     </div>
                 </div>
