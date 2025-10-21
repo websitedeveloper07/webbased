@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/gate_init.php';
+// Rest of your existing code
+?>
 header('Content-Type: text/plain');
 
 // Enable error reporting for debugging (remove in production)
