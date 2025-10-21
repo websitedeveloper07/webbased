@@ -146,12 +146,12 @@ try {
         // Format username with @ symbol
         $formattedUsername = $user['username'] ? '@' . $user['username'] : null;
         
-        // Create user data array without role assignment
+        // Create user data array with is_online field instead of is_current_user
         $userData = [
             'name' => $user['name'],
             'username' => $formattedUsername,
             'photo_url' => $avatarUrl,
-            'is_current_user' => ($user['session_id'] == $sessionId)
+            'is_online' => true  // All users in this list are online
         ];
         
         $formattedUsers[] = $userData;
