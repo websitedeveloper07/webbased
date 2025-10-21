@@ -1,10 +1,17 @@
 <?php
 // security_config.php - Full-featured secure session management
 
-// Prevent direct file access
+// Prevent direct file access - but allow main website files
 if (!defined('SECURITY_CONFIG_LOADED') && !defined('ALLOWED_ACCESS')) {
-    header('HTTP/1.0 403 Forbidden');
-    exit('Direct access denied');
+    // Check if this is a main website file that should be allowed
+    $current_file = basename($_SERVER['PHP_SELF']);
+    $allowed_files = ['index.php', 'login.php', 'logout.php'];
+    
+    // If not an allowed file, block direct access
+    if (!in_array($current_file, $allowed_files)) {
+        header('HTTP/1.0 403 Forbidden');
+        exit('Direct access denied');
+    }
 }
 
 // Strict security settings
