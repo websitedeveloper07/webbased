@@ -156,6 +156,7 @@ if (empty($userPhotoUrl)) {
             --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -167,6 +168,7 @@ if (empty($userPhotoUrl)) {
             --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
@@ -281,11 +283,11 @@ if (empty($userPhotoUrl)) {
             margin-bottom: 2rem;
         }
         
-        /* Smaller welcome banner */
+        /* Welcome banner */
         .welcome-banner {
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 1rem;
+            padding: 1.5rem;
             border: 1px solid var(--border-color);
             box-shadow: 0 4px 20px var(--shadow);
             display: flex;
@@ -298,24 +300,24 @@ if (empty($userPhotoUrl)) {
         .welcome-content {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
+            gap: 1rem;
         }
         
         .welcome-icon {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
         }
         
         .welcome-text h2 {
-            font-size: 1.2rem;
-            margin-bottom: 0.2rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -323,40 +325,30 @@ if (empty($userPhotoUrl)) {
         
         .welcome-text p {
             color: var(--text-secondary);
-            font-size: 0.8rem;
+            font-size: 0.9rem;
         }
         
         .dashboard-content {
             display: flex;
+            flex-direction: column;
             gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-        
-        .dashboard-main {
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .dashboard-sidebar {
-            width: 380px;
-            flex-shrink: 0;
         }
         
         .stats-grid {
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem; 
-            margin-bottom: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem; 
+            margin-bottom: 1.5rem;
         }
         
         .stat-card {
             background: var(--card-bg); 
             border-radius: 16px; 
-            padding: 1.2rem; 
+            padding: 1.5rem; 
             position: relative;
             transition: all 0.3s; 
             box-shadow: 0 4px 20px var(--shadow); 
-            min-height: 120px;
+            min-height: 140px;
             display: flex; 
             flex-direction: column; 
             justify-content: space-between;
@@ -379,6 +371,7 @@ if (empty($userPhotoUrl)) {
         .stat-card.threeds::before { background: var(--stat-threeds); }
         .stat-card.declined::before { background: var(--stat-declined); }
         .stat-card.checked::before { background: var(--stat-checked); }
+        .stat-card.online::before { background: var(--stat-online); }
         
         .stat-card:hover { 
             transform: translateY(-5px); 
@@ -389,17 +382,17 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
         }
         
         .stat-icon {
-            width: 40px; 
-            height: 40px; 
+            width: 45px; 
+            height: 45px; 
             border-radius: 12px;
             display: flex; 
             align-items: center; 
             justify-content: center;
-            font-size: 1.2rem; 
+            font-size: 1.3rem; 
             color: white;
         }
         
@@ -409,17 +402,18 @@ if (empty($userPhotoUrl)) {
         .stat-card.threeds .stat-icon { background: var(--stat-threeds); }
         .stat-card.declined .stat-icon { background: var(--stat-declined); }
         .stat-card.checked .stat-icon { background: var(--stat-checked); }
+        .stat-card.online .stat-icon { background: var(--stat-online); }
         
         .stat-value { 
-            font-size: 1.8rem; 
+            font-size: 2rem; 
             font-weight: 700; 
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
             line-height: 1;
         }
         
         .stat-label {
             color: var(--text-secondary); 
-            font-size: 0.8rem; 
+            font-size: 0.85rem; 
             text-transform: uppercase; 
             font-weight: 600;
             letter-spacing: 0.5px;
@@ -430,11 +424,13 @@ if (empty($userPhotoUrl)) {
         .stat-card.charged .stat-value { color: var(--success-green); }
         .stat-card.approved .stat-value { color: var(--success-green); }
         .stat-card.threeds .stat-value { color: var(--success-green); }
+        .stat-card.online .stat-value { color: var(--accent-cyan); }
         
         [data-theme="light"] .stat-card.declined .stat-value { color: var(--declined-red); }
         [data-theme="light"] .stat-card.charged .stat-value { color: var(--success-green); }
         [data-theme="light"] .stat-card.approved .stat-value { color: var(--success-green); }
         [data-theme="light"] .stat-card.threeds .stat-value { color: var(--success-green); }
+        [data-theme="light"] .stat-card.online .stat-value { color: var(--accent-cyan); }
         
         .stat-indicator {
             position: absolute;
@@ -452,6 +448,13 @@ if (empty($userPhotoUrl)) {
         .stat-card.threeds .stat-indicator { background: rgba(56, 249, 215, 0.7); }
         .stat-card.declined .stat-indicator { background: rgba(239, 68, 68, 0.7); }
         .stat-card.checked .stat-indicator { background: rgba(48, 207, 208, 0.7); }
+        .stat-card.online .stat-indicator { background: rgba(79, 172, 254, 0.7); }
+        
+        .dashboard-bottom {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+        }
         
         .recent-activity {
             background: var(--card-bg);
@@ -465,19 +468,44 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
         }
         
         .activity-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .activity-title i {
+            color: var(--accent-green);
         }
         
         .activity-list {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        
+        /* Custom scrollbar */
+        .activity-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .activity-list::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+            border-radius: 3px;
+        }
+        
+        .activity-list::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+            border-radius: 3px;
         }
         
         .activity-item {
@@ -601,7 +629,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
-            max-height: 350px;
+            max-height: 400px;
             overflow-y: auto;
             padding-right: 0.5rem;
         }
@@ -1073,8 +1101,8 @@ if (empty($userPhotoUrl)) {
             .dashboard-content {
                 flex-direction: column;
             }
-            .dashboard-sidebar {
-                width: 100%;
+            .dashboard-bottom {
+                grid-template-columns: 1fr;
             }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
             .stat-card { padding: 1rem; min-height: 100px; }
@@ -1082,7 +1110,7 @@ if (empty($userPhotoUrl)) {
             .stat-value { font-size: 1.4rem; }
             .stat-label { font-size: 0.7rem; }
             .welcome-banner { padding: 1rem; }
-            .welcome-icon { width: 50px; height: 50px; font-size: 1.2rem; }
+            .welcome-icon { width: 40px; height: 40px; font-size: 1.2rem; }
             .welcome-text h2 { font-size: 1.2rem; }
             .welcome-text p { font-size: 0.8rem; }
             .checker-section, .generator-section { padding: 0.75rem; }
@@ -1240,70 +1268,70 @@ if (empty($userPhotoUrl)) {
                 </div>
 
                 <div class="dashboard-content">
-                    <div class="dashboard-main">
-                        <div class="stats-grid" id="statsGrid">
-                            <div class="stat-card total">
-                                <div class="stat-header">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-credit-card"></i>
-                                    </div>
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card total">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-credit-card"></i>
                                 </div>
-                                <div id="total-value" class="stat-value">0</div>
-                                <div class="stat-label">TOTAL</div>
-                                <div class="stat-indicator"></div>
                             </div>
-                            <div class="stat-card charged">
-                                <div class="stat-header">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-bolt"></i>
-                                    </div>
-                                </div>
-                                <div id="charged-value" class="stat-value">0</div>
-                                <div class="stat-label">HIT|CHARGED</div>
-                                <div class="stat-indicator"></div>
-                            </div>
-                            <div class="stat-card approved">
-                                <div class="stat-header">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                </div>
-                                <div id="approved-value" class="stat-value">0</div>
-                                <div class="stat-label">LIVE|APPROVED</div>
-                                <div class="stat-indicator"></div>
-                            </div>
-                            <div class="stat-card threeds">
-                                <div class="stat-header">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-lock"></i>
-                                    </div>
-                                </div>
-                                <div id="threed-value" class="stat-value">0</div>
-                                <div class="stat-label">3DS</div>
-                                <div class="stat-indicator"></div>
-                            </div>
-                            <div class="stat-card declined">
-                                <div class="stat-header">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-times-circle"></i>
-                                    </div>
-                                </div>
-                                <div id="declined-value" class="stat-value">0</div>
-                                <div class="stat-label">DEAD|DECLINED</div>
-                                <div class="stat-indicator"></div>
-                            </div>
-                            <div class="stat-card checked">
-                                <div class="stat-header">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-check-double"></i>
-                                    </div>
-                                </div>
-                                <div id="checked-value" class="stat-value">0 / 0</div>
-                                <div class="stat-label">CHECKED</div>
-                                <div class="stat-indicator"></div>
-                            </div>
+                            <div id="total-value" class="stat-value">0</div>
+                            <div class="stat-label">TOTAL</div>
+                            <div class="stat-indicator"></div>
                         </div>
+                        <div class="stat-card charged">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                            </div>
+                            <div id="charged-value" class="stat-value">0</div>
+                            <div class="stat-label">HIT|CHARGED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card approved">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div id="approved-value" class="stat-value">0</div>
+                            <div class="stat-label">LIVE|APPROVED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card threeds">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                            <div id="threed-value" class="stat-value">0</div>
+                            <div class="stat-label">3DS</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card declined">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </div>
+                            <div id="declined-value" class="stat-value">0</div>
+                            <div class="stat-label">DEAD|DECLINED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                        <div class="stat-card checked">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
+                            </div>
+                            <div id="checked-value" class="stat-value">0 / 0</div>
+                            <div class="stat-label">CHECKED</div>
+                            <div class="stat-indicator"></div>
+                        </div>
+                    </div>
 
+                    <div class="dashboard-bottom">
                         <div class="recent-activity">
                             <div class="activity-header">
                                 <div class="activity-title">
@@ -1318,9 +1346,7 @@ if (empty($userPhotoUrl)) {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="dashboard-sidebar">
+                        
                         <div class="online-users-section">
                             <div class="online-users-header">
                                 <div class="online-users-title">
