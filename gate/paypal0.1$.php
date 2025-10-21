@@ -1,6 +1,75 @@
 <?php
 header('Content-Type: text/plain');
 
+// Start session if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security check to prevent unauthorized access
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Unauthorized access']);
+    exit;
+}
+
+// Validate security token
+if (!isset($_POST['security_token']) || $_POST['security_token'] !== $_SESSION['security_token']) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid security token']);
+    exit;
+}
+
+// Validate domain
+if (!isset($_POST['domain']) || $_POST['domain'] !== $_SERVER['HTTP_HOST']) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Domain validation failed']);
+    exit;
+}
+
+// Validate request ID (optional, for additional security)
+if (!isset($_POST['request_id']) || empty($_POST['request_id'])) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid request']);
+    exit;
+}
+
+// Add rate limiting check
+ $rate_limit_key = 'paypal_rate_limit_' . ($_SESSION['user']['id'] ?? 'unknown');
+ $rate_limit_time = 60; // 60 seconds
+ $rate_limit_max = 30; // 30 requests per minute
+
+// Check if rate limit data exists
+if (!isset($_SESSION[$rate_limit_key])) {
+    $_SESSION[$rate_limit_key] = [
+        'count' => 0,
+        'reset_time' => time() + $rate_limit_time
+    ];
+}
+
+// Check if rate limit reset time has passed
+if (time() > $_SESSION[$rate_limit_key]['reset_time']) {
+    $_SESSION[$rate_limit_key] = [
+        'count' => 1,
+        'reset_time' => time() + $rate_limit_time
+    ];
+} else {
+    // Increment count
+    $_SESSION[$rate_limit_key]['count']++;
+    
+    // Check if rate limit exceeded
+    if ($_SESSION[$rate_limit_key]['count'] > $rate_limit_max) {
+        http_response_code(429);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Rate limit exceeded. Please try again later.']);
+        exit;
+    }
+}
+
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
@@ -25,7 +94,8 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 50); // 50-second timeout
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification in production
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
 
         $response = curl_exec($ch);
@@ -122,7 +192,8 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 50);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification in production
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
 
         $chs[$index] = $ch;
