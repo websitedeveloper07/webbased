@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selected = document.querySelector('input[name="gateway"]:checked');
         if (selected) {
             selectedGateway = selected.value;
+            console.log('Selected gateway:', selectedGateway); // Debug log
             const gatewayName = selected.parentElement.querySelector('.gateway-option-name').textContent.trim();
             Swal.fire({
                 icon: 'success', title: 'Gateway Updated!',
@@ -384,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
-            console.log(`Starting request for card: ${card.displayCard}`);
+            console.log(`Starting request for card: ${card.displayCard}, Gateway: ${selectedGateway}, URL: /gate/proxy.php?endpoint=${selectedGateway}`); // Debug log
 
             $.ajax({
                 url: `/gate/proxy.php?endpoint=${selectedGateway}`,
