@@ -1,12 +1,6 @@
 <?php
-// Include security configuration
-require_once 'security_config.php';
-
 // Set content type to JSON
 header('Content-Type: application/json');
-
-// Validate the API request using the centralized security function
-validateApiRequest();
 
 // Get card details from POST request
  $cardNumber = $_POST['card']['number'] ?? '';
@@ -50,7 +44,6 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
  $response = curl_exec($ch);
  $apx = json_decode($response, true);
@@ -146,7 +139,6 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
 curl_setopt($ch, CURLOPT_COOKIE, $cookies);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
  $response1 = curl_exec($ch);
  $apx1 = json_decode($response1, true);
