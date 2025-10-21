@@ -1,3 +1,7 @@
-# .htaccess file for /gate/ folder
-# Block all direct HTTP access to files in this directory
-Deny from all
+# Block all direct access to this folder
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>
