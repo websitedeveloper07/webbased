@@ -1630,7 +1630,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-    <script>
+<script>
         // Include the index.js file inline
         let selectedGateway = 'gate/stripe1$.php';
         let isProcessing = false;
@@ -1650,6 +1650,10 @@ if (empty($userPhotoUrl)) {
         let generatedCardsData = [];
         let activityUpdateInterval = null;
         let lastActivityUpdate = 0;
+        
+        // Security token - this should be generated server-side for production
+        const securityToken = "<?php echo isset($_SESSION['security_token']) ? $_SESSION['security_token'] : ''; ?>";
+        const siteDomain = window.location.hostname;
 
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
         document.addEventListener('contextmenu', e => {
@@ -2015,6 +2019,11 @@ if (empty($userPhotoUrl)) {
                 formData.append('card[exp_month]', card.exp_month);
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvv);
+                
+                // Add security token and domain validation
+                formData.append('security_token', securityToken);
+                formData.append('domain', siteDomain);
+                formData.append('request_id', sessionId);
 
                 $('#statusLog').text(`Processing card: ${card.displayCard}`);
                 console.log(`Starting request for card: ${card.displayCard}`);
@@ -2307,7 +2316,9 @@ if (empty($userPhotoUrl)) {
                 data: {
                     bin: params,
                     num: numCards,
-                    format: 0
+                    format: 0,
+                    security_token: securityToken,
+                    domain: siteDomain
                 },
                 dataType: 'json',
                 success: function(response) {
@@ -2397,7 +2408,9 @@ if (empty($userPhotoUrl)) {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
+                    'Cache-Control': 'no-cache',
+                    'X-Security-Token': securityToken,
+                    'X-Domain': siteDomain
                 }
             })
             .then(response => {
