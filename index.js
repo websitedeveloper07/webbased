@@ -300,7 +300,6 @@ function filterResults(filter) {
     });
 }
 
-// Improved function to parse API responses from different gateways
 function parseGatewayResponse(response) {
     let status = 'DECLINED';
     let message = 'Card declined';
@@ -780,31 +779,29 @@ function displayOnlineUsers(users) {
         return;
     }
     
-    const otherUsers = users.filter(user => !user.is_current_user);
-    console.log("Other users:", otherUsers);
-    
-    if (otherUsers.length === 0) {
+    if (users.length === 0) {
         onlineUsersList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-user-slash"></i>
                 <h3>No Users Online</h3>
-                <p>No other users are currently online</p>
-            </div>
-        `;
+                <p>No users are currently online</p>
+            </div>`;
         return;
     }
     
     let usersHtml = '';
-    otherUsers.forEach(user => {
-        const roleBadgeClass = user.role === 'Owner' ? 'owner-badge' : 'free-badge';
-        const roleBadgeText = user.role;
+    users.forEach(user => {
+        const photoUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
+        const roleBadgeClass = user.role.toLowerCase() === 'owner' ? 'owner-badge' : 'free-badge';
+        const roleBadgeText = user.role || 'Free';
+        const isCurrentUser = user.is_current_user ? ' (You)' : '';
         
         usersHtml += `
             <div class="online-user-item">
-                <img src="${user.photo_url}" alt="${user.name}" class="online-user-avatar">
+                <img src="${photoUrl}" alt="${user.name}" class="online-user-avatar">
                 <div class="online-user-info">
-                    <div class="online-user-name">${user.name}</div>
-                    <div class="online-user-username">${user.username || ''}</div>
+                    <div class="online-user-name">${user.name}${isCurrentUser}</div>
+                    ${user.username ? `<div class="online-user-username">${user.username}</div>` : ''}
                     <div class="online-user-role">
                         <span class="role-badge ${roleBadgeClass}">${roleBadgeText}</span>
                     </div>
@@ -814,7 +811,7 @@ function displayOnlineUsers(users) {
     });
     
     onlineUsersList.innerHTML = usersHtml;
-    console.log("Updated online users list");
+    console.log("Updated online users list with", users.length, "users");
 }
 
 $(document).ready(function() {
@@ -951,23 +948,4 @@ $(document).ready(function() {
         clearInterval(activityInterval);
         console.log("Cleared activity update interval on page unload");
     });
-
-    // // Debugging: Test button (uncomment for testing)
-    // const testButton = document.createElement('button');
-    // testButton.textContent = 'Test Update Activity';
-    // testButton.style.position = 'fixed';
-    // testButton.style.bottom = '10px';
-    // testButton.style.right = '10px';
-    // testButton.style.zIndex = '9999';
-    // testButton.style.padding = '5px 10px';
-    // testButton.style.backgroundColor = '#3b82f6';
-    // testButton.style.color = 'white';
-    // testButton.style.border = 'none';
-    // testButton.style.borderRadius = '5px';
-    // testButton.style.cursor = 'pointer';
-    // testButton.onclick = function() {
-    //     console.log("Manually triggering user activity update...");
-    //     updateUserActivity();
-    // };
-    // document.body.appendChild(testButton);
 });
