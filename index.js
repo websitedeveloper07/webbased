@@ -596,7 +596,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Process next batch immediately for stripe1$.php
                     if (selectedGateway === 'gate/stripe1$.php') {
-                        processNextBatch();
+                        // Use a small timeout to allow the UI to update
+                        setTimeout(processNextBatch, 0);
                     }
                 });
             }
