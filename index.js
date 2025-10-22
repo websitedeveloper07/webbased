@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let isStopping = false;
     let activeRequests = 0;
     let cardQueue = [];
-    const MAX_CONCURRENT = 10;
     const MAX_RETRIES = 2;
     let abortControllers = [];
     let totalCards = 0;
@@ -21,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
     const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+
+    // Dynamic MAX_CONCURRENT based on selected gateway
+    let maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -98,10 +100,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const selected = document.querySelector('input[name="gateway"]:checked');
         if (selected) {
             selectedGateway = selected.value;
+            // Update maxConcurrent based on selected gateway
+            maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
+            
             const gatewayName = selected.parentElement.querySelector('.gateway-option-name').textContent.trim();
             Swal.fire({
                 icon: 'success', title: 'Gateway Updated!',
-                text: `Now using: ${gatewayName}`,
+                text: `Now using: ${gatewayName} (Max concurrent: ${maxConcurrent})`,
                 confirmButtonColor: '#10b981'
             });
             closeGatewaySettings();
@@ -543,12 +548,12 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#stopBtn').prop('disabled', false);
         $('#loader').show();
         $('#checkingResultsList').html('');
-        $('#statusLog').text('Starting processing...');
+        $('#statusLog').text(`Starting processing with ${maxConcurrent} concurrent requests...`);
 
         let requestIndex = 0;
 
         while (cardQueue.length > 0 && isProcessing) {
-            while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
+            while (activeRequests < maxConcurrent && cardQueue.length > 0 && isProcessing) {
                 const card = cardQueue.shift();
                 activeRequests++;
                 const controller = new AbortController();
