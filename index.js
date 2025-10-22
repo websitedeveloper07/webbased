@@ -1,8 +1,9 @@
+// Wrap everything in a DOMContentLoaded event to ensure the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    let selectedGateway = '/gate/stripe1$.php';
+    let selectedGateway = 'gate/stripe1$.php';
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
+    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -385,32 +387,30 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('card[cvc]', card.cvv);
 
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
-            console.log(`Starting request for card: ${card.displayCard}, Attempt: ${retryCount + 1}`);
+            console.log(`Starting request for card: ${card.displayCard}`);
 
-            $.ajax({
-                url: selectedGateway,
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                timeout: 30000, // 30 seconds
-                beforeSend: function(xhr) {
-                    const apiKey = 'a3lhIHJlIGxhd2RlIHlhaGkgb2thYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRkYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
-                    console.log('Setting X-API-KEY header for card:', card.displayCard);
-                    xhr.setRequestHeader('X-API-KEY', apiKey);
-                },
-                success: function(response) {
-                    console.log(`Success for card: ${card.displayCard}, Response:`, response);
+            // Create a new XMLHttpRequest object
+            const xhr = new XMLHttpRequest();
+            
+            // Configure the request
+            xhr.open('POST', selectedGateway, true);
+            xhr.setRequestHeader('X-API-KEY', API_KEY);
+            xhr.timeout = 300000; // 5 minutes timeout
+            
+            // Set up event handlers
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const response = xhr.responseText;
                     const parsedResponse = parseGatewayResponse(response);
-                    console.log(`Parsed response for card: ${card.displayCard}, Status: ${parsedResponse.status}, Message: ${parsedResponse.message}`);
+                    
+                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
                     resolve({
                         status: parsedResponse.status,
                         response: parsedResponse.message,
                         card: card,
                         displayCard: card.displayCard
                     });
-                },
-                error: function(xhr) {
+                } else {
                     $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
                     console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
                     
@@ -428,9 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    if (xhr.statusText === 'abort') {
-                        resolve(null);
-                    } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                    if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
                         setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                     } else {
                         resolve({
@@ -441,7 +439,46 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-            });
+            };
+            
+            xhr.onerror = function() {
+                $('#statusLog').text(`Error on card: ${card.displayCard} - Network error`);
+                console.error(`Network error for card: ${card.displayCard}`);
+                
+                if (retryCount < MAX_RETRIES && isProcessing) {
+                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                } else {
+                    resolve({
+                        status: 'DECLINED',
+                        response: 'Declined [Network error]',
+                        card: card,
+                        displayCard: card.displayCard
+                    });
+                }
+            };
+            
+            xhr.ontimeout = function() {
+                $('#statusLog').text(`Error on card: ${card.displayCard} - Request timeout`);
+                console.error(`Timeout for card: ${card.displayCard}`);
+                
+                if (retryCount < MAX_RETRIES && isProcessing) {
+                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                } else {
+                    resolve({
+                        status: 'DECLINED',
+                        response: 'Declined [Request timeout]',
+                        card: card,
+                        displayCard: card.displayCard
+                    });
+                }
+            };
+            
+            xhr.onabort = function() {
+                resolve(null);
+            };
+            
+            // Send the request
+            xhr.send(formData);
         });
     }
 
@@ -667,56 +704,95 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#genLoader').show();
         $('#genStatusLog').text('Generating cards...');
         
-        $.ajax({
-            url: '/gate/ccgen.php',
-            method: 'GET',
-            data: {
-                bin: params,
-                num: numCards,
-                format: 0
-            },
-            dataType: 'json',
-            success: function(response) {
-                $('#genLoader').hide();
-                
-                if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
-                    $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
-                    displayGeneratedCards(response.cards);
-                    Swal.fire({
-                        title: 'Success!',
-                        text: `Generated ${response.cards.length} cards`,
-                        icon: 'success',
-                        confirmButtonColor: '#10b981'
-                    });
-                } else if (response.error) {
+        // Create a new XMLHttpRequest object
+        const xhr = new XMLHttpRequest();
+        
+        // Configure the request
+        const url = '/gate/ccgen.php?bin=' + encodeURIComponent(params) + '&num=' + numCards + '&format=0';
+        xhr.open('GET', url, true);
+        xhr.setRequestHeader('X-API-KEY', API_KEY);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.timeout = 300000; // 5 minutes timeout
+        
+        // Set up event handlers
+        xhr.onload = function() {
+            $('#genLoader').hide();
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    
+                    if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
+                        $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
+                        displayGeneratedCards(response.cards);
+                        Swal.fire({
+                            title: 'Success!',
+                            text: `Generated ${response.cards.length} cards`,
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        });
+                    } else if (response.error) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.error,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                        $('#genStatusLog').text('Error: ' + response.error);
+                    } else {
+                        $('#genStatusLog').text('No cards generated');
+                        Swal.fire({
+                            title: 'No Cards!',
+                            text: 'Could not generate cards with the provided parameters',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b'
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to parse response:', e);
                     Swal.fire({
                         title: 'Error!',
-                        text: response.error,
+                        text: 'Failed to parse server response',
                         icon: 'error',
                         confirmButtonColor: '#ec4899'
                     });
-                    $('#genStatusLog').text('Error: ' + response.error);
-                } else {
-                    $('#genStatusLog').text('No cards generated');
-                    Swal.fire({
-                        title: 'No Cards!',
-                        text: 'Could not generate cards with the provided parameters',
-                        icon: 'warning',
-                        confirmButtonColor: '#f59e0b'
-                    });
+                    $('#genStatusLog').text('Error: Failed to parse server response');
                 }
-            },
-            error: function(xhr) {
-                $('#genLoader').hide();
-                $('#genStatusLog').text('Error: ' + xhr.statusText);
+            } else {
                 Swal.fire({
                     title: 'Error!',
                     text: 'Failed to generate cards: ' + xhr.statusText,
                     icon: 'error',
                     confirmButtonColor: '#ec4899'
                 });
+                $('#genStatusLog').text('Error: ' + xhr.statusText);
             }
-        });
+        };
+        
+        xhr.onerror = function() {
+            $('#genLoader').hide();
+            $('#genStatusLog').text('Error: Network error');
+            Swal.fire({
+                title: 'Error!',
+                text: 'Network error occurred while generating cards',
+                icon: 'error',
+                confirmButtonColor: '#ec4899'
+            });
+        };
+        
+        xhr.ontimeout = function() {
+            $('#genLoader').hide();
+            $('#genStatusLog').text('Error: Request timeout');
+            Swal.fire({
+                title: 'Error!',
+                text: 'Request timed out while generating cards',
+                icon: 'error',
+                confirmButtonColor: '#ec4899'
+            });
+        };
+        
+        // Send the request
+        xhr.send();
     }
 
     // Logout function
@@ -764,7 +840,8 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': API_KEY
             }
         })
         .then(response => {
@@ -946,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Assemble user item
             userItem.appendChild(avatarContainer);
-            userInfo.appendChild(nameElement);
+            userItem.appendChild(userInfo);
             
             // Add to fragment
             fragment.appendChild(userItem);
