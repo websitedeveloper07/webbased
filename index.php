@@ -882,6 +882,37 @@ if (empty($userPhotoUrl)) {
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
         
+        /* Result item styles for card checking */
+        .result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.8rem;
+            transition: all 0.3s;
+        }
+        
+        .result-item:hover {
+            transform: translateX(5px);
+            border-color: var(--accent-blue);
+        }
+        
+        .card-details {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .card-status {
+            font-weight: 600;
+            margin-right: 1rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        
         .copy-btn { 
             background: transparent; 
             border: none; 
@@ -892,6 +923,9 @@ if (empty($userPhotoUrl)) {
             padding: 0.2rem 0.4rem;
             border-radius: 4px;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .copy-btn:hover { 
             color: var(--accent-purple);
@@ -1598,75 +1632,123 @@ if (empty($userPhotoUrl)) {
 
     <script src="index.js"></script>
     
-    <!-- Inline script to handle copy button clicks as a backup -->
+    <!-- Inline script to handle copy button clicks -->
     <script>
-        $(document).ready(function() {
-            // Event delegation for copy buttons in card checking results
-            $(document).on('click', '#checkingResultsList .copy-btn', function(e) {
+        // Function to add copy button to a result item
+        function addCopyButton(resultItem, cardText) {
+            // Create copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+            copyBtn.setAttribute('data-card', cardText);
+            
+            // Add click event for copying
+            copyBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const cardText = $(this).data('card');
-                if (cardText) {
-                    // Create a temporary textarea element
-                    const textarea = document.createElement('textarea');
-                    textarea.value = cardText;
-                    textarea.style.position = 'fixed'; // Prevent scrolling to bottom of page
-                    textarea.style.opacity = '0'; // Hide the element
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    
-                    try {
-                        // Execute the copy command
-                        const successful = document.execCommand('copy');
-                        document.body.removeChild(textarea);
-                        
-                        if (successful) {
-                            Swal.fire({
-                                toast: true, 
-                                position: 'top-end', 
-                                icon: 'success',
-                                title: 'Copied!', 
-                                showConfirmButton: false, 
-                                timer: 1500
-                            });
-                        } else {
-                            // Fallback to modern clipboard API
-                            navigator.clipboard.writeText(cardText).then(() => {
-                                Swal.fire({
-                                    toast: true, 
-                                    position: 'top-end', 
-                                    icon: 'success',
-                                    title: 'Copied!', 
-                                    showConfirmButton: false, 
-                                    timer: 1500
-                                });
-                            }).catch(err => {
-                                console.error('Failed to copy: ', err);
-                                Swal.fire({
-                                    toast: true, 
-                                    position: 'top-end', 
-                                    icon: 'error',
-                                    title: 'Failed to copy!', 
-                                    showConfirmButton: false, 
-                                    timer: 1500
-                                });
-                            });
-                        }
-                    } catch (err) {
-                        console.error('Failed to copy: ', err);
-                        document.body.removeChild(textarea);
-                        Swal.fire({
-                            toast: true, 
-                            position: 'top-end', 
-                            icon: 'error',
-                            title: 'Failed to copy!', 
-                            showConfirmButton: false, 
-                            timer: 1500
-                        });
+                const cardToCopy = this.getAttribute('data-card');
+                
+                // Use modern clipboard API
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(cardToCopy).then(() => {
+                        showCopySuccess();
+                    }).catch(err => {
+                        fallbackCopyTextToClipboard(cardToCopy);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopyTextToClipboard(cardToCopy);
+                }
+            });
+            
+            // Add the button to the result item
+            resultItem.appendChild(copyBtn);
+        }
+        
+        // Fallback copy function
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Make the textarea out of viewport
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                } else {
+                    showCopyError();
+                }
+            } catch (err) {
+                showCopyError();
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Show success notification
+        function showCopySuccess() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Card copied to clipboard!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+        
+        // Show error notification
+        function showCopyError() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Failed to copy card',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+        
+        // Function to add copy buttons to existing results
+        function addCopyButtonsToExistingResults() {
+            const resultItems = document.querySelectorAll('#checkingResultsList .result-item');
+            resultItems.forEach(item => {
+                // Check if it already has a copy button
+                if (!item.querySelector('.copy-btn')) {
+                    const cardDetails = item.querySelector('.card-details');
+                    if (cardDetails) {
+                        const cardText = cardDetails.textContent;
+                        addCopyButton(item, cardText);
                     }
                 }
             });
+        }
+        
+        // Add copy buttons to existing results when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            addCopyButtonsToExistingResults();
+            
+            // Create a MutationObserver to watch for new results
+            const resultsList = document.getElementById('checkingResultsList');
+            if (resultsList) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList') {
+                            addCopyButtonsToExistingResults();
+                        }
+                    });
+                });
+                
+                observer.observe(resultsList, { childList: true, subtree: true });
+            }
         });
     </script>
 </body>
