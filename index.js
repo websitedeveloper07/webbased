@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (normalizedYear.length === 2) {
                 normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
             }
-            formData.append('api_key', API_KEY);  // Add this line
+            formData.append('api_key', API_KEY);  // Add to form data as backup
             formData.append('card[number]', card.number);
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
@@ -395,7 +395,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Configure the request
             xhr.open('POST', selectedGateway, true);
-            // Remove this line: xhr.setRequestHeader('X-API-KEY', API_KEY);
+            
+            // Set headers BEFORE sending the request
+            xhr.setRequestHeader('X-API-KEY', API_KEY);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            
             xhr.timeout = 300000; // 5 minutes timeout
             
             // Set up event handlers
@@ -711,6 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Configure the request
         const url = '/gate/ccgen.php?bin=' + encodeURIComponent(params) + '&num=' + numCards + '&format=0&api_key=' + encodeURIComponent(API_KEY);
         xhr.open('GET', url, true);
+        xhr.setRequestHeader('X-API-KEY', API_KEY);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.timeout = 300000; // 5 minutes timeout
         
@@ -840,7 +845,8 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': API_KEY
             }
         })
         .then(response => {
