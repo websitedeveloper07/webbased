@@ -2,9 +2,9 @@
 // Set content type to JSON
 header('Content-Type: application/json');
 
-// Check for X-API-KEY header
- $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
- $expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+// Check for API key in POST data (more reliable than headers)
+ $apiKey = $_POST['api_key'] ?? '';
+ $expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdSB1c2Uga3Lwn5iC';
 
 if ($apiKey !== $expectedApiKey) {
     http_response_code(401);
