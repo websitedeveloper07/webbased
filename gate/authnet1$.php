@@ -1,4 +1,9 @@
 <?php
+
+
+require_once __DIR__ . '/validkey.php';
+validateApiKey();
+
 // authnet1$.php - Authnet 1$ Gateway Processor
 
 // Disable error reporting for production
