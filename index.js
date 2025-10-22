@@ -395,6 +395,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 processData: false,
                 contentType: false,
                 timeout: 300000,
+                headers: {
+                    'a3lhIHJlIGxhd2RlIHlhaGkgb2thYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'
+                },               
                 xhr: function() {
                     const xhr = new window.XMLHttpRequest();
                     xhr.upload.addEventListener("progress", function(evt) {
