@@ -164,13 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
             resultsList.appendChild(resultDiv);
         }
         
-        // Now add the event listener after the element is in the DOM
-        const copyButton = resultDiv.querySelector('.copy-btn');
-        copyButton.addEventListener('click', function() {
-            const cardText = this.getAttribute('data-card');
-            copyToClipboard(cardText);
-        });
-        
         // Add to activity feed
         addActivityItem(card, status);
     }
@@ -1183,9 +1176,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize activity updates
         initializeActivityUpdates();
         
-        // Add event delegation for copy buttons as a backup
+        // Add event delegation for copy buttons
         $(document).on('click', '.copy-btn', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const cardText = $(this).data('card');
             if (cardText) {
                 copyToClipboard(cardText);
