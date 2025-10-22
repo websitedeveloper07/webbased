@@ -1,4 +1,9 @@
 <?php
+
+require_once __DIR__ . '/gate/validkey.php';
+validateApiKey();
+
+
 session_start();
 
 // Check if user is authenticated
