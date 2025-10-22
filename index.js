@@ -796,15 +796,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 10000);
         
-        console.log(`X-API-KEY header for update_activity: ${API_KEY}`);
+        console.log(`X-API-KEY header for update_activity: [REMOVED]`);
         fetch('/gate/update_activity.php', {
             method: 'GET',
             signal: controller.signal,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-                'X-API-KEY': API_KEY
+                'Cache-Control': 'no-cache'
+                // X-API-KEY header removed here
             }
         })
         .then(response => {
