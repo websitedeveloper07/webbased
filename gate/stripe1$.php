@@ -1,17 +1,23 @@
 <?php
-
-require_once 'security.php';  
-// Set content type to JSON
+require_once 'security.php';
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: https://cxchk.site');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 
-// Get card details from POST request
- $cardNumber = $_POST['card']['number'] ?? '';
- $expMonth = $_POST['card']['exp_month'] ?? '';
- $expYear = $_POST['card']['exp_year'] ?? '';
- $cvc = $_POST['card']['cvc'] ?? '';
+// Get JSON input
+$input = json_decode(file_get_contents('php://input'), true);
+$cardNumber = $input['card']['number'] ?? '';
+$expMonth = $input['card']['exp_month'] ?? '';
+$expYear = $input['card']['exp_year'] ?? '';
+$cvc = $input['card']['cvc'] ?? '';
 
 // Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
+    http_response_code(400);
     echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
     exit;
 }
