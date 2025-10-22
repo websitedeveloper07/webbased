@@ -1,15 +1,27 @@
 <?php
-header('Content-Type: text/plain');
+// Start session for user authentication
+session_start([
+    'cookie_secure' => isset($_SERVER['HTTPS']),
+    'cookie_httponly' => true,
+    'use_strict_mode' => true,
+]);
 
-// Enable error reporting for debugging (disable in production)
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
+// Enable error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/error.log');
 
-// Optional file-based logging for debugging (disable in production)
-$log_file = __DIR__ . '/shopify1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
+// Include API key validation
+require_once __DIR__ . '/validkey.php';
+validateApiKey();
+
+// Validate session for non-admin users
+if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated'] !== true) {
+    if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+        error_log("Unauthorized access to stripe1$.php: Invalid session");
+        http_response_code(401);
+        echo json_encode(['status' => 'ERROR', 'message' => 'Unauthorized access']);
+        exit;
+    }
 }
 
 // Function to check a single card via Shopify 1$ API with retry
