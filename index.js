@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+    const API_KEY = 'dGVyZSBtdW1teSBraSBqYWkga3lhIGNoZWV6IGJuYWkgaGFpIHJhc21hbGkgaGFpIGpha2UgdGVyaSBtYW1pIGtvIGJvbCB0ZXJlIHBhcGEga2EgbHVuZCBraGFkYSBuYWhpIGh1YQ';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
