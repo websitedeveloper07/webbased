@@ -6,6 +6,16 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(0);
 
+// Define the expected LUMD key
+define('EXPECTED_LUMD_KEY', 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC');
+
+// Validate the LUMD key
+if (!isset($_POST['LUMD']) || $_POST['LUMD'] !== EXPECTED_LUMD_KEY) {
+    http_response_code(401); // Unauthorized
+    echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid or missing LUMD key']);
+    exit;
+}
+
 // Check if POST data is available
 if (!isset($_POST['card']['number'], $_POST['card']['exp_month'], $_POST['card']['exp_year'], $_POST['card']['cvc'])) {
     echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card parameters']);
