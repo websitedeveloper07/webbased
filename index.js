@@ -240,52 +240,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Clipboard functions
-    function copyToClipboard(text) {
-        console.log("Attempting to copy text:", text);
-        
-        // Create a temporary textarea element
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed'; // Prevent scrolling to bottom of page
-        textarea.style.opacity = '0'; // Hide the element
-        document.body.appendChild(textarea);
-        textarea.select();
-        
-        try {
-            // Execute the copy command
-            const successful = document.execCommand('copy');
-            document.body.removeChild(textarea);
-            
-            if (successful) {
-                console.log("Copy successful");
-                Swal.fire({
-                    toast: true, position: 'top-end', icon: 'success',
-                    title: 'Copied!', showConfirmButton: false, timer: 1500
+       function copyToClipboard(text) {
+           navigator.clipboard.writeText(text).then(() => {
+               Swal.fire({
+                   toast: true, position: 'top-end', icon: 'success',
+                   title: 'Copied!', showConfirmButton: false, timer: 1500
                 });
-            } else {
-                // Fallback to modern clipboard API
-                navigator.clipboard.writeText(text).then(() => {
-                    console.log("Copy successful with Clipboard API");
-                    Swal.fire({
-                        toast: true, position: 'top-end', icon: 'success',
-                        title: 'Copied!', showConfirmButton: false, timer: 1500
-                    });
-                }).catch(err => {
-                    console.error('Failed to copy with Clipboard API: ', err);
-                    Swal.fire({
-                        toast: true, position: 'top-end', icon: 'error',
-                        title: 'Failed to copy!', showConfirmButton: false, timer: 1500
-                    });
-                });
-            }
-        } catch (err) {
-            console.error('Failed to copy: ', err);
-            document.body.removeChild(textarea);
-            Swal.fire({
-                toast: true, position: 'top-end', icon: 'error',
-                title: 'Failed to copy!', showConfirmButton: false, timer: 1500
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
             });
-        }
     }
 
     function copyAllGeneratedCards() {
