@@ -2,8 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    const LUMD_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'; // LUMD key for validation
-    let selectedGateway = 'gate/authnet1$.php'; // Updated to match authnet1$.php
+    let selectedGateway = 'gate/authnet1$.php';
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
@@ -390,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
             formData.append('card[cvc]', card.cvv);
-            formData.append('LUMD', LUMD_KEY); // Ensure LUMD key is sent
+            formData.append('LUMD', 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'); // Hardcoded LUMD key
 
             // Debug: Log FormData contents
             const formDataEntries = [];
@@ -536,9 +535,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 activeRequests++;
                 const controller = new AbortController();
                 abortControllers.push(controller);
-
-                await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
-                requestIndex++;
 
                 processCard(card, controller).then(result => {
                     if (result === null) return;
