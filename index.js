@@ -1,8 +1,8 @@
-// Wrap everything in a DOMContentLoaded event to ensure the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
+    const LUMD_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'; // Added LUMD key for validation
     let selectedGateway = 'gate/stripe1$.php';
     let isProcessing = false;
     let isStopping = false;
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Card processing function
-    async function processCard(card, controller, retryCount = 0) {
+    function processCard(card, controller, retryCount = 0) {
         if (!isProcessing) return null;
 
         return new Promise((resolve) => {
@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
             formData.append('card[cvc]', card.cvv);
+            formData.append('LUMD', LUMD_KEY); // Added LUMD key for validation
 
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
             console.log(`Starting request for card: ${card.displayCard}`);
@@ -452,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Main card processing function
-    async function processCards() {
+    function processCards() {
         if (isProcessing) {
             Swal.fire({
                 title: 'Processing in progress',
