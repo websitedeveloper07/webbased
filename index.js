@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
+    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -325,9 +326,9 @@ document.addEventListener('DOMContentLoaded', function() {
                           responseStr.includes('THREE_D_SECURE') ||
                           responseStr.includes('REDIRECT')) {
                     status = '3DS';
-                } else if (responseStr.includes('LUMD')) {
+                } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY')) {
                     status = 'ERROR';
-                    message = 'Authentication failed: Invalid or missing LUMD key';
+                    message = 'Authentication failed: Invalid or missing API key';
                 }
                 
                 message = response;
@@ -351,9 +352,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     status = 'APPROVED';
                 } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                     status = '3DS';
-                } else if (responseStr.includes('LUMD')) {
+                } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY')) {
                     status = 'ERROR';
-                    message = 'Authentication failed: Invalid or missing LUMD key';
+                    message = 'Authentication failed: Invalid or missing API key';
                 }
             }
             
@@ -389,7 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
             formData.append('card[cvc]', card.cvv);
-            formData.append('LUMD', 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC');
 
             // Debug: Log FormData contents
             const formDataEntries = [];
@@ -397,6 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formDataEntries.push(`${key}: ${value}`);
             }
             console.log(`FormData payload for card ${card.displayCard}:`, formDataEntries);
+            console.log(`X-API-KEY header: ${API_KEY}`);
 
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
             console.log(`Starting request for card: ${card.displayCard}`);
@@ -406,7 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData,
                 signal: controller.signal,
                 headers: {
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-API-KEY': API_KEY
                 }
             })
             .then(response => {
@@ -703,7 +705,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 num: numCards,
                 format: 0
             },
+            headers: {
+                'X-API-KEY': API_KEY
+            },
             dataType: 'json',
+            beforeSend: function(xhr) {
+                console.log(`X-API-KEY header for ccgen: ${API_KEY}`);
+            },
             success: function(response) {
                 $('#genLoader').hide();
                 
@@ -792,7 +800,8 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': API_KEY
             }
         })
         .then(response => {
