@@ -796,13 +796,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 10000);
         
-        fetch('update_activity.php', {
+        // Updated URL to point to root directory and removed API key header
+        fetch('/update_activity.php', {
             method: 'GET',
             signal: controller.signal,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache',
+                // Removed API key header - not needed for this endpoint
             }
         })
         .then(response => {
