@@ -152,18 +152,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
                     <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
                 </div>
-                <button class="copy-btn"><i class="fas fa-copy"></i></button>
+                <button class="copy-btn" data-card="${card.displayCard}"><i class="fas fa-copy"></i></button>
             </div>
         `;
-        // Add event listener to the copy button
-        const copyButton = resultDiv.querySelector('.copy-btn');
-        copyButton.addEventListener('click', () => copyToClipboard(card.displayCard));
+        
+        // Add the result to the DOM first
         resultsList.insertBefore(resultDiv, resultsList.firstChild);
         if (resultsList.classList.contains('empty-state')) {
             resultsList.classList.remove('empty-state');
             resultsList.innerHTML = '';
             resultsList.appendChild(resultDiv);
         }
+        
+        // Now add the event listener after the element is in the DOM
+        const copyButton = resultDiv.querySelector('.copy-btn');
+        copyButton.addEventListener('click', function() {
+            const cardText = this.getAttribute('data-card');
+            copyToClipboard(cardText);
+        });
         
         // Add to activity feed
         addActivityItem(card, status);
@@ -1176,5 +1182,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize activity updates
         initializeActivityUpdates();
+        
+        // Add event delegation for copy buttons as a backup
+        $(document).on('click', '.copy-btn', function(e) {
+            e.preventDefault();
+            const cardText = $(this).data('card');
+            if (cardText) {
+                copyToClipboard(cardText);
+            }
+        });
     });
 });
