@@ -152,11 +152,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
                     <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
                 </div>
-                <button class="copy-btn" data-card="${card.displayCard}"><i class="fas fa-copy"></i></button>
+                <button class="copy-btn" title="Copy Card"><i class="fas fa-copy"></i></button>
             </div>
         `;
-        
-        // Add the result to the DOM first
+        // Add event listener to the copy button
+        const copyButton = resultDiv.querySelector('.copy-btn');
+        copyButton.addEventListener('click', function() {
+            copyToClipboard(card.displayCard);
+        });
         resultsList.insertBefore(resultDiv, resultsList.firstChild);
         if (resultsList.classList.contains('empty-state')) {
             resultsList.classList.remove('empty-state');
@@ -240,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navigator.clipboard.writeText(text).then(() => {
             Swal.fire({
                 toast: true, position: 'top-end', icon: 'success',
-                title: 'Copied!', showConfirmButton: false, timer: 1500
+                title: 'Card Copied!', showConfirmButton: false, timer: 1500
             });
         }).catch(err => {
             console.error('Failed to copy: ', err);
@@ -785,24 +788,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUserActivity() {
         console.log("Updating user activity at", new Date().toISOString());
         
-        // Skip if an update is already in progress
+        // Cancel any previous request if still pending
         if (window.activityRequest) {
-            console.log("Previous activity request still pending, skipping...");
-            return;
+            window.activityRequest.abort();
         }
         
         // Create a new AbortController for this request
         const controller = new AbortController();
         window.activityRequest = controller;
         
-        // Set a longer timeout (30 seconds) to prevent premature abortion
+        // Set a timeout to abort the request after 10 seconds
         const timeoutId = setTimeout(() => {
             if (window.activityRequest === controller) {
                 controller.abort();
                 window.activityRequest = null;
-                console.log("Activity request timed out after 30 seconds");
             }
-        }, 30000);
+        }, 10000);
         
         fetch('/update_activity.php', {
             method: 'GET',
@@ -810,7 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
+                'Cache-Control': 'no-cache'
             }
         })
         .then(response => {
@@ -876,7 +877,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.error('Activity update error:', error);
             
+            // Only show error message if it's not an abort
             if (error.name !== 'AbortError') {
+                // Show user-friendly error message
                 let errorMessage = 'Error fetching online users';
                 
                 if (error.message.includes('Failed to fetch')) {
@@ -885,6 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage = 'Server error - please try again later';
                 }
                 
+                // Only show error toast if user is on the home page
                 if (document.getElementById('page-home').classList.contains('active')) {
                     Swal.fire({
                         toast: true,
@@ -1012,16 +1016,12 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUserActivity();
         
         // Set up interval to update every 25 seconds
-        activityUpdateInterval = setInterval(() => {
-            if (!window.activityRequest) {
-                updateUserActivity();
-            }
-        }, 25000);
+        activityUpdateInterval = setInterval(updateUserActivity, 25000);
         
         // Update on user interaction, but not more than once every 25 seconds
         $(document).on('click mousemove keypress scroll', function() {
             const now = new Date().getTime();
-            if (now - lastActivityUpdate >= 25000 && !window.activityRequest) {
+            if (now - lastActivityUpdate >= 25000) {
                 console.log("User interaction detected, updating activity...");
                 updateUserActivity();
                 lastActivityUpdate = now;
@@ -1175,15 +1175,5 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize activity updates
         initializeActivityUpdates();
-        
-        // Add event delegation for copy buttons
-        $(document).on('click', '.copy-btn', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const cardText = $(this).data('card');
-            if (cardText) {
-                copyToClipboard(cardText);
-            }
-        });
     });
 });
