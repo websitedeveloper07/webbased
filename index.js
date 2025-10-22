@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdSB1c2Uga3Lwn5iC';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -371,58 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return { status, message };
     }
 
-    // Create a helper function to make requests to the /gate/ folder with API key
-    function makeGateRequest(url, method, data, callback) {
-        // Always include the API key in the payload
-        if (method === 'POST') {
-            // For POST requests, add the API key to the FormData
-            if (data instanceof FormData) {
-                data.append('LUND', API_KEY);
-            } else if (typeof data === 'object') {
-                data.LUND = API_KEY;
-            }
-        } else if (method === 'GET') {
-            // For GET requests, add the API key as a query parameter
-            const separator = url.includes('?') ? '&' : '?';
-            url = `${url}${separator}LUND=${encodeURIComponent(API_KEY)}`;
-        }
-
-        // Create a new XMLHttpRequest object
-        const xhr = new XMLHttpRequest();
-        
-        // Configure the request
-        xhr.open(method, url, true);
-        xhr.timeout = 300000; // 5 minutes timeout
-        
-        // Set up event handlers
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                callback(null, xhr.responseText);
-            } else {
-                callback(new Error(`HTTP error! status: ${xhr.status}`), xhr.responseText);
-            }
-        };
-        
-        xhr.onerror = function() {
-            callback(new Error('Network error'), null);
-        };
-        
-        xhr.ontimeout = function() {
-            callback(new Error('Request timeout'), null);
-        };
-        
-        // Send the request
-        if (method === 'POST' && data instanceof FormData) {
-            xhr.send(data);
-        } else if (method === 'POST' && typeof data === 'object') {
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify(data));
-        } else {
-            xhr.send();
-        }
-    }
-
-    // Card processing function - Using the helper function
+    // Card processing function
     async function processCard(card, controller, retryCount = 0) {
         if (!isProcessing) return null;
 
@@ -440,34 +388,65 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
             console.log(`Starting request for card: ${card.displayCard}`);
 
-            // Use the helper function to make the request
-            makeGateRequest(selectedGateway, 'POST', formData, function(error, response) {
-                if (error) {
-                    $('#statusLog').text(`Error on card: ${card.displayCard} - ${error.message}`);
-                    console.error(`Error for card: ${card.displayCard}`, error);
+            $.ajax({
+                url: selectedGateway,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                timeout: 300000,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener("progress", function(evt) {
+                        if (evt.lengthComputable) {
+                            const percentComplete = evt.loaded / evt.total;
+                            // You could update a progress bar here if needed
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    const parsedResponse = parseGatewayResponse(response);
                     
-                    if (retryCount < MAX_RETRIES && isProcessing) {
+                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                    resolve({
+                        status: parsedResponse.status,
+                        response: parsedResponse.message,
+                        card: card,
+                        displayCard: card.displayCard
+                    });
+                },
+                error: function(xhr) {
+                    $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
+                    console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+                    
+                    let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
+                    
+                    if (xhr.responseText) {
+                        try {
+                            const errorJson = JSON.parse(xhr.responseText);
+                            if (errorJson) {
+                                const parsedError = parseGatewayResponse(errorJson);
+                                errorResponse = parsedError.message;
+                            }
+                        } catch (e) {
+                            errorResponse = xhr.responseText;
+                        }
+                    }
+                    
+                    if (xhr.statusText === 'abort') {
+                        resolve(null);
+                    } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
                         setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                     } else {
                         resolve({
                             status: 'DECLINED',
-                            response: `Declined [${error.message}]`,
+                            response: errorResponse,
                             card: card,
                             displayCard: card.displayCard
                         });
                     }
-                    return;
                 }
-
-                const parsedResponse = parseGatewayResponse(response);
-                
-                console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
-                resolve({
-                    status: parsedResponse.status,
-                    response: parsedResponse.message,
-                    card: card,
-                    displayCard: card.displayCard
-                });
             });
         });
     }
@@ -694,43 +673,35 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#genLoader').show();
         $('#genStatusLog').text('Generating cards...');
         
-        // Use the helper function to make the request
-        const url = '/gate/ccgen.php?bin=' + encodeURIComponent(params) + '&num=' + numCards + '&format=0';
-        
-        makeGateRequest(url, 'GET', null, function(error, response) {
-            $('#genLoader').hide();
-            
-            if (error) {
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Failed to generate cards: ' + error.message,
-                    icon: 'error',
-                    confirmButtonColor: '#ec4899'
-                });
-                $('#genStatusLog').text('Error: ' + error.message);
-                return;
-            }
-            
-            try {
-                const data = JSON.parse(response);
+        $.ajax({
+            url: '/gate/ccgen.php',
+            method: 'GET',
+            data: {
+                bin: params,
+                num: numCards,
+                format: 0
+            },
+            dataType: 'json',
+            success: function(response) {
+                $('#genLoader').hide();
                 
-                if (data.cards && Array.isArray(data.cards) && data.cards.length > 0) {
-                    $('#genStatusLog').text(`Generated ${data.cards.length} cards successfully!`);
-                    displayGeneratedCards(data.cards);
+                if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
+                    $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
+                    displayGeneratedCards(response.cards);
                     Swal.fire({
                         title: 'Success!',
-                        text: `Generated ${data.cards.length} cards`,
+                        text: `Generated ${response.cards.length} cards`,
                         icon: 'success',
                         confirmButtonColor: '#10b981'
                     });
-                } else if (data.error) {
+                } else if (response.error) {
                     Swal.fire({
                         title: 'Error!',
-                        text: data.error,
+                        text: response.error,
                         icon: 'error',
                         confirmButtonColor: '#ec4899'
                     });
-                    $('#genStatusLog').text('Error: ' + data.error);
+                    $('#genStatusLog').text('Error: ' + response.error);
                 } else {
                     $('#genStatusLog').text('No cards generated');
                     Swal.fire({
@@ -740,15 +711,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         confirmButtonColor: '#f59e0b'
                     });
                 }
-            } catch (e) {
-                console.error('Failed to parse response:', e);
+            },
+            error: function(xhr) {
+                $('#genLoader').hide();
+                $('#genStatusLog').text('Error: ' + xhr.statusText);
                 Swal.fire({
                     title: 'Error!',
-                    text: 'Failed to parse server response',
+                    text: 'Failed to generate cards: ' + xhr.statusText,
                     icon: 'error',
                     confirmButtonColor: '#ec4899'
                 });
-                $('#genStatusLog').text('Error: Failed to parse server response');
             }
         });
     }
@@ -792,89 +764,101 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 10000);
         
-        // Use the helper function to make the request
-        makeGateRequest('https://cxchk.site/update_activity.php', 'GET', null, function(error, response) {
+        fetch('https://cxchk.site/update_activity.php', {
+            method: 'GET',
+            signal: controller.signal,
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        })
+        .then(response => {
             // Clear the timeout
             clearTimeout(timeoutId);
             window.activityRequest = null;
             
-            if (error) {
-                console.error('Activity update error:', error);
-                
-                // Only show error message if it's not an abort
-                if (error.name !== 'AbortError') {
-                    // Show user-friendly error message
-                    let errorMessage = 'Error fetching online users';
-                    
-                    if (error.message.includes('Failed to fetch')) {
-                        errorMessage = 'Network error - please check your connection';
-                    } else if (error.message.includes('HTTP error')) {
-                        errorMessage = 'Server error - please try again later';
-                    }
-                    
-                    // Only show error toast if user is on the home page
-                    if (document.getElementById('page-home').classList.contains('active')) {
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'error',
-                            title: errorMessage,
-                            showConfirmButton: false,
-                            timer: 3000
-                        });
-                    }
-                }
-                return;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            try {
-                const data = JSON.parse(response);
-                console.log("Activity update response:", data);
-                
-                if (data.success) {
-                    // Update online count
-                    const onlineCountElement = document.getElementById('onlineCount');
-                    if (onlineCountElement) {
-                        onlineCountElement.textContent = data.count;
-                        console.log("Updated online count to:", data.count);
-                    } else {
-                        console.error("Element #onlineCount not found");
-                    }
-                    
-                    // Update current user profile
-                    const currentUser = data.users.find(user => user.is_online);
-                    if (currentUser) {
-                        // Update profile picture
-                        const profilePicElement = document.querySelector('.user-avatar');
-                        if (profilePicElement) {
-                            profilePicElement.src = currentUser.photo_url || 
-                                `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
-                            console.log("Updated profile picture");
-                        } else {
-                            console.error("Element .user-avatar not found");
-                        }
-                        
-                        // Update user name
-                        const userNameElement = document.querySelector('.user-name');
-                        if (userNameElement) {
-                            userNameElement.textContent = currentUser.name || 'Unknown User';
-                            console.log("Updated user name to:", currentUser.name);
-                        } else {
-                            console.error("Element .user-name not found");
-                        }
-                    } else {
-                        console.error("Current user not found in response");
-                    }
-                    
-                    // Display online users
-                    displayOnlineUsers(data.users);
-                    
+            return response.json();
+        })
+        .then(data => {
+            console.log("Activity update response:", data);
+            
+            if (data.success) {
+                // Update online count
+                const onlineCountElement = document.getElementById('onlineCount');
+                if (onlineCountElement) {
+                    onlineCountElement.textContent = data.count;
+                    console.log("Updated online count to:", data.count);
                 } else {
-                    console.error('Activity update failed:', data.message || 'No error message provided');
-                    // Don't show error toast for normal operation
+                    console.error("Element #onlineCount not found");
                 }
-            } catch (e) {
-                console.error('Failed to parse activity response:', e);
+                
+                // Update current user profile
+                const currentUser = data.users.find(user => user.is_online);
+                if (currentUser) {
+                    // Update profile picture
+                    const profilePicElement = document.querySelector('.user-avatar');
+                    if (profilePicElement) {
+                        profilePicElement.src = currentUser.photo_url || 
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name[0] || 'U')}&background=3b82f6&color=fff&size=64`;
+                        console.log("Updated profile picture");
+                    } else {
+                        console.error("Element .user-avatar not found");
+                    }
+                    
+                    // Update user name
+                    const userNameElement = document.querySelector('.user-name');
+                    if (userNameElement) {
+                        userNameElement.textContent = currentUser.name || 'Unknown User';
+                        console.log("Updated user name to:", currentUser.name);
+                    } else {
+                        console.error("Element .user-name not found");
+                    }
+                } else {
+                    console.error("Current user not found in response");
+                }
+                
+                // Display online users
+                displayOnlineUsers(data.users);
+                
+            } else {
+                console.error('Activity update failed:', data.message || 'No error message provided');
+                // Don't show error toast for normal operation
+            }
+        })
+        .catch(error => {
+            // Clear the timeout
+            clearTimeout(timeoutId);
+            window.activityRequest = null;
+            
+            console.error('Activity update error:', error);
+            
+            // Only show error message if it's not an abort
+            if (error.name !== 'AbortError') {
+                // Show user-friendly error message
+                let errorMessage = 'Error fetching online users';
+                
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Network error - please check your connection';
+                } else if (error.message.includes('HTTP error')) {
+                    errorMessage = 'Server error - please try again later';
+                }
+                
+                // Only show error toast if user is on the home page
+                if (document.getElementById('page-home').classList.contains('active')) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: errorMessage,
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                }
             }
         });
     }
