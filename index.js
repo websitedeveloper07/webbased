@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isStopping = false;
     let activeRequests = 0;
     let cardQueue = [];
-    const MAX_CONCURRENT = 3;
+    const MAX_CONCURRENT = 10;
     const MAX_RETRIES = 2;
     let abortControllers = [];
     let totalCards = 0;
