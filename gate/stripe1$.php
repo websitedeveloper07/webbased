@@ -27,68 +27,22 @@ if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated']
 // Set content type to JSON
 header('Content-Type: application/json');
 
-// Function to refresh session cookies
-function refreshSession() {
-    $url = 'https://www.onamissionkc.org/api/login'; // Update with actual login endpoint
-    $credentials = [
-        'email' => 'your_email@example.com', // Update with actual email
-        'password' => 'your_password' // Update with actual password
-    ];
-
-    $headers = [
-        'authority: www.onamissionkc.org',
-        'accept: application/json',
-        'accept-language: en-US,en;q=0.9',
-        'content-type: application/json',
-        'origin: https://www.onamissionkc.org',
-        'referer: https://www.onamissionkc.org/login',
-        'user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
-    ];
-
-    $payload = json_encode($credentials);
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_HEADER, 1); // Include headers in response
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode != 200) {
-        error_log("Session refresh failed: HTTP $httpCode");
-        return null;
-    }
-
-    // Extract cookies from response headers
-    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-    $header = substr($response, 0, $headerSize);
-    $cookies = [];
-
-    // Parse cookies from headers
-    preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $header, $matches);
-    foreach ($matches[1] as $item) {
-        $cookieParts = explode('=', $item, 2);
-        $cookies[$cookieParts[0]] = $cookieParts[1];
-    }
-
-    // Format cookies for curl
-    $cookieString = '';
-    foreach ($cookies as $name => $value) {
-        $cookieString .= $name . '=' . $value . '; ';
-    }
-
-    return rtrim($cookieString, '; ');
-}
-
 // Function to create a donation cart and return its token
-function createDonationCart($cookies) {
+function createDonationCart() {
     $url = 'https://www.onamissionkc.org/api/v1/fund-service/websites/62fc11be71fa7a1da8ed62f8/donations/funds/6acfdbc6-2deb-42a5-bdf2-390f9ac5bc7b';
     
+    // Using the same cookies as before
+    $cookies = 'crumb=BYRbHlJxSO4PZjU2MDU5YzlmYjc1MWZjNjkxY2M0NTIwNDdkNmUx; ' .
+               'CART=tJR2kxhb_HZMnBeUPbTBQ32JZnpEv7UhNOuyOOVe; ' .
+               'hasCart=true; ' .
+               '__stripe_mid=fc26ede9-6f69-4fd8-b4f7-386dae9c5244177313; ' .
+               'ss_cvr=63714000-1d58-4121-806c-904836745ca5|1761152654269|1761152654269|1761154790175|2; ' .
+               'ss_cvt=1761154790175; ' .
+               '__stripe_sid=6160dc1b-41b8-44ca-8ca2-0d290f1b1bd56b2330; ' .
+               'SiteUserSecureAuthToken=MXw5ZmFkYjU5Ny05ODA0LTRhN2ItOGVlNy00ZGVkNDk1MjMyOGZ8UTlneXVXQ2xUanlULWl1U2sxTmdaTHBpZ3U4QnloYkItRDIxQnA4bFZXYVlNSlNwNXlVaHhOSVYxSy1Kd0ZzbQ; ' .
+               'SiteUserInfo=%7B%22authenticated%22%3Atrue%2C%22lastAuthenticatedOn%22%3A%222025-10-22T18%3A06%3A23.771Z%22%2C%22siteUserId%22%3A%2268f90ebd9b1f1d028af94072%22%2C%22firstName%22%3A%22Rocky%22%7D; ' .
+               'siteUserCrumb=Y8IivSjWX4camqD0znkkk9qNeyZNI4YiENbz-_oda6FvZGKnqVefr68NMWci2RoIBVVWXDcii4C8RSjxNWdbLNssugrOcWCg57MhmMEUYxSY2NEp3-Jm3gcclnX6rJn0';
+
     $headers = [
         'authority: www.onamissionkc.org',
         'accept: application/json',
@@ -125,7 +79,7 @@ function createDonationCart($cookies) {
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFPEER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -158,14 +112,8 @@ function getCartToken() {
         return $_SESSION['cart_token'];
     }
     
-    // Refresh session to get fresh cookies
-    $cookies = refreshSession();
-    if (!$cookies) {
-        return null;
-    }
-    
     // Create new cart token
-    $cartToken = createDonationCart($cookies);
+    $cartToken = createDonationCart();
     if ($cartToken) {
         $_SESSION['cart_token'] = $cartToken;
         return $cartToken;
@@ -227,7 +175,7 @@ curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFPEER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
  $response = curl_exec($ch);
  $apx = json_decode($response, true);
@@ -243,12 +191,17 @@ if ($httpCode != 200 || !isset($apx['id'])) {
  $pid = $apx["id"];
 
 // Second API call to merchant
-// Refresh session again to ensure fresh cookies
- $freshCookies = refreshSession();
-if (!$freshCookies) {
-    echo json_encode(['status' => 'ERROR', 'message' => 'Failed to refresh session']);
-    exit;
-}
+// Using the same cookies as before
+ $cookies = 'crumb=BYRbHlJxSO4PZjU2MDU5YzlmYjc1MWZjNjkxY2M0NTIwNDdkNmUx; ' .
+           'CART=tJR2kxhb_HZMnBeUPbTBQ32JZnpEv7UhNOuyOOVe; ' .
+           'hasCart=true; ' .
+           '__stripe_mid=fc26ede9-6f69-4fd8-b4f7-386dae9c5244177313; ' .
+           'ss_cvr=63714000-1d58-4121-806c-904836745ca5|1761152654269|1761152654269|1761154790175|2; ' .
+           'ss_cvt=1761154790175; ' .
+           '__stripe_sid=6160dc1b-41b8-44ca-8ca2-0d290f1b1bd56b2330; ' .
+           'SiteUserSecureAuthToken=MXw5ZmFkYjU5Ny05ODA0LTRhN2ItOGVlNy00ZGVkNDk1MjMyOGZ8UTlneXVXQ2xUanlULWl1U2sxTmdaTHBpZ3U4QnloYkItRDIxQnA4bFZXYVlNSlNwNXlVaHhOSVYxSy1Kd0ZzbQ; ' .
+           'SiteUserInfo=%7B%22authenticated%22%3Atrue%2C%22lastAuthenticatedOn%22%3A%222025-10-22T18%3A06%3A23.771Z%22%2C%22siteUserId%22%3A%2268f90ebd9b1f1d028af94072%22%2C%22firstName%22%3A%22Rocky%22%7D; ' .
+           'siteUserCrumb=Y8IivSjWX4camqD0znkkk9qNeyZNI4YiENbz-_oda6FvZGKnqVefr68NMWci2RoIBVVWXDcii4C8RSjxNWdbLNssugrOcWCg57MhmMEUYxSY2NEp3-Jm3gcclnX6rJn0';
 
  $headers = [
     'authority: www.onamissionkc.org',
@@ -321,9 +274,9 @@ if (!$freshCookies) {
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-curl_setopt($ch, CURLOPT_COOKIE, $freshCookies);
+curl_setopt($ch, CURLOPT_COOKIE, $cookies);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFPEER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
  $response1 = curl_exec($ch);
  $apx1 = json_decode($response1, true);
