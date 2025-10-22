@@ -796,14 +796,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 10000);
         
-        console.log(`X-API-KEY header for update_activity: [REMOVED]`);
-        fetch('/update_activity.php', {
+        fetch('update_activity.php', {
             method: 'GET',
             signal: controller.signal,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
             }
         })
         .then(response => {
