@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdSB1c2Uga3Lwn5iC';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -381,6 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (normalizedYear.length === 2) {
                 normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
             }
+            formData.append('api_key', API_KEY);  // Add this line
             formData.append('card[number]', card.number);
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
@@ -394,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Configure the request
             xhr.open('POST', selectedGateway, true);
-            xhr.setRequestHeader('X-API-KEY', API_KEY);
+            // Remove this line: xhr.setRequestHeader('X-API-KEY', API_KEY);
             xhr.timeout = 300000; // 5 minutes timeout
             
             // Set up event handlers
@@ -708,9 +709,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const xhr = new XMLHttpRequest();
         
         // Configure the request
-        const url = '/gate/ccgen.php?bin=' + encodeURIComponent(params) + '&num=' + numCards + '&format=0';
+        const url = '/gate/ccgen.php?bin=' + encodeURIComponent(params) + '&num=' + numCards + '&format=0&api_key=' + encodeURIComponent(API_KEY);
         xhr.open('GET', url, true);
-        xhr.setRequestHeader('X-API-KEY', API_KEY);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.timeout = 300000; // 5 minutes timeout
         
@@ -834,14 +834,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 10000);
         
-        fetch('https://cxchk.site/update_activity.php', {
+        fetch('https://cxchk.site/update_activity.php?api_key=' + encodeURIComponent(API_KEY), {
             method: 'GET',
             signal: controller.signal,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-                'X-API-KEY': API_KEY
+                'Cache-Control': 'no-cache'
             }
         })
         .then(response => {
