@@ -371,16 +371,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return { status, message };
     }
 
-    // Card processing function
+    // Card processing function - Using fetch API instead of XMLHttpRequest
     async function processCard(card, controller, retryCount = 0) {
         if (!isProcessing) return null;
 
-        return new Promise((resolve) => {
-            const formData = new FormData();
+        try {
             let normalizedYear = card.exp_year;
             if (normalizedYear.length === 2) {
                 normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
             }
+
+            // Create form data
+            const formData = new FormData();
             formData.append('api_key', API_KEY);  // Add to form data as backup
             formData.append('card[number]', card.number);
             formData.append('card[exp_month]', card.exp_month);
@@ -390,101 +392,56 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
             console.log(`Starting request for card: ${card.displayCard}`);
 
-            // Create a new XMLHttpRequest object
-            const xhr = new XMLHttpRequest();
+            // Create a new AbortController for this request
+            const requestController = new AbortController();
+            abortControllers.push(requestController);
+
+            // Use fetch API with headers
+            const response = await fetch(selectedGateway, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-API-KEY': API_KEY,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: requestController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const responseText = await response.text();
+            const parsedResponse = parseGatewayResponse(responseText);
             
-            // Configure the request
-            xhr.open('POST', selectedGateway, true);
-            
-            // Set headers BEFORE sending the request
-            xhr.setRequestHeader('X-API-KEY', API_KEY);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            
-            xhr.timeout = 300000; // 5 minutes timeout
-            
-            // Set up event handlers
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    const response = xhr.responseText;
-                    const parsedResponse = parseGatewayResponse(response);
-                    
-                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
-                    resolve({
-                        status: parsedResponse.status,
-                        response: parsedResponse.message,
-                        card: card,
-                        displayCard: card.displayCard
-                    });
-                } else {
-                    $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
-                    console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                    
-                    let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
-                    
-                    if (xhr.responseText) {
-                        try {
-                            const errorJson = JSON.parse(xhr.responseText);
-                            if (errorJson) {
-                                const parsedError = parseGatewayResponse(errorJson);
-                                errorResponse = parsedError.message;
-                            }
-                        } catch (e) {
-                            errorResponse = xhr.responseText;
-                        }
-                    }
-                    
-                    if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                        setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                    } else {
-                        resolve({
-                            status: 'DECLINED',
-                            response: errorResponse,
-                            card: card,
-                            displayCard: card.displayCard
-                        });
-                    }
-                }
+            console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+            return {
+                status: parsedResponse.status,
+                response: parsedResponse.message,
+                card: card,
+                displayCard: card.displayCard
             };
+        } catch (error) {
+            $('#statusLog').text(`Error on card: ${card.displayCard} - ${error.message}`);
+            console.error(`Error for card: ${card.displayCard}`, error);
             
-            xhr.onerror = function() {
-                $('#statusLog').text(`Error on card: ${card.displayCard} - Network error`);
-                console.error(`Network error for card: ${card.displayCard}`);
-                
-                if (retryCount < MAX_RETRIES && isProcessing) {
-                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                } else {
-                    resolve({
-                        status: 'DECLINED',
-                        response: 'Declined [Network error]',
-                        card: card,
-                        displayCard: card.displayCard
-                    });
-                }
-            };
+            if (error.name === 'AbortError') {
+                return null;
+            }
             
-            xhr.ontimeout = function() {
-                $('#statusLog').text(`Error on card: ${card.displayCard} - Request timeout`);
-                console.error(`Timeout for card: ${card.displayCard}`);
-                
-                if (retryCount < MAX_RETRIES && isProcessing) {
-                    setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                } else {
-                    resolve({
-                        status: 'DECLINED',
-                        response: 'Declined [Request timeout]',
-                        card: card,
-                        displayCard: card.displayCard
-                    });
-                }
-            };
-            
-            xhr.onabort = function() {
-                resolve(null);
-            };
-            
-            // Send the request
-            xhr.send(formData);
-        });
+            if (retryCount < MAX_RETRIES && isProcessing) {
+                console.log(`Retrying card ${card.displayCard}, attempt ${retryCount + 1}`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return processCard(card, controller, retryCount + 1);
+            } else {
+                return {
+                    status: 'DECLINED',
+                    response: `Declined [${error.message}]`,
+                    card: card,
+                    displayCard: card.displayCard
+                };
+            }
+        }
     }
 
     // Main card processing function
@@ -556,13 +513,11 @@ document.addEventListener('DOMContentLoaded', function() {
             while (activeRequests < MAX_CONCURRENT && cardQueue.length > 0 && isProcessing) {
                 const card = cardQueue.shift();
                 activeRequests++;
-                const controller = new AbortController();
-                abortControllers.push(controller);
 
                 await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
                 requestIndex++;
 
-                processCard(card, controller).then(result => {
+                processCard(card).then(result => {
                     if (result === null) return;
 
                     activeRequests--;
