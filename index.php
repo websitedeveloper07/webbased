@@ -1,9 +1,5 @@
 <?php
-// -------------------------------
-// SESSION MANAGER
-// -------------------------------
-require_once 'session_manager.php';
- $session = SessionManager::getInstance();
+session_start();
 
 // MAINTENANCE MODE CHECK
 // Maintenance flag file path - using absolute path for consistency
@@ -19,7 +15,7 @@ if (file_exists(MAINTENANCE_FLAG)) {
         // Continue with normal execution
     } else {
         // Check if admin is logged in
-        if ($session->isLoggedIn() && $_SESSION['user_role'] === 'admin') {
+        if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
             // Admin can continue - bypass normal user authentication
             $adminBypass = true;
         } else {
@@ -40,8 +36,8 @@ error_log("Checking session in index.php: " . json_encode($_SESSION));
 
 // Check if user is authenticated OR if admin is authenticated during maintenance
  $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
-if (!$isAdminDuringMaintenance && !$session->isLoggedIn()) {
-    error_log("Redirecting to login.php: Session missing or invalid");
+if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
+    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
     header('Location: login.php');
     exit;
 }
@@ -63,10 +59,9 @@ if (file_exists($envFile)) {
 }
 
 // Get user information for display
- $userData = $session->getCurrentUser();
- $userName = $userData['data']['name'] ?? 'User';
- $userPhotoUrl = $userData['data']['photo_url'] ?? null;
- $userUsername = $userData['data']['username'] ?? null;
+ $userName = $_SESSION['user']['name'] ?? 'User';
+ $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
+ $userUsername = $_SESSION['user']['username'] ?? null;
 
 // Generate avatar URL if no photo is available
 if (empty($userPhotoUrl)) {
