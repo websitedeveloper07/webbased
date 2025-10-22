@@ -156,14 +156,21 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Remove empty state if it exists
+        // Add the result to the DOM first
         if (resultsList.classList.contains('empty-state')) {
             resultsList.classList.remove('empty-state');
             resultsList.innerHTML = '';
         }
-        
-        // Add the result to the DOM
         resultsList.insertBefore(resultDiv, resultsList.firstChild);
+        
+        // Now add the event listener after the element is in the DOM
+        const copyButton = resultDiv.querySelector('.copy-btn');
+        copyButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cardText = this.getAttribute('data-card');
+            copyToClipboard(cardText);
+        });
         
         // Add to activity feed
         addActivityItem(card, status);
@@ -1199,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize activity updates
         initializeActivityUpdates();
         
-        // Add event delegation for copy buttons
+        // Add event delegation for copy buttons as a backup
         $(document).on('click', '.copy-btn', function(e) {
             e.preventDefault();
             e.stopPropagation();
