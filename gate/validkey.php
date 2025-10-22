@@ -14,7 +14,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Hardcoded API key
-$expectedApiKey = 'dGVyZSBtdW1teSBraSBqYWkga3lhIGNoZWV6IGJuYWkgaGFpIHJhc21hbGkgaGFpIGpha2UgdGVyaSBtYW1pIGtvIGJvbCB0ZXJlIHBhcGEga2EgbHVuZCBraGFkYSBuYWhpIGh1YQ';
+$expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
 // Validate X-API-KEY header
 function validateApiKey() {
