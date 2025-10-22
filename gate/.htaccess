@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /gate/
+
+# Prevent direct access to gatekeeper.php
+RewriteCond %{REQUEST_URI} ^/gate/gatekeeper\.php$ [NC]
+RewriteRule ^ - [F,L]
+
+# Route all PHP requests through gatekeeper.php
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} \.php$ [NC]
+RewriteRule ^(.*\.php)$ gatekeeper.php [L,QSA]
