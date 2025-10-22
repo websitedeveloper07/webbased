@@ -1,9 +1,8 @@
-// Wrap everything in a DOMContentLoaded event to ensure the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    let selectedGateway = 'gate/stripe1$.php';
+    let selectedGateway = '/proxy.php'; // Changed to proxy.php
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
@@ -21,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -375,84 +373,66 @@ document.addEventListener('DOMContentLoaded', function() {
     async function processCard(card, controller, retryCount = 0) {
         if (!isProcessing) return null;
 
-        return new Promise((resolve) => {
-            const formData = new FormData();
-            let normalizedYear = card.exp_year;
-            if (normalizedYear.length === 2) {
-                normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+        const payload = {
+            card: {
+                number: card.number,
+                exp_month: card.exp_month,
+                exp_year: card.exp_year.length === 2 ? (parseInt(card.exp_year) < 50 ? '20' : '19') + card.exp_year : card.exp_year,
+                cvc: card.cvv
             }
-            formData.append('card[number]', card.number);
-            formData.append('card[exp_month]', card.exp_month);
-            formData.append('card[exp_year]', normalizedYear);
-            formData.append('card[cvc]', card.cvv);
+        };
 
-            $('#statusLog').text(`Processing card: ${card.displayCard}`);
-            console.log(`Starting request for card: ${card.displayCard}`);
+        $('#statusLog').text(`Processing card: ${card.displayCard}`);
+        console.log(`Starting request for card: ${card.displayCard}, Attempt: ${retryCount + 1}`);
 
-            $.ajax({
+        try {
+            const response = await $.ajax({
                 url: selectedGateway,
                 method: 'POST',
-                data: formData,
+                data: JSON.stringify(payload),
+                contentType: 'application/json',
                 processData: false,
-                contentType: false,
-                timeout: 300000,
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-API-KEY', API_KEY);
-                },
-                xhr: function() {
-                    const xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener("progress", function(evt) {
-                        if (evt.lengthComputable) {
-                            const percentComplete = evt.loaded / evt.total;
-                            // You could update a progress bar here if needed
-                        }
-                    }, false);
-                    return xhr;
-                },
-                success: function(response) {
-                    const parsedResponse = parseGatewayResponse(response);
-                    
-                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
-                    resolve({
-                        status: parsedResponse.status,
-                        response: parsedResponse.message,
-                        card: card,
-                        displayCard: card.displayCard
-                    });
-                },
-                error: function(xhr) {
-                    $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
-                    console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
-                    
-                    let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
-                    
-                    if (xhr.responseText) {
-                        try {
-                            const errorJson = JSON.parse(xhr.responseText);
-                            if (errorJson) {
-                                const parsedError = parseGatewayResponse(errorJson);
-                                errorResponse = parsedError.message;
-                            }
-                        } catch (e) {
-                            errorResponse = xhr.responseText;
-                        }
-                    }
-                    
-                    if (xhr.statusText === 'abort') {
-                        resolve(null);
-                    } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
-                        setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                    } else {
-                        resolve({
-                            status: 'DECLINED',
-                            response: errorResponse,
-                            card: card,
-                            displayCard: card.displayCard
-                        });
-                    }
-                }
+                timeout: 30000, // Reduced to 30 seconds
+                signal: controller.signal // Use AbortController for cancellation
             });
-        });
+
+            const parsedResponse = parseGatewayResponse(response);
+            console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+            return {
+                status: parsedResponse.status,
+                response: parsedResponse.message,
+                card: card,
+                displayCard: card.displayCard
+            };
+        } catch (xhr) {
+            $('#statusLog').text(`Error on card: ${card.displayCard} - ${xhr.statusText} (HTTP ${xhr.status})`);
+            console.error(`Error for card: ${card.displayCard}, Status: ${xhr.status}, Text: ${xhr.statusText}, Response: ${xhr.responseText}`);
+
+            let errorResponse = `Declined [Request failed: ${xhr.statusText} (HTTP ${xhr.status})]`;
+            if (xhr.responseText) {
+                try {
+                    const errorJson = JSON.parse(xhr.responseText);
+                    const parsedError = parseGatewayResponse(errorJson);
+                    errorResponse = parsedError.message;
+                } catch (e) {
+                    errorResponse = xhr.responseText;
+                }
+            }
+
+            if (xhr.statusText === 'abort') {
+                return null;
+            } else if ((xhr.status === 0 || xhr.status >= 500) && retryCount < MAX_RETRIES && isProcessing) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return processCard(card, controller, retryCount + 1);
+            } else {
+                return {
+                    status: 'DECLINED',
+                    response: errorResponse,
+                    card: card,
+                    displayCard: card.displayCard
+                };
+            }
+        }
     }
 
     // Main card processing function
@@ -686,9 +666,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 format: 0
             },
             dataType: 'json',
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-API-KEY', API_KEY);
-            },
             success: function(response) {
                 $('#genLoader').hide();
                 
@@ -776,9 +753,8 @@ document.addEventListener('DOMContentLoaded', function() {
             signal: controller.signal,
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-                'X-API-KEY': API_KEY
+                'Content-Type: application/json',
+                'Cache-Control: 'no-cache'
             }
         })
         .then(response => {
@@ -846,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Activity update error:', error);
             
             // Only show error message if it's not an abort
-            if (error.name !== 'AbortError') {
+            if (error.name26 !== 'AbortError') {
                 // Show user-friendly error message
                 let errorMessage = 'Error fetching online users';
                 
