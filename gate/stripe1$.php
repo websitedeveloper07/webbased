@@ -8,25 +8,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Get JSON input
-$input = json_decode(file_get_contents('php://input'), true);
-$cardNumber = $input['card']['number'] ?? '';
-$expMonth = $input['card']['exp_month'] ?? '';
-$expYear = $input['card']['exp_year'] ?? '';
-$cvc = $input['card']['cvc'] ?? '';
+$cardNumber = $_POST['card']['number'] ?? '';
+$expMonth = $_POST['card']['exp_month'] ?? '';
+$expYear = $_POST['card']['exp_year'] ?? '';
+$cvc = $_POST['card']['cvc'] ?? '';
 
-// Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
     http_response_code(400);
     echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
     exit;
 }
-
-// Format year to 4 digits if needed
-if (strlen($expYear) == 2) {
-    $expYear = '20' . $expYear;
-}
-
 // First API call to create payment method
  $headers = [
     'authority: api.stripe.com',
