@@ -11,7 +11,7 @@ require_once 'session_manager.php';
  $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
  $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
  $telegramBotUsername = 'CardXchk_LOGBOT';
- $baseUrl = 'http://cxchk.site';
+ $baseUrl = 'https://cxchk.site'; // Must use HTTPS and match bot domain
 
 // -------------------------------
 // DATABASE CONNECTION
@@ -71,8 +71,7 @@ function verifyTelegramData(array $data, string $botToken): bool {
 // LOGOUT
 // -------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    session_unset();
-    session_destroy();
+    $session->destroySession();
     header('Location: ' . $baseUrl . '/login.php');
     exit;
 }
@@ -126,7 +125,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
 // -------------------------------
 // AUTO-REDIRECT IF LOGGED IN
 // -------------------------------
-if (isset($_SESSION['user'])) {
+if ($session->isLoggedIn()) {
     header('Location: ' . $baseUrl . '/index.php');
     exit;
 }
@@ -572,6 +571,20 @@ if (isset($_SESSION['user'])) {
             gap: 8px;
         }
 
+        /* Security Messages */
+        .security-message {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #ffc107;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* Telegram Widget Container */
         .telegram-section {
             display: flex;
@@ -775,6 +788,17 @@ if (isset($_SESSION['user'])) {
                 <p>Authenticate via Telegram</p>
             </div>
 
+            <?php 
+            // Display session timeout message
+            echo $session->handleTimeout();
+            
+            // Display security alert message
+            echo $session->handleSecurityAlert();
+            
+            // Display authentication message
+            echo $session->handleAuthMessage();
+            ?>
+
             <?php if (!empty($error)): ?>
                 <div class="error">
                     <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
@@ -787,12 +811,14 @@ if (isset($_SESSION['user'])) {
             <div class="telegram-section">
                 <div class="telegram-widget-container">
                     <div class="telegram-widget">
-                        <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
+                        <!-- Fixed Telegram widget with proper domain -->
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="<?= htmlspecialchars($telegramBotUsername) ?>"
                                 data-size="large"
                                 data-auth-url="<?= $baseUrl ?>/login.php"
                                 data-request-access="write"
+                                data-userpic="true"
+                                data-radius="8"
                                 onload="console.log('Telegram widget loaded')"
                                 onerror="console.error('Telegram widget failed to load')"></script>
                     </div>
@@ -897,14 +923,14 @@ if (isset($_SESSION['user'])) {
                 }
             }, 2000);
             
-            // Handle Telegram Widget Loading - No fallback, no auto-retry, no error notification
-            // Just console error if widget fails to load
+            // Handle Telegram Widget Loading
             const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
             
             // Check if widget loaded after a delay
             setTimeout(() => {
                 if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
                     console.error('Telegram widget not loaded');
+                    // Optionally show a message to the user
                 }
             }, 3000);
         });
