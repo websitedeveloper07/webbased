@@ -1,0 +1,29 @@
+<?php
+// Prevent direct execution
+if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
+    http_response_code(403);
+    echo json_encode(['status' => 'ERROR', 'message' => 'Direct access forbidden']);
+    exit;
+}
+
+// Enable error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/error.log');
+
+// Hardcoded API key
+$expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+
+// Validate X-API-KEY header
+function validateApiKey() {
+    global $expectedApiKey;
+    $headers = getallheaders();
+    $apiKey = isset($headers['X-API-KEY']) ? $headers['X-API-KEY'] : null;
+
+    if ($apiKey !== $expectedApiKey) {
+        error_log("Unauthorized access attempt to " . basename($_SERVER['SCRIPT_FILENAME']) . ". Provided API key: " . ($apiKey ?? 'none'));
+        http_response_code(401);
+        echo json_encode(['status' => 'ERROR', 'message' => 'Invalid or missing API key']);
+        exit;
+    }
+}
+?>
