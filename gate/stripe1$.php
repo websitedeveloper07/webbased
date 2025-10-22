@@ -47,55 +47,6 @@ if (strlen($expYear) == 2) {
 // Initialize cookie jar for session continuity
 $cookieJar = tempnam(sys_get_temp_dir(), 'cookies');
 
-// Function to refresh session cookies
-function refreshSessionCookies($cookieJar) {
-    $authHeaders = [
-        'authority: www.onamissionkc.org',
-        'accept: application/json',
-        'accept-encoding: gzip, deflate, br, zstd',
-        'accept-language: en-US,en;q=0.9',
-        'content-type: application/json',
-        'origin: https://www.onamissionkc.org',
-        'referer: https://www.onamissionkc.org/login',
-        'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-        'sec-ch-ua-mobile: ?1',
-        'sec-ch-ua-model: "Nexus 5"',
-        'sec-ch-ua-platform: "Android"',
-        'sec-ch-ua-platform-version: "6.0"',
-        'sec-fetch-dest: empty',
-        'sec-fetch-mode: cors',
-        'sec-fetch-site: same-origin',
-        'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
-    ];
-
-    // Replace with actual authentication endpoint and payload
-    $authData = json_encode([
-        'email' => 'grogeh@gmail.com',
-        'password' => 'your_password_here', // Replace with actual credentials or token
-    ]);
-
-    $ch = curl_init('https://www.onamissionkc.org/api/login'); // Replace with actual login endpoint
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $authHeaders);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $authData);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieJar);
-    curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieJar);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    $response = curl_exec($ch);
-    $result = json_decode($response, true);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode != 200 || !isset($result['success'])) {
-        error_log("Failed to refresh session: " . ($result['error']['message'] ?? 'Unknown error'));
-        return false;
-    }
-
-    return true;
-}
-
 // Function to fetch a new cart token
 function fetchCartToken($cookieJar) {
     $cartHeaders = [
@@ -198,6 +149,12 @@ $pid = $apx["id"];
 
 // Function to make merchant API call
 function makeMerchantApiCall($cartToken, $pid, $cookieJar) {
+    $cookies = 'crumb=BZuPjds1rcltODIxYmZiMzc3OGI0YjkyMDM0YzZhM2RlNDI1MWE1; ' .
+               'ss_cvr=b5544939-8b08-4377-bd39-dfc7822c1376|1760724937850|1760724937850|1760724937850|1; ' .
+               'ss_cvt=1760724937850; ' .
+               '__stripe_mid=3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48; ' .
+               '__stripe_sid=9d45db81-2d1e-436a-b832-acc8b6abac4814eb67';
+
     $headers = [
         'authority: www.onamissionkc.org',
         'accept: application/json, text/plain, */*',
@@ -205,14 +162,14 @@ function makeMerchantApiCall($cartToken, $pid, $cookieJar) {
         'content-type: application/json',
         'origin: https://www.onamissionkc.org',
         'referer: https://www.onamissionkc.org/checkout?cartToken=' . $cartToken,
-        'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+        'sec-ch-ua: "Chromium";v="137", "Not/A)Brand";v="24"',
         'sec-ch-ua-mobile: ?1',
         'sec-ch-ua-platform: "Android"',
         'sec-fetch-dest: empty',
         'sec-fetch-mode: cors',
         'sec-fetch-site: same-origin',
-        'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
-        'x-csrf-token: BYRbHlJxSO4PZjU2MDU5YzlmYjc1MWZjNjkxY2M0NTIwNDdkNmUx',
+        'user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
+        'x-csrf-token: BZuPjds1rcltODIxYmZiMzc3OGI0YjkyMDM0YzZhM2RlNDI1MWE1',
     ];
 
     $jsonData = json_encode([
@@ -269,6 +226,7 @@ function makeMerchantApiCall($cartToken, $pid, $cookieJar) {
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_COOKIE, $cookies);
     curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieJar);
     curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieJar);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -305,20 +263,7 @@ while ($retryCount < $maxRetries) {
 
     // Handle specific errors
     if (isset($apx1['failureType']) && in_array($apx1['failureType'], ['CART_ALREADY_PURCHASED', 'CART_MISSING', 'STALE_USER_SESSION'])) {
-        error_log("Error: {$apx1['failureType']}, retrying...");
-        if ($apx1['failureType'] == 'STALE_USER_SESSION') {
-            // Refresh session cookies
-            if (!refreshSessionCookies($cookieJar)) {
-                unlink($cookieJar);
-                echo json_encode([
-                    'status' => 'ERROR',
-                    'message' => 'Unable to refresh user session',
-                    'response' => 'SESSION_REFRESH_FAILED'
-                ]);
-                exit;
-            }
-        }
-        // Fetch new cart token for cart-related errors or after session refresh
+        error_log("Error: {$apx1['failureType']}, retrying with new cart token");
         $cartToken = fetchCartToken($cookieJar);
         $retryCount++;
         continue;
