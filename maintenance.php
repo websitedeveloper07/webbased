@@ -1,26 +1,12 @@
 <?php
-// -------------------------------
-// SESSION MANAGER
-// -------------------------------
-require_once 'session_manager.php';
- $session = SessionManager::getInstance();
+session_start();
 
 // Define the same admin access key as in adminaccess_panel.php
 define('ADMIN_ACCESS_KEY', 'YOUR_SECURE_ADMIN_KEY_123');
 
 // Handle admin login
 if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS_KEY) {
-    // Create admin session using SessionManager
-    $session->createLoginSession(0, 'admin', [
-        'name' => 'Administrator',
-        'auth_provider' => 'system'
-    ]);
-    header("Location: /index.php");
-    exit();
-}
-
-// Check if admin is already logged in
-if ($session->isLoggedIn() && $_SESSION['user_role'] === 'admin') {
+    $_SESSION['admin_authenticated'] = true;
     header("Location: /index.php");
     exit();
 }
