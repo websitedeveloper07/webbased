@@ -165,12 +165,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Now add the event listener after the element is in the DOM
         const copyButton = resultDiv.querySelector('.copy-btn');
-        copyButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const cardText = this.getAttribute('data-card');
-            copyToClipboard(cardText);
-        });
+        if (copyButton) {
+            copyButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const cardText = this.getAttribute('data-card');
+                copyToClipboard(cardText);
+            });
+        }
         
         // Add to activity feed
         addActivityItem(card, status);
