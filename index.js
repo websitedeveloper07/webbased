@@ -487,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Main card processing function
+    // Main card processing function - completely rewritten for true concurrency
     async function processCards() {
         if (isProcessing) {
             Swal.fire({
@@ -550,32 +550,40 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#checkingResultsList').html('');
         $('#statusLog').text(`Starting processing with ${maxConcurrent} concurrent requests...`);
 
-        // Process all cards with optimized concurrency
-        const processNextBatch = async () => {
-            if (!isProcessing || cardQueue.length === 0) {
-                if (activeRequests === 0) {
+        // Create a worker pool for true concurrency
+        const workers = Array(maxConcurrent).fill(null).map(() => ({
+            busy: false,
+            currentCard: null,
+            controller: null
+        }));
+
+        // Function to assign a card to a worker
+        const assignCardToWorker = async (workerIndex) => {
+            if (!isProcessing || cardQueue.length === 0 || isStopping) {
+                // Check if all workers are idle
+                if (workers.every(w => !w.busy)) {
                     finishProcessing();
                 }
                 return;
             }
 
-            // Start as many requests as we can up to maxConcurrent
-            while (activeRequests < maxConcurrent && cardQueue.length > 0 && isProcessing) {
-                const card = cardQueue.shift();
-                activeRequests++;
-                const controller = new AbortController();
-                abortControllers.push(controller);
+            const worker = workers[workerIndex];
+            if (worker.busy) return;
 
-                // For stripe1$.php, process immediately without delay
-                // For other gateways, add a small delay to avoid overwhelming
-                if (selectedGateway !== 'gate/stripe1$.php') {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
+            // Get next card from queue
+            const card = cardQueue.shift();
+            worker.busy = true;
+            worker.currentCard = card;
+            worker.controller = new AbortController();
+            abortControllers.push(worker.controller);
+            activeRequests++;
 
-                processCard(card, controller).then(result => {
-                    if (result === null) return;
+            console.log(`Worker ${workerIndex} processing card: ${card.displayCard} (Active: ${activeRequests}/${maxConcurrent})`);
 
-                    activeRequests--;
+            try {
+                const result = await processCard(card, worker.controller);
+                
+                if (result !== null) {
                     const cardEntry = { response: result.response, displayCard: result.displayCard };
                     if (result.status === 'CHARGED') {
                         chargedCards.push(cardEntry);
@@ -593,23 +601,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     addResult(card, result.status, result.response);
                     updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-
-                    // Process next batch immediately for stripe1$.php
-                    if (selectedGateway === 'gate/stripe1$.php') {
-                        // Use a small timeout to allow the UI to update
-                        setTimeout(processNextBatch, 0);
-                    }
-                });
-            }
-
-            // For non-stripe1$.php gateways, check periodically for completed requests
-            if (selectedGateway !== 'gate/stripe1$.php') {
-                setTimeout(processNextBatch, 100);
+                }
+            } catch (error) {
+                console.error(`Worker ${workerIndex} error:`, error);
+            } finally {
+                // Mark worker as idle and assign next card
+                worker.busy = false;
+                worker.currentCard = null;
+                activeRequests--;
+                
+                // Immediately assign next card to this worker
+                setTimeout(() => assignCardToWorker(workerIndex), 0);
             }
         };
 
-        // Start processing
-        processNextBatch();
+        // Start all workers
+        for (let i = 0; i < maxConcurrent; i++) {
+            setTimeout(() => assignCardToWorker(i), i * 10); // Stagger start slightly to avoid browser limits
+        }
     }
 
     // Finish processing function
