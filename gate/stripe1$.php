@@ -1,23 +1,34 @@
 <?php
-require_once 'security.php';
+// Set content type to JSON
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: https://cxchk.site');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
+
+// Check for X-API-KEY header
+ $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+ $expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+
+if ($apiKey !== $expectedApiKey) {
+    http_response_code(401);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'Unauthorized: Invalid API key']);
+    exit;
 }
 
-$cardNumber = $_POST['card']['number'] ?? '';
-$expMonth = $_POST['card']['exp_month'] ?? '';
-$expYear = $_POST['card']['exp_year'] ?? '';
-$cvc = $_POST['card']['cvc'] ?? '';
+// Get card details from POST request
+ $cardNumber = $_POST['card']['number'] ?? '';
+ $expMonth = $_POST['card']['exp_month'] ?? '';
+ $expYear = $_POST['card']['exp_year'] ?? '';
+ $cvc = $_POST['card']['cvc'] ?? '';
 
+// Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
-    http_response_code(400);
     echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
     exit;
 }
+
+// Format year to 4 digits if needed
+if (strlen($expYear) == 2) {
+    $expYear = '20' . $expYear;
+}
+
 // First API call to create payment method
  $headers = [
     'authority: api.stripe.com',
