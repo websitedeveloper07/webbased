@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    let selectedGateway = '/proxy.php'; // Changed to proxy.php
+    let selectedGateway = '/gate/proxy.php'; // Changed to proxy.php
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
