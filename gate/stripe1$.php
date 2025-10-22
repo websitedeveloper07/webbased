@@ -1,5 +1,6 @@
-
 <?php
+
+include __DIR__ . '/security.php'; 
 // Set content type to JSON
 header('Content-Type: application/json');
 
