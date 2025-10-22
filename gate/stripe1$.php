@@ -1,4 +1,17 @@
 <?php
+// -------------------------------
+// SESSION MANAGER
+// -------------------------------
+require_once '../session_manager.php';
+ $session = SessionManager::getInstance();
+
+// Check if user is authenticated
+if (!$session->isLoggedIn()) {
+    http_response_code(401);
+    echo json_encode(['status' => 'ERROR', 'message' => 'Unauthorized access']);
+    exit;
+}
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
