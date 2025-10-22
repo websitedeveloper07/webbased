@@ -1,11 +1,9 @@
-
 <?php
 // -------------------------------
-// SESSION & INITIAL CONFIG
+// SESSION MANAGER
 // -------------------------------
-ini_set('session.gc_maxlifetime', 3600);
-ini_set('session.cookie_lifetime', 3600);
-session_start();
+require_once 'session_manager.php';
+ $session = SessionManager::getInstance();
 
 // -------------------------------
 // CONFIGURATION
@@ -13,7 +11,7 @@ session_start();
  $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
  $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
  $telegramBotUsername = 'CardXchk_LOGBOT';
- $baseUrl = 'http://cxchk.site';
+ $baseUrl = 'https://cxchk.site'; // Must use HTTPS
 
 // -------------------------------
 // DATABASE CONNECTION
@@ -73,8 +71,7 @@ function verifyTelegramData(array $data, string $botToken): bool {
 // LOGOUT
 // -------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    session_unset();
-    session_destroy();
+    $session->destroySession();
     header('Location: ' . $baseUrl . '/login.php');
     exit;
 }
@@ -102,14 +99,13 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
             $insert->execute([$telegramId, $firstName]);
         }
 
-        // Set session
-        $_SESSION['user'] = [
-            'telegram_id' => $telegramId,
+        // Set session using SessionManager
+        $session->createLoginSession($telegramId, 'user', [
             'name' => "$firstName $lastName",
             'username' => $username,
             'photo_url' => $photoUrl,
             'auth_provider' => 'telegram'
-        ];
+        ]);
 
         // Redirect to index
         echo '<script>
@@ -129,7 +125,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
 // -------------------------------
 // AUTO-REDIRECT IF LOGGED IN
 // -------------------------------
-if (isset($_SESSION['user'])) {
+if ($session->isLoggedIn()) {
     header('Location: ' . $baseUrl . '/index.php');
     exit;
 }
@@ -145,6 +141,7 @@ if (isset($_SESSION['user'])) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="icon" href="https://cxchk.site/assets/branding/cardxchk-mark.png">
     <style>
+        /* Your existing CSS styles */
         * {
             margin: 0;
             padding: 0;
@@ -163,7 +160,7 @@ if (isset($_SESSION['user'])) {
             overflow: hidden;
         }
 
-        /* Futuristic Background */
+        /* Include all your existing CSS here... */
         .bg-container {
             position: fixed;
             top: 0;
@@ -178,7 +175,6 @@ if (isset($_SESSION['user'])) {
                 linear-gradient(135deg, #000 0%, #0a0a0a 50%, #121212 100%);
         }
 
-        /* Animated Grid */
         .grid-container {
             position: absolute;
             top: 0;
@@ -208,7 +204,6 @@ if (isset($_SESSION['user'])) {
             100% { transform: translate(0%, 0%); }
         }
 
-        /* Hexagon Pattern */
         .hex-container {
             position: absolute;
             top: 0;
@@ -249,7 +244,6 @@ if (isset($_SESSION['user'])) {
             border-top: 17.32px solid rgba(120, 20, 180, 0.5);
         }
 
-        /* Particles */
         .particles-container {
             position: absolute;
             top: 0;
@@ -269,7 +263,6 @@ if (isset($_SESSION['user'])) {
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
-        /* Particle animations */
         @keyframes float1 {
             0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
             10% { opacity: 1; }
@@ -326,7 +319,6 @@ if (isset($_SESSION['user'])) {
             50% { transform: translate(60px, -150px) scale(1.5); }
         }
 
-        /* Scanlines */
         .scanlines {
             position: absolute;
             top: 0;
@@ -348,7 +340,6 @@ if (isset($_SESSION['user'])) {
             100% { background-position: 0 10px; }
         }
 
-        /* Glitch Effect */
         .glitch {
             position: absolute;
             top: 0;
@@ -369,7 +360,6 @@ if (isset($_SESSION['user'])) {
             10% { opacity: 0; }
         }
 
-        /* Binary Rain */
         .binary-rain {
             position: absolute;
             top: 0;
@@ -395,7 +385,6 @@ if (isset($_SESSION['user'])) {
             100% { top: 100%; }
         }
 
-        /* Lightning Effect */
         .lightning {
             position: absolute;
             top: 0;
@@ -416,7 +405,6 @@ if (isset($_SESSION['user'])) {
             filter: blur(1px);
         }
 
-        /* Main Container */
         .auth-container {
             position: relative;
             z-index: 100;
@@ -424,7 +412,6 @@ if (isset($_SESSION['user'])) {
             max-width: 90vw;
         }
 
-        /* Logo Section */
         .logo-section {
             display: flex;
             align-items: center;
@@ -493,7 +480,6 @@ if (isset($_SESSION['user'])) {
             100% { filter: drop-shadow(0 0 15px rgba(120, 20, 180, 0.8)); }
         }
 
-        /* Login Card */
         .login-card {
             background: rgba(10, 10, 20, 0.95);
             backdrop-filter: blur(25px);
@@ -529,7 +515,6 @@ if (isset($_SESSION['user'])) {
             100% { opacity: 0.3; }
         }
 
-        /* Welcome Text */
         .welcome {
             text-align: center;
             margin-bottom: 22px;
@@ -561,7 +546,6 @@ if (isset($_SESSION['user'])) {
             font-weight: 500;
         }
 
-        /* Error Message */
         .error {
             background: rgba(255, 0, 0, 0.15);
             border: 1px solid rgba(255, 0, 0, 0.4);
@@ -575,7 +559,19 @@ if (isset($_SESSION['user'])) {
             gap: 8px;
         }
 
-        /* Telegram Widget Container */
+        .security-message {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #ffc107;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .telegram-section {
             display: flex;
             justify-content: center;
@@ -599,7 +595,6 @@ if (isset($_SESSION['user'])) {
             text-align: center;
         }
 
-        /* Security Badges */
         .security {
             display: flex;
             justify-content: center;
@@ -625,7 +620,6 @@ if (isset($_SESSION['user'])) {
             flex-shrink: 0;
         }
 
-        /* Footer - Enhanced */
         .footer {
             text-align: center;
             margin-top: 25px;
@@ -700,7 +694,6 @@ if (isset($_SESSION['user'])) {
             animation: footerLine 4s ease-in-out infinite reverse;
         }
 
-        /* Retry Button */
         .retry-btn {
             background: rgba(120, 20, 180, 0.3);
             color: #fff;
@@ -721,7 +714,17 @@ if (isset($_SESSION['user'])) {
             transform: translateY(-2px);
         }
 
-        /* Responsive */
+        .widget-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #ef4444;
+            text-align: center;
+        }
+
         @media (max-width: 380px) {
             .auth-container {
                 width: 300px;
@@ -778,6 +781,17 @@ if (isset($_SESSION['user'])) {
                 <p>Authenticate via Telegram</p>
             </div>
 
+            <?php 
+            // Display session timeout message
+            echo $session->handleTimeout();
+            
+            // Display security alert message
+            echo $session->handleSecurityAlert();
+            
+            // Display authentication message
+            echo $session->handleAuthMessage();
+            ?>
+
             <?php if (!empty($error)): ?>
                 <div class="error">
                     <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
@@ -790,14 +804,22 @@ if (isset($_SESSION['user'])) {
             <div class="telegram-section">
                 <div class="telegram-widget-container">
                     <div class="telegram-widget">
-                        <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
+                        <!-- Enhanced Telegram widget with error handling -->
+                        <div id="telegramWidgetPlaceholder">
+                            <div class="widget-error" id="widgetError" style="display: none;">
+                                Telegram widget failed to load. Please check your internet connection and try again.
+                                <button class="retry-btn" onclick="reloadWidget()">Retry</button>
+                            </div>
+                        </div>
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
                                 data-telegram-login="<?= htmlspecialchars($telegramBotUsername) ?>"
                                 data-size="large"
                                 data-auth-url="<?= $baseUrl ?>/login.php"
                                 data-request-access="write"
-                                onload="console.log('Telegram widget loaded')"
-                                onerror="console.error('Telegram widget failed to load')"></script>
+                                data-userpic="true"
+                                data-radius="8"
+                                onload="onTelegramWidgetLoad()"
+                                onerror="onTelegramWidgetError()"></script>
                     </div>
                 </div>
             </div>
@@ -844,7 +866,6 @@ if (isset($_SESSION['user'])) {
                 particle.style.left = `${Math.random() * 100}%`;
                 particle.style.top = `${Math.random() * 100}%`;
                 
-                // Random animation
                 const duration = 10 + Math.random() * 20;
                 const delay = Math.random() * 5;
                 particle.style.animation = `float${(i % 8) + 1} ${duration}s ${delay}s infinite`;
@@ -861,7 +882,6 @@ if (isset($_SESSION['user'])) {
                 column.style.animationDuration = `${5 + Math.random() * 10}s`;
                 column.style.animationDelay = `${Math.random() * 5}s`;
                 
-                // Generate random binary string
                 let binary = '';
                 for (let j = 0; j < 20; j++) {
                     binary += Math.random() > 0.5 ? '1' : '0';
@@ -899,18 +919,52 @@ if (isset($_SESSION['user'])) {
                     }, 400);
                 }
             }, 2000);
-            
-            // Handle Telegram Widget Loading - No fallback, no auto-retry, no error notification
-            // Just console error if widget fails to load
-            const telegramWidget = document.querySelector('.telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>');
-            
-            // Check if widget loaded after a delay
-            setTimeout(() => {
-                if (!telegramWidget || !telegramWidget.querySelector('iframe')) {
-                    console.error('Telegram widget not loaded');
-                }
-            }, 3000);
         });
+
+        // Telegram widget error handling
+        function onTelegramWidgetLoad() {
+            console.log('Telegram widget loaded successfully');
+            document.getElementById('widgetError').style.display = 'none';
+        }
+
+        function onTelegramWidgetError() {
+            console.error('Telegram widget failed to load');
+            document.getElementById('widgetError').style.display = 'block';
+        }
+
+        function reloadWidget() {
+            // Clear any existing widget
+            const existingWidget = document.querySelector('script[data-telegram-login]');
+            if (existingWidget) {
+                existingWidget.remove();
+            }
+            
+            // Hide error message
+            document.getElementById('widgetError').style.display = 'none';
+            
+            // Create new widget script
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-widget.js?22';
+            script.setAttribute('data-telegram-login', '<?= htmlspecialchars($telegramBotUsername) ?>');
+            script.setAttribute('data-size', 'large');
+            script.setAttribute('data-auth-url', '<?= $baseUrl ?>/login.php');
+            script.setAttribute('data-request-access', 'write');
+            script.setAttribute('data-userpic', 'true');
+            script.setAttribute('data-radius', '8');
+            script.setAttribute('async', '');
+            script.setAttribute('onload', 'onTelegramWidgetLoad()');
+            script.setAttribute('onerror', 'onTelegramWidgetError()');
+            
+            document.querySelector('.telegram-widget').appendChild(script);
+        }
+
+        // Check if widget loaded after 5 seconds
+        setTimeout(() => {
+            const widgetFrame = document.querySelector('iframe[src*="telegram.org"]');
+            if (!widgetFrame) {
+                onTelegramWidgetError();
+            }
+        }, 5000);
     </script>
 </body>
 </html>
