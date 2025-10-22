@@ -20,15 +20,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRkYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
-    // Restrict copy, cut, and context menu globally, allowing only card copy via buttons
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('copy', e => {
-        const isCardCopyButton = e.target.classList.contains('copy-btn') && e.target.closest('.result-item');
-        if (!isCardCopyButton) e.preventDefault();
+    // Disable copy, context menu, and dev tools, but allow pasting in the textarea
+    document.addEventListener('contextmenu', e => {
+        if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
     });
-    document.addEventListener('cut', e => e.preventDefault());
+    document.addEventListener('copy', e => {
+        if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
+    });
+    document.addEventListener('cut', e => {
+        if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
+    });
     document.addEventListener('paste', e => {
         if (e.target.id === 'cardInput' || e.target.id === 'binInput' || e.target.id === 'cvvInput' || e.target.id === 'yearInput') {
             const pastedText = e.clipboardData.getData('text');
@@ -45,8 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
-            const isCardCopyButton = e.target.classList.contains('copy-btn') && e.target.closest('.result-item');
-            if (!isCardCopyButton) e.preventDefault();
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
         } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
             e.preventDefault();
         }
@@ -150,20 +152,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
                     <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
                 </div>
-                <button class="copy-btn" title="Copy Card"><i class="fas fa-copy"></i></button>
+                <button class="copy-btn" data-card="${card.displayCard}"><i class="fas fa-copy"></i></button>
             </div>
         `;
-        // Add event listener to the copy button
-        const copyButton = resultDiv.querySelector('.copy-btn');
-        copyButton.addEventListener('click', function() {
-            copyToClipboard(card.displayCard);
-        });
+        
+        // Add the result to the DOM first
         resultsList.insertBefore(resultDiv, resultsList.firstChild);
         if (resultsList.classList.contains('empty-state')) {
             resultsList.classList.remove('empty-state');
             resultsList.innerHTML = '';
             resultsList.appendChild(resultDiv);
         }
+        
+        // Now add the event listener after the element is in the DOM
+        const copyButton = resultDiv.querySelector('.copy-btn');
+        copyButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cardText = this.getAttribute('data-card');
+            copyToClipboard(cardText);
+        });
         
         // Add to activity feed
         addActivityItem(card, status);
@@ -238,18 +246,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Clipboard functions
     function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'Card Copied!', showConfirmButton: false, timer: 1500
-            });
-        }).catch(err => {
+        // Create a temporary textarea element
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed'; // Prevent scrolling to bottom of page
+        textarea.style.opacity = '0'; // Hide the element
+        document.body.appendChild(textarea);
+        textarea.select();
+        
+        try {
+            // Execute the copy command
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            if (successful) {
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success',
+                    title: 'Copied!', showConfirmButton: false, timer: 1500
+                });
+            } else {
+                // Fallback to modern clipboard API
+                navigator.clipboard.writeText(text).then(() => {
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'success',
+                        title: 'Copied!', showConfirmButton: false, timer: 1500
+                    });
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'error',
+                        title: 'Failed to copy!', showConfirmButton: false, timer: 1500
+                    });
+                });
+            }
+        } catch (err) {
             console.error('Failed to copy: ', err);
+            document.body.removeChild(textarea);
             Swal.fire({
                 toast: true, position: 'top-end', icon: 'error',
                 title: 'Failed to copy!', showConfirmButton: false, timer: 1500
             });
-        });
+        }
     }
 
     function copyAllGeneratedCards() {
@@ -262,14 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const allCardsText = generatedCardsData.join('\n');
-        navigator.clipboard.writeText(allCardsText).then(() => {
-            Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'All cards copied!', showConfirmButton: false, timer: 1500
-            });
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-        });
+        copyToClipboard(allCardsText);
     }
 
     function clearAllGeneratedCards() {
@@ -786,22 +816,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUserActivity() {
         console.log("Updating user activity at", new Date().toISOString());
         
-        // Cancel any previous request if still pending
+        // Skip if an update is already in progress
         if (window.activityRequest) {
-            window.activityRequest.abort();
+            console.log("Previous activity request still pending, skipping...");
+            return;
         }
         
         // Create a new AbortController for this request
         const controller = new AbortController();
         window.activityRequest = controller;
         
-        // Set a timeout to abort the request after 10 seconds
+        // Set a longer timeout (30 seconds) to prevent premature abortion
         const timeoutId = setTimeout(() => {
             if (window.activityRequest === controller) {
                 controller.abort();
                 window.activityRequest = null;
+                console.log("Activity request timed out after 30 seconds");
             }
-        }, 10000);
+        }, 30000);
         
         fetch('/update_activity.php', {
             method: 'GET',
@@ -809,7 +841,7 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
             }
         })
         .then(response => {
@@ -875,9 +907,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.error('Activity update error:', error);
             
-            // Only show error message if it's not an abort
             if (error.name !== 'AbortError') {
-                // Show user-friendly error message
                 let errorMessage = 'Error fetching online users';
                 
                 if (error.message.includes('Failed to fetch')) {
@@ -886,7 +916,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage = 'Server error - please try again later';
                 }
                 
-                // Only show error toast if user is on the home page
                 if (document.getElementById('page-home').classList.contains('active')) {
                     Swal.fire({
                         toast: true,
@@ -1014,12 +1043,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUserActivity();
         
         // Set up interval to update every 25 seconds
-        activityUpdateInterval = setInterval(updateUserActivity, 25000);
+        activityUpdateInterval = setInterval(() => {
+            if (!window.activityRequest) {
+                updateUserActivity();
+            }
+        }, 25000);
         
         // Update on user interaction, but not more than once every 25 seconds
         $(document).on('click mousemove keypress scroll', function() {
             const now = new Date().getTime();
-            if (now - lastActivityUpdate >= 25000) {
+            if (now - lastActivityUpdate >= 25000 && !window.activityRequest) {
                 console.log("User interaction detected, updating activity...");
                 updateUserActivity();
                 lastActivityUpdate = now;
@@ -1173,5 +1206,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize activity updates
         initializeActivityUpdates();
+        
+        // Add event delegation for copy buttons as a backup
+        $(document).on('click', '.copy-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cardText = $(this).data('card');
+            if (cardText) {
+                copyToClipboard(cardText);
+            }
+        });
     });
 });
