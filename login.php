@@ -1,10 +1,9 @@
 <?php
 // -------------------------------
-// SESSION & INITIAL CONFIG
+// SESSION MANAGER
 // -------------------------------
-ini_set('session.gc_maxlifetime', 3600);
-ini_set('session.cookie_lifetime', 3600);
-session_start();
+require_once 'session_manager.php';
+ $session = SessionManager::getInstance();
 
 // -------------------------------
 // CONFIGURATION
@@ -72,8 +71,7 @@ function verifyTelegramData(array $data, string $botToken): bool {
 // LOGOUT
 // -------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    session_unset();
-    session_destroy();
+    $session->destroySession();
     header('Location: ' . $baseUrl . '/login.php');
     exit;
 }
@@ -101,14 +99,13 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
             $insert->execute([$telegramId, $firstName]);
         }
 
-        // Set session
-        $_SESSION['user'] = [
-            'telegram_id' => $telegramId,
+        // Set session using SessionManager
+        $session->createLoginSession($telegramId, 'user', [
             'name' => "$firstName $lastName",
             'username' => $username,
             'photo_url' => $photoUrl,
             'auth_provider' => 'telegram'
-        ];
+        ]);
 
         // Redirect to index
         echo '<script>
@@ -128,7 +125,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
 // -------------------------------
 // AUTO-REDIRECT IF LOGGED IN
 // -------------------------------
-if (isset($_SESSION['user'])) {
+if ($session->isLoggedIn()) {
     header('Location: ' . $baseUrl . '/index.php');
     exit;
 }
@@ -574,6 +571,20 @@ if (isset($_SESSION['user'])) {
             gap: 8px;
         }
 
+        /* Security Messages */
+        .security-message {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #ffc107;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* Telegram Widget Container */
         .telegram-section {
             display: flex;
@@ -776,6 +787,17 @@ if (isset($_SESSION['user'])) {
                 <h2>Secure Sign In</h2>
                 <p>Authenticate via Telegram</p>
             </div>
+
+            <?php 
+            // Display session timeout message
+            echo $session->handleTimeout();
+            
+            // Display security alert message
+            echo $session->handleSecurityAlert();
+            
+            // Display authentication message
+            echo $session->handleAuthMessage();
+            ?>
 
             <?php if (!empty($error)): ?>
                 <div class="error">
