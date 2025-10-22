@@ -1,9 +1,4 @@
 <?php
-
-
-require_once __DIR__ . '/validkey.php';
-validateApiKey();
-
 // authnet1$.php - Authnet 1$ Gateway Processor
 
 // Disable error reporting for production
@@ -49,7 +44,7 @@ function makeRequest($url) {
     return $error ? false : $response;
 }
 
-// Create 3 parallel requests with slight variations
+// Create 3 parallel requests with slight variations (e.g., adding random delay to simulate different attempts)
 $responses = [];
 $multi_handle = curl_multi_init();
 
@@ -169,6 +164,9 @@ if ($our_status === 'DECLINED') {
         $our_status = 'DECLINED';
     }
 }
+
+// Prepare output message
+$our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
 
 // Output JSON response
 echo json_encode(['status' => $our_status, 'message' => $our_message]);
