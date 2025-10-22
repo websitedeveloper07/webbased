@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    const LUMD_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'; // Added LUMD key for validation
-    let selectedGateway = 'gate/stripe1$.php';
+    const LUMD_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'; // LUMD key for validation
+    let selectedGateway = 'gate/authnet1$.php'; // Updated to match authnet1$.php
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
@@ -326,6 +326,9 @@ document.addEventListener('DOMContentLoaded', function() {
                           responseStr.includes('THREE_D_SECURE') ||
                           responseStr.includes('REDIRECT')) {
                     status = '3DS';
+                } else if (responseStr.includes('LUMD')) {
+                    status = 'ERROR';
+                    message = 'Authentication failed: Invalid or missing LUMD key';
                 }
                 
                 message = response;
@@ -349,6 +352,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     status = 'APPROVED';
                 } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                     status = '3DS';
+                } else if (responseStr.includes('LUMD')) {
+                    status = 'ERROR';
+                    message = 'Authentication failed: Invalid or missing LUMD key';
                 }
             }
             
@@ -363,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Normalize status to one of our standard values
-        if (status !== 'CHARGED' && status !== 'APPROVED' && status !== '3DS') {
+        if (status !== 'CHARGED' && status !== 'APPROVED' && status !== '3DS' && status !== 'ERROR') {
             status = 'DECLINED';
         }
         
@@ -384,7 +390,14 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('card[exp_month]', card.exp_month);
             formData.append('card[exp_year]', normalizedYear);
             formData.append('card[cvc]', card.cvv);
-            formData.append('LUMD', LUMD_KEY); // Added LUMD key for validation
+            formData.append('LUMD', LUMD_KEY); // Ensure LUMD key is sent
+
+            // Debug: Log FormData contents
+            const formDataEntries = [];
+            for (let [key, value] of formData.entries()) {
+                formDataEntries.push(`${key}: ${value}`);
+            }
+            console.log(`FormData payload for card ${card.displayCard}:`, formDataEntries);
 
             $('#statusLog').text(`Processing card: ${card.displayCard}`);
             console.log(`Starting request for card: ${card.displayCard}`);
