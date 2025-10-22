@@ -58,15 +58,31 @@ class SessionManager {
         session_regenerate_id(true); // Generate new ID to prevent fixation
         $_SESSION = [
             'initiated' => true,
-            'ip_address' => $_SERVER['REMOTE_ADDR'],
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'],
             'created_at' => time(),
             'last_activity' => time(),
-            'logged_in' => false
+            'logged_in' => false,
+            // Store partial IP for security (first two octets)
+            'partial_ip' => $this->getPartialIp(),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT']
         ];
     }
     
-    // Validate session integrity
+    // Get partial IP (first two octets) for more flexible validation
+    private function getPartialIp() {
+        $ip = $_SERVER['REMOTE_ADDR'];
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $parts = explode('.', $ip);
+            return $parts[0] . '.' . $parts[1];
+        }
+        // For IPv6, return the first 16 bits
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $parts = explode(':', $ip);
+            return $parts[0] . ':' . $parts[1];
+        }
+        return $ip; // Fallback
+    }
+    
+    // Validate session integrity with more flexible IP checking
     private function validateSession() {
         // Check if session has expired
         if (isset($_SESSION['last_activity']) && 
@@ -75,13 +91,16 @@ class SessionManager {
             $this->redirectWithMessage('login.php', 'timeout', 'Your session expired. Please login again.');
         }
         
-        // Validate IP address (allow for changes in some networks)
-        if ($_SESSION['ip_address'] !== $_SERVER['REMOTE_ADDR']) {
-            $this->destroySession();
-            $this->redirectWithMessage('login.php', 'security', 'Security alert: IP address changed');
+        // Validate partial IP (more flexible than full IP)
+        if (isset($_SESSION['partial_ip']) && $_SESSION['partial_ip'] !== $this->getPartialIp()) {
+            // Instead of destroying session, we'll log this and continue
+            // This allows for legitimate IP changes while still detecting suspicious activity
+            error_log("Session partial IP changed from " . $_SESSION['partial_ip'] . " to " . $this->getPartialIp());
+            // Update the partial IP to the new one
+            $_SESSION['partial_ip'] = $this->getPartialIp();
         }
         
-        // Validate user agent
+        // Validate user agent (less likely to change than IP)
         if ($_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
             $this->destroySession();
             $this->redirectWithMessage('login.php', 'security', 'Security alert: Browser changed');
@@ -104,14 +123,15 @@ class SessionManager {
         // Set session variables
         $_SESSION = [
             'initiated' => true,
-            'ip_address' => $_SERVER['REMOTE_ADDR'],
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'],
             'created_at' => time(),
             'last_activity' => time(),
             'logged_in' => true,
             'user_id' => $userId,
             'user_role' => $userRole,
-            'user_data' => $userData
+            'user_data' => $userData,
+            // Store partial IP for security
+            'partial_ip' => $this->getPartialIp(),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT']
         ];
     }
     
@@ -186,8 +206,6 @@ class SessionManager {
         $domain = $_SERVER['HTTP_HOST'] ?? '';
         // Remove port number if present
         $domain = preg_replace('/:\d+$/', '', $domain);
-        // Remove subdomain for wildcard cookies (optional)
-        // $domain = substr_count($domain, '.') > 1 ? substr($domain, strpos($domain, '.') + 1) : $domain;
         return $domain;
     }
     
@@ -204,24 +222,39 @@ class SessionManager {
     
     // Handle session timeout gracefully
     public function handleTimeout() {
-        if (isset($_GET['timeout']) && $_GET['timeout'] == 1) {
-            return '<div class="alert alert-warning">Your session expired. Please login again.</div>';
+        if (isset($_GET['type']) && $_GET['type'] == 'timeout') {
+            return '<div class="security-message">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>Your session expired. Please login again.</span>
+            </div>';
         }
         return '';
     }
     
-    // Handle security alerts
+    // Handle security alerts (now more lenient)
     public function handleSecurityAlert() {
-        if (isset($_GET['security']) && $_GET['security'] == 1) {
-            return '<div class="alert alert-danger">Security alert detected. Please login again.</div>';
+        if (isset($_GET['type']) && $_GET['type'] == 'security') {
+            return '<div class="security-message">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>Security alert detected. For your protection, please login again.</span>
+            </div>';
         }
         return '';
     }
     
     // Handle authentication messages
     public function handleAuthMessage() {
-        if (isset($_GET['auth']) && $_GET['auth'] == 1) {
-            return '<div class="alert alert-info">Please login to continue</div>';
+        if (isset($_GET['type']) && $_GET['type'] == 'auth') {
+            return '<div class="security-message">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>Please login to continue</span>
+            </div>';
         }
         return '';
     }
