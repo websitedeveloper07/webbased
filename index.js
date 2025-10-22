@@ -697,61 +697,63 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#genLoader').show();
         $('#genStatusLog').text('Generating cards...');
         
-        $.ajax({
-            url: '/gate/ccgen.php',
+        const url = `/gate/ccgen.php?bin=${encodeURIComponent(params)}&num=${numCards}&format=0`;
+        console.log(`Fetching cards from: ${url}`);
+        console.log(`X-API-KEY header for ccgen: ${API_KEY}`);
+        
+        fetch(url, {
             method: 'GET',
-            data: {
-                bin: params,
-                num: numCards,
-                format: 0
-            },
             headers: {
+                'Accept': 'application/json',
                 'X-API-KEY': API_KEY
-            },
-            dataType: 'json',
-            beforeSend: function(xhr) {
-                console.log(`X-API-KEY header for ccgen: ${API_KEY}`);
-            },
-            success: function(response) {
-                $('#genLoader').hide();
-                
-                if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
-                    $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
-                    displayGeneratedCards(response.cards);
-                    Swal.fire({
-                        title: 'Success!',
-                        text: `Generated ${response.cards.length} cards`,
-                        icon: 'success',
-                        confirmButtonColor: '#10b981'
-                    });
-                } else if (response.error) {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: response.error,
-                        icon: 'error',
-                        confirmButtonColor: '#ec4899'
-                    });
-                    $('#genStatusLog').text('Error: ' + response.error);
-                } else {
-                    $('#genStatusLog').text('No cards generated');
-                    Swal.fire({
-                        title: 'No Cards!',
-                        text: 'Could not generate cards with the provided parameters',
-                        icon: 'warning',
-                        confirmButtonColor: '#f59e0b'
-                    });
-                }
-            },
-            error: function(xhr) {
-                $('#genLoader').hide();
-                $('#genStatusLog').text('Error: ' + xhr.statusText);
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(response => {
+            $('#genLoader').hide();
+            
+            if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
+                $('#genStatusLog').text(`Generated ${response.cards.length} cards successfully!`);
+                displayGeneratedCards(response.cards);
+                Swal.fire({
+                    title: 'Success!',
+                    text: `Generated ${response.cards.length} cards`,
+                    icon: 'success',
+                    confirmButtonColor: '#10b981'
+                });
+            } else if (response.error) {
+                $('#genStatusLog').text('Error: ' + response.error);
                 Swal.fire({
                     title: 'Error!',
-                    text: 'Failed to generate cards: ' + xhr.statusText,
+                    text: response.error,
                     icon: 'error',
                     confirmButtonColor: '#ec4899'
                 });
+            } else {
+                $('#genStatusLog').text('No cards generated');
+                Swal.fire({
+                    title: 'No Cards!',
+                    text: 'Could not generate cards with the provided parameters',
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b'
+                });
             }
+        })
+        .catch(error => {
+            $('#genLoader').hide();
+            $('#genStatusLog').text('Error: ' + error.message);
+            console.error(`Card generation error: ${error.message}`);
+            Swal.fire({
+                title: 'Error!',
+                text: `Failed to generate cards: ${error.message}`,
+                icon: 'error',
+                confirmButtonColor: '#ec4899'
+            });
         });
     }
 
@@ -794,7 +796,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 10000);
         
-        fetch('https://cxchk.site/update_activity.php', {
+        console.log(`X-API-KEY header for update_activity: ${API_KEY}`);
+        fetch('/gate/update_activity.php', {
             method: 'GET',
             signal: controller.signal,
             credentials: 'include',
@@ -810,7 +813,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.activityRequest = null;
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
             }
             
             return response.json();
