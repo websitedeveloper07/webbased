@@ -2,8 +2,19 @@
 // Set content type to JSON
 header('Content-Type: application/json');
 
-// Check for API key in POST data (more reliable than headers)
+// Check for API key in POST data (for multipart/form-data requests)
  $apiKey = $_POST['api_key'] ?? '';
+
+// Also check for API key in query parameters (for GET requests)
+if (empty($apiKey)) {
+    $apiKey = $_GET['api_key'] ?? '';
+}
+
+// As a fallback, check for the X-API-KEY header
+if (empty($apiKey)) {
+    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+}
+
  $expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdSB1c2Uga3Lwn5iC';
 
 if ($apiKey !== $expectedApiKey) {
