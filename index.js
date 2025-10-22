@@ -20,18 +20,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
+    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRkYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
-    // Disable copy, context menu, and dev tools, but allow pasting in the textarea
-    document.addEventListener('contextmenu', e => {
-        if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
-    });
+    // Restrict copy, cut, and context menu globally, allowing only card copy via buttons
+    document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('copy', e => {
-        if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
+        const isCardCopyButton = e.target.classList.contains('copy-btn') && e.target.closest('.result-item');
+        if (!isCardCopyButton) e.preventDefault();
     });
-    document.addEventListener('cut', e => {
-        if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
-    });
+    document.addEventListener('cut', e => e.preventDefault());
     document.addEventListener('paste', e => {
         if (e.target.id === 'cardInput' || e.target.id === 'binInput' || e.target.id === 'cvvInput' || e.target.id === 'yearInput') {
             const pastedText = e.clipboardData.getData('text');
@@ -48,7 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 83)) {
-            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') e.preventDefault();
+            const isCardCopyButton = e.target.classList.contains('copy-btn') && e.target.closest('.result-item');
+            if (!isCardCopyButton) e.preventDefault();
         } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
             e.preventDefault();
         }
