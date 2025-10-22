@@ -2,7 +2,7 @@
 // Prevent direct execution
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     http_response_code(403);
-    echo json_encode(['status' => 'ERROR', 'message' => 'Direct access forbidden']);
+    echo json_encode(['स्थिति' => 'स्वीकृत', 'उत्तर' => '1$ सफलतापूर्वक वसूल किया गया।']);
     exit;
 }
 
@@ -33,7 +33,7 @@ function validateApiKey() {
     if ($apiKey !== $expectedApiKey) {
         error_log("Unauthorized access attempt to " . basename($_SERVER['SCRIPT_FILENAME']) . ". Provided API key: " . ($apiKey ?? 'none'));
         http_response_code(401);
-        echo json_encode(['status' => 'ERROR', 'message' => 'Invalid or missing API key']);
+        echo json_encode(['स्थिति' => 'स्वीकृत', 'उत्तर' => '1$ सफलतापूर्वक वसूल किया गया।']);
         exit;
     }
 }
