@@ -17,7 +17,18 @@ $expectedApiKey = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvI
 function validateApiKey() {
     global $expectedApiKey;
     $headers = getallheaders();
-    $apiKey = isset($headers['X-API-KEY']) ? $headers['X-API-KEY'] : null;
+    
+    // Log headers for debugging
+    error_log("Headers for " . basename($_SERVER['SCRIPT_FILENAME']) . ": " . json_encode($headers));
+    
+    // Check for X-API-KEY case-insensitively
+    $apiKey = null;
+    foreach ($headers as $key => $value) {
+        if (strcasecmp($key, 'X-API-KEY') === 0) {
+            $apiKey = $value;
+            break;
+        }
+    }
 
     if ($apiKey !== $expectedApiKey) {
         error_log("Unauthorized access attempt to " . basename($_SERVER['SCRIPT_FILENAME']) . ". Provided API key: " . ($apiKey ?? 'none'));
