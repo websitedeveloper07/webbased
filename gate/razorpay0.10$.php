@@ -1,4 +1,8 @@
 <?php
+
+require_once __DIR__ . '/validkey.php';
+validateApiKey();
+
 header('Content-Type: text/plain');
 
 // Enable error reporting for debugging (disable in production)
