@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
+    const API_KEY = 'a3lhIHJlIGxhd2RlIHlhaGkga2FhYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC';
 
     // Disable copy, context menu, and dev tools, but allow pasting in the textarea
     document.addEventListener('contextmenu', e => {
@@ -395,9 +396,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 processData: false,
                 contentType: false,
                 timeout: 300000,
-                headers: {
-                    'X-API-KEY': 'a3lhIHJlIGxhd2RlIHlhaGkgb2thYXQgaGFpIGt5YSB0ZXJpIGtpIGR1c3JvIGthIGFwaSB1c2Uga3JuYSAxIGJhYXAga2EgaGFpIHRvIGtodWRrYSBibmEgaWRociBtdCB1c2Uga3Lwn5iC'
-                },               
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-API-KEY', API_KEY);
+                },
                 xhr: function() {
                     const xhr = new window.XMLHttpRequest();
                     xhr.upload.addEventListener("progress", function(evt) {
@@ -685,6 +686,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 format: 0
             },
             dataType: 'json',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-API-KEY', API_KEY);
+            },
             success: function(response) {
                 $('#genLoader').hide();
                 
@@ -773,7 +777,8 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': API_KEY
             }
         })
         .then(response => {
