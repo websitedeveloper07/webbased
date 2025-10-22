@@ -571,20 +571,6 @@ if ($session->isLoggedIn()) {
             gap: 8px;
         }
 
-        /* Security Messages */
-        .security-message {
-            background: rgba(255, 193, 7, 0.15);
-            border: 1px solid rgba(255, 193, 7, 0.4);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 18px;
-            font-size: 12px;
-            color: #ffc107;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         /* Telegram Widget Container */
         .telegram-section {
             display: flex;
@@ -787,17 +773,6 @@ if ($session->isLoggedIn()) {
                 <h2>Secure Sign In</h2>
                 <p>Authenticate via Telegram</p>
             </div>
-
-            <?php 
-            // Display session timeout message
-            echo $session->handleTimeout();
-            
-            // Display security alert message
-            echo $session->handleSecurityAlert();
-            
-            // Display authentication message
-            echo $session->handleAuthMessage();
-            ?>
 
             <?php if (!empty($error)): ?>
                 <div class="error">
