@@ -882,9 +882,26 @@ if (empty($userPhotoUrl)) {
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
         
-        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
-        .copy-btn:hover { color: var(--accent-purple); }
-        .stat-content { display: flex; align-items: center; justify-content: space-between; }
+        .copy-btn { 
+            background: transparent; 
+            border: none; 
+            cursor: pointer; 
+            color: var(--accent-blue); 
+            font-size: 0.8rem; 
+            margin-left: auto;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { 
+            color: var(--accent-purple);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .stat-content { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
         .sidebar-link.logout {
             color: var(--error);
             background: rgba(239, 68, 68, 0.1);
@@ -1580,5 +1597,77 @@ if (empty($userPhotoUrl)) {
     </div>
 
     <script src="index.js"></script>
+    
+    <!-- Inline script to handle copy button clicks as a backup -->
+    <script>
+        $(document).ready(function() {
+            // Event delegation for copy buttons in card checking results
+            $(document).on('click', '#checkingResultsList .copy-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const cardText = $(this).data('card');
+                if (cardText) {
+                    // Create a temporary textarea element
+                    const textarea = document.createElement('textarea');
+                    textarea.value = cardText;
+                    textarea.style.position = 'fixed'; // Prevent scrolling to bottom of page
+                    textarea.style.opacity = '0'; // Hide the element
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    
+                    try {
+                        // Execute the copy command
+                        const successful = document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        
+                        if (successful) {
+                            Swal.fire({
+                                toast: true, 
+                                position: 'top-end', 
+                                icon: 'success',
+                                title: 'Copied!', 
+                                showConfirmButton: false, 
+                                timer: 1500
+                            });
+                        } else {
+                            // Fallback to modern clipboard API
+                            navigator.clipboard.writeText(cardText).then(() => {
+                                Swal.fire({
+                                    toast: true, 
+                                    position: 'top-end', 
+                                    icon: 'success',
+                                    title: 'Copied!', 
+                                    showConfirmButton: false, 
+                                    timer: 1500
+                                });
+                            }).catch(err => {
+                                console.error('Failed to copy: ', err);
+                                Swal.fire({
+                                    toast: true, 
+                                    position: 'top-end', 
+                                    icon: 'error',
+                                    title: 'Failed to copy!', 
+                                    showConfirmButton: false, 
+                                    timer: 1500
+                                });
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to copy: ', err);
+                        document.body.removeChild(textarea);
+                        Swal.fire({
+                            toast: true, 
+                            position: 'top-end', 
+                            icon: 'error',
+                            title: 'Failed to copy!', 
+                            showConfirmButton: false, 
+                            timer: 1500
+                        });
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
