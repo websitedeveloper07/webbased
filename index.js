@@ -141,8 +141,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const cardClass = status.toLowerCase();
         const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'fas fa-check-circle' : 'fas fa-times-circle';
         const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 'var(--success-green)' : 'var(--declined-red)';
+        
+        // Create unique ID for this result
+        const resultId = `result-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+        
         const resultDiv = document.createElement('div');
         resultDiv.className = `stat-card ${cardClass} result-item`;
+        resultDiv.id = resultId;
         resultDiv.innerHTML = `
             <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
                 <i class="${icon}"></i>
@@ -152,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
                     <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
                 </div>
-                <button class="copy-btn" data-card="${card.displayCard}"><i class="fas fa-copy"></i></button>
+                <button class="copy-btn" data-card="${card.displayCard}" data-result-id="${resultId}"><i class="fas fa-copy"></i></button>
             </div>
         `;
         
@@ -162,17 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
             resultsList.innerHTML = '';
         }
         resultsList.insertBefore(resultDiv, resultsList.firstChild);
-        
-        // Now add the event listener after the element is in the DOM
-        const copyButton = resultDiv.querySelector('.copy-btn');
-        if (copyButton) {
-            copyButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardText = this.getAttribute('data-card');
-                copyToClipboard(cardText);
-            });
-        }
         
         // Add to activity feed
         addActivityItem(card, status);
@@ -247,6 +241,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Clipboard functions
     function copyToClipboard(text) {
+        console.log("Attempting to copy text:", text);
+        
         // Create a temporary textarea element
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -261,6 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.removeChild(textarea);
             
             if (successful) {
+                console.log("Copy successful");
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'success',
                     title: 'Copied!', showConfirmButton: false, timer: 1500
@@ -268,12 +265,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Fallback to modern clipboard API
                 navigator.clipboard.writeText(text).then(() => {
+                    console.log("Copy successful with Clipboard API");
                     Swal.fire({
                         toast: true, position: 'top-end', icon: 'success',
                         title: 'Copied!', showConfirmButton: false, timer: 1500
                     });
                 }).catch(err => {
-                    console.error('Failed to copy: ', err);
+                    console.error('Failed to copy with Clipboard API: ', err);
                     Swal.fire({
                         toast: true, position: 'top-end', icon: 'error',
                         title: 'Failed to copy!', showConfirmButton: false, timer: 1500
@@ -1208,13 +1206,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize activity updates
         initializeActivityUpdates();
         
-        // Add event delegation for copy buttons as a backup
+        // Setup copy button event delegation - the main method
         $(document).on('click', '.copy-btn', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            
             const cardText = $(this).data('card');
             if (cardText) {
+                console.log("Copy button clicked, card text:", cardText);
                 copyToClipboard(cardText);
+            } else {
+                console.error("No card text found in data attribute");
             }
         });
     });
