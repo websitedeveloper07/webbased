@@ -71,7 +71,8 @@ function verifyTelegramData(array $data, string $botToken): bool {
 // LOGOUT
 // -------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    $session->destroySession();
+    session_unset();
+    session_destroy();
     header('Location: ' . $baseUrl . '/login.php');
     exit;
 }
@@ -125,7 +126,7 @@ if (isset($_GET['id']) && isset($_GET['hash'])) {
 // -------------------------------
 // AUTO-REDIRECT IF LOGGED IN
 // -------------------------------
-if ($session->isLoggedIn()) {
+if (isset($_SESSION['user'])) {
     header('Location: ' . $baseUrl . '/index.php');
     exit;
 }
