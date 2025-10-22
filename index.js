@@ -152,9 +152,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
                     <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
                 </div>
-                <button class="copy-btn" onclick="copyToClipboard('${card.displayCard}')"><i class="fas fa-copy"></i></button>
+                <button class="copy-btn"><i class="fas fa-copy"></i></button>
             </div>
         `;
+        // Add event listener to the copy button
+        const copyButton = resultDiv.querySelector('.copy-btn');
+        copyButton.addEventListener('click', () => copyToClipboard(card.displayCard));
         resultsList.insertBefore(resultDiv, resultsList.firstChild);
         if (resultsList.classList.contains('empty-state')) {
             resultsList.classList.remove('empty-state');
@@ -242,6 +245,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }).catch(err => {
             console.error('Failed to copy: ', err);
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'error',
+                title: 'Failed to copy!', showConfirmButton: false, timer: 1500
+            });
         });
     }
 
@@ -779,24 +786,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUserActivity() {
         console.log("Updating user activity at", new Date().toISOString());
         
-        // Cancel any previous request if still pending
+        // Skip if an update is already in progress
         if (window.activityRequest) {
-            window.activityRequest.abort();
+            console.log("Previous activity request still pending, skipping...");
+            return;
         }
         
         // Create a new AbortController for this request
         const controller = new AbortController();
         window.activityRequest = controller;
         
-        // Set a timeout to abort the request after 10 seconds
+        // Set a longer timeout (30 seconds) to prevent premature abortion
         const timeoutId = setTimeout(() => {
             if (window.activityRequest === controller) {
                 controller.abort();
                 window.activityRequest = null;
+                console.log("Activity request timed out after 30 seconds");
             }
-        }, 10000);
+        }, 30000);
         
-        // Updated URL to point to root directory and removed API key header
         fetch('/update_activity.php', {
             method: 'GET',
             signal: controller.signal,
@@ -804,7 +812,6 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache',
-                // Removed API key header - not needed for this endpoint
             }
         })
         .then(response => {
@@ -861,7 +868,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             } else {
                 console.error('Activity update failed:', data.message || 'No error message provided');
-                // Don't show error toast for normal operation
             }
         })
         .catch(error => {
@@ -871,9 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.error('Activity update error:', error);
             
-            // Only show error message if it's not an abort
             if (error.name !== 'AbortError') {
-                // Show user-friendly error message
                 let errorMessage = 'Error fetching online users';
                 
                 if (error.message.includes('Failed to fetch')) {
@@ -882,7 +886,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage = 'Server error - please try again later';
                 }
                 
-                // Only show error toast if user is on the home page
                 if (document.getElementById('page-home').classList.contains('active')) {
                     Swal.fire({
                         toast: true,
@@ -1010,12 +1013,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUserActivity();
         
         // Set up interval to update every 25 seconds
-        activityUpdateInterval = setInterval(updateUserActivity, 25000);
+        activityUpdateInterval = setInterval(() => {
+            if (!window.activityRequest) {
+                updateUserActivity();
+            }
+        }, 25000);
         
         // Update on user interaction, but not more than once every 25 seconds
         $(document).on('click mousemove keypress scroll', function() {
             const now = new Date().getTime();
-            if (now - lastActivityUpdate >= 25000) {
+            if (now - lastActivityUpdate >= 25000 && !window.activityRequest) {
                 console.log("User interaction detected, updating activity...");
                 updateUserActivity();
                 lastActivityUpdate = now;
