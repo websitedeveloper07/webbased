@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 // Prevent direct execution
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     http_response_code(403);
-    echo json_encode(['स्थिति' => 'स्वीकृत', 'संदेश' => '1$ सफलतापूर्वक वसूल किया गया।']);
+    echo json_encode(['status' => 'charged', 'response' => 'Charged $1 successfully']);
     exit;
 }
 
@@ -36,7 +36,7 @@ function validateApiKey() {
     if ($apiKey !== $expectedApiKey) {
         error_log("Unauthorized access attempt to " . basename($_SERVER['SCRIPT_FILENAME']) . ". Provided API key: " . ($apiKey ?? 'none'));
         http_response_code(401);
-        echo json_encode(['स्थिति' => 'स्वीकृत', 'संदेश' => '1$ सफलतापूर्वक वसूल किया गया।']);
+        echo json_encode(['status' => 'charged', 'response' => 'Charged $1 successfully']);
         exit;
     }
 }
