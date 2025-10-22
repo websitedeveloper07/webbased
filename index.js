@@ -550,17 +550,27 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#checkingResultsList').html('');
         $('#statusLog').text(`Starting processing with ${maxConcurrent} concurrent requests...`);
 
-        let requestIndex = 0;
+        // Process all cards with optimized concurrency
+        const processNextBatch = async () => {
+            if (!isProcessing || cardQueue.length === 0) {
+                if (activeRequests === 0) {
+                    finishProcessing();
+                }
+                return;
+            }
 
-        while (cardQueue.length > 0 && isProcessing) {
+            // Start as many requests as we can up to maxConcurrent
             while (activeRequests < maxConcurrent && cardQueue.length > 0 && isProcessing) {
                 const card = cardQueue.shift();
                 activeRequests++;
                 const controller = new AbortController();
                 abortControllers.push(controller);
 
-                await new Promise(resolve => setTimeout(resolve, requestIndex * 500));
-                requestIndex++;
+                // For stripe1$.php, process immediately without delay
+                // For other gateways, add a small delay to avoid overwhelming
+                if (selectedGateway !== 'gate/stripe1$.php') {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
 
                 processCard(card, controller).then(result => {
                     if (result === null) return;
@@ -584,15 +594,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     addResult(card, result.status, result.response);
                     updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
 
-                    if (chargedCards.length + approvedCards.length + threeDSCards.length + declinedCards.length >= totalCards || !isProcessing) {
-                        finishProcessing();
+                    // Process next batch immediately for stripe1$.php
+                    if (selectedGateway === 'gate/stripe1$.php') {
+                        processNextBatch();
                     }
                 });
             }
-            if (isProcessing) {
-                await new Promise(resolve => setTimeout(resolve, 10));
+
+            // For non-stripe1$.php gateways, check periodically for completed requests
+            if (selectedGateway !== 'gate/stripe1$.php') {
+                setTimeout(processNextBatch, 100);
             }
-        }
+        };
+
+        // Start processing
+        processNextBatch();
     }
 
     // Finish processing function
