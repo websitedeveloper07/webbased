@@ -36,7 +36,7 @@ function validateApiKey() {
     if ($apiKey !== $expectedApiKey) {
         error_log("Unauthorized access attempt to " . basename($_SERVER['SCRIPT_FILENAME']) . ". Provided API key: " . ($apiKey ?? 'none'));
         http_response_code(401);
-        echo json_encode(['status' => 'OK' => 'AAGYA MADRCHOD WAPIS MA CHUDANE😂']);
+        echo json_encode(['status' => 'OK', => 'AAGYA MADRCHOD WAPIS MA CHUDANE😂']);
         exit;
     }
 }
