@@ -1,35 +1,22 @@
 <?php
-// update_activity.php - Updated with proper API key validation via validkey.php
+// update_activity.php
+// Proper API key validation + custom response (no 401 page)
 
-// === API KEY VALIDATION ===
-// Extract API key from X-API-KEY header
-$apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+require_once __DIR__ . '/gate/validkey.php';
 
-// Validate using validkey.php (same directory as /gate)
-$validationContext = stream_context_create([
-    'http' => [
-        'method' => 'GET',
-        'header' => "X-API-KEY: $apiKey\r\n"
-    ]
-]);
+// === VALIDATE API KEY ===
+$validation = validateApiKey();
 
-$validationResponse = @file_get_contents('http://cxchk.site/gate/validkey.php', false, $validationContext);
-$validation = json_decode($validationResponse, true);
-
-if (!$validation || !$validation['valid']) {
-    http_response_code(401); // Unauthorized
+if (!$validation['valid']) {
     header('Content-Type: application/json');
-    echo json_encode([
-        'Status' => APPROVED, 
-        'RESPONSE' => 'SAJAG MADRCHOD HAI' 
-    ]);
+    echo json_encode($validation['response']);
     exit;
 }
 
-// === SESSION & AUTH CHECK ===
+// === KEY IS VALID → CONTINUE ===
 session_start();
 
-// Check if user is authenticated
+// Check Telegram session
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -40,44 +27,29 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
 try {
-    // Parse the database URL
     $dbUrl = parse_url($databaseUrl);
-    
-    // Extract components with defaults
     $host = $dbUrl['host'] ?? null;
-    $port = $dbUrl['port'] ?? 5432; // Default PostgreSQL port
+    $port = $dbUrl['port'] ?? 5432;
     $user = $dbUrl['user'] ?? null;
     $pass = $dbUrl['pass'] ?? null;
     $path = $dbUrl['path'] ?? null;
-    
-    // Validate required components
+
     if (!$host || !$user || !$pass || !$path) {
-        throw new Exception("Missing required database connection parameters");
+        throw new Exception("Missing DB connection parameters");
     }
-    
-    // Remove leading slash from path to get database name
+
     $dbName = ltrim($path, '/');
-    
+
     $pdo = new PDO(
         "pgsql:host=$host;port=$port;dbname=$dbName",
         $user,
         $pass,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
-    
-    // Check if table exists
-    $tableExists = false;
-    try {
-        $stmt = $pdo->query("SELECT to_regclass('public.online_users')");
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($result && $result['to_regclass']) {
-            $tableExists = true;
-        }
-    } catch (Exception $e) {
-        // Table doesn't exist
-    }
-    
-    // Create table if it doesn't exist
+
+    // === TABLE SETUP ===
+    $tableExists = $pdo->query("SELECT to_regclass('public.online_users')")->fetchColumn();
+
     if (!$tableExists) {
         $pdo->exec("
             CREATE TABLE online_users (
@@ -92,37 +64,30 @@ try {
             );
         ");
     } else {
-        // Check if columns exist and add them if they don't
-        $columns = $pdo->query("SELECT column_name FROM information_schema.columns 
-                               WHERE table_name = 'online_users'")->fetchAll(PDO::FETCH_COLUMN);
-        
-        $columnNames = array_flip($columns);
-        
-        // Add telegram_id column if it doesn't exist
-        if (!isset($columnNames['telegram_id'])) {
+        $columns = $pdo->query("SELECT column_name FROM information_schema.columns WHERE table_name = 'online_users'")->fetchAll(PDO::FETCH_COLUMN);
+        $cols = array_flip($columns);
+
+        if (!isset($cols['telegram_id'])) {
             $pdo->exec("ALTER TABLE online_users ADD COLUMN telegram_id BIGINT");
         }
-        
-        // Add username column if it doesn't exist
-        if (!isset($columnNames['username'])) {
+        if (!isset($cols['username'])) {
             $pdo->exec("ALTER TABLE online_users ADD COLUMN username VARCHAR(255)");
         }
     }
-    
-    // Get current user information
-    $sessionId = session_id(); // Use session ID as unique identifier
+
+    // === USER DATA ===
+    $sessionId = session_id();
     $name = $_SESSION['user']['name'] ?? 'Unknown User';
     $photoUrl = $_SESSION['user']['photo_url'] ?? null;
-    $telegramId = $_SESSION['user']['id'] ?? null; // Get Telegram ID from session
-    $username = $_SESSION['user']['username'] ?? null; // Get Telegram username from session
-    
-    // Validate required fields
+    $telegramId = $_SESSION['user']['id'] ?? null;
+    $username = $_SESSION['user']['username'] ?? null;
+
     if (empty($name)) {
         throw new Exception("User name cannot be empty");
     }
-    
-    // Update current user's last_activity timestamp using session_id
-    $updateStmt = $pdo->prepare("
+
+    // === UPDATE ACTIVITY ===
+    $pdo->prepare("
         INSERT INTO online_users (session_id, name, photo_url, telegram_id, username, last_activity)
         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT (session_id) DO UPDATE SET
@@ -131,74 +96,52 @@ try {
             telegram_id = EXCLUDED.telegram_id,
             username = EXCLUDED.username,
             last_activity = CURRENT_TIMESTAMP
-    ");
-    $updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId, $username]);
-    
-    // Clean up users not active in the last 10 seconds
-    $cleanupStmt = $pdo->prepare("
-        DELETE FROM online_users
-        WHERE last_activity < NOW() - INTERVAL '10 seconds'
-    ");
-    $cleanupStmt->execute();
-    
-    // Get all online users (active in the last 10 seconds)
-    $usersStmt = $pdo->prepare("
-        SELECT session_id, name, photo_url, telegram_id, username, last_activity
+    ")->execute([$sessionId, $name, $photoUrl, $telegramId, $username]);
+
+    // === CLEANUP OLD USERS ===
+    $pdo->prepare("DELETE FROM online_users WHERE last_activity < NOW() - INTERVAL '10 seconds'")->execute();
+
+    // === GET ONLINE USERS ===
+    $stmt = $pdo->query("
+        SELECT session_id, name, photo_url, telegram_id, username
         FROM online_users
         WHERE last_activity >= NOW() - INTERVAL '10 seconds'
         ORDER BY last_activity DESC
     ");
-    $usersStmt->execute();
-    $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format user data for response
-    $formattedUsers = [];
-    $currentUserSession = $sessionId; // Mark current user
-    
-    foreach ($users as $user) {
-        // Generate avatar URL if not available
-        $avatarUrl = $user['photo_url'];
-        if (empty($avatarUrl)) {
-            // Generate initials from name
-            $initials = '';
-            $words = explode(' ', trim($user['name']));
-            foreach ($words as $word) {
-                if (!empty($word)) {
-                    $initials .= strtoupper(substr($word, 0, 1));
-                    if (strlen($initials) >= 2) break;
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // === FORMAT RESPONSE ===
+    $formatted = [];
+    foreach ($users as $u) {
+        $avatar = $u['photo_url'] ?: (
+            function($n) {
+                $i = '';
+                foreach (explode(' ', trim($n)) as $w) {
+                    if ($w) $i .= strtoupper(substr($w, 0, 1));
+                    if (strlen($i) >= 2) break;
                 }
+                return 'https://ui-avatars.com/api/?name=' . urlencode($i ?: 'U') . '&background=3b82f6&color=fff&size=64';
             }
-            if (empty($initials)) $initials = 'U';
-            $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
-        }
-        
-        // Format username with @ symbol
-        $formattedUsername = $user['username'] ? '@' . $user['username'] : null;
-        
-        // Create user data array with is_currently_online field
-        $userData = [
-            'name' => $user['name'],
-            'username' => $formattedUsername,
-            'photo_url' => $avatarUrl,
-            'is_currently_online' => ($user['session_id'] === $currentUserSession)
+        )($u['name']);
+
+        $formatted[] = [
+            'name' => $u['name'],
+            'username' => $u['username'] ? '@' . $u['username'] : null,
+            'photo_url' => $avatar,
+            'is_currently_online' => ($u['session_id'] === $sessionId)
         ];
-        
-        $formattedUsers[] = $userData;
     }
-    
-    // Get total count of online users (including current user)
-    $totalCount = count($formattedUsers);
-    
+
     header('Content-Type: application/json');
     echo json_encode([
-        'success' => true, 
-        'count' => $totalCount,
-        'users' => $formattedUsers
+        'success' => true,
+        'count' => count($formatted),
+        'users' => $formatted
     ]);
-    
+
 } catch (Exception $e) {
-    error_log("Database error in update_activity.php: " . $e->getMessage());
+    error_log("DB Error in update_activity.php: " . $e->getMessage());
     header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
 }
 ?>
