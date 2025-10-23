@@ -22,13 +22,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let API_KEY = null; // Will be loaded from rotate.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
+    let ROTATE_SECRET_KEY = null; // Will store the secret key from rotatekey.php
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
 
-    // Load API key from rotate.php
-    function loadApiKey() {
-        return fetch('/rotate.php', {
+    // Get the secret key from rotatekey.php
+    function getRotateSecretKey() {
+        if (ROTATE_SECRET_KEY) {
+            return Promise.resolve(ROTATE_SECRET_KEY);
+        }
+        
+        return fetch('/rotatekey.php', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -37,36 +42,71 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Failed to load API key: ${response.status}`);
+                throw new Error(`Failed to get secret key: ${response.status}`);
             }
-            return response.json();
+            return response.text();
         })
         .then(data => {
-            if (data && data.apiKey) {
-                API_KEY = data.apiKey;
-                console.log('API key loaded successfully');
-                
-                // Validate the API key
-                return validateApiKey(API_KEY).then(valid => {
-                    if (valid) {
-                        isApiKeyValid = true;
-                        console.log('API key validated successfully');
-                        return true;
-                    } else {
-                        console.error('API key validation failed');
-                        isApiKeyValid = false;
-                        return false;
-                    }
-                });
+            // The response should be the secret key as plain text
+            if (data && data.trim()) {
+                ROTATE_SECRET_KEY = data.trim();
+                console.log('Secret key loaded successfully');
+                return ROTATE_SECRET_KEY;
             } else {
-                throw new Error('Invalid API key response');
+                throw new Error('Invalid secret key response');
             }
         })
         .catch(error => {
-            console.error('Error loading API key:', error);
-            isApiKeyValid = false;
-            return false;
+            console.error('Error getting secret key:', error);
+            throw error;
         });
+    }
+
+    // Load API key from rotate.php using POST with secret key
+    function loadApiKey() {
+        return getRotateSecretKey()
+            .then(secretKey => {
+                return fetch('/rotate.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({ secret_key: secretKey })
+                });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load API key: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.apiKey) {
+                    API_KEY = data.apiKey;
+                    console.log('API key loaded successfully');
+                    
+                    // Validate the API key
+                    return validateApiKey(API_KEY).then(valid => {
+                        if (valid) {
+                            isApiKeyValid = true;
+                            console.log('API key validated successfully');
+                            return true;
+                        } else {
+                            console.error('API key validation failed');
+                            isApiKeyValid = false;
+                            return false;
+                        }
+                    });
+                } else {
+                    throw new Error('Invalid API key response');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading API key:', error);
+                isApiKeyValid = false;
+                return false;
+            });
     }
 
     // Validate API key using validkey.php
@@ -781,75 +821,79 @@ document.addEventListener('DOMContentLoaded', function() {
         function refreshApiKey() {
             console.log('Refreshing API key due to authentication error...');
             
-            return fetch('/rotate.php', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to refresh API key: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data && data.apiKey) {
-                    API_KEY = data.apiKey;
+            return getRotateSecretKey()
+                .then(secretKey => {
+                    return fetch('/rotate.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        },
+                        body: JSON.stringify({ secret_key: secretKey })
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to refresh API key: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.apiKey) {
+                        API_KEY = data.apiKey;
+                        
+                        // Validate the new API key
+                        return validateApiKey(API_KEY).then(valid => {
+                            if (valid) {
+                                isApiKeyValid = true;
+                                console.log('API key refreshed and validated successfully');
+                                
+                                if (window.Swal) {
+                                    Swal.fire({
+                                        toast: true,
+                                        position: 'top-end',
+                                        icon: 'success',
+                                        title: 'API Key Refreshed',
+                                        showConfirmButton: false,
+                                        timer: 3000
+                                    });
+                                }
+                                
+                                return true;
+                            } else {
+                                console.error('Refreshed API key validation failed');
+                                isApiKeyValid = false;
+                                
+                                if (window.Swal) {
+                                    Swal.fire({
+                                        title: 'API Key Validation Failed',
+                                        text: 'The refreshed API key is not valid. Please try again later.',
+                                        icon: 'error',
+                                        confirmButtonColor: '#ec4899'
+                                    });
+                                }
+                                
+                                return false;
+                            }
+                        });
+                    } else {
+                        throw new Error('Invalid API key response during refresh');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error refreshing API key:', error);
                     
-                    // Validate the new API key
-                    return validateApiKey(API_KEY).then(valid => {
-                        if (valid) {
-                            isApiKeyValid = true;
-                            console.log('API key refreshed and validated successfully');
-                            
-                            if (window.Swal) {
-                                Swal.fire({
-                                    toast: true,
-                                    position: 'top-end',
-                                    icon: 'success',
-                                    title: 'API Key Refreshed',
-                                    showConfirmButton: false,
-                                    timer: 3000
-                                });
-                            }
-                            
-                            return true;
-                        } else {
-                            console.error('Refreshed API key validation failed');
-                            isApiKeyValid = false;
-                            
-                            if (window.Swal) {
-                                Swal.fire({
-                                    title: 'API Key Validation Failed',
-                                    text: 'The refreshed API key is not valid. Please try again later.',
-                                    icon: 'error',
-                                    confirmButtonColor: '#ec4899'
-                                });
-                            }
-                            
-                            return false;
-                        }
-                    });
-                } else {
-                    throw new Error('Invalid API key response during refresh');
-                }
-            })
-            .catch(error => {
-                console.error('Error refreshing API key:', error);
-                
-                if (window.Swal) {
-                    Swal.fire({
-                        title: 'API Key Refresh Failed',
-                        text: 'Could not refresh API key. Please try again later.',
-                        icon: 'error',
-                        confirmButtonColor: '#ec4899'
-                    });
-                }
-                
-                return false;
-            });
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'API Key Refresh Failed',
+                            text: 'Could not refresh API key. Please try again later.',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    
+                    return false;
+                });
         }
 
         // Main card processing function
