@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // === 2. GET secret_key FROM POST BODY ===
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-$providedKey = trim($input['secret_key'] ?? '');
+$providedKey = trim($input['lund'] ?? '');
 
 // === 3. VALIDATE SECRET KEY ===
 $SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Your key
