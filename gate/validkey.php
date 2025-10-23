@@ -1,5 +1,5 @@
 <?php
-die("FILE LOADED: " . __FILE__);
+
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -16,7 +16,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Hardcoded API key
-$expectedApiKey = 'a9F3kL2mV8pQwZ6xR1tB0yN5jH7sC4dG8vM3eP9qU2rT6wY1zK0bX5nL7fJ3hD4a9F3kL2mV8pQwZ6xR1tB0yN5jH7sC4dG8vM3eP9qU2rT6wY1zK0bX5nL7fJ3hD4';
+$expectedApiKey = 'kyarelwdeaagyafirseidhrgaandmarwaneqV9nP3kR8xM1cF2jG6tY5uZ0oL4iW7A9fK3pQz7XvB1mNcD8rJ5wL2yT6sU0aEA4bH7qV9nP3kR8xM1cF2jG6tY5uZ0oL4iW7';
 
 // Validate X-API-KEY header
 function validateApiKey() {
