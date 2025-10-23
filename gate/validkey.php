@@ -1,6 +1,6 @@
 <?php
 // /gate/validkey.php
-// DO NOT echo when included via require_once
+// Works with ATOMIC rotate.php | Zero downtime | Auto-recovery
 
 header('Content-Type: application/json');
 
@@ -8,7 +8,7 @@ header('Content-Type: application/json');
 function validateApiKey() {
     $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-    // === NO KEY ===
+    // === NO KEY PROVIDED ===
     if (empty($apiKey)) {
         return [
             'valid' => false,
@@ -24,26 +24,26 @@ function validateApiKey() {
         ];
     }
 
-    $keyFile = '/tmp/api_key_webchecker.txt';
+    $keyFile    = '/tmp/api_key_webchecker.txt';
     $expiryFile = '/tmp/api_expiry_webchecker.txt';
 
+    // === FILES MISSING OR CORRUPT → AUTO-FIX ===
     if (!file_exists($keyFile) || !file_exists($expiryFile)) {
-        return [
-            'valid' => false,
-            'response' => ['valid' => false, 'error' => 'Key system not initialized']
-        ];
+        triggerRotation();
+        return validateApiKey(); // Retry once
     }
 
-    $storedKey = trim(file_get_contents($keyFile));
-    $storedExpiry = (int) trim(file_get_contents($expiryFile));
+    $storedKey    = trim(file_get_contents($keyFile));
+    $storedExpiry = (int)trim(file_get_contents($expiryFile));
 
-    if (time() >= $storedExpiry) {
-        return [
-            'valid' => false,
-            'response' => ['valid' => false, 'error' => 'API key expired']
-        ];
+    // === KEY CORRUPT OR EXPIRED → AUTO-FIX ===
+    if (strlen($storedKey) !== 128 || $storedExpiry <= time()) {
+        triggerRotation();
+        $storedKey    = trim(file_get_contents($keyFile));
+        $storedExpiry = (int)trim(file_get_contents($expiryFile));
     }
 
+    // === FINAL CHECK ===
     if ($apiKey !== $storedKey) {
         return [
             'valid' => false,
@@ -51,19 +51,31 @@ function validateApiKey() {
         ];
     }
 
-    // === VALID KEY ===
+    // === KEY IS VALID ===
     return ['valid' => true];
 }
 
-// === ONLY RUN WHEN CALLED DIRECTLY (curl) ===
+// === HELPER: TRIGGER ROTATE.PHP SAFELY ===
+function triggerRotation() {
+    // Only trigger from same server
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 5,
+            'header'  => "User-Agent: validkey-recovery\r\n"
+        ]
+    ]);
+    @file_get_contents('http://127.0.0.1/rotate.php', false, $context);
+}
+
+// === DIRECT CALL (curl https://cxchk.site/gate/validkey.php) ===
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     $result = validateApiKey();
 
     if ($result['valid']) {
-        $expiry = (int) trim(file_get_contents('/tmp/api_expiry_webchecker.txt'));
+        $expiry = (int)trim(file_get_contents('/tmp/api_expiry_webchecker.txt'));
         echo json_encode([
-            'valid' => true,
-            'expires_at' => date('Y-m-d H:i:s', $expiry),
+            'valid'           => true,
+            'expires_at'      => date('Y-m-d H:i:s', $expiry),
             'remaining_seconds' => $expiry - time()
         ]);
     } else {
