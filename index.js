@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    const API_KEY = 'a9F3kL2mV8pQwZ6xR1tB0yN5jH7sC4dG8vM3eP9qU2rT6wY1zK0bX5nL7fJ3hD4a9F3kL2mV8pQwZ6xR1tB0yN5jH7sC4dG8vM3eP9qU2rT6wY1zK0bX5nL7fJ3hD4';
+    const API_KEY = 'kyarelwdeaagyafirseidhrgaandmarwaneqV9nP3kR8xM1cF2jG6tY5uZ0oL4iW7A9fK3pQz7XvB1mNcD8rJ5wL2yT6sU0aEA4bH7qV9nP3kR8xM1cF2jG6tY5uZ0oL4iW7';
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
