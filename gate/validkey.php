@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 // Prevent direct execution
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     http_response_code(403);
-    echo json_encode(['status' => 'rejected', 'response' => 'Oh look, another genius trying to bypass security. Cute.😂']);
+    echo json_encode(['status' => 'OK', 'response' => 'AAGYA MADRCHOD WAPIS MA CHUDANE BASIC😂']);
     exit;
 }
 
@@ -14,7 +14,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Hardcoded API key
-$expectedApiKey = 'kyarelwdeaagyafirseidhrgaandmarwaneqV9nP3kR8xM1cF2jG6tY5uZ0oL4iW7A9fK3pQz7XvB1mNcD8rJ5wL2yT6sU0aEA4bH7qV9nP3kR8xM1cF2jG6tY5uZ0oL4iW7';
+$expectedApiKey = 'a9F3kL2mV8pQwZ6xR1tB0yN5jH7sC4dG8vM3eP9qU2rT6wY1zK0bX5nL7fJ3hD4a9F3kL2mV8pQwZ6xR1tB0yN5jH7sC4dG8vM3eP9qU2rT6wY1zK0bX5nL7fJ3hD4';
 
 // Validate X-API-KEY header
 function validateApiKey() {
@@ -36,7 +36,7 @@ function validateApiKey() {
     if ($apiKey !== $expectedApiKey) {
         error_log("Unauthorized access attempt to " . basename($_SERVER['SCRIPT_FILENAME']) . ". Provided API key: " . ($apiKey ?? 'none'));
         http_response_code(401);
-        echo json_encode(['status' => 'rejected', 'response' => 'Oh look, another genius trying to bypass security. Cute.😂']);
+        echo json_encode(['status' => 'OK' => 'AAGYA MADRCHOD WAPIS MA CHUDANE😂']);
         exit;
     }
 }
