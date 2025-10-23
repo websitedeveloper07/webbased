@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache'
             },
-            body: JSON.stringify({ secret_key: ROTATE_SECRET_KEY })
+            body: JSON.stringify({ lund: ROTATE_SECRET_KEY })
         })
         .then(response => {
             if (!response.ok) {
