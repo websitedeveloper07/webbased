@@ -323,8 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Clipboard functions
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                Swal.fire({
+            navigator.clipboard.writeText(text)..fire({
                     toast: true, position: 'top-end', icon: 'success',
                     title: 'Copied!', showConfirmButton: false, timer: 1500
                 });
@@ -333,11 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'error',
                     title: 'Failed to copy!', showConfirmButton: false, timer: 1500
-                });
-            });
-        }
-
-        function copyAllGeneratedCards() {
+                });AllGeneratedCards() {
             if (generatedCardsData.length === 0) {
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'warning',
@@ -348,8 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const allCardsText = generatedCardsData.join('\n');
             navigator.clipboard.writeText(allCardsText).then(() => {
-                Swal.fire({
-                    toast: true, position: 'top-end', icon: 'success',
+                Swal.fire position: 'top-end', icon: 'success',
                     title: 'All cards copied!', showConfirmButton: false, timer: 1500
                 });
             }).catch(err => {
@@ -361,8 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const cardsList = document.getElementById('generatedCardsList');
             if (cardsList) {
                 cardsList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
+                    <div class="empty-state"> fa-inbox"></i>
                         <h3>No Cards Generated Yet</h3>
                         <p>Generate cards to see them here</p>
                     </div>
@@ -374,8 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
             generatedCardsData = [];
             
             Swal.fire({
-                toast: true, position: 'top-end', icon: 'success',
-                title: 'Cleared!', showConfirmButton: false, timer: 1500
+                toast: true, position: 'top-end', icon: 'successleared!', showConfirmButton: false, timer: 1500
             });
         }
 
@@ -386,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const items = document.querySelectorAll('.result-item');
             items.forEach(item => {
                 const status = item.className.split(' ')[1];
-                item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
+                itemall' || status === filter ? 'block' : 'none';
             });
             Swal.fire({
                 toast: true, position: 'top-end', icon: 'info',
@@ -398,9 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Gateway response parser
         function parseGatewayResponse(response) {
             let status = 'DECLINED';
-            let message = 'Card declined';
-            
-            // Handle different response types
+            let message = ' Handle different response types
             if (typeof response === 'string') {
                 // Try to parse as JSON first
                 try {
@@ -410,8 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const responseStr = response.toUpperCase();
                     
                     if (responseStr.includes('CHARGED')) {
-                        status = 'CHARGED';
-                    } else if (responseStr.includes('APPROVED')) {
+                        status = 'CHARG (responseStr.includes('APPROVED')) {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D_AUTHENTICATION') || 
                               responseStr.includes('3DS') || 
@@ -419,7 +408,6 @@ document.addEventListener('DOMContentLoaded', function() {
                               responseStr.includes('REDIRECT')) {
                         status = '3DS';
                     } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY')) {
-                        status = 'ERROR';
                         message = 'Authentication failed: Invalid or missing API key';
                     }
                     
@@ -432,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof response === 'object') {
                 // Check for status field in various formats
                 if (response.status) {
-                    status = String(response.status).toUpperCase();
+                    status = String
                 } else if (response.result) {
                     status = String(response.result).toUpperCase();
                 } else if (response.response) {
@@ -440,8 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const responseStr = String(response.response).toUpperCase();
                     if (responseStr.includes('CHARGED')) {
                         status = 'CHARGED';
-                    } else if (responseStr.includes('APPROVED')) {
-                        status = 'APPROVED';
+                    } else if (responseStr.includes('APPRO 'APPROVED';
                     } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                         status = '3DS';
                     } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY')) {
@@ -475,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formData = new FormData();
                 let normalizedYear = card.exp_year;
                 if (normalizedYear.length === 2) {
-                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' :;
+                    normalizedYear = (parseInt(normalizedYear) < 5019') + normalizedYear;
                 }
                 formData.append('card[number]', card.number);
                 formData.append('card[exp_month]', card.exp_month);
@@ -485,7 +472,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Debug: Log FormData contents
                 const formDataEntries = [];
                 for (let [key, value] of formData.entries()) {
-                    formDataEntries.push(`${key
+                    formDataEntries.push(`${key}: ${value}`);
+                }
                 console.log(`FormData payload for card ${card.displayCard}:`, formDataEntries);
                 console.log(`X-API-KEY header: ${getCurrentApiKey()}`);
 
@@ -495,7 +483,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(selectedGateway, {
                     method: 'POST',
                     body: formData,
-                    signal: {
+                    signal: controller.signal,
+                    headers: {
                         'Accept': 'application/json',
                         'X-API-KEY': getCurrentApiKey()
                     }
@@ -507,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.text();
                 })
                 .then(data => {
-                    let
+                    let parsedData;
                     try {
                         parsedData = JSON.parse(data);
                     } catch (e) {
@@ -515,7 +504,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const parsedResponse = parseGatewayResponse(parsedData);
                     console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
-                    if (parsedResponse.status === 'ERROR
+                    if (parsedResponse.status === 'ERROR') {
+                        Swal.fire({
                             title: 'Authentication Error',
                             text: parsedResponse.message,
                             icon: 'error',
@@ -526,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         status: parsedResponse.status,
                         response: parsedResponse.message,
                         card: card,
+                        displayCard: card.displayCard
                     });
                 })
                 .catch(error => {
@@ -537,21 +528,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
 
-                    let errorResponse = `Declined [Request failed:
+                    let errorResponse = `Declined [Request failed: ${error.message}]`;
                     if (error.message.includes('HTTP error')) {
                         try {
                             const errorData = JSON.parse(error.message.split('HTTP error! ')[1]);
                             const parsedError = parseGatewayResponse(errorData);
                             errorResponse = parsedError.message;
                         } catch (e) {
-                            // Use raw error messageerror.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
+                            // Use raw error message
+                        }
+                    }
+
+                    if ((error.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
                         setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                     } else {
                         resolve({
                             status: 'DECLINED',
                             response: errorResponse,
                             card: card,
-                            displayCard:
+                            displayCard: card.displayCard
+                        });
                     }
                 });
             });
@@ -566,6 +562,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon: 'warning',
                     confirmButtonColor: '#ec4899'
                 });
+                return;
+            }
 
             const cardText = $('#cardInput').val().trim();
             const lines = cardText.split('\n').filter(line => line.trim());
@@ -589,8 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (validCards.length > 1000) {
                 Swal.fire({
-                    title: 'Limit exceeded!',
-                    text: 'Maximum 1000 cards allowed',
+                    title:: 'Maximum 1000 cards allowed',
                     icon: 'error',
                     confirmButtonColor: '#ec4899'
                 });
@@ -605,15 +602,13 @@ document.addEventListener('DOMContentLoaded', function() {
             totalCards = validCards.length;
             chargedCards = [];
             approvedCards = [];
-            threeDSCards = [];
-            declinedCards = [];
+            threeDSCards =
             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
             sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
             sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
             updateStats(totalCards, 0, 0, 0, 0);
-            $('#startBtn').prop('disabled', true);
-            $('#stopBtn').prop('disabled', false);
+            $('#startBtn').prop('disabled', true);('disabled', false);
             $('#loader').show();
             $('#checkingResultsList').html('');
             $('#statusLog').text(`Starting processing with ${maxConcurrent} concurrent requests...`);
@@ -625,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 controller: null
             }));
 
-            // Function to assign a card to a worker
+            // Function to assign a
             const assignCardToWorker = async (workerIndex) => {
                 if (!isProcessing || cardQueue.length === 0 || isStopping) {
                     // Check if all workers are idle
@@ -638,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worker = workers[workerIndex];
                 if (worker.busy) return;
 
-                // Get next card from queue
+                // Get
                 const card = cardQueue.shift();
                 worker.busy = true;
                 worker.currentCard = card;
@@ -649,22 +644,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Worker ${workerIndex} processing card: ${card.displayCard} (Active: ${activeRequests}/${maxConcurrent})`);
 
                 try {
-                    const result = await processCard(card, worker.controller);
+                    const result = await);
                     
                     if (result !== null) {
                         const cardEntry = { response: result.response, displayCard: result.displayCard };
                         if (result.status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
-                        } else if (result.status === 'APPROVED') {
-                            approvedCards.push(cardEntry);
+                        } else if (result.status === 'APCards.push(cardEntry);
                             sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                         } else if (result.status === '3DS') {
                             threeDSCards.push(cardEntry);
                             sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
                         } else {
-                            declinedCards.push(cardEntry);
-                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                            declinedCards.push(cardEntryinedCards-${sessionId}`, JSON.stringify(declinedCards));
                         }
 
                         addResult(card, result.status, result.response);
@@ -673,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch (error) {
                     console.error(`Worker ${workerIndex} error:`, error);
                 } finally {
-                    // Mark worker as idle and assign next card
+                    // Mark worker
                     worker.busy = false;
                     worker.currentCard = null;
                     activeRequests--;
@@ -685,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Start all workers
             for (let i = 0; i < maxConcurrent; i++) {
-                setTimeout(() => assignCardToWorker(i), i * 10); // Stagger start slightly to avoid browser limits
+                setTimeout(() => assignCardToWorker(i), i * 10); // Stagger
             }
         }
 
@@ -701,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#loader').hide();
             $('#cardInput').val('');
             updateCardCount();
-            $('#statusLog').text('Processing completed.');
+            $('#status.');
             Swal.fire({
                 title: 'Processing complete!',
                 text: 'All cards have been checked. See the results below.',
@@ -716,10 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function setCvvRnd() {
-            document.getElementById('cvvInput').value = 'rnd';
-        }
-
-        function generateCards() {
+            document.getElementById('cvvInput').value = 'rnd'; {
             const bin = $('#binInput').val().trim();
             const month = $('#monthSelect').val();
             let year = $('#yearInput').val().trim();
@@ -730,8 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({
                     title: 'Invalid BIN!',
                     text: 'Please enter a valid 6-8 digit BIN',
-                    icon: 'error',
-                    confirmButtonColor: '#ec4899'
+                    icon:Color: '#ec4899'
                 });
                 return;
             }
@@ -746,8 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            if (numCards > 1000) {
-                Swal.fire({
+            if (numCards > 1000
                     title: 'Large Number of Cards',
                     text: `You are about to generate ${numCards} cards. This may take a while and use significant resources. Continue?`,
                     icon: 'warning',
@@ -755,8 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonColor: '#10b981',
                     cancelButtonColor: '#ef4444',
                     confirmButtonText: 'Yes, generate'
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                }).then((result) => {) {
                         continueGenerateCards(bin, month, year, cvv, numCards);
                     }
                 });
@@ -769,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (year !== 'rnd') {
                 if (year.length === 2) {
                     const currentYear = new Date().getFullYear();
-                    const currentCentury = Math.floor(currentYear / 100) * 100;
+                    constYear / 100) * 100;
                     const twoDigitYear = parseInt(year);
                     year = (twoDigitYear < 50 ? currentCentury : currentCentury - 100) + twoDigitYear;
                 }
@@ -778,7 +765,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
                         title: 'Invalid Year!',
                         text: 'Please enter a valid year (e.g., 2025, 30, or "rnd")',
-                        icon: 'error',
                         confirmButtonColor: '#ec4899'
                     });
                     return;
@@ -794,8 +780,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 return;
             }
-            
-            let params = bin;
             if (month !== 'rnd') params += '|' + month;
             if (year !== 'rnd') params += '|' + year;
             if (cvv !== 'rnd') params += '|' + cvv;
@@ -805,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const url = `/gate/ccgen.php?bin=${encodeURIComponent(params)}&num=${numCards}&format=0`;
             console.log(`Fetching cards from: ${url}`);
-            console.log(`X-API-KEY header for ccgen: ${getCurrentApiKey()}`);
+            console.log(`X-API-KEY header for ccgen: ${
             
             fetch(url, {
                 method: 'GET',
@@ -818,9 +802,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
                 }
-                return response.json();
-            })
-            .then(response => {
+                return response.json(); {
                 $('#genLoader').hide();
                 
                 if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
@@ -828,8 +810,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayGeneratedCards(response.cards);
                     Swal.fire({
                         title: 'Success!',
-                        text: `Generated ${response.cards.length} cards`,
-                        icon: 'success',
+                        text: `Generated ${response.cards.length} cards',
                         confirmButtonColor: '#10b981'
                     });
                 } else if (response.error) {
@@ -841,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         confirmButtonColor: '#ec4899'
                     });
                 } else {
-                    $('#genStatusLog').text('No cards generated');
+                    $('#genStatusLog cards generated');
                     Swal.fire({
                         title: 'No Cards!',
                         text: 'Could not generate cards with the provided parameters',
