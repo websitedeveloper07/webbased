@@ -1,3 +1,6 @@
+require_once __DIR__ . '/validkey.php';
+validateApiKey();
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
