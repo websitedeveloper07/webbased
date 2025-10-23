@@ -1,5 +1,5 @@
 <?php
-// rotate.php - POST-ONLY + secret_key FROM POST BODY
+// rotate.php - POST-ONLY + KEY FROM "lund" FIELD
 // Secret key: vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR
 
 // === 1. ALLOW POST ONLY ===
@@ -10,12 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// === 2. GET secret_key FROM POST BODY ===
+// === 2. GET KEY FROM POST BODY (field: lund) ===
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 $providedKey = trim($input['lund'] ?? '');
 
 // === 3. VALIDATE SECRET KEY ===
-$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Your key
+$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Your actual key
 
 if ($providedKey !== $SECRET_KEY) {
     http_response_code(401);
