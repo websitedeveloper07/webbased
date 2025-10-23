@@ -1,8 +1,32 @@
 <?php
+// update_activity.php - Updated with proper API key validation via validkey.php
 
-require_once __DIR__ . '/gate/validkey.php';
-validateApiKey();
+// === API KEY VALIDATION ===
+// Extract API key from X-API-KEY header
+$apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
+// Validate using validkey.php (same directory as /gate)
+$validationContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => "X-API-KEY: $apiKey\r\n"
+    ]
+]);
+
+$validationResponse = @file_get_contents('http://cxchk.site/gate/validkey.php', false, $validationContext);
+$validation = json_decode($validationResponse, true);
+
+if (!$validation || !$validation['valid']) {
+    http_response_code(401); // Unauthorized
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Invalid or expired API key: ' . ($validation['error'] ?? 'Validation failed')
+    ]);
+    exit;
+}
+
+// === SESSION & AUTH CHECK ===
 session_start();
 
 // Check if user is authenticated
@@ -12,10 +36,9 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
     exit;
 }
 
-// Hardcoded database connection information
- $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+// === DATABASE CONNECTION ===
+$databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
-// Database connection
 try {
     // Parse the database URL
     $dbUrl = parse_url($databaseUrl);
@@ -130,6 +153,8 @@ try {
     
     // Format user data for response
     $formattedUsers = [];
+    $currentUserSession = $sessionId; // Mark current user
+    
     foreach ($users as $user) {
         // Generate avatar URL if not available
         $avatarUrl = $user['photo_url'];
@@ -150,12 +175,12 @@ try {
         // Format username with @ symbol
         $formattedUsername = $user['username'] ? '@' . $user['username'] : null;
         
-        // Create user data array with is_online field instead of is_current_user
+        // Create user data array with is_currently_online field
         $userData = [
             'name' => $user['name'],
             'username' => $formattedUsername,
             'photo_url' => $avatarUrl,
-            'is_online' => true  // All users in this list are online
+            'is_currently_online' => ($user['session_id'] === $currentUserSession)
         ];
         
         $formattedUsers[] = $userData;
