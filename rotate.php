@@ -1,6 +1,5 @@
 <?php
-// rotate.php - ONLY 1 REQUEST GENERATES NEW KEY
-// Uses file lock + atomic check
+// rotate.php - NO 429 ON RELOAD | ONLY 1 REQUEST GENERATES KEY
 
 // === 1. BLOCK GET → 403 ===
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -22,37 +21,22 @@ if ($providedKey !== $SECRET_KEY) {
     exit;
 }
 
-// === 3. IP-BASED RATE LIMIT (30 sec) ===
-$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$lockDir = '/tmp/rotate_locks';
-$ipLockFile = "$lockDir/$ip.lock";
+// === 3. GLOBAL LOCK: ONLY 1 REQUEST GENERATES KEY ===
+$lockFile = '/tmp/rotate_generation.lock';
+$fp = fopen($lockFile, 'c+') or die('Lock error');
 
-if (!is_dir($lockDir)) mkdir($lockDir, 0755, true);
-
-if (file_exists($ipLockFile)) {
-    $last = (int)file_get_contents($ipLockFile);
-    if (time() - $last < 30) {
-        http_response_code(429);
-        echo json_encode(['error' => 'Wait 30 sec']);
-        exit;
-    }
+if (!flock($fp, LOCK_EX)) {
+    fclose($fp);
+    http_response_code(500);
+    echo json_encode(['error' => 'System busy']);
+    exit;
 }
-file_put_contents($ipLockFile, time());
 
-// === 4. CORE: ONLY 1 REQUEST GENERATES NEW KEY ===
+$currentTime = time();
 $keyFile = '/tmp/api_key_webchecker.txt';
 $expiryFile = '/tmp/api_expiry_webchecker.txt';
 $tempKey = '/tmp/api_key_temp.txt';
 $tempExpiry = '/tmp/api_expiry_temp.txt';
-$rotationLock = '/tmp/rotate_generation.lock'; // GLOBAL LOCK
-
-$fp = fopen($rotationLock, 'c+') or exit('Lock error');
-if (!flock($fp, LOCK_EX)) {
-    fclose($fp);
-    exit('Lock failed');
-}
-
-$currentTime = time();
 
 // === AUTO-CREATE FILES ===
 if (!file_exists($keyFile)) file_put_contents($keyFile, '', LOCK_EX);
@@ -62,8 +46,8 @@ if (!file_exists($expiryFile)) file_put_contents($expiryFile, '0', LOCK_EX);
 $storedKey = trim(file_get_contents($keyFile));
 $storedExpiry = (int)trim(file_get_contents($expiryFile));
 
+// === IF KEY VALID → REUSE (ALL REQUESTS) ===
 if (strlen($storedKey) === 128 && $storedExpiry > $currentTime) {
-    // REUSE — even if expired, wait for 1st to generate
     flock($fp, LOCK_UN);
     fclose($fp);
     header('Content-Type: application/json');
@@ -100,6 +84,7 @@ rename($tempExpiry, $expiryFile);
 flock($fp, LOCK_UN);
 fclose($fp);
 
+// === SUCCESS RESPONSE ===
 header('Content-Type: application/json');
 echo json_encode([
     'apiKey' => $newKey,
