@@ -1,4 +1,40 @@
 <?php
+// update_activity.php - Updated with proper API key validation via validkey.php
+
+// === API KEY VALIDATION ===
+// Extract API key from X-API-KEY header
+$apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+
+// Validate using validkey.php (same directory as /gate)
+$validationContext = stream_context_create([
+    'http' => [
+        'method' => 'GET',
+        'header' => "X-API-KEY: $apiKey\r\n"
+    ]
+]);
+
+$validationResponse = @file_get_contents('http://cxchk.site/gate/validkey.php', false, $validationContext);
+$validation = json_decode($validationResponse, true);
+
+if (!$validation || !$validation['valid']) {
+    http_response_code(401); // Unauthorized
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Invalid or expired API key: ' . ($validation['error'] ?? 'Validation failed')
+    ]);
+    exit;
+}
+
+// === SESSION & AUTH CHECK ===
+session_start();
+
+// Check if user is authenticated
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit;
+}
 // Start session for user authentication
 session_start([
     'cookie_secure' => isset($_SERVER['HTTPS']),
