@@ -194,12 +194,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        localStorage.setItem('theme', 'light');
+        document.body.setAttribute('data-theme', 'light');
+
         // Theme toggle function
         function toggleTheme() {
             const body = document.body;
             const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            body.setAttribute('data-theme', light);
-            localStorage.setItem('theme', light);
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
             const icon = document.querySelector('.theme-toggle-slider i');
             if (icon) {
                 icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
