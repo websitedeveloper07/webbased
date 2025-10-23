@@ -1579,7 +1579,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-    <script src="index.js?v=<?= time(); ?>"></script>
+    <script src="indeex.js?v=<?= time(); ?>"></script>
 
 
 </body>
