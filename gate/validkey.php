@@ -1,4 +1,6 @@
 <?php
+die("FILE LOADED: " . __FILE__);
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
