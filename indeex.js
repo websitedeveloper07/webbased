@@ -177,9 +177,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 link.classList.remove('active');
             });
             
-            const eventTarget = event.target.closest('.sidebar-link');
-            if (eventTarget) {
-                eventTarget.classList.add('active');
+            if (event && event.target) {
+                const eventTarget = event.target.closest('.sidebar-link');
+                if (eventTarget) {
+                    eventTarget.classList.add('active');
+                }
             }
         }
 
@@ -717,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.Swal) {
                     Swal.fire({
                         title: 'Limit exceeded!',
-                        text: 'Maximum
+                        text: 'Maximum 1000 cards allowed!',
                         icon: 'error',
                         confirmButtonColor: '#ec4899'
                     });
@@ -742,7 +744,9 @@ document.addEventListener('DOMContentLoaded', function() {
             sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
             
-            updateStats(totalCards, 0, 0, 0, 0); document.getElementById('startBtn');
+            updateStats(totalCards, 0, 0, 0, 0);
+            
+            const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
             const loader = document.getElementById('loader');
             const checkingResultsList = document.getElementById('checkingResultsList');
@@ -750,7 +754,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (startBtn) startBtn.disabled = true;
             if (stopBtn) stopBtn.disabled = false;
-            if (loader) loader.style.display = 'blockResultsList) checkingResultsList.innerHTML = '';
+            if (loader) loader.style.display = 'block';
+            if (checkingResultsList) checkingResultsList.innerHTML = '';
             if (statusLog) statusLog.textContent = `Starting processing with ${maxConcurrent} concurrent requests...`;
 
             // Create a worker pool for true concurrency
@@ -760,7 +765,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 controller: null
             }));
 
-            // Function to assign a card to a worker = async (workerIndex) => {
+            // Function to assign a card to a worker
+            const assignCardToWorker = async (workerIndex) => {
                 if (!isProcessing || cardQueue.length === 0 || isStopping) {
                     // Check if all workers are idle
                     if (workers.every(w => !w.busy)) {
@@ -772,7 +778,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worker = workers[workerIndex];
                 if (worker.busy) return;
 
-                // Get next card from queue.busy = true;
+                // Get next card from queue
+                const card = cardQueue.shift();
+                if (!card) {
+                    // No more cards, check if all workers are idle
+                    if (workers.every(w => !w.busy)) {
+                        finishProcessing();
+                    }
+                    return;
+                }
+
+                worker.busy = true;
                 worker.currentCard = card;
                 worker.controller = new AbortController();
                 abortControllers.push(worker.controller);
@@ -783,19 +799,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     const result = await processCard(card, worker.controller);
                     
-                    if (
+                    if (result) {
                         const cardEntry = { response: result.response, displayCard: result.displayCard };
                         if (result.status === 'CHARGED') {
                             chargedCards.push(cardEntry);
                             sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
                         } else if (result.status === 'APPROVED') {
-                            approvedCards.push(cardEntry);Cards-${sessionId}`, JSON.stringify(approvedCards));
+                            approvedCards.push(cardEntry);
+                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
                         } else if (result.status === '3DS') {
                             threeDSCards.push(cardEntry);
                             sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
                         } else {
                             declinedCards.push(cardEntry);
-                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(decl
+                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        }
 
                         addResult(card, result.status, result.response);
                         updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
@@ -804,7 +822,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error(`Worker ${workerIndex} error:`, error);
                 } finally {
                     // Mark worker as idle and assign next card
-                    worker.busy = false null;
+                    worker.busy = false;
+                    worker.currentCard = null;
                     activeRequests--;
                     
                     // Immediately assign next card to this worker
@@ -818,7 +837,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Finish processing() {
+        // Finish processing
+        function finishProcessing() {
             isProcessing = false;
             isStopping = false;
             activeRequests = 0;
@@ -829,7 +849,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const stopBtn = document.getElementById('stopBtn');
             const loader = document.getElementById('loader');
             const cardInput = document.getElementById('cardInput');
-            const statusLog = document.getElementById
+            const statusLog = document.getElementById('statusLog');
             
             if (startBtn) startBtn.disabled = false;
             if (stopBtn) stopBtn.disabled = true;
@@ -857,7 +877,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function setCvvRnd() {
             const cvvInput = document.getElementById('cvvInput');
-            if (cvvInput) cvvInput.value
+            if (cvvInput) cvvInput.value = 'rnd';
+        }
 
         function generateCards() {
             const binInput = document.getElementById('binInput');
@@ -867,7 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const numCardsInput = document.getElementById('numCardsInput');
             
             const bin = binInput ? binInput.value.trim() : '';
-            const month = monthSelect ?rnd';
+            const month = monthSelect ? monthSelect.value : 'rnd';
             let year = yearInput ? yearInput.value.trim() : 'rnd';
             const cvv = cvvInput ? cvvInput.value.trim() : 'rnd';
             const numCards = numCardsInput ? parseInt(numCardsInput.value) : 10;
@@ -877,7 +898,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
                         title: 'Invalid BIN!',
                         text: 'Please enter a valid 6-8 digit BIN',
-                        icon: 'error',4899'
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
                     });
                 }
                 return;
@@ -891,6 +913,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon: 'error',
                         confirmButtonColor: '#ec4899'
                     });
+                }
+                return;
             }
             
             if (numCards > 1000) {
@@ -1109,7 +1133,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("Activity update response:", data);
                 
                 if (data.success) {
-                    // Update onlineElement = document.getElementById('onlineCount');
+                    // Update online count
+                    const onlineCountElement = document.getElementById('onlineCount');
                     if (onlineCountElement) {
                         onlineCountElement.textContent = data.count;
                         console.log("Updated online count to:", data.count);
@@ -1118,13 +1143,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Update current user profile
-                    const currentUser = data.users ?_online) : null;
+                    const currentUser = data.users ? data.users.find(u => u.is_currently_online) : null;
                     if (currentUser) {
                         // Update profile picture
                         const profilePicElement = document.querySelector('.user-avatar');
                         if (profilePicElement) {
                             profilePicElement.src = currentUser.photo_url || 
-                                `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name ? currentUser.name[0] : 'U')}&background=3b82f6&color=fff&size=64 profile picture");
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name ? currentUser.name[0] : 'U')}&background=3b82f6&color=fff&size=64`;
+                            console.log("Updated profile picture");
                         } else {
                             console.error("Element .user-avatar not found");
                         }
