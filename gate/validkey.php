@@ -1,81 +1,74 @@
 <?php
 // /gate/validkey.php
-// Validates API key + custom responses
+// DO NOT echo when included via require_once
 
 header('Content-Type: application/json');
 
-// === FUNCTION: validateApiKey() — FOR require_once ===
+// === FUNCTION: validateApiKey() — RETURNS ARRAY ONLY ===
 function validateApiKey() {
     $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-    // === NO KEY PROVIDED ===
+    // === NO KEY ===
     if (empty($apiKey)) {
-        echo json_encode([
-            'Status' => 'APPROVED',
-            'RESPONSE' => 'SAJAG MADRCHOD HAI'
-        ]);
-        return false;
+        return [
+            'valid' => false,
+            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']
+        ];
     }
 
     // === INVALID FORMAT ===
     if (strlen($apiKey) !== 128 || !preg_match('/^[a-zA-Z0-9]{128}$/', $apiKey)) {
-        echo json_encode([
+        return [
             'valid' => false,
-            'error' => 'Invalid key format'
-        ]);
-        return false;
+            'response' => ['valid' => false, 'error' => 'Invalid key format']
+        ];
     }
 
     $keyFile = '/tmp/api_key_webchecker.txt';
     $expiryFile = '/tmp/api_expiry_webchecker.txt';
 
-    // === FILES MISSING ===
     if (!file_exists($keyFile) || !file_exists($expiryFile)) {
-        echo json_encode([
+        return [
             'valid' => false,
-            'error' => 'Key system not initialized'
-        ]);
-        return false;
+            'response' => ['valid' => false, 'error' => 'Key system not initialized']
+        ];
     }
 
     $storedKey = trim(file_get_contents($keyFile));
     $storedExpiry = (int) trim(file_get_contents($expiryFile));
 
-    // === KEY EXPIRED ===
     if (time() >= $storedExpiry) {
-        echo json_encode([
+        return [
             'valid' => false,
-            'error' => 'API key expired'
-        ]);
-        return false;
+            'response' => ['valid' => false, 'error' => 'API key expired']
+        ];
     }
 
-    // === WRONG KEY ===
     if ($apiKey !== $storedKey) {
-        echo json_encode([
-            'Status' => 'APPROVED',
-            'RESPONSE' => 'SAJAG MADRCHOD HAI'
-        ]);
-        return false;
+        return [
+            'valid' => false,
+            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']
+        ];
     }
 
-    // === KEY IS VALID ===
-    return true;
+    // === VALID KEY ===
+    return ['valid' => true];
 }
 
-// === DIRECT CALL (curl https://cxchk.site/gate/validkey.php) ===
+// === ONLY RUN WHEN CALLED DIRECTLY (curl) ===
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
-    if (validateApiKey()) {
+    $result = validateApiKey();
+
+    if ($result['valid']) {
         $expiry = (int) trim(file_get_contents('/tmp/api_expiry_webchecker.txt'));
         echo json_encode([
             'valid' => true,
             'expires_at' => date('Y-m-d H:i:s', $expiry),
-            'remaining_seconds' => $expiry - time(),
-            'Status' => 'APPROVED',
-            'RESPONSE' => 'SAJAG MADRCHOD HAI'
+            'remaining_seconds' => $expiry - time()
         ]);
+    } else {
+        echo json_encode($result['response']);
     }
-    // validateApiKey() already outputs JSON
     exit;
 }
 ?>
