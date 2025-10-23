@@ -1,10 +1,10 @@
 <?php
-// rotate.php - POST-ONLY + KEY FROM "lund" FIELD
-// Secret key: vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR
+// rotate.php - CUSTOM STATUS CODES + KEY FROM "lund"
+// 403 on: GET, no key, wrong key
 
-// === 1. ALLOW POST ONLY ===
+// === 1. BLOCK GET REQUESTS → 403 ===
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
+    http_response_code(403);
     header('Content-Type: application/json');
     echo json_encode(['RESPONSE' => 'SAJAG MADRCHOD HAI']);
     exit;
@@ -15,16 +15,16 @@ $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 $providedKey = trim($input['lund'] ?? '');
 
 // === 3. VALIDATE SECRET KEY ===
-$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Your actual key
+$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR';
 
 if ($providedKey !== $SECRET_KEY) {
-    http_response_code(401);
+    http_response_code(403);  // 403 instead of 401
     header('Content-Type: application/json');
     echo json_encode(['RESPONSE' => 'SAJAG MADRCHOD HAI']);
     exit;
 }
 
-// === 4. RATE LIMIT (1 call per 30 sec) ===
+// === 4. RATE LIMIT (429) ===
 $lockFile = '/tmp/rotate_lock.txt';
 if (file_exists($lockFile)) {
     $lastRun = (int)file_get_contents($lockFile);
@@ -81,12 +81,12 @@ if (strlen($storedKey) === 128 && $storedExpiry > $currentTime) {
 
 // === GENERATE NEW KEY (ATOMIC SWAP) ===
 $newKey = generateApiKey();
-$newExpiry = $currentTime + 3600; // 1 hour
+$newExpiry = $currentTime + 3600;
 
 file_put_contents($tempKey, $newKey, LOCK_EX);
 file_put_contents($tempExpiry, $newExpiry, LOCK_EX);
 
-rename($tempKey, $keyFile);
+rename($tempKey, $キーFile);
 rename($tempExpiry, $expiryFile);
 
 echo json_encode([
