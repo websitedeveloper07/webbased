@@ -27,26 +27,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load API key from rotate.php
     function loadApiKey() {
-        return fetch('/rotate.php')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to load API key: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data && data.apiKey) {
-                    API_KEY = data.apiKey;
-                    console.log('API key loaded successfully');
-                    return true;
-                } else {
-                    throw new Error('Invalid API key response');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading API key:', error);
-                return false;
-            });
+        return fetch('/rotate.php', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load API key: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.apiKey) {
+                API_KEY = data.apiKey;
+                console.log('API key loaded successfully');
+                return true;
+            } else {
+                throw new Error('Invalid API key response');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading API key:', error);
+            return false;
+        });
     }
 
     // Start rotating API keys every hour
@@ -84,6 +90,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Get current API key with fallback
     function getCurrentApiKey() {
+        if (!API_KEY) {
+            console.warn('API key is not set!');
+        }
         return API_KEY || '';
     }
 
@@ -525,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
                               responseStr.includes('THREE_D_SECURE') ||
                               responseStr.includes('REDIRECT')) {
                         status = '3DS';
-                    } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY')) {
+                    } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY') || responseStr.includes('AUTHENTICATION FAILED')) {
                         status = 'ERROR';
                         message = 'Authentication failed: Invalid or missing API key';
                     }
@@ -551,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                         status = '3DS';
-                    } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY')) {
+                    } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY') || responseStr.includes('AUTHENTICATION FAILED')) {
                         status = 'ERROR';
                         message = 'Authentication failed: Invalid or missing API key';
                     }
@@ -596,7 +605,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     formDataEntries.push(`${key}: ${value}`);
                 }
                 console.log(`FormData payload for card ${card.displayCard}:`, formDataEntries);
-                console.log(`X-API-KEY header: ${getCurrentApiKey()}`);
+                
+                const apiKey = getCurrentApiKey();
+                console.log(`X-API-KEY header: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
 
                 const statusLog = document.getElementById('statusLog');
                 if (statusLog) statusLog.textContent = `Processing card: ${card.displayCard}`;
@@ -608,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     signal: controller.signal,
                     headers: {
                         'Accept': 'application/json',
-                        'X-API-KEY': getCurrentApiKey()
+                        'X-API-KEY': apiKey
                     }
                 })
                 .then(response => {
@@ -985,13 +996,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const url = `/gate/ccgen.php?bin=${encodeURIComponent(params)}&num=${numCards}&format=0`;
             console.log(`Fetching cards from: ${url}`);
-            console.log(`X-API-KEY header for ccgen: ${getCurrentApiKey()}`);
+            
+            const apiKey = getCurrentApiKey();
+            console.log(`X-API-KEY header for ccgen: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
             
             fetch(url, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
-                    'X-API-KEY': getCurrentApiKey()
+                    'X-API-KEY': apiKey
                 }
             })
             .then(response => {
@@ -1108,6 +1121,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 30000);
             
+            const apiKey = getCurrentApiKey();
+            console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+            
             fetch('/update_activity.php', {
                 method: 'GET',
                 signal: controller.signal,
@@ -1115,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache',
-                    'X-API-KEY': getCurrentApiKey()
+                    'X-API-KEY': apiKey
                 }
             })
             .then(response => {
@@ -1548,6 +1564,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadApiKey().then(success => {
         if (!success) {
             console.warn('Proceeding without valid API key');
+            // Show a warning if API key loading fails
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'API Key Issue',
+                    text: 'Could not load API key. Some features may not work properly.',
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b'
+                });
+            }
         }
         
         // Start key rotation
