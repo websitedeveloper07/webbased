@@ -19,31 +19,32 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    let API_KEY = null; // Initialize as null, will be loaded from config
+    let API_KEY = null; // Initialize as null, will be loaded from rotate.php
+    let keyRotationInterval = null; // Interval for key rotation
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
 
-    // Load configuration from config.json
-    function loadConfig() {
-        return fetch('/config.json')
+    // Load API key from rotate.php
+    function loadApiKey() {
+        return fetch('/rotate.php')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Failed to load config: ${response.status} ${response.statusText}`);
+                    throw new Error(`Failed to load API key: ${response.status} ${response.statusText}`);
                 }
                 return response.json();
             })
-            .then(config => {
-                if (config.apiKey) {
-                    API_KEY = config.apiKey;
+            .then(data => {
+                if (data.apiKey) {
+                    API_KEY = data.apiKey;
                     console.log('API key loaded successfully');
                     return true;
                 } else {
-                    throw new Error('API key not found in config');
+                    throw new Error('API key not found in response');
                 }
             })
             .catch(error => {
-                console.error('Error loading configuration:', error);
+                console.error('Error loading API key:', error);
                 Swal.fire({
                     title: 'Configuration Error',
                     text: 'Failed to load API key. Some features may not work properly.',
@@ -54,14 +55,51 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Initialize configuration before setting up event listeners
-    loadConfig().then(configLoaded => {
-        if (!configLoaded) {
-            // If config loading failed, we might want to disable certain features
+    // Start rotating API keys every hour
+    function startKeyRotation() {
+        // Clear any existing interval
+        if (keyRotationInterval) {
+            clearInterval(keyRotationInterval);
+        }
+        
+        // Rotate keys every hour (3600000 milliseconds)
+        keyRotationInterval = setInterval(() => {
+            console.log('Rotating API key...');
+            loadApiKey().then(success => {
+                if (success) {
+                    console.log('API key rotated successfully');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'API Key Rotated',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } else {
+                    console.error('Failed to rotate API key');
+                }
+            });
+        }, 3600000);
+        
+        console.log('API key rotation started. Keys will rotate every hour.');
+    }
+
+    // Get current API key with fallback
+    function getCurrentApiKey() {
+        return API_KEY || '';
+    }
+
+    // Initialize API key before setting up event listeners
+    loadApiKey().then(success => {
+        if (!success) {
             console.warn('Proceeding without valid API key');
         }
         
-        // Now that we've attempted to load the config, set up the rest of the app
+        // Start key rotation
+        startKeyRotation();
+        
+        // Now that we've attempted to load the API key, set up the rest of the app
         initializeApp();
     });
 
@@ -412,8 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                // Get message from various possible fields
-                message = response.message || 
+                // Get message from various possible fields 
                          response.response || 
                          response.result || 
                          response.error || 
@@ -424,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Normalize status to one of our standard values
             if (status !== 'CHARGED' && status !== 'APPROVED' && status !== '3DS' && status !== 'ERROR') {
-                status = 'DECLINED';
+                status
             }
             
             return { status, message };
@@ -438,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formData = new FormData();
                 let normalizedYear = card.exp_year;
                 if (normalizedYear.length === 2) {
-                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' :;
                 }
                 formData.append('card[number]', card.number);
                 formData.append('card[exp_month]', card.exp_month);
@@ -448,10 +485,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Debug: Log FormData contents
                 const formDataEntries = [];
                 for (let [key, value] of formData.entries()) {
-                    formDataEntries.push(`${key}: ${value}`);
-                }
+                    formDataEntries.push(`${key
                 console.log(`FormData payload for card ${card.displayCard}:`, formDataEntries);
-                console.log(`X-API-KEY header: ${API_KEY}`);
+                console.log(`X-API-KEY header: ${getCurrentApiKey()}`);
 
                 $('#statusLog').text(`Processing card: ${card.displayCard}`);
                 console.log(`Starting request for card: ${card.displayCard}`);
@@ -459,10 +495,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(selectedGateway, {
                     method: 'POST',
                     body: formData,
-                    signal: controller.signal,
-                    headers: {
+                    signal: {
                         'Accept': 'application/json',
-                        'X-API-KEY': API_KEY || '' // Use empty string if API_KEY is null
+                        'X-API-KEY': getCurrentApiKey()
                     }
                 })
                 .then(response => {
@@ -472,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.text();
                 })
                 .then(data => {
-                    let parsedData;
+                    let
                     try {
                         parsedData = JSON.parse(data);
                     } catch (e) {
@@ -480,8 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const parsedResponse = parseGatewayResponse(parsedData);
                     console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
-                    if (parsedResponse.status === 'ERROR') {
-                        Swal.fire({
+                    if (parsedResponse.status === 'ERROR
                             title: 'Authentication Error',
                             text: parsedResponse.message,
                             icon: 'error',
@@ -492,7 +526,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         status: parsedResponse.status,
                         response: parsedResponse.message,
                         card: card,
-                        displayCard: card.displayCard
                     });
                 })
                 .catch(error => {
@@ -504,26 +537,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
 
-                    let errorResponse = `Declined [Request failed: ${error.message}]`;
+                    let errorResponse = `Declined [Request failed:
                     if (error.message.includes('HTTP error')) {
                         try {
                             const errorData = JSON.parse(error.message.split('HTTP error! ')[1]);
                             const parsedError = parseGatewayResponse(errorData);
                             errorResponse = parsedError.message;
                         } catch (e) {
-                            // Use raw error message
-                        }
-                    }
-
-                    if ((error.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
+                            // Use raw error messageerror.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
                         setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                     } else {
                         resolve({
                             status: 'DECLINED',
                             response: errorResponse,
                             card: card,
-                            displayCard: card.displayCard
-                        });
+                            displayCard:
                     }
                 });
             });
@@ -538,8 +566,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon: 'warning',
                     confirmButtonColor: '#ec4899'
                 });
-                return;
-            }
 
             const cardText = $('#cardInput').val().trim();
             const lines = cardText.split('\n').filter(line => line.trim());
@@ -779,13 +805,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const url = `/gate/ccgen.php?bin=${encodeURIComponent(params)}&num=${numCards}&format=0`;
             console.log(`Fetching cards from: ${url}`);
-            console.log(`X-API-KEY header for ccgen: ${API_KEY}`);
+            console.log(`X-API-KEY header for ccgen: ${getCurrentApiKey()}`);
             
             fetch(url, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
-                    'X-API-KEY': API_KEY || '' // Use empty string if API_KEY is null
+                    'X-API-KEY': getCurrentApiKey()
                 }
             })
             .then(response => {
@@ -849,6 +875,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonText: 'Yes, logout'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Clear key rotation interval
+                    if (keyRotationInterval) {
+                        clearInterval(keyRotationInterval);
+                    }
+                    
                     sessionStorage.clear();
                     window.location.href = 'login.php';
                 }
@@ -885,7 +916,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache',
-                    'X-API-KEY': API_KEY || '' // Use empty string if API_KEY is null
+                    'X-API-KEY': getCurrentApiKey()
                 }
             })
             .then(response => {
@@ -1111,7 +1142,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.activityRequest) {
                     window.activityRequest.abort();
                 }
-                console.log("Cleared activity update interval on page unload");
+                if (keyRotationInterval) {
+                    clearInterval(keyRotationInterval);
+                }
+                console.log("Cleared intervals on page unload");
             });
         }
 
