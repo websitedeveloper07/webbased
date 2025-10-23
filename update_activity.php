@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/validkey.php';
+require_once __DIR__ . '/gate/validkey.php';
 validateApiKey();
 
 session_start();
