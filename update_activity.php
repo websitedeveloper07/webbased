@@ -20,8 +20,8 @@ if (!$validation || !$validation['valid']) {
     http_response_code(401); // Unauthorized
     header('Content-Type: application/json');
     echo json_encode([
-        'success' => false, 
-        'message' => 'Invalid or expired API key: ' . ($validation['error'] ?? 'Validation failed')
+        'Status' => APPROVED, 
+        'RESPONSE' => 'SAJAG MADRCHOD HAI' 
     ]);
     exit;
 }
