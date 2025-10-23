@@ -1,100 +1,97 @@
 <?php
-// rotate.php - BEAST MODE ROOT-FIXED VERSION
+// rotate.php - ULTIMATE ROOT-FIXED VERSION
 // Uses /tmp for guaranteed writability
-// Pre-generates next key 10 min before expiry to avoid downtime
+// One key per hour, reused until expiry
 
-header('Content-Type: application/json');
+$keyFile = '/tmp/api_key_webchecker.txt';
+$expiryFile = '/tmp/api_expiry_webchecker.txt';
 
-$currentTime = time();
-
-// Files
-$currentKeyFile = '/tmp/api_key_current_webchecker.txt';
-$currentExpiryFile = '/tmp/api_expiry_current_webchecker.txt';
-$nextKeyFile = '/tmp/api_key_next_webchecker.txt';
-$nextExpiryFile = '/tmp/api_expiry_next_webchecker.txt';
-
-// Key length & pre-gen window
-define('KEY_LENGTH', 128);
-define('PREGEN_SECONDS', 600); // 10 minutes
-
-// === Generate secure API key ===
-function generateApiKey($length = KEY_LENGTH) {
+function generateApiKey() {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $apiKey = '';
-    for ($i = 0; $i < $length; $i++) {
+    for ($i = 0; $i < 128; $i++) {
         $apiKey .= $characters[random_int(0, strlen($characters) - 1)];
     }
     return $apiKey;
 }
 
-// === Ensure files exist ===
-$files = [
-    $currentKeyFile, $currentExpiryFile, 
-    $nextKeyFile, $nextExpiryFile
-];
-foreach ($files as $f) {
-    if (!file_exists($f)) {
-        file_put_contents($f, '');
-        chmod($f, 0600);
+header('Content-Type: application/json');
+$currentTime = time();
+
+$storedKey = '';
+$storedExpiry = 0;
+$keyIsValid = false;
+
+// === AUTO-CREATE FILES IF MISSING ===
+if (!file_exists($keyFile)) {
+    if (file_put_contents($keyFile, '') === false) {
+        echo json_encode(['error' => 'Cannot create key file in /tmp']);
+        exit;
+    }
+    chmod($keyFile, 0644);
+}
+if (!file_exists($expiryFile)) {
+    if (file_put_contents($expiryFile, '') === false) {
+        echo json_encode(['error' => 'Cannot create expiry file in /tmp']);
+        exit;
+    }
+    chmod($expiryFile, 0644);
+}
+
+// === READ EXISTING KEY ===
+if (file_exists($keyFile) && file_exists($expiryFile)) {
+    $storedKey = trim(file_get_contents($keyFile));
+    $storedExpiry = (int) trim(file_get_contents($expiryFile));
+
+    if (strlen($storedKey) === 128 && $storedExpiry > $currentTime) {
+        $keyIsValid = true;
     }
 }
 
-// === Atomic read/write using flock ===
-$fp = fopen($currentKeyFile, 'c+');
-if (!$fp) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Cannot open key file']);
-    exit;
+// === REUSE OR GENERATE NEW ===
+if ($keyIsValid) {
+    echo json_encode([
+        'apiKey' => $storedKey,
+        'expires_at' => date('Y-m-d H:i:s', $storedExpiry),
+        'status' => 'reused',
+        'source' => 'tmp_file'
+    ]);
+} else {
+    // Generate new key
+    $apiKey = generateApiKey();
+    $expiryTime = $currentTime + 3600; // 1 hour
+
+    // === SAVE WITH FORCE ===
+    if (
+        file_put_contents($keyFile, $apiKey) === false ||
+        file_put_contents($expiryFile, $expiryTime) === false
+    ) {
+        // Last resort: fallback to a single file
+        $singleFile = '/tmp/api_key_single_webchecker.txt';
+        $data = base64_encode($apiKey . '|' . $expiryTime);
+        if (file_put_contents($singleFile, $data) === false) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'ALL file writes failed - check server disk',
+                'disk_free' => disk_free_space('/'),
+                'tmp_writable' => is_writable('/tmp') ? 'yes' : 'no'
+            ]);
+            exit;
+        }
+        echo json_encode([
+            'apiKey' => $apiKey,
+            'expires_at' => date('Y-m-d H:i:s', $expiryTime),
+            'status' => 'generated_fallback_single',
+            'source' => 'single_tmp_file'
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'apiKey' => $apiKey,
+        'expires_at' => date('Y-m-d H:i:s', $expiryTime),
+        'status' => 'generated',
+        'source' => 'tmp_file'
+    ]);
 }
-
-if (flock($fp, LOCK_EX)) {
-
-    // Read current key/expiry
-    $currentKey = trim(file_get_contents($currentKeyFile));
-    $currentExpiry = (int) trim(file_get_contents($currentExpiryFile));
-
-    // Read next key/expiry
-    $nextKey = trim(file_get_contents($nextKeyFile));
-    $nextExpiry = (int) trim(file_get_contents($nextExpiryFile));
-
-    // === Pre-generate next key if within PREGEN_SECONDS ===
-    if ($currentExpiry - $currentTime <= PREGEN_SECONDS && empty($nextKey)) {
-        $nextKey = generateApiKey();
-        $nextExpiry = $currentExpiry + 3600; // valid 1 hour after current
-        file_put_contents($nextKeyFile, $nextKey, LOCK_EX);
-        file_put_contents($nextExpiryFile, $nextExpiry, LOCK_EX);
-    }
-
-    // === Swap to next key if current expired ===
-    if ($currentExpiry <= $currentTime && !empty($nextKey)) {
-        $currentKey = $nextKey;
-        $currentExpiry = $nextExpiry;
-
-        file_put_contents($currentKeyFile, $currentKey, LOCK_EX);
-        file_put_contents($currentExpiryFile, $currentExpiry, LOCK_EX);
-
-        // Clear next key
-        file_put_contents($nextKeyFile, '', LOCK_EX);
-        file_put_contents($nextExpiryFile, '', LOCK_EX);
-    }
-
-    // If no valid current key, generate fresh one
-    if (strlen($currentKey) !== KEY_LENGTH || $currentExpiry <= $currentTime) {
-        $currentKey = generateApiKey();
-        $currentExpiry = $currentTime + 3600;
-        file_put_contents($currentKeyFile, $currentKey, LOCK_EX);
-        file_put_contents($currentExpiryFile, $currentExpiry, LOCK_EX);
-    }
-
-    flock($fp, LOCK_UN);
-}
-fclose($fp);
-
-// === Output API info ===
-echo json_encode([
-    'apiKey' => $currentKey,
-    'expires_at' => date('Y-m-d H:i:s', $currentExpiry),
-    'status' => 'active',
-    'nextKeyExists' => !empty($nextKey) ? 'yes' : 'no'
-]);
 ?>
