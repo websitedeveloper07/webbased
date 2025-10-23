@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let lastActivityUpdate = 0;
     let API_KEY = null; // Will be loaded from rotate.php
     let keyRotationInterval = null;
+    let isApiKeyValid = false;
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
@@ -44,13 +45,50 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data && data.apiKey) {
                 API_KEY = data.apiKey;
                 console.log('API key loaded successfully');
-                return true;
+                
+                // Validate the API key
+                return validateApiKey(API_KEY).then(valid => {
+                    if (valid) {
+                        isApiKeyValid = true;
+                        console.log('API key validated successfully');
+                        return true;
+                    } else {
+                        console.error('API key validation failed');
+                        isApiKeyValid = false;
+                        return false;
+                    }
+                });
             } else {
                 throw new Error('Invalid API key response');
             }
         })
         .catch(error => {
             console.error('Error loading API key:', error);
+            isApiKeyValid = false;
+            return false;
+        });
+    }
+
+    // Validate API key using validkey.php
+    function validateApiKey(apiKey) {
+        return fetch('/gate/validkey.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': apiKey
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Validation failed: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            return data.valid === true;
+        })
+        .catch(error => {
+            console.error('API key validation error:', error);
             return false;
         });
     }
@@ -94,6 +132,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('API key is not set!');
         }
         return API_KEY || '';
+    }
+
+    // Check if API key is valid
+    function isApiKeyValidated() {
+        return isApiKeyValid;
     }
 
     // Initialize the application
@@ -534,7 +577,11 @@ document.addEventListener('DOMContentLoaded', function() {
                               responseStr.includes('THREE_D_SECURE') ||
                               responseStr.includes('REDIRECT')) {
                         status = '3DS';
-                    } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY') || responseStr.includes('AUTHENTICATION FAILED')) {
+                    } else if (responseStr.includes('AUTHENTICATION FAILED') || 
+                              responseStr.includes('INVALID API KEY') || 
+                              responseStr.includes('MISSING API KEY') ||
+                              responseStr.includes('UNAUTHORIZED') ||
+                              responseStr.includes('401')) {
                         status = 'ERROR';
                         message = 'Authentication failed: Invalid or missing API key';
                     }
@@ -560,7 +607,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         status = 'APPROVED';
                     } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
                         status = '3DS';
-                    } else if (responseStr.includes('LUMD') || responseStr.includes('API-KEY') || responseStr.includes('AUTHENTICATION FAILED')) {
+                    } else if (responseStr.includes('AUTHENTICATION FAILED') || 
+                              responseStr.includes('INVALID API KEY') || 
+                              responseStr.includes('MISSING API KEY') ||
+                              responseStr.includes('UNAUTHORIZED') ||
+                              responseStr.includes('401')) {
                         status = 'ERROR';
                         message = 'Authentication failed: Invalid or missing API key';
                     }
@@ -574,6 +625,12 @@ document.addEventListener('DOMContentLoaded', function() {
                          response.description ||
                          response.reason ||
                          JSON.stringify(response);
+                         
+                // Check for HTTP status code if available
+                if (response.httpCode && response.httpCode === 401) {
+                    status = 'ERROR';
+                    message = 'Authentication failed: Invalid or missing API key';
+                }
             }
             
             // Normalize status to one of our standard values
@@ -599,13 +656,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvv);
 
-                // Debug: Log FormData contents
-                const formDataEntries = [];
-                for (let [key, value] of formData.entries()) {
-                    formDataEntries.push(`${key}: ${value}`);
-                }
-                console.log(`FormData payload for card ${card.displayCard}:`, formDataEntries);
-                
                 const apiKey = getCurrentApiKey();
                 console.log(`X-API-KEY header: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
 
@@ -624,6 +674,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => {
                     if (!response.ok) {
+                        // Check for 401 Unauthorized
+                        if (response.status === 401) {
+                            throw new Error('Authentication failed: Invalid or missing API key');
+                        }
                         throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
                     }
                     return response.text();
@@ -637,7 +691,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const parsedResponse = parseGatewayResponse(parsedData);
                     console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                    
                     if (parsedResponse.status === 'ERROR') {
+                        // Show authentication error
                         if (window.Swal) {
                             Swal.fire({
                                 title: 'Authentication Error',
@@ -646,7 +702,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 confirmButtonColor: '#ec4899'
                             });
                         }
+                        
+                        // Try to refresh the API key
+                        refreshApiKey();
                     }
+                    
                     resolve({
                         status: parsedResponse.status,
                         response: parsedResponse.message,
@@ -661,6 +721,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (error.name === 'AbortError') {
                         resolve(null);
+                        return;
+                    }
+
+                    // Check for authentication error
+                    if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Authentication Error',
+                                text: error.message,
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
+                        
+                        // Try to refresh the API key
+                        refreshApiKey().then(() => {
+                            // Retry the request with the new API key
+                            if (retryCount < MAX_RETRIES && isProcessing) {
+                                setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                            } else {
+                                resolve({
+                                    status: 'ERROR',
+                                    response: error.message,
+                                    card: card,
+                                    displayCard: card.displayCard
+                                });
+                            }
+                        });
                         return;
                     }
 
@@ -689,6 +777,81 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        // Function to refresh API key when authentication fails
+        function refreshApiKey() {
+            console.log('Refreshing API key due to authentication error...');
+            
+            return fetch('/rotate.php', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to refresh API key: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.apiKey) {
+                    API_KEY = data.apiKey;
+                    
+                    // Validate the new API key
+                    return validateApiKey(API_KEY).then(valid => {
+                        if (valid) {
+                            isApiKeyValid = true;
+                            console.log('API key refreshed and validated successfully');
+                            
+                            if (window.Swal) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: 'API Key Refreshed',
+                                    showConfirmButton: false,
+                                    timer: 3000
+                                });
+                            }
+                            
+                            return true;
+                        } else {
+                            console.error('Refreshed API key validation failed');
+                            isApiKeyValid = false;
+                            
+                            if (window.Swal) {
+                                Swal.fire({
+                                    title: 'API Key Validation Failed',
+                                    text: 'The refreshed API key is not valid. Please try again later.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                            }
+                            
+                            return false;
+                        }
+                    });
+                } else {
+                    throw new Error('Invalid API key response during refresh');
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing API key:', error);
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'API Key Refresh Failed',
+                        text: 'Could not refresh API key. Please try again later.',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                
+                return false;
+            });
+        }
+
         // Main card processing function
         async function processCards() {
             if (isProcessing) {
@@ -701,6 +864,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 return;
+            }
+
+            // Check if API key is valid before processing
+            if (!isApiKeyValidated()) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'API Key Invalid',
+                        text: 'The API key is not valid. Attempting to refresh...',
+                        icon: 'warning',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+                
+                const refreshed = await refreshApiKey();
+                if (!refreshed) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'API Key Error',
+                            text: 'Could not validate API key. Please try again later.',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    return;
+                }
             }
 
             const cardInput = document.getElementById('cardInput');
@@ -1009,6 +1197,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (!response.ok) {
+                    // Check for 401 Unauthorized
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed: Invalid or missing API key');
+                    }
                     throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
                 }
                 return response.json();
@@ -1053,13 +1245,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (genLoader) genLoader.style.display = 'none';
                 if (genStatusLog) genStatusLog.textContent = 'Error: ' + error.message;
                 console.error(`Card generation error: ${error.message}`);
-                if (window.Swal) {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: `Failed to generate cards: ${error.message}`,
-                        icon: 'error',
-                        confirmButtonColor: '#ec4899'
-                    });
+                
+                // Check for authentication error
+                if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Authentication Error',
+                            text: error.message,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    
+                    // Try to refresh the API key
+                    refreshApiKey();
+                } else {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: `Failed to generate cards: ${error.message}`,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
                 }
             });
         }
@@ -1140,6 +1348,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.activityRequest = null;
                 
                 if (!response.ok) {
+                    // Check for 401 Unauthorized
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed: Invalid or missing API key');
+                    }
                     throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
                 }
                 
@@ -1206,6 +1418,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         errorMessage = 'Network error - please check your connection';
                     } else if (error.message.includes('HTTP error')) {
                         errorMessage = 'Server error - please try again later';
+                    } else if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                        errorMessage = 'Authentication error - please refresh the page';
+                        // Try to refresh the API key
+                        refreshApiKey();
                     }
                     
                     const homePage = document.getElementById('page-home');
