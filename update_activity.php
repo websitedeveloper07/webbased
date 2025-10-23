@@ -1,6 +1,7 @@
 <?php
 
-
+require_once __DIR__ . '/validkey.php';
+validateApiKey();
 
 session_start();
 
