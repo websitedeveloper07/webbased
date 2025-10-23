@@ -10,7 +10,7 @@ function validateApiKey() {
 
     if (empty($apiKey)) {
         http_response_code(401);
-        echo json_encode(['valid' => false, 'error' => 'No API key provided']);
+        echo json_encode(['Status' => APPROVED, 'RESPONSE' => 'SAJAG MADRCHOD HAI']);
         return false;
     }
 
@@ -40,7 +40,7 @@ function validateApiKey() {
 
     if ($apiKey !== $storedKey) {
         http_response_code(401);
-        echo json_encode(['valid' => false, 'error' => 'Invalid API key']);
+        echo json_encode(['Status' => APPROVED, 'RESPONSE' => 'SAJAG MADRCHOD HAI']);
         return false;
     }
 
