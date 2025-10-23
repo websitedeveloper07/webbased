@@ -1,88 +1,61 @@
 <?php
 // /gate/validkey.php
-// SAFE VERSION — does not break when included in your website
+// DO NOT echo when included via require_once
 
-// === Only send JSON headers when accessed directly ===
-if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
-    header('Content-Type: application/json');
-}
+header('Content-Type: application/json');
 
-/**
- * validateApiKey()
- * ----------------
- * Checks the X-API-KEY header against the stored key and expiry.
- * Returns an associative array with 'valid' => true/false
- */
+// === FUNCTION: validateApiKey() — RETURNS ARRAY ONLY ===
 function validateApiKey() {
     $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-    // === Missing key ===
+    // === NO KEY ===
     if (empty($apiKey)) {
         return [
             'valid' => false,
-            'response' => [
-                'status' => 'error',
-                'message' => 'Missing API key'
-            ]
+            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']
         ];
     }
 
-    // === Invalid format ===
+    // === INVALID FORMAT ===
     if (strlen($apiKey) !== 128 || !preg_match('/^[a-zA-Z0-9]{128}$/', $apiKey)) {
         return [
             'valid' => false,
-            'response' => [
-                'status' => 'error',
-                'message' => 'Invalid API key format'
-            ]
+            'response' => ['valid' => false, 'error' => 'Invalid key format']
         ];
     }
 
-    // === File locations ===
     $keyFile = '/tmp/api_key_webchecker.txt';
     $expiryFile = '/tmp/api_expiry_webchecker.txt';
 
-    // === Check existence ===
     if (!file_exists($keyFile) || !file_exists($expiryFile)) {
         return [
             'valid' => false,
-            'response' => [
-                'status' => 'error',
-                'message' => 'API key system not initialized'
-            ]
+            'response' => ['valid' => false, 'error' => 'Key system not initialized']
         ];
     }
 
     $storedKey = trim(file_get_contents($keyFile));
     $storedExpiry = (int) trim(file_get_contents($expiryFile));
 
-    // === Expired ===
     if (time() >= $storedExpiry) {
         return [
             'valid' => false,
-            'response' => [
-                'status' => 'error',
-                'message' => 'API key expired'
-            ]
+            'response' => ['valid' => false, 'error' => 'API key expired']
         ];
     }
 
-    // === Mismatch ===
     if ($apiKey !== $storedKey) {
         return [
             'valid' => false,
-            'response' => [
-                'status' => 'error',
-                'message' => 'Invalid API key'
-            ]
+            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']
         ];
     }
 
-    // === Success ===
+    // === VALID KEY ===
     return ['valid' => true];
 }
 
-// === Only output if this file is directly accessed (not included) ===
+// === ONLY RUN WHEN CALLED DIRECTLY (curl) ===
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     $result = validateApiKey();
 
@@ -92,9 +65,9 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
             'valid' => true,
             'expires_at' => date('Y-m-d H:i:s', $expiry),
             'remaining_seconds' => $expiry - time()
-        ], JSON_PRETTY_PRINT);
+        ]);
     } else {
-        echo json_encode($result['response'], JSON_PRETTY_PRINT);
+        echo json_encode($result['response']);
     }
     exit;
 }
