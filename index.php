@@ -1579,6 +1579,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </div>
 
-    <script src="index.js?v=2"></script>
+    <script src="index.js?v=20251023"></script>
+
 </body>
 </html>
