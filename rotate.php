@@ -1,6 +1,6 @@
 <?php
-// rotate.php - POST-ONLY + SECRET KEY FROM POST
-// Key: vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR
+// rotate.php - POST-ONLY + secret_key FROM POST BODY
+// Secret key: vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR
 
 // === 1. ALLOW POST ONLY ===
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -10,14 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// === 2. SECRET KEY (HARD-CODED) ===
-$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR';
-
-// === 3. GET KEY FROM POST BODY ===
+// === 2. GET secret_key FROM POST BODY ===
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-$providedKey = trim($input['key'] ?? '');
+$providedKey = trim($input['secret_key'] ?? '');
 
-// === 4. VALIDATE KEY ===
+// === 3. VALIDATE SECRET KEY ===
+$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Your key
+
 if ($providedKey !== $SECRET_KEY) {
     http_response_code(401);
     header('Content-Type: application/json');
@@ -25,7 +24,7 @@ if ($providedKey !== $SECRET_KEY) {
     exit;
 }
 
-// === 5. RATE LIMIT (1 call per 30 sec) ===
+// === 4. RATE LIMIT (1 call per 30 sec) ===
 $lockFile = '/tmp/rotate_lock.txt';
 if (file_exists($lockFile)) {
     $lastRun = (int)file_get_contents($lockFile);
@@ -37,7 +36,7 @@ if (file_exists($lockFile)) {
 }
 file_put_contents($lockFile, time());
 
-// === 6. CORE: GENERATE OR REUSE API KEY ===
+// === 5. CORE: GENERATE OR REUSE API KEY ===
 $keyFile = '/tmp/api_key_webchecker.txt';
 $expiryFile = '/tmp/api_expiry_webchecker.txt';
 $tempKey = '/tmp/api_key_temp.txt';
@@ -55,7 +54,7 @@ function generateApiKey() {
 header('Content-Type: application/json');
 $currentTime = time();
 
-// === AUTO-CREATE FILES ===
+// === AUTO-CREATE FILES IF MISSING ===
 if (!file_exists($keyFile)) {
     file_put_contents($keyFile, '', LOCK_EX);
     chmod($keyFile, 0644);
@@ -70,7 +69,6 @@ $storedKey = trim(file_get_contents($keyFile));
 $storedExpiry = (int)trim(file_get_contents($expiryFile));
 
 if (strlen($storedKey) === 128 && $storedExpiry > $currentTime) {
-    // REUSE
     echo json_encode([
         'apiKey' => $storedKey,
         'expires_at' => date('Y-m-d H:i:s', $storedExpiry),
