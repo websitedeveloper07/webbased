@@ -1,11 +1,10 @@
 <?php
-// rotate.php - WORKS UNDER ROOT
+// rotate.php - ULTIMATE ROOT-FIXED VERSION
+// Uses /tmp for guaranteed writability
 // One key per hour, reused until expiry
-// Auto-creates files, forces permissions
 
-$baseDir = __DIR__;
-$keyFile = $baseDir . '/api_key.txt';
-$expiryFile = $baseDir . '/api_expiry.txt';
+$keyFile = '/tmp/api_key_webchecker.txt';
+$expiryFile = '/tmp/api_expiry_webchecker.txt';
 
 function generateApiKey() {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -25,11 +24,17 @@ $keyIsValid = false;
 
 // === AUTO-CREATE FILES IF MISSING ===
 if (!file_exists($keyFile)) {
-    file_put_contents($keyFile, '');
+    if (file_put_contents($keyFile, '') === false) {
+        echo json_encode(['error' => 'Cannot create key file in /tmp']);
+        exit;
+    }
     chmod($keyFile, 0644);
 }
 if (!file_exists($expiryFile)) {
-    file_put_contents($expiryFile, '');
+    if (file_put_contents($expiryFile, '') === false) {
+        echo json_encode(['error' => 'Cannot create expiry file in /tmp']);
+        exit;
+    }
     chmod($expiryFile, 0644);
 }
 
@@ -49,7 +54,7 @@ if ($keyIsValid) {
         'apiKey' => $storedKey,
         'expires_at' => date('Y-m-d H:i:s', $storedExpiry),
         'status' => 'reused',
-        'source' => 'file'
+        'source' => 'tmp_file'
     ]);
 } else {
     // Generate new key
@@ -61,11 +66,23 @@ if ($keyIsValid) {
         file_put_contents($keyFile, $apiKey) === false ||
         file_put_contents($expiryFile, $expiryTime) === false
     ) {
-        // Even root can't fail — but just in case
+        // Last resort: fallback to a single file
+        $singleFile = '/tmp/api_key_single_webchecker.txt';
+        $data = base64_encode($apiKey . '|' . $expiryTime);
+        if (file_put_contents($singleFile, $data) === false) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'ALL file writes failed - check server disk',
+                'disk_free' => disk_free_space('/'),
+                'tmp_writable' => is_writable('/tmp') ? 'yes' : 'no'
+            ]);
+            exit;
+        }
         echo json_encode([
-            'error' => 'Failed to save key files (impossible under root?)',
-            'keyFile' => $keyFile,
-            'disk_free' => disk_free_space($baseDir)
+            'apiKey' => $apiKey,
+            'expires_at' => date('Y-m-d H:i:s', $expiryTime),
+            'status' => 'generated_fallback_single',
+            'source' => 'single_tmp_file'
         ]);
         exit;
     }
@@ -74,7 +91,7 @@ if ($keyIsValid) {
         'apiKey' => $apiKey,
         'expires_at' => date('Y-m-d H:i:s', $expiryTime),
         'status' => 'generated',
-        'source' => 'new'
+        'source' => 'tmp_file'
     ]);
 }
 ?>
