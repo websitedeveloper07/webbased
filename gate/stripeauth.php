@@ -1,7 +1,15 @@
 <?php
 
 require_once __DIR__ . '/validkey.php';
-validateApiKey();
+
+$validation = validateApiKey();
+
+if (!$validation['valid']) {
+    // Use the response from validkey.php
+    header('Content-Type: application/json');
+    echo json_encode($validation['response']);
+    exit;
+}
 
 header('Content-Type: text/plain');
 
