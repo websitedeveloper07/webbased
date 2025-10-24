@@ -63,15 +63,15 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         // Map Shopify API response to status
         $response_text = $result['Response'];
         $status = 'DECLINED';
-        if (in_array($response_text, 'Thank You', 'ORDER_PLACED')) {
+        if (in_array($response_text, ['Thank You', 'ORDER_PLACED'])) {
             $status = 'CHARGED';
-        } elseif (in_array($response_text, 'INCORRECT_ZIP', 'INCORRECT_CVV', '3D_AUTHENTICATION', 'INSUFFICIENT_FUNDS')) {
+        } elseif (in_array($response_text, ['INCORRECT_ZIP', 'INCORRECT_CVV', '3D_AUTHENTICATION', 'INSUFFICIENT_FUNDS'])) {
             $status = 'APPROVED';
-        } elseif (in_array($response_text, 
+        } elseif (in_array($response_text, [
             'CARD_DECLINED', 'FRAUD_SUSPECTED', 'r4 token empty', 'tax amount empty', 'del amount empty',
             'INCORRECT_NUMBER', 'product id empty', 'py id empty', 'clinte token', 'EXPIRED_CARD',
             'INVALID_PAYMENT_ERROR', 'AUTHORIZATION_ERROR', 'PROCESSING_ERROR'
-        )) {
+        ])) {
             $status = 'DECLINED';
         }
 
@@ -153,7 +153,7 @@ $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
 $current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
     log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
-    echo "DECLINED card expired";
+    echo "DECLINED [Card expired]";
     exit;
 }
 
