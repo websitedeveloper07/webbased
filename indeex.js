@@ -24,6 +24,19 @@ document.addEventListener('DOMContentLoaded', function() {
     let isApiKeyValid = false;
     const ROTATE_SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Hardcoded secret key
 
+    // Function to update maxConcurrent based on selected gateway
+    function updateMaxConcurrent() {
+        if (selectedGateway === 'gate/stripe1$.php') {
+            maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
+        } else if (selectedGateway === 'gate/stripegbp.php' || selectedGateway === 'gate/paypal0.1$.php') {
+            maxConcurrent = 5; // 5 concurrent requests for Stripe GBP and PayPal
+            console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
+        } else {
+            maxConcurrent = 3; // 3 concurrent requests for all other gateways
+            console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
+        }
+    }
+
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 10; // Default for stripe1$ 
     // Load API key from refresh_cache.php using POST with secret key
@@ -273,14 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedGateway = selected.value;
                 
                 // Update maxConcurrent based on selected gateway
-                if (selectedGateway === 'gate/stripe1$.php') {
-                    maxConcurrent = 10; // 10 concurrent requests for Stripe 1$                 } else if (selectedGateway === 'gate/stripegbp.php' || selectedGateway === 'gate/paypal0.1$.php') {
-                    maxConcurrent = 5; // 5 concurrent requests for Stripe GBP and PayPal
-                } else {
-                    maxConcurrent = 3; // 3 concurrent requests for all other gateways
-                }
-                
-                console.log(`Gateway updated to: ${selectedGateway}, Max concurrent: ${maxConcurrent}`);
+                updateMaxConcurrent();
                 
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
                 const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
@@ -1785,15 +1791,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 initializeActivityUpdates();
                 
                 // Initialize maxConcurrent based on selected gateway
-                if (selectedGateway === 'gate/stripe1$.php') {
-                    maxConcurrent = 10;
-                } else if (selectedGateway === 'gate/stripegbp.php' || selectedGateway === 'gate/paypal0.1$.php') {
-                    maxConcurrent = 5;
-                } else {
-                    maxConcurrent = 3;
-                }
-                
-                console.log(`Initialized with gateway: ${selectedGateway}, Max concurrent: ${maxConcurrent}`);
+                updateMaxConcurrent();
             });
         } else {
             console.error("jQuery not loaded, some functionality may not work");
