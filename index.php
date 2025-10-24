@@ -1507,6 +1507,16 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/stripe1£.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-stripe"></i> Stripe UK
+                                <span class="gateway-badge badge-charge">1£ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">UK payment processing with £1 charge</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/shopify1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
@@ -1580,7 +1590,5 @@ if (empty($userPhotoUrl)) {
     </div>
 
     <script src="indeex.js?v=<?= time(); ?>"></script>
-
-
 </body>
 </html>
