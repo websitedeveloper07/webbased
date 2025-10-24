@@ -50,9 +50,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
 
     // Output based on status
     if ($status === "APPROVED") {
-        return "APPROVED [$response_msg] $card_details";
+        return "APPROVED [$response_msg]";
     } elseif ($status === "DECLINED") {
-        return "DECLINED [$response_msg] $card_details";
+        return "DECLINED [$response_msg]";
     } else {
         return "DECLINED [Unknown status: $status] $card_details";
     }
@@ -119,7 +119,7 @@ if (!preg_match('/^\d{3,4}$/', $cvc)) {
 $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
 $current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
-    echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc";
+    echo "DECLINED [Card expired]";
     exit;
 }
 
