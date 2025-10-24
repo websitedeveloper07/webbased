@@ -19,10 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    let API_KEY = null; // Will be loaded from refresh_cache.php
+    let API_KEY = null; // Will be loaded from cron_sync.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
-    const ROTATE_SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Hardcoded secret key
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -39,15 +38,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 10; // Default for stripe1$ 
-    // Load API key from refresh_cache.php using POST with secret key
+    
+    // Load API key from cron_sync.php using POST
     function loadApiKey() {
-        return fetch('/refresh_cache.php', {
+        return fetch('/gate/cron_sync.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache'
-            },
-            body: JSON.stringify({ lund: ROTATE_SECRET_KEY })
+            }
         })
         .then(response => {
             if (!response.ok) {
@@ -59,19 +58,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data && data.apiKey) {
                 API_KEY = data.apiKey;
                 console.log('API key loaded successfully');
-                
-                // Validate the API key
-                return validateApiKey(API_KEY).then(valid => {
-                    if (valid) {
-                        isApiKeyValid = true;
-                        console.log('API key validated successfully');
-                        return true;
-                    } else {
-                        console.error('API key validation failed');
-                        isApiKeyValid = false;
-                        return false;
-                    }
-                });
+                isApiKeyValid = true;
+                return true;
             } else {
                 throw new Error('Invalid API key response');
             }
@@ -79,30 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error loading API key:', error);
             isApiKeyValid = false;
-            return false;
-        });
-    }
-
-    // Validate API key using validkey.php
-    function validateApiKey(apiKey) {
-        return fetch('/gate/validkey.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': apiKey
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Validation failed: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            return data.valid === true;
-        })
-        .catch(error => {
-            console.error('API key validation error:', error);
             return false;
         });
     }
@@ -799,13 +763,12 @@ document.addEventListener('DOMContentLoaded', function() {
         function refreshApiKey() {
             console.log('Refreshing API key due to authentication error...');
             
-            return fetch('/refresh_cache.php', {
+            return fetch('/gate/cron_sync.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache'
-                },
-                body: JSON.stringify({ secret_key: ROTATE_SECRET_KEY })
+                }
             })
             .then(response => {
                 if (!response.ok) {
@@ -816,41 +779,21 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data && data.apiKey) {
                     API_KEY = data.apiKey;
+                    isApiKeyValid = true;
+                    console.log('API key refreshed successfully');
                     
-                    // Validate the new API key
-                    return validateApiKey(API_KEY).then(valid => {
-                        if (valid) {
-                            isApiKeyValid = true;
-                            console.log('API key refreshed and validated successfully');
-                            
-                            if (window.Swal) {
-                                Swal.fire({
-                                    toast: true,
-                                    position: 'top-end',
-                                    icon: 'success',
-                                    title: 'API Key Refreshed',
-                                    showConfirmButton: false,
-                                    timer: 3000
-                                });
-                            }
-                            
-                            return true;
-                        } else {
-                            console.error('Refreshed API key validation failed');
-                            isApiKeyValid = false;
-                            
-                            if (window.Swal) {
-                                Swal.fire({
-                                    title: 'API Key Validation Failed',
-                                    text: 'The refreshed API key is not valid. Please try again later.',
-                                    icon: 'error',
-                                    confirmButtonColor: '#ec4899'
-                                });
-                            }
-                            
-                            return false;
-                        }
-                    });
+                    if (window.Swal) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'API Key Refreshed',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                    
+                    return true;
                 } else {
                     throw new Error('Invalid API key response during refresh');
                 }
