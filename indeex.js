@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ROTATE_SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Hardcoded secret key
 
     // Dynamic MAX_CONCURRENT based on selected gateway
-    let maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
-
+    let maxConcurrent = 10; // Default for stripe1$ 
     // Load API key from rotate.php using POST with secret key
     function loadApiKey() {
         return fetch('/rotate.php', {
@@ -272,8 +271,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const selected = document.querySelector('input[name="gateway"]:checked');
             if (selected) {
                 selectedGateway = selected.value;
+                
                 // Update maxConcurrent based on selected gateway
-                maxConcurrent = selectedGateway === 'gate/stripe1$.php' ? 10 : 3;
+                if (selectedGateway === 'gate/stripe1$.php') {
+                    maxConcurrent = 10; // 10 concurrent requests for Stripe 1$                 } else {
+                    maxConcurrent = 5;  // 5 concurrent requests for all other gateways including Stripe 1£
+                }
                 
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
                 const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
