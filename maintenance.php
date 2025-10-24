@@ -2,21 +2,35 @@
 session_start();
 
 // Define the same admin access key as in adminaccess_panel.php
-define('ADMIN_ACCESS_KEY', 'YOUR_SECURE_ADMIN_KEY_123');
+define('ADMIN_ACCESS_KEY', 'iloveyoupayal'); // Must match adminaccess_panel.php
+
+// Maintenance flag file path (must match adminaccess_panel.php)
+define('MAINTENANCE_FLAG', 'maintenance.flag');
+
+// Check if maintenance mode is active
+if (!file_exists(MAINTENANCE_FLAG)) {
+    // If maintenance mode is disabled, redirect to the main site
+    header("Location: /index.php");
+    exit();
+}
 
 // Handle admin login
 if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS_KEY) {
     $_SESSION['admin_authenticated'] = true;
-    header("Location: /index.php");
+    header("Location: /adminaccess_panel.php");
     exit();
+} elseif (isset($_POST['admin_password']) && $_POST['admin_password'] !== '') {
+    $error = "Invalid access key. Please try again.";
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Under Maintenance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -346,7 +360,6 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
             font-size: 0.85rem;
             margin-top: 8px;
             text-align: left;
-            display: none;
         }
 
         /* Animations */
@@ -539,7 +552,11 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
                     <div class="form-group">
                         <label class="form-label" for="adminPassword">Admin Access Key</label>
                         <input type="password" id="adminPassword" name="admin_password" class="form-input" placeholder="Enter admin access key" required>
-                        <div class="error-message" id="loginError">Invalid access key. Please try again.</div>
+                        <?php if (isset($error)): ?>
+                            <div class="error-message" style="display: block;"><?php echo htmlspecialchars($error); ?></div>
+                        <?php else: ?>
+                            <div class="error-message" id="loginError">Invalid access key. Please try again.</div>
+                        <?php endif; ?>
                     </div>
                 </form>
             </div>
@@ -564,19 +581,13 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
 
         // Handle form submission
         document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
             const password = document.getElementById('adminPassword').value;
             const errorElement = document.getElementById('loginError');
             
-            // Simple validation (in a real app, this would be done server-side)
             if (password === '') {
+                e.preventDefault();
                 errorElement.style.display = 'block';
-                return;
             }
-            
-            // Submit the form
-            this.submit();
         });
 
         // Close modal on Escape key
