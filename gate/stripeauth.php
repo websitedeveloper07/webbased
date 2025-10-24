@@ -50,11 +50,11 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
 
     // Output based on status
     if ($status === "APPROVED") {
-        return "APPROVED [$response_msg]";
+        return "[$response_msg]";
     } elseif ($status === "DECLINED") {
-        return "DECLINED [$response_msg]";
+        return "[$response_msg]";
     } else {
-        return "DECLINED [Unknown status: $status] $card_details";
+        return "DECLINED [Unknown status: $status]";
     }
 }
 
