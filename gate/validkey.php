@@ -14,17 +14,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    $input = $_POST; // Fallback to form data
+    $input = $_POST;
     file_put_contents('debug.log', date('Y-m-d H:i:s') . ' Non-JSON input: ' . print_r($_POST, true) . PHP_EOL, FILE_APPEND);
 } else {
     file_put_contents('debug.log', date('Y-m-d H:i:s') . ' JSON input: ' . $rawInput . PHP_EOL, FILE_APPEND);
 }
 
-// Log headers and server info for debugging
+// Log headers and server info
 file_put_contents('debug.log', date('Y-m-d H:i:s') . ' Headers: ' . print_r(getallheaders(), true) . PHP_EOL, FILE_APPEND);
 file_put_contents('debug.log', date('Y-m-d H:i:s') . ' Server: ' . print_r($_SERVER, true) . PHP_EOL, FILE_APPEND);
 
-// Check for key (try 'lund', 'key', or 'api_key')
+// Check for key
 $providedKey = trim($input['lund'] ?? $input['key'] ?? $input['api_key'] ?? '');
 if (empty($providedKey)) {
     http_response_code(400);
