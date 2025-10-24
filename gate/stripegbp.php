@@ -16,7 +16,12 @@ $validation = validateApiKey();
 
 if (!$validation['valid']) {
     header('Content-Type: application/json');
-    echo json_encode($validation['response']);
+    http_response_code(401);
+    echo json_encode([
+        'status' => 'ERROR',
+        'message' => $validation['response']['message'] ?? 'Invalid or missing API key',
+        'time_taken' => '0.00 seconds'
+    ]);
     exit;
 }
 
@@ -24,8 +29,13 @@ if (!$validation['valid']) {
 if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated'] !== true) {
     if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
         error_log("Unauthorized access to stripegbp.php: Invalid session");
+        header('Content-Type: application/json');
         http_response_code(401);
-        echo json_encode(['status' => 'ERROR', 'message' => 'Unauthorized access']);
+        echo json_encode([
+            'status' => 'ERROR',
+            'message' => 'Unauthorized access',
+            'time_taken' => '0.00 seconds'
+        ]);
         exit;
     }
 }
@@ -41,13 +51,28 @@ $cvc = $_POST['card']['cvc'] ?? '';
 
 // Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
-    echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
+    echo json_encode([
+        'status' => 'DECLINED',
+        'message' => 'Missing or incomplete card details',
+        'time_taken' => '0.00 seconds'
+    ]);
     exit;
 }
 
 // Format year to 4 digits if needed
 if (strlen($expYear) == 2) {
-    $expYear = '20' . $expYear;
+    $expYear = (intval($expYear) < 50 ? '20' : '19') . $expYear;
+}
+
+// Validate card format
+if (!preg_match('/^\d{13,19}$/', $cardNumber) || !preg_match('/^\d{1,2}$/', $expMonth) || 
+    !preg_match('/^\d{4}$/', $expYear) || !preg_match('/^\d{3,4}$/', $cvc)) {
+    echo json_encode([
+        'status' => 'DECLINED',
+        'message' => 'Invalid card format',
+        'time_taken' => '0.00 seconds'
+    ]);
+    exit;
 }
 
 // Initialize cookie jar for session continuity
@@ -242,12 +267,14 @@ $cookieJar = $donationResult['cookieJar'];
 $donationResponse = $donationResult['response'];
 $httpCode = $donationResult['httpCode'];
 
+// Calculate time taken for initial response
+$endTime = microtime(true);
+$timeTaken = number_format($endTime - $startTime, 2);
+
 if ($httpCode != 200 || !isset($donationResponse['data']['clientSecret'])) {
     $errorMsg = $donationResponse['error']['message'] ?? 'Failed to get clientSecret';
     error_log("Donation API call failed: $errorMsg");
     unlink($cookieJar);
-    $endTime = microtime(true);
-    $timeTaken = number_format($endTime - $startTime, 2);
     echo json_encode([
         'status' => 'ERROR',
         'message' => $errorMsg,
@@ -265,7 +292,7 @@ $stripeResult = confirmPayment($clientSecret, $paymentIntentId, $returnUrl, $car
 $stripeResponse = $stripeResult['response'];
 $httpCode = $stripeResult['httpCode'];
 
-// Calculate time taken
+// Calculate total time taken
 $endTime = microtime(true);
 $timeTaken = number_format($endTime - $startTime, 2);
 
@@ -275,17 +302,29 @@ unlink($cookieJar);
 if ($httpCode != 200 || isset($stripeResponse['error'])) {
     $errorCode = $stripeResponse['error']['code'] ?? 'unknown_error';
     $errorMessage = $stripeResponse['error']['message'] ?? 'Unknown error';
-    echo json_encode([
-        'status' => $errorCode,
-        'message' => $errorMessage,
-        'time_taken' => "$timeTaken seconds"
-    ]);
+    
+    // Check for 3DS requirement
+    if ($errorCode === 'authentication_required' || 
+        (isset($stripeResponse['error']['type']) && $stripeResponse['error']['type'] === 'card_error' && 
+         strpos($errorMessage, '3D Secure') !== false)) {
+        echo json_encode([
+            'status' => '3DS',
+            'message' => '3D Secure authentication required',
+            'time_taken' => "$timeTaken seconds"
+        ]);
+    } else {
+        echo json_encode([
+            'status' => 'DECLINED',
+            'message' => $errorMessage,
+            'time_taken' => "$timeTaken seconds"
+        ]);
+    }
     exit;
 }
 
 // Success response
 echo json_encode([
-    'status' => 'success',
+    'status' => 'CHARGED',
     'message' => 'PAYMENT_SUCCESS',
     'time_taken' => "$timeTaken seconds"
 ]);
