@@ -1319,8 +1319,7 @@ if (empty($userPhotoUrl)) {
             <div class="custom-banner">
                 <div class="banner-content">
                     <span class="banner-text">@SajagOG</span>
-                    <span class="banner-divider">/</span>
-                    <span class="banner-text">Sajag MADARCHOD HAI</span>
+                    <span class="banner-text">MADARCHOD HAI</span>
                 </div>
             </div>
             
