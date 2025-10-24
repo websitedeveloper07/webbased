@@ -1,5 +1,48 @@
 <?php
+header('Content-Type: application/json');
 
+// Enable error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/stripe1_debug.log');
+
+// Include cron_sync.php for validateApiKey
+require_once __DIR__ . '/cron_sync.php';
+
+// Start session for user authentication
+session_start([
+    'cookie_secure' => isset($_SERVER['HTTPS']),
+    'cookie_httponly' => true,
+    'use_strict_mode' => true,
+]);
+
+// Check if user is authenticated
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Unauthorized access', 'response' => 'UNAUTHORIZED'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
+}
+
+// Validate API key
+$validation = validateApiKey();
+if (!$validation['valid']) {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API key', 'response' => 'INVALID_API_KEY'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
+}
+
+$expectedApiKey = $validation['response']['apiKey'];
+$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+if ($providedApiKey !== $expectedApiKey) {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid or missing API key', 'response' => 'INVALID_API_KEY'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
+}
 require_once __DIR__ . '/cron_sync.php';
 
 $validation = validateApiKey();
