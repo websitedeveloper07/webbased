@@ -64,7 +64,7 @@ function triggerRotation() {
             'header'  => "User-Agent: validkey-recovery\r\n"
         ]
     ]);
-    @file_get_contents('http://127.0.0.1/rotate.php', false, $context);
+    @file_get_contents('http://127.0.0.1/refresh_cache.php', false, $context);
 }
 
 // === DIRECT CALL (curl https://cxchk.site/gate/validkey.php) ===
