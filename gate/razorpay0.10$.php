@@ -62,7 +62,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         $result = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE || !isset($result['description'])) {
             log_message("Invalid JSON for $card_details: " . substr($response, 0, 100));
-            return "DECLINED [Invalid API response: " . substr($response, 0, 100) . "] $card_details";
+            return "DECLINED [Invalid API response: " . substr($response, 0, 100) . "]";
         }
 
         // Map Razorpay API response to status
@@ -83,11 +83,11 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         $response_msg = htmlspecialchars($response_text, ENT_QUOTES, 'UTF-8');
         log_message("$status for $card_details: $response_msg");
-        return "$status [$response_msg] $card_details";
+        return "$status [$response_msg]";
     }
 
     log_message("Failed after retries for $card_details");
-    return "DECLINED [API request failed after retries] $card_details";
+    return "DECLINED [API request failed after retries]";
 }
 
 // Check if the request is POST and contains card data
