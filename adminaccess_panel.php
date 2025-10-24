@@ -1,11 +1,16 @@
 <?php
 session_start();
 
-// Admin access key (change this to your secure key)
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Admin access key
 define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
 
 // Maintenance flag file path
-define('MAINTENANCE_FLAG', 'maintenance.flag');
+define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
 // Check if admin is logged in
 if (isset($_POST['access_key'])) {
@@ -23,14 +28,14 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             if (file_put_contents(MAINTENANCE_FLAG, '1') !== false) {
                 $status_message = "Maintenance mode has been enabled.";
             } else {
-                $error = "Failed to enable maintenance mode. Check file permissions.";
+                $error = "Failed to enable maintenance mode. Check file permissions for /tmp/.maintenance.";
             }
         } elseif ($_POST['maintenance_action'] === 'disable') {
             if (file_exists(MAINTENANCE_FLAG)) {
                 if (unlink(MAINTENANCE_FLAG)) {
                     $status_message = "Maintenance mode has been disabled.";
                 } else {
-                    $error = "Failed to disable maintenance mode. Check file permissions.";
+                    $error = "Failed to disable maintenance mode. Check file permissions for /tmp/.maintenance.";
                 }
             } else {
                 $status_message = "Maintenance mode is already disabled.";
