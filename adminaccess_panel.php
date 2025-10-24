@@ -1,26 +1,50 @@
 <?php
 session_start();
 
-// Define the same admin access key as in adminaccess_panel.php
-define('ADMIN_ACCESS_KEY', 'iloveyoupayal'); // Must match adminaccess_panel.php
+// Admin access key (change this to your secure key)
+define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
 
-// Maintenance flag file path (must match adminaccess_panel.php)
+// Maintenance flag file path
 define('MAINTENANCE_FLAG', 'maintenance.flag');
 
-// Check if maintenance mode is active
-if (!file_exists(MAINTENANCE_FLAG)) {
-    // If maintenance mode is disabled, redirect to the main site
-    header("Location: /index.php");
-    exit();
+// Check if admin is logged in
+if (isset($_POST['access_key'])) {
+    if ($_POST['access_key'] === ADMIN_ACCESS_KEY) {
+        $_SESSION['admin_authenticated'] = true;
+    } else {
+        $error = "Invalid access key!";
+    }
 }
 
-// Handle admin login
-if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS_KEY) {
-    $_SESSION['admin_authenticated'] = true;
-    header("Location: /adminaccess_panel.php");
-    exit();
-} elseif (isset($_POST['admin_password']) && $_POST['admin_password'] !== '') {
-    $error = "Invalid access key. Please try again.";
+// Handle maintenance toggle
+if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
+    if (isset($_POST['maintenance_action'])) {
+        if ($_POST['maintenance_action'] === 'enable') {
+            if (file_put_contents(MAINTENANCE_FLAG, '1') !== false) {
+                $status_message = "Maintenance mode has been enabled.";
+            } else {
+                $error = "Failed to enable maintenance mode. Check file permissions.";
+            }
+        } elseif ($_POST['maintenance_action'] === 'disable') {
+            if (file_exists(MAINTENANCE_FLAG)) {
+                if (unlink(MAINTENANCE_FLAG)) {
+                    $status_message = "Maintenance mode has been disabled.";
+                } else {
+                    $error = "Failed to disable maintenance mode. Check file permissions.";
+                }
+            } else {
+                $status_message = "Maintenance mode is already disabled.";
+            }
+        }
+    }
+    
+    // Handle logout
+    if (isset($_GET['logout'])) {
+        session_unset();
+        session_destroy();
+        header("Location: adminaccess_panel.php");
+        exit();
+    }
 }
 ?>
 
@@ -29,572 +53,406 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 - Under Maintenance</title>
+    <title>Admin Access Panel | Card X CHK</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: #0d0d0d;
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
             min-height: 100vh;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             padding: 20px;
+        }
+        
+        .container {
+            background: rgba(15, 15, 35, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            backdrop-filter: blur(10px);
             position: relative;
             overflow: hidden;
         }
-
-        /* Simple gradient orbs */
-        body::before,
-        body::after {
-            content: '';
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-            pointer-events: none;
-        }
-
-        body::before {
-            width: 500px;
-            height: 500px;
-            background: #8b5cf6;
-            top: -200px;
-            right: -200px;
-        }
-
-        body::after {
-            width: 400px;
-            height: 400px;
-            background: #6366f1;
-            bottom: -150px;
-            left: -150px;
-        }
-
-        .container {
-            max-width: 450px;
+        
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+        
+        .logo-container {
             text-align: center;
-            position: relative;
-            z-index: 10;
-            animation: fadeIn 0.5s ease-out;
+            margin-bottom: 30px;
         }
-
-        /* Logo */
-        .logo-wrapper {
-            margin-bottom: 32px;
-        }
-
-        .logo-circle {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 24px;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+        
+        .logo {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            padding: 3px;
-            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+            object-fit: cover;
+            border: 2px solid rgba(167, 139, 250, 0.6);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
         }
-
-        .logo-inner {
-            width: 100%;
-            height: 100%;
-            background: #0d0d0d;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .logo-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .brand-name {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #a78bfa, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 4px;
-        }
-
-        /* Card */
-        .main-card {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 32px;
-            padding: 48px 36px;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-        }
-
+        
         h1 {
-            font-size: 2rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
             font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 16px;
-            letter-spacing: -0.5px;
-        }
-
-        .subtitle {
-            font-size: 1.05rem;
-            color: #9ca3af;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
-
-        /* Animated bars */
-        .loader-bars {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 8px;
-            height: 50px;
-            margin: 40px 0;
-        }
-
-        .bar {
-            width: 8px;
-            background: linear-gradient(180deg, #8b5cf6, #6366f1);
-            border-radius: 10px;
-            animation: wave 1.2s ease-in-out infinite;
-        }
-
-        .bar:nth-child(1) { animation-delay: 0s; }
-        .bar:nth-child(2) { animation-delay: 0.1s; }
-        .bar:nth-child(3) { animation-delay: 0.2s; }
-        .bar:nth-child(4) { animation-delay: 0.3s; }
-        .bar:nth-child(5) { animation-delay: 0.4s; }
-
-        /* Status text */
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            padding: 12px 24px;
-            border-radius: 50px;
-            margin-top: 32px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #8b5cf6;
-            border-radius: 50%;
-            animation: blink 2s ease-in-out infinite;
-        }
-
-        .status-text {
-            font-size: 0.9rem;
             color: #a78bfa;
-            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-
-        /* Admin Login Button */
-        .admin-login-btn {
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 14px 28px;
-            font-size: 0.95rem;
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
             font-weight: 600;
+            color: #c4b5fd;
+        }
+        
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-family: 'Rajdhani', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="password"]:focus {
+            outline: none;
+            border-color: rgba(167, 139, 250, 0.6);
+            box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #7c3aed, #a78bfa);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 40px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+            margin-top: 10px;
         }
-
-        .admin-login-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
         }
-
-        .admin-login-btn i {
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .maintenance-status {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-enabled {
+            color: #f87171;
+            border-left: 4px solid #f87171;
+        }
+        
+        .status-disabled {
+            color: #4ade80;
+            border-left: 4px solid #4ade80;
+        }
+        
+        .status-text {
             font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
-
-        /* Modal */
-        .modal {
-            display: none;
+        
+        .status-desc {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .control-buttons button {
+            flex: 1;
+        }
+        
+        .enable-btn {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+        
+        .disable-btn {
+            background: linear-gradient(90deg, #10b981, #4ade80);
+        }
+        
+        .logout-btn {
+            background: linear-gradient(90deg, #6b7280, #9ca3af);
+            margin-top: 20px;
+        }
+        
+        .error {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .success {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .particles {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+            z-index: -1;
+            pointer-events: none;
         }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: rgba(20, 20, 20, 0.9);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 24px;
-            padding: 36px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.3s ease-out;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .modal-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: white;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #9ca3af;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .modal-close:hover {
-            color: white;
-        }
-
-        .modal-body {
-            margin-bottom: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #9ca3af;
-            font-size: 0.9rem;
-        }
-
-        .form-input {
+        
+        .grid-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 14px 18px;
-            background: rgba(30, 30, 30, 0.7);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(124, 58, 237, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124, 58, 237, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
         }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(40px, 40px); }
         }
-
-        .modal-footer {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #777;
         }
-
-        .btn {
-            padding: 12px 20px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .btn-cancel {
-            background: rgba(255, 255, 255, 0.1);
-            color: #9ca3af;
-        }
-
-        .btn-cancel:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .btn-submit {
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-            color: white;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
-        }
-
-        .error-message {
-            color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            text-align: left;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+                gap: 10px;
             }
         }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes wave {
-            0%, 100% {
-                height: 20px;
-                opacity: 0.4;
-            }
-            50% {
-                height: 50px;
-                opacity: 1;
-            }
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        /* Mobile responsive */
+        
         @media (max-width: 480px) {
-            body {
-                padding: 16px;
+            .container {
+                padding: 25px 15px;
             }
-
-            .logo-circle {
-                width: 90px;
-                height: 90px;
+            
+            h1 {
+                font-size: 1.4rem;
                 margin-bottom: 20px;
             }
-
-            .logo-inner {
-                padding: 18px;
-            }
-
-            .brand-name {
-                font-size: 1.65rem;
-                letter-spacing: 3px;
-            }
-
-            .main-card {
-                padding: 36px 28px;
-                border-radius: 28px;
-            }
-
-            h1 {
-                font-size: 1.65rem;
-            }
-
-            .subtitle {
-                font-size: 1rem;
-            }
-
-            .loader-bars {
-                height: 45px;
-                margin: 32px 0;
-            }
-
-            .bar {
-                width: 7px;
-            }
-
-            .status {
-                padding: 10px 20px;
-            }
-
-            .status-text {
-                font-size: 0.85rem;
-            }
-
-            .admin-login-btn {
-                padding: 12px 24px;
-                font-size: 0.9rem;
-            }
-
-            .modal-content {
-                padding: 28px 24px;
-            }
-
-            .modal-title {
-                font-size: 1.2rem;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .logo-circle {
-                width: 80px;
-                height: 80px;
-            }
-
-            .logo-inner {
-                padding: 16px;
-            }
-
-            .brand-name {
-                font-size: 1.5rem;
-                letter-spacing: 2px;
-            }
-
-            .main-card {
-                padding: 32px 24px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .subtitle {
-                font-size: 0.95rem;
-            }
-
-            .loader-bars {
-                height: 40px;
-            }
-
-            .bar {
-                width: 6px;
-                gap: 6px;
+            
+            .logo {
+                width: 70px;
+                height: 70px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="grid-lines"></div>
+    <div class="particles" id="particles"></div>
+    
     <div class="container">
-        <div class="logo-wrapper">
-            <div class="logo-circle">
-                <div class="logo-inner">
-                    <img src="https://cxchk.site/assets/branding/cardxchk-mark.png" alt="Logo" class="logo-img">
+        <div class="logo-container">
+            <img src="https://cxchk.site/assets/branding/cardxchk-mark.png" alt="Card X CHK Logo" class="logo">
+        </div>
+        
+        <?php if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated'] !== true): ?>
+            <h1>Admin Access Panel</h1>
+            
+            <?php if (isset($error)): ?>
+                <div class="error"><?php echo htmlspecialchars($error); ?></div>
+            <?php endif; ?>
+            
+            <form method="post">
+                <div class="form-group">
+                    <label for="access_key">Enter Admin Access Key</label>
+                    <input type="password" id="access_key" name="access_key" required>
+                </div>
+                <button type="submit">Authenticate</button>
+            </form>
+        <?php else: ?>
+            <h1>Maintenance Control Panel</h1>
+            
+            <?php if (isset($status_message)): ?>
+                <div class="success"><?php echo htmlspecialchars($status_message); ?></div>
+            <?php elseif (isset($error)): ?>
+                <div class="error"><?php echo htmlspecialchars($error); ?></div>
+            <?php endif; ?>
+            
+            <div class="maintenance-status <?php echo file_exists(MAINTENANCE_FLAG) ? 'status-enabled' : 'status-disabled'; ?>">
+                <div class="status-text">
+                    Maintenance Mode: <?php echo file_exists(MAINTENANCE_FLAG) ? 'ENABLED' : 'DISABLED'; ?>
+                </div>
+                <div class="status-desc">
+                    <?php 
+                    if (file_exists(MAINTENANCE_FLAG)) {
+                        echo "Visitors are currently seeing the maintenance page.";
+                    } else {
+                        echo "Visitors can access the website normally.";
+                    }
+                    ?>
                 </div>
             </div>
-            <div class="brand-name">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</div>
-        </div>
-
-        <div class="main-card">
-            <h1>Under Maintenance</h1>
-            <p class="subtitle">
-                We're making some improvements. Please check back in a few moments.
-            </p>
-
-            <div class="loader-bars">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
-
-            <div class="status">
-                <div class="status-dot"></div>
-                <span class="status-text">Updating System</span>
-            </div>
-
-            <button class="admin-login-btn" onclick="openLoginModal()">
-                <i class="fas fa-user-shield"></i> Admin Login
-            </button>
-        </div>
-    </div>
-
-    <!-- Admin Login Modal -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Admin Access</h3>
-                <button class="modal-close" onclick="closeLoginModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="adminLoginForm" method="post">
-                    <div class="form-group">
-                        <label class="form-label" for="adminPassword">Admin Access Key</label>
-                        <input type="password" id="adminPassword" name="admin_password" class="form-input" placeholder="Enter admin access key" required>
-                        <?php if (isset($error)): ?>
-                            <div class="error-message" style="display: block;"><?php echo htmlspecialchars($error); ?></div>
-                        <?php else: ?>
-                            <div class="error-message" id="loginError">Invalid access key. Please try again.</div>
-                        <?php endif; ?>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-cancel" onclick="closeLoginModal()">Cancel</button>
-                <button type="submit" form="adminLoginForm" class="btn btn-submit">Login</button>
-            </div>
+            
+            <form id="maintenance-form" method="post">
+                <div class="control-buttons">
+                    <button type="submit" name="maintenance_action" value="enable" class="enable-btn <?php echo file_exists(MAINTENANCE_FLAG) ? 'hidden' : ''; ?>">
+                        <i class="fas fa-power-off"></i> Enable Maintenance
+                    </button>
+                    <button type="submit" name="maintenance_action" value="disable" class="disable-btn <?php echo !file_exists(MAINTENANCE_FLAG) ? 'hidden' : ''; ?>">
+                        <i class="fas fa-power-off"></i> Disable Maintenance
+                    </button>
+                </div>
+            </form>
+            
+            <a href="adminaccess_panel.php?logout=1" class="logout-btn" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 8px; margin-top: 20px;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        <?php endif; ?>
+        
+        <div class="footer">
+            <p>© <?php echo date('Y'); ?> Card X CHK. All rights reserved.</p>
         </div>
     </div>
 
     <script>
-        function openLoginModal() {
-            document.getElementById('loginModal').classList.add('active');
-            document.getElementById('adminPassword').focus();
-        }
-
-        function closeLoginModal() {
-            document.getElementById('loginModal').classList.remove('active');
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('loginError').style.display = 'none';
-        }
-
-        // Handle form submission
-        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('adminPassword').value;
-            const errorElement = document.getElementById('loginError');
+        // Create floating particles
+        document.addEventListener('DOMContentLoaded', function() {
+            const particlesContainer = document.getElementById('particles');
             
-            if (password === '') {
-                e.preventDefault();
-                errorElement.style.display = 'block';
+            // Create particles
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size between 2px and 5px
+                const size = Math.random() * 3 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random opacity
+                particle.style.opacity = Math.random() * 0.5 + 0.1;
+                
+                // Random animation delay
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                
+                // Random animation duration
+                particle.style.animationDuration = `${15 + Math.random() * 30}s`;
+                
+                particlesContainer.appendChild(particle);
             }
-        });
-
-        // Close modal on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeLoginModal();
-            }
+            
+            // Create CSS animation for particles
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .particle {
+                    position: absolute;
+                    background: #a78bfa;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    animation: float 20s infinite linear;
+                }
+                
+                @keyframes float {
+                    0% { 
+                        transform: translateY(0) translateX(0); 
+                        opacity: 0;
+                    }
+                    10% { 
+                        opacity: 0.7;
+                    }
+                    90% { 
+                        opacity: 0.7;
+                    }
+                    100% { 
+                        transform: translateY(-100vh) translateX(100px); 
+                        opacity: 0;
+                    }
+                }
+                
+                .hidden {
+                    display: none;
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
 </body>
