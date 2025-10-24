@@ -16,8 +16,8 @@ if (php_sapi_name() !== 'cli' && $_SERVER['SCRIPT_FILENAME'] === __FILE__) {
 
     // Handle API request
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        $errorMsg = ['error' => 'Method not allowed'];
+        http_response_code(403);
+        $errorMsg = ['error' => '403 Forbidden Access'];
         file_put_contents(__DIR__ . '/debug.log', date('Y-m-d H:i:s') . ' Error 405: ' . json_encode($errorMsg) . ' Headers: ' . print_r(getallheaders(), true) . PHP_EOL, FILE_APPEND);
         echo json_encode($errorMsg);
         exit;
