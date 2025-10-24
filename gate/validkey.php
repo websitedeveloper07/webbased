@@ -1,79 +1,18 @@
 <?php
-// /gate/validkey.php
-// Works with lazy refresh_cache.php | Zero downtime validation
-
 header('Content-Type: application/json');
 
-// === FUNCTION: validateApiKey() — RETURNS ARRAY ONLY ===
-function validateApiKey() {
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+// Only one static key
+$STATIC_API_KEY = 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz1234567890aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789AbCdEfGhIjK'; // Must match refresh_cache.php
 
-    // === 1. NO KEY PROVIDED ===
-    if (empty($apiKey)) {
-        return [
-            'valid' => false,
-            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']
-        ];
-    }
+$apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-    // === 2. INVALID FORMAT ===
-    if (strlen($apiKey) !== 128 || !preg_match('/^[a-zA-Z0-9]{128}$/', $apiKey)) {
-        return [
-            'valid' => false,
-            'response' => ['valid' => false, 'error' => 'Invalid key format']
-        ];
-    }
-
-    // === 3. FILE PATHS ===
-    $keyFile    = '/tmp/api_key_webchecker.txt';
-    $expiryFile = '/tmp/api_expiry_webchecker.txt';
-
-    // === 4. FILES MISSING ===
-    if (!file_exists($keyFile) || !file_exists($expiryFile)) {
-        return [
-            'valid' => false,
-            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'API KEY NOT GENERATED YET']
-        ];
-    }
-
-    // === 5. READ CURRENT KEY AND EXPIRY ===
-    $storedKey    = trim(@file_get_contents($keyFile));
-    $storedExpiry = (int)trim(@file_get_contents($expiryFile));
-    $currentTime  = time();
-
-    // === 6. KEY EXPIRED OR INVALID ===
-    if (strlen($storedKey) !== 128 || $storedExpiry <= $currentTime) {
-        return [
-            'valid' => false,
-            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'API KEY EXPIRED']
-        ];
-    }
-
-    // === 7. FINAL CHECK ===
-    if ($apiKey !== $storedKey) {
-        return [
-            'valid' => false,
-            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']
-        ];
-    }
-
-    // === 8. KEY IS VALID ===
-    return ['valid' => true];
-}
-
-// === DIRECT CALL (curl https://cxchk.site/gate/validkey.php) ===
-if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
-    $result = validateApiKey();
-
-    if ($result['valid']) {
-        $expiry = (int)trim(file_get_contents('/tmp/api_expiry_webchecker.txt'));
-        echo json_encode([
-            'valid'            => true,
-            'expires_at'       => date('Y-m-d H:i:s', $expiry),
-            'remaining_seconds'=> $expiry - time()
-        ]);
-    } else {
-        echo json_encode($result['response']);
-    }
+if (empty($apiKey) || $apiKey !== $STATIC_API_KEY) {
+    echo json_encode(['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']);
     exit;
 }
+
+// Key is valid
+echo json_encode([
+    'valid' => true,
+    'apiKey' => $STATIC_API_KEY
+]);
