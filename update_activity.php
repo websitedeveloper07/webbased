@@ -1,16 +1,17 @@
 <?php
 // update_activity.php
-// Proper API key validation + custom response (static single key)
+// Static API key validation + return users data
 
-require_once __DIR__ . '/gate/validkey.php';
+header('Content-Type: application/json');
+
+// === STATIC API KEY ===
+$STATIC_API_KEY = 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz1234567890aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789AbCdEfGhIjK'; // Replace with your static key
 
 // === VALIDATE API KEY ===
 $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
-$STATIC_API_KEY = 'YOUR_FIXED_128_CHARACTER_API_KEY_HERE'; // Must match validkey.php
 
 if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
-    header('Content-Type: application/json');
-    echo json_encode(['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']);
+    echo json_encode(['success' => false, 'message' => 'Invalid API key']);
     exit;
 }
 
@@ -19,7 +20,6 @@ session_start();
 
 // Check Telegram session
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
@@ -64,16 +64,6 @@ try {
                 UNIQUE(session_id)
             );
         ");
-    } else {
-        $columns = $pdo->query("SELECT column_name FROM information_schema.columns WHERE table_name = 'online_users'")->fetchAll(PDO::FETCH_COLUMN);
-        $cols = array_flip($columns);
-
-        if (!isset($cols['telegram_id'])) {
-            $pdo->exec("ALTER TABLE online_users ADD COLUMN telegram_id BIGINT");
-        }
-        if (!isset($cols['username'])) {
-            $pdo->exec("ALTER TABLE online_users ADD COLUMN username VARCHAR(255)");
-        }
     }
 
     // === USER DATA ===
@@ -82,10 +72,6 @@ try {
     $photoUrl = $_SESSION['user']['photo_url'] ?? null;
     $telegramId = $_SESSION['user']['id'] ?? null;
     $username = $_SESSION['user']['username'] ?? null;
-
-    if (empty($name)) {
-        throw new Exception("User name cannot be empty");
-    }
 
     // === UPDATE ACTIVITY ===
     $pdo->prepare("
@@ -133,7 +119,6 @@ try {
         ];
     }
 
-    header('Content-Type: application/json');
     echo json_encode([
         'success' => true,
         'count' => count($formatted),
@@ -142,6 +127,5 @@ try {
 
 } catch (Exception $e) {
     error_log("DB Error in update_activity.php: " . $e->getMessage());
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Database error']);
 }
