@@ -1,18 +1,44 @@
 <?php
-header('Content-Type: application/json');
+// validkey.php
+// Static API key validation for all scripts
 
-// Only one static key
-$STATIC_API_KEY = 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz1234567890aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789AbCdEfGhIjK'; // Must match refresh_cache.php
+// STATIC API KEY — must match update_activity.php
+define('STATIC_API_KEY', 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz1234567890aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789AbCdEfGhIjK'); // Replace with your 128-char key
 
-$apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+/**
+ * Validate API key
+ * Returns array:
+ * [
+ *   'valid' => true|false,
+ *   'response' => array // optional, used when invalid
+ * ]
+ */
+function validateApiKey() {
+    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-if (empty($apiKey) || $apiKey !== $STATIC_API_KEY) {
-    echo json_encode(['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']);
-    exit;
+    // === NO KEY OR INVALID ===
+    if (empty($apiKey) || $apiKey !== STATIC_API_KEY) {
+        return [
+            'valid' => false,
+            'response' => [
+                'success' => false,
+                'message' => 'Invalid API key'
+            ]
+        ];
+    }
+
+    // === KEY IS VALID ===
+    return ['valid' => true];
 }
 
-// Key is valid
-echo json_encode([
-    'valid' => true,
-    'apiKey' => $STATIC_API_KEY
-]);
+// === DIRECT CALL (optional) ===
+if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
+    $result = validateApiKey();
+    header('Content-Type: application/json');
+    if ($result['valid']) {
+        echo json_encode(['success' => true, 'message' => 'API key is valid']);
+    } else {
+        echo json_encode($result['response']);
+    }
+    exit;
+}
