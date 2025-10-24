@@ -897,6 +897,7 @@ if (empty($userPhotoUrl)) {
             display: flex; align-items: center; padding: 0.5rem;
             background: var(--secondary-bg); border: 1px solid var(--border-color);
             border-radius: 8px; cursor: pointer; transition: all 0.3s;
+            position: relative;
         }
         .gateway-option:hover {
             border-color: var(--accent-blue); transform: translateX(3px);
@@ -917,6 +918,16 @@ if (empty($userPhotoUrl)) {
         }
         .badge-charge { background: rgba(245,158,11,0.15); color: var(--warning); }
         .badge-auth { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+        .badge-maintenance {
+            background-color: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 5px;
+        }
         .settings-footer {
             display: flex; gap: 0.5rem; margin-top: 1rem;
             padding-top: 0.5rem; border-top: 1px solid var(--border-color);
@@ -1636,13 +1647,14 @@ if (empty($userPhotoUrl)) {
                             <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/razorpay0.10$.php">
+                    <label class="gateway-option" id="razorpay-gateway">
+                        <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
                                     style="width:15px; height:15px; object-fit:contain;">Razorpay
                                 <span class="gateway-badge badge-charge">0.10$ Charge</span>
+                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                             </div>
                             <div class="gateway-option-desc">Indian payment gateway</div>
                         </div>
@@ -1700,5 +1712,43 @@ if (empty($userPhotoUrl)) {
     </div>
 
     <script src="indeex.js?v=<?= time(); ?>"></script>
+    
+    <script>
+        // Disable Razorpay 0.10$ gateway and show maintenance popup
+        document.addEventListener('DOMContentLoaded', function() {
+            const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
+            if (razorpayGateway) {
+                // Disable the radio button
+                razorpayGateway.disabled = true;
+                
+                // Find the parent label
+                const parentLabel = razorpayGateway.closest('label');
+                if (parentLabel) {
+                    // Add visual styling to show it's disabled
+                    parentLabel.style.opacity = '0.6';
+                    parentLabel.style.cursor = 'not-allowed';
+                    parentLabel.style.position = 'relative';
+                    
+                    // Add click event to show popup
+                    parentLabel.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Gateway Under Maintenance',
+                                text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444', // Red color
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Gateway under maintenance. Please select another gateway.');
+                        }
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>
