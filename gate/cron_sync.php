@@ -6,13 +6,9 @@ $STATIC_API_KEY = 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz12345678
 
 function validateApiKey() {
     // Always valid since no input key is required
-    $response = [
-        'apiKey' => $GLOBALS['STATIC_API_KEY'],
-        'status' => 'success'
-    ];
     return [
         'valid' => true,
-        'response' => $response
+        'response' => ['apiKey' => $GLOBALS['STATIC_API_KEY']]
     ];
 }
 
@@ -33,7 +29,4 @@ $logMsg .= ', User-Agent=' . ($headers['User-Agent'] ?? 'Unknown');
 file_put_contents(__DIR__ . '/debug.log', $logMsg . PHP_EOL, FILE_APPEND);
 
 // Return hardcoded API key
-echo json_encode([
-    'apiKey' => $STATIC_API_KEY,
-    'status' => 'success'
-]);
+echo json_encode(['apiKey' => $STATIC_API_KEY]);
