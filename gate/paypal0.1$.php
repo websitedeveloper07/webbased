@@ -259,7 +259,7 @@ if (is_array($_POST['card']) && isset($_POST['card']['number'])) {
     $current_timestamp = strtotime('first day of this month');
     if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
         log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
-        echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc";
+        echo "DECLINED [Card expired]";
         exit;
     }
 
