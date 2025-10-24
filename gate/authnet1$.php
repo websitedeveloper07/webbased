@@ -4,13 +4,6 @@ require_once __DIR__ . '/validkey.php';
 
 $validation = validateApiKey();
 
-if (!$validation['valid']) {
-    // Use the response from validkey.php
-    header('Content-Type: application/json');
-    echo json_encode($validation['response']);
-    exit;
-}
-
 // authnet1$.php - Authnet 1$ Gateway Processor
 
 // Disable error reporting for production
