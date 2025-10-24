@@ -20,19 +20,28 @@ if (isset($_POST['access_key'])) {
 if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
     if (isset($_POST['maintenance_action'])) {
         if ($_POST['maintenance_action'] === 'enable') {
-            file_put_contents(MAINTENANCE_FLAG, '1');
-            $status_message = "Maintenance mode has been enabled.";
-        } else {
+            if (file_put_contents(MAINTENANCE_FLAG, '1') !== false) {
+                $status_message = "Maintenance mode has been enabled.";
+            } else {
+                $error = "Failed to enable maintenance mode. Check file permissions.";
+            }
+        } elseif ($_POST['maintenance_action'] === 'disable') {
             if (file_exists(MAINTENANCE_FLAG)) {
-                unlink(MAINTENANCE_FLAG);
-                $status_message = "Maintenance mode has been disabled.";
+                if (unlink(MAINTENANCE_FLAG)) {
+                    $status_message = "Maintenance mode has been disabled.";
+                } else {
+                    $error = "Failed to disable maintenance mode. Check file permissions.";
+                }
+            } else {
+                $status_message = "Maintenance mode is already disabled.";
             }
         }
     }
     
     // Handle logout
     if (isset($_GET['logout'])) {
-        unset($_SESSION['admin_authenticated']);
+        session_unset();
+        session_destroy();
         header("Location: adminaccess_panel.php");
         exit();
     }
@@ -325,7 +334,7 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             <h1>Admin Access Panel</h1>
             
             <?php if (isset($error)): ?>
-                <div class="error"><?php echo $error; ?></div>
+                <div class="error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
             <form method="post">
@@ -339,7 +348,9 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             <h1>Maintenance Control Panel</h1>
             
             <?php if (isset($status_message)): ?>
-                <div class="success"><?php echo $status_message; ?></div>
+                <div class="success"><?php echo htmlspecialchars($status_message); ?></div>
+            <?php elseif (isset($error)): ?>
+                <div class="error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
             <div class="maintenance-status <?php echo file_exists(MAINTENANCE_FLAG) ? 'status-enabled' : 'status-disabled'; ?>">
@@ -357,19 +368,16 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                 </div>
             </div>
             
-            <div class="control-buttons">
-                <?php if (!file_exists(MAINTENANCE_FLAG)): ?>
-                    <button type="submit" form="maintenance-form" name="maintenance_action" value="enable" class="enable-btn">
+            <form id="maintenance-form" method="post">
+                <div class="control-buttons">
+                    <button type="submit" name="maintenance_action" value="enable" class="enable-btn <?php echo file_exists(MAINTENANCE_FLAG) ? 'hidden' : ''; ?>">
                         <i class="fas fa-power-off"></i> Enable Maintenance
                     </button>
-                <?php else: ?>
-                    <button type="submit" form="maintenance-form" name="maintenance_action" value="disable" class="disable-btn">
+                    <button type="submit" name="maintenance_action" value="disable" class="disable-btn <?php echo !file_exists(MAINTENANCE_FLAG) ? 'hidden' : ''; ?>">
                         <i class="fas fa-power-off"></i> Disable Maintenance
                     </button>
-                <?php endif; ?>
-            </div>
-            
-            <form id="maintenance-form" method="post" style="display: none;"></form>
+                </div>
+            </form>
             
             <a href="adminaccess_panel.php?logout=1" class="logout-btn" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 8px; margin-top: 20px;">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -438,6 +446,10 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                         transform: translateY(-100vh) translateX(100px); 
                         opacity: 0;
                     }
+                }
+                
+                .hidden {
+                    display: none;
                 }
             `;
             document.head.appendChild(style);
