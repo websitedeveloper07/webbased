@@ -50,14 +50,14 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
                 continue;
             }
             log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
-            return "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)] $card_details";
+            return "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)]";
         }
 
         // Parse JSON response
         $result = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
             log_message("Invalid JSON for $card_details: " . substr($response, 0, 200));
-            return "DECLINED [Invalid API response: " . substr($response, 0, 200) . "] $card_details";
+            return "DECLINED [Invalid API response: " . substr($response, 0, 200) . "]";
         }
 
         $status = $result['status'];
@@ -75,11 +75,11 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         $response_msg = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
         log_message("$final_status for $card_details: $response_msg");
-        return "$final_status [$response_msg] $card_details";
+        return "$final_status [$response_msg]";
     }
 
     log_message("Failed after retries for $card_details");
-    return "DECLINED [API request failed after retries] $card_details";
+    return "DECLINED [API request failed after retries]";
 }
 
 // Function to check multiple cards in parallel using multi-curl
