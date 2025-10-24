@@ -19,16 +19,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    let API_KEY = null; // Will be loaded from rotate.php
+    let API_KEY = null; // Will be loaded from refresh_cache.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
     const ROTATE_SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // Hardcoded secret key
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 10; // Default for stripe1$ 
-    // Load API key from rotate.php using POST with secret key
+    // Load API key from refresh_cache.php using POST with secret key
     function loadApiKey() {
-        return fetch('/rotate.php', {
+        return fetch('/refresh_cache.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -274,8 +274,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update maxConcurrent based on selected gateway
                 if (selectedGateway === 'gate/stripe1$.php') {
-                    maxConcurrent = 10; // 10 concurrent requests for Stripe 1$                 } else {
-                    maxConcurrent = 5;  // 5 concurrent requests for all other gateways including Stripe GBP
+                    maxConcurrent = 10; // 10 concurrent requests for Stripe 1$                 } else if (selectedGateway === 'gate/stripegbp.php' || selectedGateway === 'gate/paypal0.1$.php') {
+                    maxConcurrent = 5; // 5 concurrent requests for Stripe GBP and PayPal
+                } else {
+                    maxConcurrent = 3; // 3 concurrent requests for all other gateways
                 }
                 
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
@@ -285,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
                         icon: 'success', 
                         title: 'Gateway Updated!',
-                        text: `Now using: ${nameText} (Max concurrent: ${maxConcurrent})`,
+                        text: `Now using: ${nameText}`,
                         confirmButtonColor: '#10b981'
                     });
                 }
@@ -789,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function refreshApiKey() {
             console.log('Refreshing API key due to authentication error...');
             
-            return fetch('/rotate.php', {
+            return fetch('/refresh_cache.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
