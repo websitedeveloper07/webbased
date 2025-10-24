@@ -1194,12 +1194,23 @@ if (empty($userPhotoUrl)) {
                 margin-bottom: 1rem;
             }
             
+            .banner-content {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            
             .banner-text {
                 font-size: 1rem;
             }
             
             .banner-divider {
-                font-size: 1rem;
+                transform: rotate(90deg);
+                font-size: 1.2rem;
+                height: 1.2rem;
+                width: 1.2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
         }
         
@@ -1226,14 +1237,22 @@ if (empty($userPhotoUrl)) {
             .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
             
             /* Custom banner for very small screens */
+            .custom-banner {
+                padding: 0.6rem;
+            }
+            
             .banner-content {
-                flex-direction: column;
-                gap: 0.3rem;
+                gap: 0.2rem;
+            }
+            
+            .banner-text {
+                font-size: 0.9rem;
             }
             
             .banner-divider {
-                transform: rotate(90deg);
-                font-size: 1.2rem;
+                font-size: 1rem;
+                height: 1rem;
+                width: 1rem;
             }
         }
     </style>
