@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update maxConcurrent based on selected gateway
                 if (selectedGateway === 'gate/stripe1$.php') {
                     maxConcurrent = 10; // 10 concurrent requests for Stripe 1$                 } else {
-                    maxConcurrent = 5;  // 5 concurrent requests for all other gateways including Stripe 1£
+                    maxConcurrent = 5;  // 5 concurrent requests for all other gateways including Stripe GBP
                 }
                 
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
