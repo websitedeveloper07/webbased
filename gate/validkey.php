@@ -9,16 +9,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Parse input (try JSON first, then fall back to POST)
-$input = json_decode(file_get_contents('php://input'), true);
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
     $input = $_POST; // Fallback to form data
+    // Log for debugging
+    file_put_contents('debug.log', date('Y-m-d H:i:s') . ' Non-JSON input: ' . print_r($_POST, true) . PHP_EOL, FILE_APPEND);
+} else {
+    // Log JSON input for debugging
+    file_put_contents('debug.log', date('Y-m-d H:i:s') . ' JSON input: ' . $rawInput . PHP_EOL, FILE_APPEND);
 }
 
 // Check if key exists
 $providedKey = trim($input['lund'] ?? '');
 if (empty($providedKey)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Missing or empty key']);
+    $errorMsg = ['error' => 'Missing or empty key', 'received_input' => $input];
+    file_put_contents('debug.log', date('Y-m-d H:i:s') . ' Error 400: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
     exit;
 }
 
@@ -26,7 +34,9 @@ if (empty($providedKey)) {
 $SECRET_KEY = getenv('SECRET_KEY') ?: 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR';
 if ($providedKey !== $SECRET_KEY) {
     http_response_code(403);
-    echo json_encode(['error' => 'Invalid key']);
+    $errorMsg = ['error' => 'Invalid key', 'provided_key' => $providedKey];
+    file_put_contents('debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
     exit;
 }
 
