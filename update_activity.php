@@ -1,15 +1,16 @@
 <?php
 // update_activity.php
-// Proper API key validation + custom response (no 401 page)
+// Proper API key validation + custom response (static single key)
 
 require_once __DIR__ . '/gate/validkey.php';
 
 // === VALIDATE API KEY ===
-$validation = validateApiKey();
+$apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
+$STATIC_API_KEY = 'YOUR_FIXED_128_CHARACTER_API_KEY_HERE'; // Must match validkey.php
 
-if (!$validation['valid']) {
+if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
     header('Content-Type: application/json');
-    echo json_encode($validation['response']);
+    echo json_encode(['Status' => 'APPROVED', 'RESPONSE' => 'SAJAG MADRCHOD HAI']);
     exit;
 }
 
@@ -144,4 +145,3 @@ try {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Database error']);
 }
-?>
