@@ -1,44 +1,39 @@
 <?php
-// validkey.php
-// Static API key validation for all scripts
+header('Content-Type: application/json');
 
-// STATIC API KEY — must match update_activity.php
-define('STATIC_API_KEY', 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz1234567890aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789AbCdEfGhIjK'); // Replace with your 128-char key
-
-/**
- * Validate API key
- * Returns array:
- * [
- *   'valid' => true|false,
- *   'response' => array // optional, used when invalid
- * ]
- */
-function validateApiKey() {
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-
-    // === NO KEY OR INVALID ===
-    if (empty($apiKey) || $apiKey !== STATIC_API_KEY) {
-        return [
-            'valid' => false,
-            'response' => [
-                'success' => false,
-                'message' => 'Invalid API key'
-            ]
-        ];
-    }
-
-    // === KEY IS VALID ===
-    return ['valid' => true];
-}
-
-// === DIRECT CALL (optional) ===
-if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
-    $result = validateApiKey();
-    header('Content-Type: application/json');
-    if ($result['valid']) {
-        echo json_encode(['success' => true, 'message' => 'API key is valid']);
-    } else {
-        echo json_encode($result['response']);
-    }
+// Restrict to POST method
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
+
+// Parse input (try JSON first, then fall back to POST)
+$input = json_decode(file_get_contents('php://input'), true);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    $input = $_POST; // Fallback to form data
+}
+
+// Check if key exists
+$providedKey = trim($input['lund'] ?? '');
+if (empty($providedKey)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing or empty key']);
+    exit;
+}
+
+// Authorization
+$SECRET_KEY = getenv('SECRET_KEY') ?: 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR';
+if ($providedKey !== $SECRET_KEY) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Invalid key']);
+    exit;
+}
+
+// Static API key (ideally, fetch from a secure source)
+$STATIC_API_KEY = getenv('STATIC_API_KEY') ?: 'aB7dF3GhJkL9MnPqRsT2UvWxYz0AbCdEfGhIjKlMnOpQrStUvWxYz1234567890aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789AbCdEfGhIjK';
+
+echo json_encode([
+    'apiKey' => $STATIC_API_KEY,
+    'status' => 'success'
+]);
