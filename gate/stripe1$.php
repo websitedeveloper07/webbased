@@ -1,54 +1,7 @@
 <?php
 require_once __DIR__ . '/cron_sync.php';
 
-// Try multiple sources for the API key
- $apiKey = '';
-
-// 1. Check Authorization header (Bearer token)
- $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-if (strpos($authHeader, 'Bearer ') === 0) {
-    $apiKey = substr($authHeader, 7);
-}
-
-// 2. Check X-API-KEY header
-if (empty($apiKey)) {
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-}
-
-// 3. Check custom header (case-insensitive)
-if (empty($apiKey)) {
-    $headers = getallheaders();
-    foreach ($headers as $key => $value) {
-        if (strtolower($key) === 'x-api-key') {
-            $apiKey = $value;
-            break;
-        }
-    }
-}
-
-// 4. Check POST data
-if (empty($apiKey)) {
-    $apiKey = $_POST['api_key'] ?? '';
-}
-
-// 5. Check GET data (not recommended for sensitive data)
-if (empty($apiKey)) {
-    $apiKey = $_GET['api_key'] ?? '';
-}
-
-// Log the key we received (first 10 chars for security)
-file_put_contents(__DIR__ . '/auth_debug.log', date('Y-m-d H:i:s') . ' Received Key (first 10): ' . substr($apiKey, 0, 10) . PHP_EOL, FILE_APPEND);
-
-if (!validateApiKey($apiKey)) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
-
-// Your existing gate logic continues here...
-// Example:
-// $response = processStripePayment(...);
-// echo $response;
+$validation = validateApiKey();
 
 
 // === SESSION & AUTH CHECK ===
