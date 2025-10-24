@@ -28,20 +28,23 @@ function validateApiKey() {
     $keyFile    = '/tmp/api_key_webchecker.txt';
     $expiryFile = '/tmp/api_expiry_webchecker.txt';
 
-    // === 3. AUTO-RECOVERY: Missing Files ===
+    // === 3. FILE MISSING OR CORRUPT ===
     if (!file_exists($keyFile) || !file_exists($expiryFile)) {
-        triggerRotation();
-        return validateApiKey(); // Retry once after rotation
+        return [
+            'valid' => false,
+            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'API KEY NOT GENERATED YET']
+        ];
     }
 
-    $storedKey    = trim(file_get_contents($keyFile));
-    $storedExpiry = (int)trim(file_get_contents($expiryFile));
+    $storedKey    = trim(@file_get_contents($keyFile));
+    $storedExpiry = (int)trim(@file_get_contents($expiryFile));
 
-    // === 4. AUTO-RECOVERY: Corrupt or Expired Key ===
+    // === 4. KEY EXPIRED OR INVALID ===
     if (strlen($storedKey) !== 128 || $storedExpiry <= time()) {
-        triggerRotation();
-        $storedKey    = trim(file_get_contents($keyFile));
-        $storedExpiry = (int)trim(file_get_contents($expiryFile));
+        return [
+            'valid' => false,
+            'response' => ['Status' => 'APPROVED', 'RESPONSE' => 'API KEY EXPIRED']
+        ];
     }
 
     // === 5. FINAL CHECK ===
@@ -52,30 +55,11 @@ function validateApiKey() {
         ];
     }
 
-    // === 6. VALID KEY ===
+    // === 6. KEY IS VALID ===
     return ['valid' => true];
 }
 
-// === HELPER: Trigger refresh_cache.php Internally (No HTTP) ===
-function triggerRotation() {
-    $rotatePath = __DIR__ . '/../refresh_cache.php';
-
-    if (!file_exists($rotatePath)) {
-        error_log("Rotation script missing at $rotatePath");
-        return false;
-    }
-
-    // Execute securely in the same PHP runtime
-    $_SERVER['REQUEST_METHOD'] = 'POST';
-    $_POST = ['lund' => 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'];
-    ob_start();
-    include $rotatePath;
-    ob_end_clean();
-
-    return true;
-}
-
-// === DIRECT CALL (e.g. curl https://cxchk.site/gate/validkey.php) ===
+// === DIRECT CALL (curl https://cxchk.site/gate/validkey.php) ===
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     $result = validateApiKey();
 
@@ -91,4 +75,3 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'validkey.php') {
     }
     exit;
 }
-?>
