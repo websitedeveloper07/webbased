@@ -1,9 +1,14 @@
 <?php
 session_start();
 
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // MAINTENANCE MODE CHECK
-// Maintenance flag file path - using absolute path for consistency
-define('MAINTENANCE_FLAG', __DIR__ . '/maintenance.flag');
+// Maintenance flag file path - using /tmp/.maintenance as specified
+define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
 // Check if maintenance mode is active
 if (file_exists(MAINTENANCE_FLAG)) {
