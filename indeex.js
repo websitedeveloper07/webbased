@@ -1735,6 +1735,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Initialize maxConcurrent based on selected gateway
                 updateMaxConcurrent();
+                
+                // RAZORPAY GATEWAY MAINTENANCE FEATURE
+                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
+                if (razorpayGateway) {
+                    // Disable the radio button
+                    razorpayGateway.disabled = true;
+                    
+                    // Find the parent label
+                    const parentLabel = razorpayGateway.closest('label');
+                    if (parentLabel) {
+                        // Add visual styling to show it's disabled
+                        parentLabel.style.opacity = '0.6';
+                        parentLabel.style.cursor = 'not-allowed';
+                        parentLabel.style.position = 'relative';
+                        
+                        // Add a maintenance badge
+                        const badge = document.createElement('span');
+                        badge.textContent = 'Maintenance';
+                        badge.style.position = 'absolute';
+                        badge.style.top = '5px';
+                        badge.style.right = '5px';
+                        badge.style.backgroundColor = '#ef4444'; // Red color
+                        badge.style.color = 'white';
+                        badge.style.padding = '2px 6px';
+                        badge.style.borderRadius = '4px';
+                        badge.style.fontSize = '0.7rem';
+                        badge.style.fontWeight = 'bold';
+                        parentLabel.appendChild(badge);
+                        
+                        // Add click event to show popup
+                        parentLabel.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (window.Swal) {
+                                Swal.fire({
+                                    title: 'Gateway Under Maintenance',
+                                    text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444', // Red color
+                                    confirmButtonText: 'OK'
+                                });
+                            } else {
+                                alert('Gateway under maintenance. Please select another gateway.');
+                            }
+                        });
+                    }
+                }
             });
         } else {
             console.error("jQuery not loaded, some functionality may not work");
