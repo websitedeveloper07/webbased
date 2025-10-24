@@ -1,15 +1,10 @@
 <?php
 
-require_once __DIR__ . '/validkey.php';
+require_once __DIR__ . '/cron_sync.php';
 
 $validation = validateApiKey();
 
-if (!$validation['valid']) {
-    // Use the response from validkey.php
-    header('Content-Type: application/json');
-    echo json_encode($validation['response']);
-    exit;
-}
+
 // Set a higher execution time limit for generating many cards
 set_time_limit(300); // 5 minutes
 
