@@ -50,14 +50,14 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
                 continue;
             }
             log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
-            return "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)] $card_details";
+            return "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)]";
         }
 
         // Parse JSON response
         $result = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE || !isset($result['Response'], $result['Status'])) {
             log_message("Invalid JSON for $card_details: " . substr($response, 0, 100));
-            return "DECLINED [Invalid API response: " . substr($response, 0, 100) . "] $card_details";
+            return "DECLINED [Invalid API response: " . substr($response, 0, 100) . "]";
         }
 
         // Map Shopify API response to status
@@ -77,11 +77,11 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         $response_msg = htmlspecialchars($response_text, ENT_QUOTES, 'UTF-8');
         log_message("$status for $card_details: $response_msg");
-        return "$status [$response_msg] $card_details";
+        return "$status [$response_msg]";
     }
 
     log_message("Failed after retries for $card_details");
-    return "DECLINED [API request failed after retries] $card_details";
+    return "DECLINED [API request failed after retries]";
 }
 
 // Check if the request is POST and contains card data
@@ -153,7 +153,7 @@ $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
 $current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
     log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
-    echo "DECLINED [Card expired] $card_number|$exp_month|$exp_year|$cvc";
+    echo "DECLINED [Card expired]";
     exit;
 }
 
