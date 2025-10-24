@@ -1,7 +1,7 @@
 <?php
 
 // Include API key validation
-require_once __DIR__ . '/validkey.php';
+require_once __DIR__ . '/cron_sync.php';
 
 $validation = validateApiKey();
 
