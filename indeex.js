@@ -280,6 +280,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     maxConcurrent = 3; // 3 concurrent requests for all other gateways
                 }
                 
+                console.log(`Gateway updated to: ${selectedGateway}, Max concurrent: ${maxConcurrent}`);
+                
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
                 const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
                 
@@ -1781,6 +1783,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Initialize activity updates
                 initializeActivityUpdates();
+                
+                // Initialize maxConcurrent based on selected gateway
+                if (selectedGateway === 'gate/stripe1$.php') {
+                    maxConcurrent = 10;
+                } else if (selectedGateway === 'gate/stripegbp.php' || selectedGateway === 'gate/paypal0.1$.php') {
+                    maxConcurrent = 5;
+                } else {
+                    maxConcurrent = 3;
+                }
+                
+                console.log(`Initialized with gateway: ${selectedGateway}, Max concurrent: ${maxConcurrent}`);
             });
         } else {
             console.error("jQuery not loaded, some functionality may not work");
