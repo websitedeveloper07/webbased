@@ -20,39 +20,34 @@ if (!$validation['valid']) {
     exit;
 }
 
-
+// Validate session for non-admin users
+if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated'] !== true) {
+    if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+        error_log("Unauthorized access to stripegbp.php: Invalid session");
+        http_response_code(401);
+        echo json_encode(['status' => 'ERROR', 'message' => 'Unauthorized access']);
+        exit;
+    }
+}
 
 // Set content type to JSON
 header('Content-Type: application/json');
 
 // Get card details from POST request
-$cardInput = $_POST['card_input'] ?? '';
-if (empty($cardInput)) {
+$cardNumber = $_POST['card']['number'] ?? '';
+$expMonth = $_POST['card']['exp_month'] ?? '';
+$expYear = $_POST['card']['exp_year'] ?? '';
+$cvc = $_POST['card']['cvc'] ?? '';
+
+// Validate card details
+if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
     echo json_encode(['status' => 'DECLINED', 'message' => 'Missing card details']);
     exit;
 }
 
-// Parse card input (cc|mm|yy|cvv)
-$parts = explode('|', $cardInput);
-if (count($parts) != 4) {
-    echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid card format. Use cc|mm|yy|cvv']);
-    exit;
-}
-
-$cardNumber = trim($parts[0]);
-$expMonth = trim($parts[1]);
-$expYear = trim($parts[2]);
-$cvc = trim($parts[3]);
-
 // Format year to 4 digits if needed
 if (strlen($expYear) == 2) {
     $expYear = '20' . $expYear;
-}
-
-// Validate card details
-if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
-    echo json_encode(['status' => 'DECLINED', 'message' => 'Incomplete card details']);
-    exit;
 }
 
 // Initialize cookie jar for session continuity
