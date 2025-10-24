@@ -1,11 +1,16 @@
 <?php
 session_start();
 
-// Define the same admin access key as in adminaccess_panel.php
-define('ADMIN_ACCESS_KEY', 'iloveyoupayal'); // Must match adminaccess_panel.php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-// Maintenance flag file path (must match adminaccess_panel.php)
-define('MAINTENANCE_FLAG', 'maintenance.flag');
+// Define the same admin access key as in adminaccess_panel.php
+define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
+
+// Maintenance flag file path
+define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
 // Check if maintenance mode is active
 if (!file_exists(MAINTENANCE_FLAG)) {
