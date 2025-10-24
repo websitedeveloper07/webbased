@@ -1,7 +1,21 @@
 <?php
 require_once __DIR__ . '/cron_sync.php';
 
-$validation = validateApiKey();
+// Get API key from request (adjust based on how you send it)
+ $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? ''; // From header
+// OR
+ $apiKey = $_POST['api_key'] ?? ''; // From POST data
+
+if (!validateApiKey($apiKey)) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Forbidden Acess']);
+    exit;
+}
+
+// Your existing gate logic continues here...
+// Example:
+// $response = processStripePayment(...);
+// echo $response;
 
 
 // === SESSION & AUTH CHECK ===
