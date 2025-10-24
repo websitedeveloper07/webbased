@@ -229,6 +229,69 @@ if (empty($userPhotoUrl)) {
         }
         .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         
+        /* Custom Banner */
+        .custom-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .custom-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .banner-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .banner-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textGlow 3s ease-in-out infinite alternate;
+        }
+        
+        .banner-divider {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: rgba(139, 92, 246, 0.7);
+        }
+        
+        @keyframes textGlow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+            }
+            to {
+                filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+            }
+        }
+        
         /* Enhanced Dashboard Stats */
         .dashboard-container {
             display: flex;
@@ -916,7 +979,7 @@ if (empty($userPhotoUrl)) {
         }
         .custom-select {
             position: relative;
-            display: flex,
+            display: flex;
             width: 100%;
         }
         .custom-select select {
@@ -948,7 +1011,7 @@ if (empty($userPhotoUrl)) {
             color: var(--text-secondary);
         }
         .custom-input-group {
-            display: flex,
+            display: flex;
             width: 100%;
         }
         .custom-input-group input {
@@ -1014,7 +1077,7 @@ if (empty($userPhotoUrl)) {
             color: white;
         }
         .results-actions {
-            display: flex,
+            display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
         }
@@ -1124,6 +1187,20 @@ if (empty($userPhotoUrl)) {
             .online-user-name {
                 font-size: 0.85rem;
             }
+            
+            /* Custom banner mobile adjustments */
+            .custom-banner {
+                padding: 0.8rem;
+                margin-bottom: 1rem;
+            }
+            
+            .banner-text {
+                font-size: 1rem;
+            }
+            
+            .banner-divider {
+                font-size: 1rem;
+            }
         }
         
         /* For very small screens */
@@ -1147,6 +1224,17 @@ if (empty($userPhotoUrl)) {
             .stat-value { font-size: 1.2rem; }
             .stat-label { font-size: 0.65rem; }
             .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
+            
+            /* Custom banner for very small screens */
+            .banner-content {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            
+            .banner-divider {
+                transform: rotate(90deg);
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -1208,6 +1296,15 @@ if (empty($userPhotoUrl)) {
 
     <main class="main-content">
         <section class="page-section active" id="page-home">
+            <!-- Custom Banner -->
+            <div class="custom-banner">
+                <div class="banner-content">
+                    <span class="banner-text">@SajagOG</span>
+                    <span class="banner-divider">/</span>
+                    <span class="banner-text">Sajag MADARCHOD HAI</span>
+                </div>
+            </div>
+            
             <div class="dashboard-container">
                 <div class="welcome-banner">
                     <div class="welcome-content">
