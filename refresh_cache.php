@@ -1,7 +1,7 @@
 <?php
 // refresh_cache.php
 // Secure API key rotation script — cxchk.site
-// Generates a new 128-character alphanumeric key every 2 hours.
+// Generates a new 128-character alphanumeric key every 2 hours (7200s).
 // Atomic swap | Safe concurrency | JSON response
 
 header('Content-Type: application/json');
@@ -16,8 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // === 2. SECRET VALIDATION ===
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 $providedKey = trim($input['lund'] ?? '');
-
-$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // ✅ move to env var in production
+$SECRET_KEY = 'vF8mP2YkQ9rGxBzH1tEwU7sJcL0dNqR'; // store in env var in production
 
 if ($providedKey !== $SECRET_KEY) {
     http_response_code(403);
@@ -45,9 +44,9 @@ if (!file_exists($keyFile))    file_put_contents($keyFile, '', LOCK_EX);
 if (!file_exists($expiryFile)) file_put_contents($expiryFile, '0', LOCK_EX);
 
 // === 6. READ CURRENT STATE ===
-$currentTime   = time();
-$storedKey     = trim(@file_get_contents($keyFile));
-$storedExpiry  = (int)trim(@file_get_contents($expiryFile));
+$currentTime  = time();
+$storedKey    = trim(@file_get_contents($keyFile));
+$storedExpiry = (int)trim(@file_get_contents($expiryFile));
 
 // === 7. IF VALID KEY EXISTS → REUSE ===
 if (strlen($storedKey) === 128 && $storedExpiry > $currentTime) {
@@ -72,8 +71,8 @@ function generateApiKey(): string {
     return $key;
 }
 
-$newKey     = generateApiKey();
-$newExpiry  = $currentTime + 7200; // 🔥 2 hours (7200 seconds)
+$newKey    = generateApiKey();
+$newExpiry = $currentTime + 7200; // 2 hours validity
 
 // === 9. ATOMIC SWAP ===
 file_put_contents($tempKey, $newKey, LOCK_EX);
