@@ -104,7 +104,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         // Map API response to status
         $final_status = 'DECLINED';
-        if ($status === 'charged' || $status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED/CARD ADDED') {
+        if ($status === 'charged' || $status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED/CARD ADDED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         } elseif ($status === 'declined') {
             $final_status = 'DECLINED';
@@ -208,7 +208,7 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         $message = $result['response'] ?? 'Unknown error';
 
         $final_status = 'DECLINED';
-        if ($status === 'charged' || $status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED/CARD ADDED') {
+        if ($status === 'charged' || $status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED/CARD ADDED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         }
 
