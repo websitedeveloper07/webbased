@@ -1,5 +1,7 @@
 <?php
-require_once 'banned.php';
+require_once __DIR__ . '/banned.php';
+// rest of the script...
+
 
 // Rest of your script...
 
