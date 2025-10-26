@@ -1284,11 +1284,14 @@ if (empty($userPhotoUrl)) {
     </style>
 </head>
 <body data-theme="light">
-    <!-- Cloudflare Turnstile Widget (Invisible) -->
-    <div id="turnstile-widget" class="cf-turnstile" 
-         data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey); ?>" 
-         data-callback="turnstileCallback" 
-         data-size="invisible">
+    <!-- Cloudflare Turnstile Widget (Visible) -->
+    <div id="turnstile-container" style="display: flex; justify-content: center; margin: 20px 0;">
+        <div id="turnstile-widget" class="cf-turnstile" 
+             data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey); ?>" 
+             data-callback="turnstileCallback" 
+             data-theme="auto"
+             data-size="normal">
+        </div>
     </div>
     
     <nav class="navbar">
@@ -1742,6 +1745,12 @@ if (empty($userPhotoUrl)) {
         function turnstileCallback(token) {
             turnstileToken = token;
             console.log('Turnstile token received');
+            
+            // Hide the Turnstile widget after successful verification
+            const turnstileContainer = document.getElementById('turnstile-container');
+            if (turnstileContainer) {
+                turnstileContainer.style.display = 'none';
+            }
         }
         
         // Function to reset Turnstile token
@@ -1749,8 +1758,57 @@ if (empty($userPhotoUrl)) {
             turnstileToken = '';
             if (typeof turnstile !== 'undefined' && turnstile.reset) {
                 turnstile.reset();
+                
+                // Show the Turnstile widget again when reset
+                const turnstileContainer = document.getElementById('turnstile-container');
+                if (turnstileContainer) {
+                    turnstileContainer.style.display = 'flex';
+                }
             }
         }
+        
+        // Function to check if Turnstile is loaded
+        function checkTurnstileLoaded() {
+            if (typeof turnstile === 'undefined') {
+                console.error('Turnstile is not loaded');
+                return false;
+            }
+            return true;
+        }
+        
+        // Function to render Turnstile widget
+        function renderTurnstile() {
+            if (!checkTurnstileLoaded()) {
+                return;
+            }
+            
+            const widgetId = turnstile.render('#turnstile-widget', {
+                sitekey: '<?php echo htmlspecialchars($turnstileSiteKey); ?>',
+                callback: turnstileCallback,
+                theme: 'auto',
+                size: 'normal'
+            });
+            
+            console.log('Turnstile widget rendered with ID:', widgetId);
+        }
+        
+        // Initialize Turnstile when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if Turnstile is loaded, if not, wait for it
+            if (typeof turnstile === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+                script.async = true;
+                script.defer = true;
+                script.onload = function() {
+                    console.log('Turnstile script loaded');
+                    renderTurnstile();
+                };
+                document.head.appendChild(script);
+            } else {
+                renderTurnstile();
+            }
+        });
         
         // Disable Razorpay 0.10$ gateway and show maintenance popup
         document.addEventListener('DOMContentLoaded', function() {
