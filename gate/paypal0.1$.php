@@ -25,7 +25,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 }
 
 // Validate API key
-$validation = validateApiKey();
+ $validation = validateApiKey();
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'DARK kI MUMMY RANDI', 'response' => 'DARK kI MUMMY RANDI'];
@@ -34,8 +34,8 @@ if (!$validation['valid']) {
     exit;
 }
 
-$expectedApiKey = $validation['response']['apiKey'];
-$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+ $expectedApiKey = $validation['response']['apiKey'];
+ $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'DARK kI MUMMY RANDI', 'response' => 'DARK kI MUMMY RANDI'];
@@ -51,7 +51,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Optional file-based logging for debugging (disable in production)
-$log_file = __DIR__ . '/paypal0.1$_debug.log';
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
 function log_message($message) {
     global $log_file;
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
@@ -104,13 +104,20 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         // Map API response to status
         $final_status = 'DECLINED';
-        if ($status === 'charged' || $status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED' || $message === 'CARD ADDED') {
+        $response_msg = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+        
+        // Updated status mapping
+        if ($status === 'charged') {
+            $final_status = 'CHARGED';
+        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
+        } elseif ($message === 'CARD ADDED') {
+            $final_status = 'CHARGED';
+            $response_msg = 'Your $0.01 payment was successful.';
         } elseif ($status === 'declined') {
             $final_status = 'DECLINED';
         }
 
-        $response_msg = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
         log_message("$final_status for $card_details: $response_msg");
         return "$final_status [$response_msg]";
     }
@@ -207,9 +214,17 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         $status = $result['status'];
         $message = $result['response'] ?? 'Unknown error';
 
+        // Updated status mapping for parallel check
         $final_status = 'DECLINED';
-        if ($status === 'charged' || $status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED/CARD ADDED' || $message === 'EXISTING_ACCOUNT_RESTRICTED' || $message === 'CARD ADDED') {
+        if ($status === 'charged') {
+            $final_status = 'CHARGED';
+        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
+        } elseif ($message === 'CARD ADDED') {
+            $final_status = 'CHARGED';
+            $message = 'Your $0.01 payment was successful.';
+        } elseif ($status === 'declined') {
+            $final_status = 'DECLINED';
         }
 
         $results[$index] = "$final_status [$message]";
