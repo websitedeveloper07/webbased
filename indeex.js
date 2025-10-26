@@ -29,6 +29,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cloudflare Turnstile variables
     let turnstileToken = '';
     let tokenRefreshPromise = null;
+    let turnstileWidgetRendered = false;
+    
+    // Function to check if Turnstile is loaded
+    function checkTurnstileLoaded() {
+        if (typeof turnstile === 'undefined') {
+            console.error('Turnstile is not loaded');
+            return false;
+        }
+        return true;
+    }
+    
+    // Function to render Turnstile widget
+    function renderTurnstileWidget() {
+        if (!checkTurnstileLoaded() || turnstileWidgetRendered) {
+            return;
+        }
+        
+        try {
+            const widgetId = turnstile.render('#turnstile-widget', {
+                sitekey: TURNSITE_SITE_KEY,
+                callback: turnstileCallback,
+                theme: 'auto',
+                size: 'normal'
+            });
+            
+            turnstileWidgetRendered = true;
+            console.log('Turnstile widget rendered with ID:', widgetId);
+            return widgetId;
+        } catch (error) {
+            console.error('Error rendering Turnstile widget:', error);
+            return null;
+        }
+    }
     
     // Function to get a fresh Turnstile token
     async function getTurnstileToken() {
@@ -42,23 +75,33 @@ document.addEventListener('DOMContentLoaded', function() {
             return tokenRefreshPromise;
         }
         
+        // Check if Turnstile is loaded
+        if (!checkTurnstileLoaded()) {
+            throw new Error('Turnstile is not loaded');
+        }
+        
+        // If widget is not rendered yet, render it
+        if (!turnstileWidgetRendered) {
+            renderTurnstileWidget();
+        }
+        
         // Create a new promise to refresh the token
         tokenRefreshPromise = new Promise((resolve, reject) => {
+            // Set a timeout to reject the promise if token is not received
+            const timeoutId = setTimeout(() => {
+                tokenRefreshPromise = null;
+                reject(new Error('Turnstile token timeout'));
+            }, 10000); // Increased timeout to 10 seconds
+            
             // Check if token is available after a short delay
             const checkToken = setInterval(() => {
                 if (turnstileToken) {
                     clearInterval(checkToken);
+                    clearTimeout(timeoutId);
                     tokenRefreshPromise = null;
                     resolve(turnstileToken);
                 }
             }, 100);
-            
-            // Timeout after 5 seconds
-            setTimeout(() => {
-                clearInterval(checkToken);
-                tokenRefreshPromise = null;
-                reject(new Error('Turnstile token timeout'));
-            }, 5000);
         });
         
         return tokenRefreshPromise;
@@ -67,8 +110,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to reset the Turnstile token
     function resetTurnstileToken() {
         turnstileToken = '';
-        if (typeof turnstile !== 'undefined' && turnstile.reset) {
-            turnstile.reset();
+        if (checkTurnstileLoaded() && turnstileWidgetRendered) {
+            try {
+                turnstile.reset();
+                
+                // Show the Turnstile widget again when reset
+                const turnstileContainer = document.getElementById('turnstile-container');
+                if (turnstileContainer) {
+                    turnstileContainer.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error resetting Turnstile widget:', error);
+            }
         }
     }
 
