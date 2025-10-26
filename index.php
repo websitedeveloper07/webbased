@@ -7,6 +7,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // MAINTENANCE MODE CHECK
+// Maintenance flag file path - using /tmp/.maintenance as specified
 define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
 // Check if maintenance mode is active
@@ -20,6 +21,7 @@ if (file_exists(MAINTENANCE_FLAG)) {
     } else {
         // Check if admin is logged in
         if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
+            // Admin can continue - bypass normal user authentication
             $adminBypass = true;
         } else {
             // Redirect to maintenance page
@@ -29,19 +31,36 @@ if (file_exists(MAINTENANCE_FLAG)) {
     }
 }
 
+// Enable error reporting for debugging (disable in production)
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+
+// Log session state
+error_log("Checking session in index.php: " . json_encode($_SESSION));
+
 // Check if user is authenticated OR if admin is authenticated during maintenance
  $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
 if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
-    // If this is an AJAX request, return JSON error
-    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-        exit();
+    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
+    header('Location: login.php');
+    exit;
+}
+
+// Load environment variables manually
+ $envFile = __DIR__ . '/.env';
+ $_ENV = [];
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
+            continue;
+        }
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
     }
-    
-    // For regular requests, redirect to login
-    header('Location: login.php");
-    exit();
+} else {
+    error_log("Environment file (.env) not found in " . __DIR__);
 }
 
 // Get user information for display
@@ -1432,7 +1451,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑬𝑹</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
 
             <div class="checker-section">
@@ -1693,5 +1712,43 @@ if (empty($userPhotoUrl)) {
     </div>
 
     <script src="indeex.js?v=<?= time(); ?>"></script>
+    
+    <script>
+        // Disable Razorpay 0.10$ gateway and show maintenance popup
+        document.addEventListener('DOMContentLoaded', function() {
+            const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
+            if (razorpayGateway) {
+                // Disable the radio button
+                razorpayGateway.disabled = true;
+                
+                // Find the parent label
+                const parentLabel = razorpayGateway.closest('label');
+                if (parentLabel) {
+                    // Add visual styling to show it's disabled
+                    parentLabel.style.opacity = '0.6';
+                    parentLabel.style.cursor = 'not-allowed';
+                    parentLabel.style.position = 'relative';
+                    
+                    // Add click event to show popup
+                    parentLabel.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Gateway Under Maintenance',
+                                text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444', // Red color
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Gateway under maintenance. Please select another gateway.');
+                        }
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>
