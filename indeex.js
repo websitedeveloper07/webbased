@@ -19,9 +19,33 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedCardsData = [];
     let activityUpdateInterval = null;
     let lastActivityUpdate = 0;
-    let API_KEY = null; // Will be loaded from cron_sync.php
+    let API_KEY = null; // Will be loaded from refresh.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
+
+    // Function to format the response by removing status prefix and brackets
+    function formatResponse(response) {
+        // Check if the response starts with a status followed by brackets
+        const statusPrefixPattern = /^(APPROVED|CHARGED|DECLINED|3DS)\s*\[(.*)\]$/i;
+        const match = response.match(statusPrefixPattern);
+        
+        if (match) {
+            // If there's a match, return only the content inside the brackets
+            return match[2];
+        }
+        
+        // If no status prefix, check if the response is wrapped in brackets
+        const bracketsPattern = /^\[(.*)\]$/;
+        const bracketsMatch = response.match(bracketsPattern);
+        
+        if (bracketsMatch) {
+            // If there's a match, return only the content inside the brackets
+            return bracketsMatch[1];
+        }
+        
+        // If no patterns match, return the original response
+        return response;
+    }
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -39,9 +63,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 10; // Default for stripe1$ 
     
-    // Load API key from cron_sync.php using POST
+    // Load API key from refresh.php using POST
     function loadApiKey() {
-        return fetch('/gate/cron_sync.php', {
+        return fetch('/gate/refresh.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -172,10 +196,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const gatewayName = formatGatewayName(selectedGateway);
         
+        // Format the response to remove status prefix and brackets
+        const formattedResponse = formatResponse(response);
+        
         // Escape all text for HTML
         const escapedUserName = escapeHtml(userName);
         const escapedGateway = escapeHtml(gatewayName);
-        const escapedResponse = escapeHtml(response);
+        const escapedResponse = escapeHtml(formattedResponse);
         
         // Create the HTML message with the exact format
         const message = `<b>✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦</b>\n` +
@@ -218,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                   `[⌇] 𝐔𝐬𝐞𝐫 ➳ ${userName}\n` +
                                   `[⌇] 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${status} ${statusEmoji}\n` +
                                   `[⌇] 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${gatewayName}\n` +
-                                  `[⌇] 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ ${response}\n` +
+                                  `[⌇] 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ ${formattedResponse}\n` +
                                   `―――――――――――――――\n` +
                                   `[⌇] 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 (https://cxchk.site)`;
             
@@ -439,6 +466,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const resultsList = document.getElementById('checkingResultsList');
             if (!resultsList) return;
             
+            // Format the response to remove status prefix and brackets
+            const formattedResponse = formatResponse(response);
+            
             const cardClass = status.toLowerCase();
             const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 
                 'fas fa-check-circle' : 'fas fa-times-circle';
@@ -454,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="stat-content">
                     <div>
                         <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
-                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
+                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${formattedResponse}</div>
                     </div>
                     <button class="copy-btn"><i class="fas fa-copy"></i></button>
                 </div>
@@ -898,7 +928,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function refreshApiKey() {
             console.log('Refreshing API key due to authentication error...');
             
-            return fetch('/gate/cron_sync.php', {
+            return fetch('/gate/refresh.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
