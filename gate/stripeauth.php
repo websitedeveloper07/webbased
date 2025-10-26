@@ -5,63 +5,8 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/stripe1_debug.log');
 
-// Load environment variables manually
- $envFile = __DIR__ . '/../.env';
- $_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-} else {
-    error_log("Environment file (.env) not found in " . dirname($envFile));
-}
-
-// Cloudflare Turnstile credentials
- $turnstileSecretKey = $_ENV['TURNSITE_SECRET_KEY'] ?? '';
-
-if (empty($turnstileSecretKey)) {
-    http_response_code(500);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Server configuration error', 'response' => 'Server configuration error'];
-    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 500: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// Function to verify Turnstile token
-function verifyTurnstileToken($token, $secretKey) {
-    if (empty($token)) {
-        return false;
-    }
-    
-    $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-    $data = [
-        'secret' => $secretKey,
-        'response' => $token,
-        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null
-    ];
-    
-    $options = [
-        'http' => [
-            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method' => 'POST',
-            'content' => http_build_query($data)
-        ]
-    ];
-    
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-    $result = json_decode($response, true);
-    
-    return $result && isset($result['success']) && $result['success'] === true;
-}
-
 // Include cron_sync.php for validateApiKey
-require_once __DIR__ . '/cron_sync.php';
+require_once __DIR__ . '/refresh.php';
 
 // Start session for user authentication
 session_start([
@@ -73,37 +18,27 @@ session_start([
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// Verify Turnstile token
- $turnstileToken = $_SERVER['HTTP_X_TURNSTILE_TOKEN'] ?? '';
-if (!verifyTurnstileToken($turnstileToken, $turnstileSecretKey)) {
-    http_response_code(403);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Security verification failed', 'response' => 'Security verification failed'];
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Acess', 'response' => 'Forbidden Access'];
     file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
 }
 
 // Validate API key
- $validation = validateApiKey();
+$validation = validateApiKey();
 if (!$validation['valid']) {
     http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'DARK kI MUMMY RANDI', 'response' => 'DARK kI MUMMY RANDI'];
+    $errorMsg = ['status' => 'ERROR', 'message' => '@Sajagog THE FUCKING ASSHOLE', 'response' => '@Sajagog THE FUCKING ASSHOLE'];
     file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
 }
 
- $expectedApiKey = $validation['response']['apiKey'];
- $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+$expectedApiKey = $validation['response']['apiKey'];
+$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'DARK kI MUMMY RANDI', 'response' => 'DARK kI MUMMY RANDI'];
+    $errorMsg = ['status' => 'ERROR', 'message' => '@Sajagog THE FUCKING ASSHOLE', 'response' => '@Sajagog THE FUCKING ASSHOLE'];
     file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
@@ -169,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array
     exit;
 }
 
- $card = $_POST['card'];
- $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
+$card = $_POST['card'];
+$required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 
 // Validate card data
 foreach ($required_fields as $field) {
@@ -181,13 +116,13 @@ foreach ($required_fields as $field) {
 }
 
 // Sanitize inputs
- $card_number = preg_replace('/[^0-9]/', '', $card['number']);
- $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
- $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
- $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
+$card_number = preg_replace('/[^0-9]/', '', $card['number']);
+$exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
+$exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
+$cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
 
 // Normalize exp_month to 2 digits
- $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
+$exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
 if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
     echo "DECLINED [Invalid exp_month format]";
     exit;
@@ -221,8 +156,8 @@ if (!preg_match('/^\d{3,4}$/', $cvc)) {
 }
 
 // Validate logical expiry
- $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
- $current_timestamp = strtotime('first day of this month');
+$expiry_timestamp = strtotime("$exp_year-$exp_month-01");
+$current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
     echo "DECLINED [Card expired]";
     exit;
