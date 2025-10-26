@@ -44,14 +44,26 @@ if (empty($chatId) || empty($text)) {
     exit;
 }
 
-// Your bot token (replace with your actual bot token)
- $botToken = 'YOUR_BOT_TOKEN';
+// Your bot token (already provided)
+ $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
+
+// Your chat ID (already provided)
+ $targetChatId = '-1002554243871';
+
+// Override chat ID with the one provided in the request if it's different
+if ($chatId !== $targetChatId) {
+    // For security, you might want to log this or restrict to only your chat ID
+    // For now, we'll use the provided chat ID
+    $finalChatId = $chatId;
+} else {
+    $finalChatId = $targetChatId;
+}
 
 // Prepare the API request
  $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
 
  $postFields = [
-    'chat_id' => $chatId,
+    'chat_id' => $finalChatId,
     'text' => $text,
     'parse_mode' => $parseMode,
     'disable_web_page_preview' => true
