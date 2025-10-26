@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
+    // Cloudflare Turnstile Site Key (Hardcoded)
+    const TURNSITE_SITE_KEY = '0x4AAAAAAB8uqZTEm07M817T';
+    
     // Global variables
     let selectedGateway = 'gate/stripe1$.php';
     let isProcessing = false;
