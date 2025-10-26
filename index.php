@@ -63,10 +63,6 @@ if (file_exists($envFile)) {
     error_log("Environment file (.env) not found in " . __DIR__);
 }
 
-// Cloudflare Turnstile credentials (Hardcoded)
- $turnstileSiteKey = '0x4AAAAAAB8uqZTEm07M817T';
- $turnstileSecretKey = '0x4AAAAAAB8uqeP5W9TVr6Xx_4QvDs3LVvc';
-
 // Get user information for display
  $userName = $_SESSION['user']['name'] ?? 'User';
  $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
@@ -99,10 +95,7 @@ if (empty($userPhotoUrl)) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Cloudflare Turnstile Script -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
-        /* All your existing CSS remains unchanged */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
             --primary-bg: #0a0e27; --secondary-bg: #131937; --card-bg: #1a1f3a;
@@ -135,7 +128,6 @@ if (empty($userPhotoUrl)) {
             font-family: Inter, sans-serif; background: var(--primary-bg);
             color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
         }
-        /* All your existing CSS remains the same... */
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
             background: rgba(10,14,39,0.95); backdrop-filter: blur(10px);
@@ -237,7 +229,6 @@ if (empty($userPhotoUrl)) {
         }
         .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         
-        /* All your existing CSS remains the same... */
         /* Custom Banner */
         .custom-banner {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
@@ -301,7 +292,6 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* All your existing CSS remains the same... */
         /* Enhanced Dashboard Stats */
         .dashboard-container {
             display: flex;
@@ -1279,16 +1269,6 @@ if (empty($userPhotoUrl)) {
     </style>
 </head>
 <body data-theme="light">
-    <!-- Cloudflare Turnstile Widget (Visible) -->
-    <div id="turnstile-container" style="display: flex; justify-content: center; margin: 20px 0;">
-        <div id="turnstile-widget" class="cf-turnstile" 
-             data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey); ?>" 
-             data-callback="turnstileCallback" 
-             data-theme="auto"
-             data-size="normal">
-        </div>
-    </div>
-    
     <nav class="navbar">
         <div class="menu-toggle" id="menuToggle">
             <i class="fas fa-bars"></i>
@@ -1734,77 +1714,6 @@ if (empty($userPhotoUrl)) {
     <script src="indeex.js?v=<?= time(); ?>"></script>
     
     <script>
-        // Cloudflare Turnstile token handling
-        let turnstileToken = '';
-        
-        function turnstileCallback(token) {
-            turnstileToken = token;
-            console.log('Turnstile token received');
-            
-            // Hide the Turnstile widget after successful verification
-            const turnstileContainer = document.getElementById('turnstile-container');
-            if (turnstileContainer) {
-                turnstileContainer.style.display = 'none';
-            }
-        }
-        
-        // Function to reset Turnstile token
-        function resetTurnstileToken() {
-            turnstileToken = '';
-            if (typeof turnstile !== 'undefined' && turnstile.reset) {
-                turnstile.reset();
-                
-                // Show the Turnstile widget again when reset
-                const turnstileContainer = document.getElementById('turnstile-container');
-                if (turnstileContainer) {
-                    turnstileContainer.style.display = 'flex';
-                }
-            }
-        }
-        
-        // Function to check if Turnstile is loaded
-        function checkTurnstileLoaded() {
-            if (typeof turnstile === 'undefined') {
-                console.error('Turnstile is not loaded');
-                return false;
-            }
-            return true;
-        }
-        
-        // Function to render Turnstile widget
-        function renderTurnstile() {
-            if (!checkTurnstileLoaded()) {
-                return;
-            }
-            
-            const widgetId = turnstile.render('#turnstile-widget', {
-                sitekey: '<?php echo htmlspecialchars($turnstileSiteKey); ?>',
-                callback: turnstileCallback,
-                theme: 'auto',
-                size: 'normal'
-            });
-            
-            console.log('Turnstile widget rendered with ID:', widgetId);
-        }
-        
-        // Initialize Turnstile when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if Turnstile is loaded, if not, wait for it
-            if (typeof turnstile === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-                script.async = true;
-                script.defer = true;
-                script.onload = function() {
-                    console.log('Turnstile script loaded');
-                    renderTurnstile();
-                };
-                document.head.appendChild(script);
-            } else {
-                renderTurnstile();
-            }
-        });
-        
         // Disable Razorpay 0.10$ gateway and show maintenance popup
         document.addEventListener('DOMContentLoaded', function() {
             const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
