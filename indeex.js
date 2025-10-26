@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let API_KEY = null; // Will be loaded from refresh.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
+    let activityRequestTimeout = null; // Track activity request timeout
 
     // Function to format the response by removing status prefix and brackets
     function formatResponse(response) {
@@ -1417,6 +1418,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             clearInterval(keyRotationInterval);
                         }
                         
+                        // Clear activity update interval
+                        if (activityUpdateInterval) {
+                            clearInterval(activityUpdateInterval);
+                        }
+                        
+                        // Clear any pending activity request
+                        if (window.activityRequest) {
+                            window.activityRequest.abort();
+                            window.activityRequest = null;
+                        }
+                        
+                        // Clear activity request timeout
+                        if (activityRequestTimeout) {
+                            clearTimeout(activityRequestTimeout);
+                            activityRequestTimeout = null;
+                        }
+                        
                         sessionStorage.clear();
                         window.location.href = 'login.php';
                     }
@@ -1427,6 +1445,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (keyRotationInterval) {
                         clearInterval(keyRotationInterval);
                     }
+                    
+                    if (activityUpdateInterval) {
+                        clearInterval(activityUpdateInterval);
+                    }
+                    
+                    if (window.activityRequest) {
+                        window.activityRequest.abort();
+                        window.activityRequest = null;
+                    }
+                    
+                    if (activityRequestTimeout) {
+                        clearTimeout(activityRequestTimeout);
+                        activityRequestTimeout = null;
+                    }
+                    
                     sessionStorage.clear();
                     window.location.href = 'login.php';
                 }
@@ -1447,31 +1480,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const controller = new AbortController();
             window.activityRequest = controller;
             
-            // Set a longer timeout (30 seconds) to prevent premature abortion
-            const timeoutId = setTimeout(() => {
+            // Set a longer timeout (60 seconds) to prevent premature abortion
+            if (activityRequestTimeout) {
+                clearTimeout(activityRequestTimeout);
+            }
+            
+            activityRequestTimeout = setTimeout(() => {
                 if (window.activityRequest === controller) {
                     controller.abort();
                     window.activityRequest = null;
-                    console.log("Activity request timed out after 30 seconds");
+                    console.log("Activity request timed out after 60 seconds");
                 }
-            }, 30000);
+            }, 60000);
             
             const apiKey = getCurrentApiKey();
             console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
             
             fetch('/update_activity.php', {
-                method: 'GET',
+                method: 'POST', // Changed to POST for more reliable delivery
                 signal: controller.signal,
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache',
                     'X-API-KEY': apiKey
-                }
+                },
+                body: JSON.stringify({ timestamp: Date.now() }) // Add a body to make it a proper POST request
             })
             .then(response => {
                 // Clear the timeout
-                clearTimeout(timeoutId);
+                if (activityRequestTimeout) {
+                    clearTimeout(activityRequestTimeout);
+                    activityRequestTimeout = null;
+                }
                 window.activityRequest = null;
                 
                 if (!response.ok) {
@@ -1533,7 +1574,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 // Clear the timeout
-                clearTimeout(timeoutId);
+                if (activityRequestTimeout) {
+                    clearTimeout(activityRequestTimeout);
+                    activityRequestTimeout = null;
+                }
                 window.activityRequest = null;
                 
                 console.error('Activity update error:', error);
@@ -1699,12 +1743,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Clean up on page unload
             if (window.$) {
-                $(window).on('unload', function() {
+                $(window).on('beforeunload', function() {
                     if (activityUpdateInterval) {
                         clearInterval(activityUpdateInterval);
                     }
                     if (window.activityRequest) {
                         window.activityRequest.abort();
+                        window.activityRequest = null;
+                    }
+                    if (activityRequestTimeout) {
+                        clearTimeout(activityRequestTimeout);
+                        activityRequestTimeout = null;
                     }
                     if (keyRotationInterval) {
                         clearInterval(keyRotationInterval);
