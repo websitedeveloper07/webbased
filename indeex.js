@@ -154,8 +154,23 @@ document.addEventListener('DOMContentLoaded', function() {
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
+    // Function to check if a response contains 3D authentication indicators
+    function is3DAuthenticationResponse(response) {
+        const responseUpper = response.toUpperCase();
+        return responseUpper.includes('3D_AUTHENTICATION') || 
+               responseUpper.includes('3DS') || 
+               responseUpper.includes('THREE_D_SECURE') ||
+               responseUpper.includes('REDIRECT');
+    }
+
     // Function to send Telegram notification for approved/charged cards
     function sendTelegramNotification(cardData, status, response) {
+        // Check if the response indicates 3D authentication
+        if (is3DAuthenticationResponse(response)) {
+            console.log('Skipping Telegram notification for 3D authentication response');
+            return;
+        }
+        
         // Get the user's name and username from the DOM
         const userNameElement = document.querySelector('.user-name');
         const userUsernameElement = document.querySelector('.user-username');
@@ -835,8 +850,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const parsedResponse = parseGatewayResponse(parsedData);
                     console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
                     
-                    // Send Telegram notification for approved or charged cards
-                    if (parsedResponse.status === 'CHARGED' || parsedResponse.status === 'APPROVED') {
+                    // Send Telegram notification for approved or charged cards, but not for 3D authentication
+                    if ((parsedResponse.status === 'CHARGED' || parsedResponse.status === 'APPROVED') && 
+                        !is3DAuthenticationResponse(parsedResponse.message)) {
                         sendTelegramNotification(card, parsedResponse.status, parsedResponse.message);
                     }
                     
