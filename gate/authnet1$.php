@@ -1,22 +1,5 @@
 <?php
-// gate/stripeauth.php (example for one gateway file)
-
-// Include Cloudflare verification
-require_once __DIR__ . '/../cloudflare.php';
-
-// Get the token from the request
- $token = $_POST['cf-turnstile-response'] ?? '';
-
-// Verify the token
-if (!verifyTurnstileToken($token)) {
-    // Return error response
-    header('Content-Type: application/json');
-    echo json_encode([
-        'error' => 'Turnstile verification failed',
-        'message' => 'Security verification failed. Please try again.'
-    ]);
-    exit;
-}
+header('Content-Type: application/json');
 
 // Enable error logging
 ini_set('log_errors', 1);
@@ -45,7 +28,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 $validation = validateApiKey();
 if (!$validation['valid']) {
     http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'DARK kI MUMMY RANDI', 'response' => 'DARK kI MUMMY RANDI'];
+    $errorMsg = ['status' => 'ERROR', 'message' => '@Sajagog THE FUCKING ASSHOLE', 'response' => '@Sajagog THE FUCKING ASSHOLE'];
     file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
@@ -55,7 +38,7 @@ $expectedApiKey = $validation['response']['apiKey'];
 $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'DARK kI MUMMY RANDI', 'response' => 'DARK kI MUMMY RANDI'];
+    $errorMsg = ['status' => 'ERROR', 'message' => '@Sajagog THE FUCKING ASSHOLE', 'response' => '@Sajagog THE FUCKING ASSHOLE'];
     file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
