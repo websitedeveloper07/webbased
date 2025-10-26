@@ -40,23 +40,8 @@ if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user'
     }
     
     // For regular requests, redirect to login
-    header('Location: login.php');
+    header('Location: login.php");
     exit();
-}
-
-// Read Cloudflare secret key from .snv file
- $snvFile = __DIR__ . '/.snv';
- $secretKey = '';
-if (file_exists($snvFile)) {
-    $snvContent = file_get_contents($snvFile);
-    // Parse the .snv file to extract the secret key
-    if (preg_match('/CLOUDFLARE_TURNSTILE_SECRET="([^"]+)"/', $snvContent, $matches)) {
-        $secretKey = $matches[1];
-    } else {
-        error_log("Could not parse Cloudflare secret key from .snv file");
-    }
-} else {
-    error_log(".snv file not found in " . __DIR__);
 }
 
 // Get user information for display
@@ -80,43 +65,6 @@ if (empty($userPhotoUrl)) {
 
 // Format username with @ symbol
  $formattedUsername = $userUsername ? '@' . $userUsername : '';
-
-// Function to verify Turnstile token
-function verifyTurnstileToken($token, $secretKey) {
-    if (empty($secretKey)) {
-        error_log('Turnstile secret key is not set');
-        return false;
-    }
-
-    $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-    $data = [
-        'secret' => $secretKey,
-        'response' => $token
-    ];
-
-    $options = [
-        'http' => [
-            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method' => 'POST',
-            'content' => http_build_query($data)
-        ]
-    ];
-
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-    if ($response === false) {
-        error_log('Failed to contact Turnstile verification service');
-        return false;
-    }
-
-    $result = json_decode($response, true);
-    if (!isset($result['success'])) {
-        error_log('Invalid response from Turnstile verification service');
-        return false;
-    }
-
-    return $result['success'];
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -126,7 +74,6 @@ function verifyTurnstileToken($token, $secretKey) {
     <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -1485,7 +1432,7 @@ function verifyTurnstileToken($token, $secretKey) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑬𝑹</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
 
             <div class="checker-section">
@@ -1507,16 +1454,6 @@ function verifyTurnstileToken($token, $secretKey) {
                     </div>
                     <textarea id="cardInput" class="card-textarea" 
                         placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
-                </div>
-
-                <!-- Cloudflare Turnstile Widget - Invisible -->
-                <div id="turnstile-widget" class="cf-turnstile" 
-                     data-sitekey="0x4AAAAAAB8uqZTEm07M817T" 
-                     data-size="invisible" 
-                     data-callback="onTurnstileSuccess"
-                     data-error-callback="onTurnstileError"
-                     data-before-interactive-callback="onTurnstileBeforeInteractive"
-                     data-after-interactive-callback="onTurnstileAfterInteractive">
                 </div>
 
                 <div class="action-buttons">
@@ -1756,107 +1693,5 @@ function verifyTurnstileToken($token, $secretKey) {
     </div>
 
     <script src="indeex.js?v=<?= time(); ?>"></script>
-    
-    <script>
-        // Global variables for Turnstile
-        let turnstileWidgetId = null;
-        let turnstileToken = null;
-        let isCheckingCards = false;
-        
-        // Initialize Turnstile widget when script loads
-        window.onloadTurnstileCallback = function() {
-            if (document.getElementById('turnstile-widget')) {
-                turnstileWidgetId = turnstile.render('#turnstile-widget');
-                console.log('Turnstile widget initialized with ID:', turnstileWidgetId);
-            }
-        };
-
-        // Called when Turnstile verification is successful
-        function onTurnstileSuccess(token) {
-            turnstileToken = token;
-            console.log('Turnstile verification successful');
-            proceedWithCardCheck();
-        }
-
-        // Called when Turnstile verification fails
-        function onTurnstileError() {
-            console.error('Turnstile verification failed');
-            Swal.fire({
-                title: 'Verification Failed',
-                text: 'Please complete the verification challenge to continue.',
-                icon: 'error',
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'OK'
-            });
-            
-            // Reset UI state
-            const startBtn = document.getElementById('startBtn');
-            const loader = document.getElementById('loader');
-            if (startBtn) startBtn.disabled = false;
-            if (loader) loader.style.display = 'none';
-            isCheckingCards = false;
-        }
-
-        // Called before Turnstile shows interactive challenge
-        function onTurnstileBeforeInteractive() {
-            console.log('Turnstile is about to show interactive challenge');
-            const statusLog = document.getElementById('statusLog');
-            if (statusLog) {
-                statusLog.textContent = 'Verification required. Please complete the challenge.';
-            }
-        }
-
-        // Called after Turnstile shows interactive challenge
-        function onTurnstileAfterInteractive() {
-            console.log('Turnstile interactive challenge is now visible');
-        }
-
-        // Function to proceed with card checking after Turnstile verification
-        function proceedWithCardCheck() {
-            // Now we can proceed with the original card processing
-            processCards();
-        }
-
-        // Function to reset Turnstile widget
-        function resetTurnstile() {
-            if (turnstileWidgetId !== null) {
-                turnstile.reset(turnstileWidgetId);
-                turnstileToken = null;
-            }
-        }
-
-        // Function to execute Turnstile verification
-        function executeTurnstile() {
-            if (isCheckingCards) return;
-            
-            isCheckingCards = true;
-            const startBtn = document.getElementById('startBtn');
-            const loader = document.getElementById('loader');
-            const statusLog = document.getElementById('statusLog');
-            
-            if (startBtn) startBtn.disabled = true;
-            if (loader) loader.style.display = 'block';
-            if (statusLog) statusLog.textContent = 'Verifying...';
-            
-            // Reset Turnstile before executing
-            resetTurnstile();
-            
-            // Execute Turnstile
-            if (turnstileWidgetId !== null) {
-                turnstile.execute(turnstileWidgetId);
-            } else {
-                console.error('Turnstile widget not initialized');
-                onTurnstileError();
-            }
-        }
-
-        // Add event listener for start button
-        document.addEventListener('DOMContentLoaded', function() {
-            const startBtn = document.getElementById('startBtn');
-            if (startBtn) {
-                startBtn.addEventListener('click', executeTurnstile);
-            }
-        });
-    </script>
 </body>
 </html>
