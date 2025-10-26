@@ -1647,6 +1647,16 @@ if (empty($userPhotoUrl)) {
                             <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-paypal"></i> PayPal
+                                <span class="gateway-badge badge-charge">0.1$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
+                        </div>
+                    </label>
                     <label class="gateway-option" id="razorpay-gateway">
                         <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
                         <div class="gateway-option-content">
@@ -1677,16 +1687,6 @@ if (empty($userPhotoUrl)) {
                     <i class="fas fa-shield-alt"></i> Auth Gateways
                 </div>
                 <div class="gateway-options">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-auth">0.1$ Auth</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorization only, no charge</div>
-                        </div>
-                    </label>
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/stripeauth.php">
                         <div class="gateway-option-content">
