@@ -123,23 +123,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const userNameElement = document.querySelector('.user-name');
         const userName = userNameElement ? userNameElement.textContent.trim() : 'CardxChk User';
         
+        // Create user profile URL
+        const userProfileUrl = `${window.location.origin}/user/${userName.replace(/\s+/g, '_').toLowerCase()}`;
+        
+        // Format status with emoji
+        const statusEmoji = status === 'CHARGED' ? '🔥' : '✅';
+        
         // Create the beast-level message
-        const message = `🚀 ⚡️ **CARD ALERT** ⚡️ 🚀\n\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                       `🔥 **CARD DETAILS** 🔥\n\n` +
-                       `👤 **User:** \`${userName}\`\n` +
-                       `💳 **Gateway:** \`${selectedGateway.replace('gate/', '').replace('.php', '')}\`\n` +
-                       `✅ **Status:** \`${status}\`\n` +
-                       `📝 **Response:** \`${response}\`\n\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                       `🔗 **REDIRECT LINK** 🔗\n` +
-                       `[🚀 ACCESS CARDXCHK NOW](${window.location.origin})\n\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                       `🔔 *Automated notification from CardxChk*`;
+        const message = `✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦\n` +
+                       `[⌇](${userProfileUrl}) 𝐔𝐬𝐞𝐫 ➳ [${userName}](${userProfileUrl})\n` +
+                       `[⌇](${userProfileUrl}) 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${selectedGateway.replace('gate/', '').replace('.php', '')}\n` +
+                       `[⌇](${userProfileUrl}) 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${statusEmoji}\n` +
+                       `[⌇](${userProfileUrl}) 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ _${response}_\n` +
+                       `―――――――――――――――\n` +
+                       `[⌇](${userProfileUrl}) 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ [𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲](https://cxchk.site)`;
         
         // Prepare data for API call
         const telegramData = {
-            chat_id: '-1003044358879', // Your actual group chat ID
+            chat_id: '-1002554243871', // Your actual group chat ID
             text: message,
             parse_mode: 'MarkdownV2'
         };
