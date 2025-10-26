@@ -156,13 +156,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Remove the 'gate/' prefix and '.php' suffix
             let name = gateway.replace('gate/', '').replace('.php', '');
             
+            // Convert to lowercase for case-insensitive comparison
+            const nameLower = name.toLowerCase();
+            
             // Add space between name and amount if needed
-            if (name === 'PAYPAL0.1$') name = 'PAYPAL 0.1$';
-            else if (name === 'razorpay0.10$') name = 'Razorpay 0.10$';
-            else if (name === 'authnet1$') name = 'Authnet 1$';
-            else if (name === 'shopify1$') name = 'Shopify 1$';
-            else if (name === 'stripe1$') name = 'Stripe 1$';
-            else if (name === 'stripeauth') name = 'Stripe Auth';
+            if (nameLower === 'paypal0.1$') name = 'Paypal 0.1$';
+            else if (nameLower === 'razorpay0.10$') name = 'Razorpay 0.10$';
+            else if (nameLower === 'authnet1$') name = 'Authnet 1$';
+            else if (nameLower === 'shopify1$') name = 'Shopify 1$';
+            else if (nameLower === 'stripe1$') name = 'Stripe 1$';
+            else if (nameLower === 'stripeauth') name = 'Stripe Auth';
             
             return name;
         }
