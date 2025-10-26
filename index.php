@@ -64,7 +64,8 @@ if (file_exists($envFile)) {
 }
 
 // Cloudflare Turnstile credentials
- $turnstileSiteKey = $_ENV['TURNSITE_SITE_KEY'] ?? 'YOUR_SITE_KEY_HERE';
+// HARDCODED SITE KEY
+ $turnstileSiteKey = '0x4AAAAAAB8uqZTEm07M817T';
  $turnstileSecretKey = $_ENV['TURNSITE_SECRET_KEY'] ?? '';
 
 if (empty($turnstileSecretKey)) {
