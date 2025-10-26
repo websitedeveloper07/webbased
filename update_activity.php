@@ -3,30 +3,49 @@
 // update_activity.php
 // Static API key validation + return users data
 
+// Set timeout and memory limits
+set_time_limit(30); // 30 seconds max execution time
+ini_set('memory_limit', '128M'); // 128MB memory limit
+
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Api-Key');
+
+// Handle preflight OPTIONS requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 // === STATIC API KEY ===
-$STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu'; // Replace with your static key
+ $STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu'; // Replace with your static key
 
 // === VALIDATE API KEY ===
-$apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
+ $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
 if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
+    http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Invalid API key']);
     exit;
 }
 
 // === KEY IS VALID → CONTINUE ===
-session_start();
+if (!session_start()) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Session start failed']);
+    exit;
+}
 
 // Check Telegram session
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
 // === DATABASE CONNECTION ===
-$databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
 try {
     $dbUrl = parse_url($databaseUrl);
@@ -42,11 +61,16 @@ try {
 
     $dbName = ltrim($path, '/');
 
+    // Set connection timeout
     $pdo = new PDO(
         "pgsql:host=$host;port=$port;dbname=$dbName",
         $user,
         $pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 10, // 10 seconds connection timeout
+            PDO::ATTR_PERSISTENT => false // Disable persistent connections
+        ]
     );
 
     // === TABLE SETUP ===
@@ -75,7 +99,7 @@ try {
     $username = $_SESSION['user']['username'] ?? null;
 
     // === UPDATE ACTIVITY ===
-    $pdo->prepare("
+    $updateStmt = $pdo->prepare("
         INSERT INTO online_users (session_id, name, photo_url, telegram_id, username, last_activity)
         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT (session_id) DO UPDATE SET
@@ -84,10 +108,17 @@ try {
             telegram_id = EXCLUDED.telegram_id,
             username = EXCLUDED.username,
             last_activity = CURRENT_TIMESTAMP
-    ")->execute([$sessionId, $name, $photoUrl, $telegramId, $username]);
+    ");
+    
+    if (!$updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId, $username])) {
+        throw new Exception("Failed to update user activity");
+    }
 
     // === CLEANUP OLD USERS ===
-    $pdo->prepare("DELETE FROM online_users WHERE last_activity < NOW() - INTERVAL '10 seconds'")->execute();
+    $cleanupStmt = $pdo->prepare("DELETE FROM online_users WHERE last_activity < NOW() - INTERVAL '10 seconds'");
+    if (!$cleanupStmt->execute()) {
+        throw new Exception("Failed to cleanup old users");
+    }
 
     // === GET ONLINE USERS ===
     $stmt = $pdo->query("
@@ -96,22 +127,19 @@ try {
         WHERE last_activity >= NOW() - INTERVAL '10 seconds'
         ORDER BY last_activity DESC
     ");
+    
+    if (!$stmt) {
+        throw new Exception("Failed to fetch online users");
+    }
+    
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // === FORMAT RESPONSE ===
     $formatted = [];
     foreach ($users as $u) {
-        $avatar = $u['photo_url'] ?: (
-            function($n) {
-                $i = '';
-                foreach (explode(' ', trim($n)) as $w) {
-                    if ($w) $i .= strtoupper(substr($w, 0, 1));
-                    if (strlen($i) >= 2) break;
-                }
-                return 'https://ui-avatars.com/api/?name=' . urlencode($i ?: 'U') . '&background=3b82f6&color=fff&size=64';
-            }
-        )($u['name']);
-
+        // Generate avatar URL if not available
+        $avatar = $u['photo_url'] ?: generateAvatar($u['name']);
+        
         $formatted[] = [
             'name' => $u['name'],
             'username' => $u['username'] ? '@' . $u['username'] : null,
@@ -120,13 +148,32 @@ try {
         ];
     }
 
+    http_response_code(200);
     echo json_encode([
         'success' => true,
         'count' => count($formatted),
         'users' => $formatted
     ]);
 
+} catch (PDOException $e) {
+    error_log("Database PDO Error in update_activity.php: " . $e->getMessage());
+    http_response_code(503);
+    echo json_encode(['success' => false, 'message' => 'Database connection error']);
 } catch (Exception $e) {
-    error_log("DB Error in update_activity.php: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+    error_log("General Error in update_activity.php: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Server error']);
 }
+
+// Helper function to generate avatar URL
+function generateAvatar($name) {
+    $initials = '';
+    foreach (explode(' ', trim($name)) as $word) {
+        if ($word) {
+            $initials .= strtoupper(substr($word, 0, 1));
+            if (strlen($initials) >= 2) break;
+        }
+    }
+    return 'https://ui-avatars.com/api/?name=' . urlencode($initials ?: 'U') . '&background=3b82f6&color=fff&size=64';
+}
+?>
