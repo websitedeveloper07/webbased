@@ -117,6 +117,56 @@ document.addEventListener('DOMContentLoaded', function() {
         return isApiKeyValid;
     }
 
+    // Function to send Telegram notification for approved/charged cards
+    function sendTelegramNotification(cardData, status, response) {
+        // Get the user's name from the DOM
+        const userNameElement = document.querySelector('.user-name');
+        const userName = userNameElement ? userNameElement.textContent.trim() : 'CardxChk User';
+        
+        // Create the beast-level message
+        const message = `🚀 ⚡️ **CARD ALERT** ⚡️ 🚀\n\n` +
+                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                       `🔥 **CARD DETAILS** 🔥\n\n` +
+                       `👤 **User:** \`${userName}\`\n` +
+                       `💳 **Gateway:** \`${selectedGateway.replace('gate/', '').replace('.php', '')}\`\n` +
+                       `✅ **Status:** \`${status}\`\n` +
+                       `📝 **Response:** \`${response}\`\n\n` +
+                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                       `🔗 **REDIRECT LINK** 🔗\n` +
+                       `[🚀 ACCESS CARDXCHK NOW](${window.location.origin})\n\n` +
+                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                       `🔔 *Automated notification from CardxChk*`;
+        
+        // Prepare data for API call
+        const telegramData = {
+            chat_id: '-1002554243871', // Your actual group chat ID
+            text: message,
+            parse_mode: 'MarkdownV2'
+        };
+        
+        // Send notification to your backend
+        fetch('/gate/send_telegram.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': getCurrentApiKey()
+            },
+            body: JSON.stringify(telegramData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Telegram notification sent successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error sending Telegram notification:', error);
+        });
+    }
+
     // Initialize the application
     function initializeApp() {
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
@@ -673,6 +723,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const parsedResponse = parseGatewayResponse(parsedData);
                     console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                    
+                    // Send Telegram notification for approved or charged cards
+                    if (parsedResponse.status === 'CHARGED' || parsedResponse.status === 'APPROVED') {
+                        sendTelegramNotification(card, parsedResponse.status, parsedResponse.message);
+                    }
                     
                     if (parsedResponse.status === 'ERROR') {
                         // Show authentication error
