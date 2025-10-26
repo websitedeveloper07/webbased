@@ -84,6 +84,44 @@ if (empty($userPhotoUrl)) {
 
 // Format username with @ symbol
  $formattedUsername = $userUsername ? '@' . $userUsername : '';
+
+// Function to verify Turnstile token
+function verifyTurnstileToken($token) {
+    $secret = $_ENV['CLOUDFLARE_TURNSTILE_SECRET'] ?? '';
+    if (empty($secret)) {
+        error_log('Turnstile secret key is not set');
+        return false;
+    }
+
+    $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+    $data = [
+        'secret' => $secret,
+        'response' => $token
+    ];
+
+    $options = [
+        'http' => [
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $response = file_get_contents($url, false, $context);
+    if ($response === false) {
+        error_log('Failed to contact Turnstile verification service');
+        return false;
+    }
+
+    $result = json_decode($response, true);
+    if (!isset($result['success'])) {
+        error_log('Invalid response from Turnstile verification service');
+        return false;
+    }
+
+    return $result['success'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -93,6 +131,7 @@ if (empty($userPhotoUrl)) {
     <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -1475,6 +1514,14 @@ if (empty($userPhotoUrl)) {
                         placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
                 </div>
 
+                <!-- Cloudflare Turnstile Widget -->
+                <div id="turnstile-widget" class="cf-turnstile" 
+                     data-sitekey="0x4AAAAAAB8uqZTEm07M817T" 
+                     data-size="invisible" 
+                     data-callback="onTurnstileSuccess"
+                     data-error-callback="onTurnstileError">
+                </div>
+
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="startBtn">
                         <i class="fas fa-play"></i> Start Check
@@ -1714,6 +1761,139 @@ if (empty($userPhotoUrl)) {
     <script src="indeex.js?v=<?= time(); ?>"></script>
     
     <script>
+        // Cloudflare Turnstile handling
+        let turnstileToken = null;
+        let turnstileWidgetId = null;
+        
+        // Initialize Turnstile widget when script loads
+        window.onloadTurnstileCallback = function() {
+            turnstileWidgetId = turnstile.render('#turnstile-widget');
+        };
+        
+        // Called when Turnstile verification is successful
+        function onTurnstileSuccess(token) {
+            turnstileToken = token;
+            // Now we can proceed with the original form submission
+            proceedWithCardCheck();
+        }
+        
+        // Called when Turnstile verification fails
+        function onTurnstileError() {
+            Swal.fire({
+                title: 'Verification Failed',
+                text: 'Please complete the verification challenge to continue.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'OK'
+            });
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('startBtn').disabled = false;
+        }
+        
+        // Function to proceed with card checking after Turnstile verification
+        function proceedWithCardCheck() {
+            // Add the token to the form data
+            const cardInput = document.getElementById('cardInput').value;
+            const formData = new FormData();
+            formData.append('cards', cardInput);
+            formData.append('cf-turnstile-response', turnstileToken);
+            
+            // Get selected gateway
+            const selectedGateway = document.querySelector('input[name="gateway"]:checked');
+            if (selectedGateway) {
+                formData.append('gateway', selectedGateway.value);
+            }
+            
+            // Make the AJAX request to your backend
+            fetch('api/check_cards.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response from your backend
+                if (data.success) {
+                    // Process successful card check
+                    document.getElementById('statusLog').innerText = 'Card check completed successfully';
+                    // Update UI with results
+                    updateResults(data.results);
+                } else {
+                    // Handle error
+                    document.getElementById('statusLog').innerText = 'Error: ' + data.message;
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444',
+                        confirmButtonText: 'OK'
+                    });
+                }
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('startBtn').disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('statusLog').innerText = 'An error occurred during card checking';
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('startBtn').disabled = false;
+            });
+        }
+        
+        // Override the start button click to trigger Turnstile
+        document.addEventListener('DOMContentLoaded', function() {
+            const startBtn = document.getElementById('startBtn');
+            if (startBtn) {
+                startBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Validate card input
+                    const cardInput = document.getElementById('cardInput').value.trim();
+                    if (!cardInput) {
+                        Swal.fire({
+                            title: 'No Cards Entered',
+                            text: 'Please enter card details to check.',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    }
+                    
+                    // Show loader
+                    document.getElementById('loader').style.display = 'block';
+                    document.getElementById('startBtn').disabled = true;
+                    
+                    // Trigger Turnstile challenge
+                    if (window.turnstile && turnstileWidgetId) {
+                        turnstile.reset(turnstileWidgetId); // Reset in case it was used before
+                        turnstile.execute(turnstileWidgetId); // Execute the challenge
+                    } else {
+                        // Fallback if Turnstile isn't loaded
+                        Swal.fire({
+                            title: 'Security Check',
+                            text: 'Loading security verification, please wait...',
+                            icon: 'info',
+                            confirmButtonColor: '#3b82f6',
+                            confirmButtonText: 'OK'
+                        });
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('startBtn').disabled = false;
+                    }
+                });
+            }
+            
+            // Reset Turnstile when clear button is clicked
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    if (window.turnstile && turnstileWidgetId) {
+                        turnstile.reset(turnstileWidgetId);
+                    }
+                    turnstileToken = null;
+                });
+            }
+        });
+        
         // Disable Razorpay 0.10$ gateway and show maintenance popup
         document.addEventListener('DOMContentLoaded', function() {
             const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
