@@ -16,41 +16,7 @@ session_start();
  $telegramBotToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
  $telegramBotUsername = 'CardXchk_LOGBOT';
  $baseUrl = 'http://cxchk.site';
-// Cloudflare Turnstile credentials
- $turnstileSiteKey = '0x4AAAAAAB8uqZTEm07M817T';
- // Load secret key from .env file
- $envFile = __DIR__ . '/.env';
- $turnstileSecretKey = '';
 
-if (file_exists($envFile)) {
-    $envContent = file_get_contents($envFile);
-    $envLines = explode("\n", $envContent);
-    
-    foreach ($envLines as $line) {
-        $line = trim($line);
-        if (empty($line) || strpos($line, '#') === 0) {
-            continue;
-        }
-        
-        list($key, $value) = explode('=', $line, 2);
-        $key = trim($key);
-        $value = trim($value);
-        
-        // Remove surrounding quotes if present
-        if (strpos($value, '"') === 0 || strpos($value, "'") === 0) {
-            $value = substr($value, 1, -1);
-        }
-        
-        if ($key === 'TURNSITE_SECRET_KEY') {
-            $turnstileSecretKey = $value;
-            break;
-        }
-    }
-}
-
-if (empty($turnstileSecretKey)) {
-    die("Error: TURNSITE_SECRET_KEY not found in .env file");
-}
 // -------------------------------
 // DATABASE CONNECTION
 // -------------------------------
@@ -81,36 +47,6 @@ try {
     );");
 } catch (Exception $e) {
     die("Database connection failed: " . $e->getMessage());
-}
-
-// -------------------------------
-// CLOUDFLARE TURNSTILE VERIFICATION
-// -------------------------------
-function verifyTurnstileToken($token, $secretKey) {
-    if (empty($token)) {
-        return false;
-    }
-    
-    $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-    $data = [
-        'secret' => $secretKey,
-        'response' => $token,
-        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null
-    ];
-    
-    $options = [
-        'http' => [
-            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method' => 'POST',
-            'content' => http_build_query($data)
-        ]
-    ];
-    
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-    $result = json_decode($response, true);
-    
-    return $result && isset($result['success']) && $result['success'] === true;
 }
 
 // -------------------------------
@@ -150,12 +86,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
 // -------------------------------
 if (isset($_GET['id']) && isset($_GET['hash'])) {
     try {
-        // Verify Turnstile token first
-        if (!isset($_GET['cf_turnstile_token']) || 
-            !verifyTurnstileToken($_GET['cf_turnstile_token'], $turnstileSecretKey)) {
-            throw new Exception("Security verification failed. Please try again.");
-        }
-
         if (!verifyTelegramData($_GET, $telegramBotToken)) {
             throw new Exception("Invalid Telegram authentication data");
         }
@@ -216,8 +146,6 @@ if (isset($_SESSION['user'])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="icon" href="https://cxchk.site/assets/branding/cardxchk-mark.png">
-    <!-- Cloudflare Turnstile Script -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         /* All your existing CSS styles remain unchanged */
         * {
@@ -865,13 +793,6 @@ if (isset($_SESSION['user'])) {
 
             <div class="telegram-section">
                 <div class="telegram-widget-container">
-                    <!-- Cloudflare Turnstile Widget (Invisible) -->
-                    <div id="turnstile-widget" class="cf-turnstile" 
-                         data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey); ?>" 
-                         data-callback="turnstileCallback" 
-                         data-size="invisible">
-                    </div>
-                    
                     <div class="telegram-widget">
                         <div class="telegram-login-<?= htmlspecialchars($telegramBotUsername) ?>"></div>
                         <script async src="https://telegram.org/js/telegram-widget.js?22"
@@ -879,7 +800,6 @@ if (isset($_SESSION['user'])) {
                                 data-size="large"
                                 data-auth-url="<?= $baseUrl ?>/login.php"
                                 data-request-access="write"
-                                data-onauth="onTelegramAuth(user)"
                                 onload="console.log('Telegram widget loaded')"
                                 onerror="console.error('Telegram widget failed to load')"></script>
                     </div>
@@ -1001,48 +921,6 @@ if (isset($_SESSION['user'])) {
                 }
             }, 3000);
         });
-
-        // Cloudflare Turnstile callback function
-        let turnstileToken = '';
-        
-        function turnstileCallback(token) {
-            turnstileToken = token;
-            console.log('Turnstile token received');
-        }
-
-        // Telegram authentication callback
-        function onTelegramAuth(user) {
-            if (!turnstileToken) {
-                console.error('Turnstile token not available');
-                alert('Security verification in progress. Please try again.');
-                return;
-            }
-            
-            // Create a form to submit with Turnstile token
-            const form = document.createElement('form');
-            form.method = 'GET';
-            form.action = '<?= $baseUrl ?>/login.php';
-            
-            // Add Telegram user data
-            Object.keys(user).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = user[key];
-                form.appendChild(input);
-            });
-            
-            // Add Turnstile token
-            const tokenInput = document.createElement('input');
-            tokenInput.type = 'hidden';
-            tokenInput.name = 'cf_turnstile_token';
-            tokenInput.value = turnstileToken;
-            form.appendChild(tokenInput);
-            
-            // Submit the form
-            document.body.appendChild(form);
-            form.submit();
-        }
     </script>
 </body>
 </html>
