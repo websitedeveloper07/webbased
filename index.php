@@ -63,14 +63,9 @@ if (file_exists($envFile)) {
     error_log("Environment file (.env) not found in " . __DIR__);
 }
 
-// Cloudflare Turnstile credentials
-// HARDCODED SITE KEY
+// Cloudflare Turnstile credentials (Hardcoded)
  $turnstileSiteKey = '0x4AAAAAAB8uqZTEm07M817T';
- $turnstileSecretKey = $_ENV['TURNSITE_SECRET_KEY'] ?? '';
-
-if (empty($turnstileSecretKey)) {
-    die("Error: TURNSITE_SECRET_KEY not found in .env file");
-}
+ $turnstileSecretKey = '0x4AAAAAAB8uqeP5W9TVr6Xx_4QvDs3LVvc';
 
 // Get user information for display
  $userName = $_SESSION['user']['name'] ?? 'User';
