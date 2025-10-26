@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedGateway === 'gate/stripe1$.php') {
             maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
         } else if (selectedGateway === 'gate/paypal0.1$.php') {
-            maxConcurrent = 2; // 2 concurrent requests for PayPal
-            console.log(`Set maxConcurrent to 2 for ${selectedGateway}`);
+            maxConcurrent = 2; // 5 concurrent requests for PayPal
+            console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
         } else {
             maxConcurrent = 3; // 3 concurrent requests for all other gateways
             console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
@@ -1579,28 +1579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const cardInput = document.getElementById('cardInput');
                 const menuToggle = document.getElementById('menuToggle');
                 
-                if (startBtn) {
-                    startBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        
-                        // Validate card input
-                        const cardInputValue = cardInput ? cardInput.value.trim() : '';
-                        if (!cardInputValue) {
-                            Swal.fire({
-                                title: 'No Cards Entered',
-                                text: 'Please enter card details to check.',
-                                icon: 'warning',
-                                confirmButtonColor: '#f59e0b',
-                                confirmButtonText: 'OK'
-                            });
-                            return;
-                        }
-                        
-                        // Directly start processing without any security check
-                        processCards();
-                    });
-                }
-                
+                if (startBtn) startBtn.addEventListener('click', processCards);
                 if (generateBtn) generateBtn.addEventListener('click', generateCards);
                 if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllGeneratedCards);
                 if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllGeneratedCards);
@@ -1758,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateMaxConcurrent();
                 
                 // RAZORPAY GATEWAY MAINTENANCE FEATURE
-                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
+                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
                 if (razorpayGateway) {
                     // Disable the radio button
                     razorpayGateway.disabled = true;
