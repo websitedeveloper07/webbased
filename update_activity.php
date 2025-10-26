@@ -1,4 +1,8 @@
 <?php
+require_once 'banned.php';
+
+// Rest of your script...
+
 // update_activity.php
 // Static API key validation + return users data
 
