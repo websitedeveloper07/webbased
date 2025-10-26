@@ -1,7 +1,4 @@
 <?php
-
-// Rest of your script...
-
 // -------------------------------
 // SESSION & INITIAL CONFIG
 // -------------------------------
@@ -147,7 +144,6 @@ if (isset($_SESSION['user'])) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="icon" href="https://cxchk.site/assets/branding/cardxchk-mark.png">
     <style>
-        /* All your existing CSS styles remain unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -166,7 +162,6 @@ if (isset($_SESSION['user'])) {
             overflow: hidden;
         }
 
-        /* All your existing CSS remains the same... */
         /* Futuristic Background */
         .bg-container {
             position: fixed;
@@ -819,12 +814,6 @@ if (isset($_SESSION['user'])) {
                         <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
                     </svg>
                     <span>Private</span>
-                </div>
-                <div class="security-item">
-                    <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                    </svg>
-                    <span>Protected</span>
                 </div>
             </div>
         </div>
