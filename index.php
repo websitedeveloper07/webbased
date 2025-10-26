@@ -1,8 +1,4 @@
 <?php
-
-
-// Rest of your script...
-
 session_start();
 
 // Enable error reporting for debugging
@@ -11,7 +7,6 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // MAINTENANCE MODE CHECK
-// Maintenance flag file path - using /tmp/.maintenance as specified
 define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
 // Check if maintenance mode is active
@@ -25,7 +20,6 @@ if (file_exists(MAINTENANCE_FLAG)) {
     } else {
         // Check if admin is logged in
         if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
-            // Admin can continue - bypass normal user authentication
             $adminBypass = true;
         } else {
             // Redirect to maintenance page
@@ -35,36 +29,34 @@ if (file_exists(MAINTENANCE_FLAG)) {
     }
 }
 
-// Enable error reporting for debugging (disable in production)
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-
-// Log session state
-error_log("Checking session in index.php: " . json_encode($_SESSION));
-
 // Check if user is authenticated OR if admin is authenticated during maintenance
  $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
 if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
-    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
+    // If this is an AJAX request, return JSON error
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    // For regular requests, redirect to login
     header('Location: login.php');
-    exit;
+    exit();
 }
 
-// Load environment variables manually
- $envFile = __DIR__ . '/.env';
- $_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
+// Read Cloudflare secret key from .snv file
+ $snvFile = __DIR__ . '/.snv';
+ $secretKey = '';
+if (file_exists($snvFile)) {
+    $snvContent = file_get_contents($snvFile);
+    // Parse the .snv file to extract the secret key
+    if (preg_match('/CLOUDFLARE_TURNSTILE_SECRET="([^"]+)"/', $snvContent, $matches)) {
+        $secretKey = $matches[1];
+    } else {
+        error_log("Could not parse Cloudflare secret key from .snv file");
     }
 } else {
-    error_log("Environment file (.env) not found in " . __DIR__);
+    error_log(".snv file not found in " . __DIR__);
 }
 
 // Get user information for display
@@ -90,16 +82,15 @@ if (empty($userPhotoUrl)) {
  $formattedUsername = $userUsername ? '@' . $userUsername : '';
 
 // Function to verify Turnstile token
-function verifyTurnstileToken($token) {
-    $secret = $_ENV['CLOUDFLARE_TURNSTILE_SECRET'] ?? '';
-    if (empty($secret)) {
+function verifyTurnstileToken($token, $secretKey) {
+    if (empty($secretKey)) {
         error_log('Turnstile secret key is not set');
         return false;
     }
 
     $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
     $data = [
-        'secret' => $secret,
+        'secret' => $secretKey,
         'response' => $token
     ];
 
@@ -1518,12 +1509,14 @@ function verifyTurnstileToken($token) {
                         placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
                 </div>
 
-                <!-- Cloudflare Turnstile Widget -->
+                <!-- Cloudflare Turnstile Widget - Invisible -->
                 <div id="turnstile-widget" class="cf-turnstile" 
                      data-sitekey="0x4AAAAAAB8uqZTEm07M817T" 
                      data-size="invisible" 
                      data-callback="onTurnstileSuccess"
-                     data-error-callback="onTurnstileError">
+                     data-error-callback="onTurnstileError"
+                     data-before-interactive-callback="onTurnstileBeforeInteractive"
+                     data-after-interactive-callback="onTurnstileAfterInteractive">
                 </div>
 
                 <div class="action-buttons">
@@ -1765,24 +1758,29 @@ function verifyTurnstileToken($token) {
     <script src="indeex.js?v=<?= time(); ?>"></script>
     
     <script>
-        // Cloudflare Turnstile handling
-        let turnstileToken = null;
+        // Global variables for Turnstile
         let turnstileWidgetId = null;
+        let turnstileToken = null;
+        let isCheckingCards = false;
         
         // Initialize Turnstile widget when script loads
         window.onloadTurnstileCallback = function() {
-            turnstileWidgetId = turnstile.render('#turnstile-widget');
+            if (document.getElementById('turnstile-widget')) {
+                turnstileWidgetId = turnstile.render('#turnstile-widget');
+                console.log('Turnstile widget initialized with ID:', turnstileWidgetId);
+            }
         };
-        
+
         // Called when Turnstile verification is successful
         function onTurnstileSuccess(token) {
             turnstileToken = token;
-            // Now we can proceed with the original form submission
+            console.log('Turnstile verification successful');
             proceedWithCardCheck();
         }
-        
+
         // Called when Turnstile verification fails
         function onTurnstileError() {
+            console.error('Turnstile verification failed');
             Swal.fire({
                 title: 'Verification Failed',
                 text: 'Please complete the verification challenge to continue.',
@@ -1790,147 +1788,73 @@ function verifyTurnstileToken($token) {
                 confirmButtonColor: '#ef4444',
                 confirmButtonText: 'OK'
             });
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('startBtn').disabled = false;
+            
+            // Reset UI state
+            const startBtn = document.getElementById('startBtn');
+            const loader = document.getElementById('loader');
+            if (startBtn) startBtn.disabled = false;
+            if (loader) loader.style.display = 'none';
+            isCheckingCards = false;
         }
-        
+
+        // Called before Turnstile shows interactive challenge
+        function onTurnstileBeforeInteractive() {
+            console.log('Turnstile is about to show interactive challenge');
+            const statusLog = document.getElementById('statusLog');
+            if (statusLog) {
+                statusLog.textContent = 'Verification required. Please complete the challenge.';
+            }
+        }
+
+        // Called after Turnstile shows interactive challenge
+        function onTurnstileAfterInteractive() {
+            console.log('Turnstile interactive challenge is now visible');
+        }
+
         // Function to proceed with card checking after Turnstile verification
         function proceedWithCardCheck() {
-            // Add the token to the form data
-            const cardInput = document.getElementById('cardInput').value;
-            const formData = new FormData();
-            formData.append('cards', cardInput);
-            formData.append('cf-turnstile-response', turnstileToken);
-            
-            // Get selected gateway
-            const selectedGateway = document.querySelector('input[name="gateway"]:checked');
-            if (selectedGateway) {
-                formData.append('gateway', selectedGateway.value);
-            }
-            
-            // Make the AJAX request to your backend
-            fetch('api/check_cards.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Handle the response from your backend
-                if (data.success) {
-                    // Process successful card check
-                    document.getElementById('statusLog').innerText = 'Card check completed successfully';
-                    // Update UI with results
-                    updateResults(data.results);
-                } else {
-                    // Handle error
-                    document.getElementById('statusLog').innerText = 'Error: ' + data.message;
-                    Swal.fire({
-                        title: 'Error',
-                        text: data.message,
-                        icon: 'error',
-                        confirmButtonColor: '#ef4444',
-                        confirmButtonText: 'OK'
-                    });
-                }
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('startBtn').disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('statusLog').innerText = 'An error occurred during card checking';
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('startBtn').disabled = false;
-            });
+            // Now we can proceed with the original card processing
+            processCards();
         }
-        
-        // Override the start button click to trigger Turnstile
+
+        // Function to reset Turnstile widget
+        function resetTurnstile() {
+            if (turnstileWidgetId !== null) {
+                turnstile.reset(turnstileWidgetId);
+                turnstileToken = null;
+            }
+        }
+
+        // Function to execute Turnstile verification
+        function executeTurnstile() {
+            if (isCheckingCards) return;
+            
+            isCheckingCards = true;
+            const startBtn = document.getElementById('startBtn');
+            const loader = document.getElementById('loader');
+            const statusLog = document.getElementById('statusLog');
+            
+            if (startBtn) startBtn.disabled = true;
+            if (loader) loader.style.display = 'block';
+            if (statusLog) statusLog.textContent = 'Verifying...';
+            
+            // Reset Turnstile before executing
+            resetTurnstile();
+            
+            // Execute Turnstile
+            if (turnstileWidgetId !== null) {
+                turnstile.execute(turnstileWidgetId);
+            } else {
+                console.error('Turnstile widget not initialized');
+                onTurnstileError();
+            }
+        }
+
+        // Add event listener for start button
         document.addEventListener('DOMContentLoaded', function() {
             const startBtn = document.getElementById('startBtn');
             if (startBtn) {
-                startBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Validate card input
-                    const cardInput = document.getElementById('cardInput').value.trim();
-                    if (!cardInput) {
-                        Swal.fire({
-                            title: 'No Cards Entered',
-                            text: 'Please enter card details to check.',
-                            icon: 'warning',
-                            confirmButtonColor: '#f59e0b',
-                            confirmButtonText: 'OK'
-                        });
-                        return;
-                    }
-                    
-                    // Show loader
-                    document.getElementById('loader').style.display = 'block';
-                    document.getElementById('startBtn').disabled = true;
-                    
-                    // Trigger Turnstile challenge
-                    if (window.turnstile && turnstileWidgetId) {
-                        turnstile.reset(turnstileWidgetId); // Reset in case it was used before
-                        turnstile.execute(turnstileWidgetId); // Execute the challenge
-                    } else {
-                        // Fallback if Turnstile isn't loaded
-                        Swal.fire({
-                            title: 'Security Check',
-                            text: 'Loading security verification, please wait...',
-                            icon: 'info',
-                            confirmButtonColor: '#3b82f6',
-                            confirmButtonText: 'OK'
-                        });
-                        document.getElementById('loader').style.display = 'none';
-                        document.getElementById('startBtn').disabled = false;
-                    }
-                });
-            }
-            
-            // Reset Turnstile when clear button is clicked
-            const clearBtn = document.getElementById('clearBtn');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function() {
-                    if (window.turnstile && turnstileWidgetId) {
-                        turnstile.reset(turnstileWidgetId);
-                    }
-                    turnstileToken = null;
-                });
-            }
-        });
-        
-        // Disable Razorpay 0.10$ gateway and show maintenance popup
-        document.addEventListener('DOMContentLoaded', function() {
-            const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
-            if (razorpayGateway) {
-                // Disable the radio button
-                razorpayGateway.disabled = true;
-                
-                // Find the parent label
-                const parentLabel = razorpayGateway.closest('label');
-                if (parentLabel) {
-                    // Add visual styling to show it's disabled
-                    parentLabel.style.opacity = '0.6';
-                    parentLabel.style.cursor = 'not-allowed';
-                    parentLabel.style.position = 'relative';
-                    
-                    // Add click event to show popup
-                    parentLabel.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'Gateway Under Maintenance',
-                                text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
-                                icon: 'error',
-                                confirmButtonColor: '#ef4444', // Red color
-                                confirmButtonText: 'OK'
-                            });
-                        } else {
-                            alert('Gateway under maintenance. Please select another gateway.');
-                        }
-                    });
-                }
+                startBtn.addEventListener('click', executeTurnstile);
             }
         });
     </script>
