@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedGateway === 'gate/stripe1$.php') {
             maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
         } else if (selectedGateway === 'gate/paypal0.1$.php') {
-            maxConcurrent = 4; // 2 concurrent requests for PayPal
+            maxConcurrent = 3; // 2 concurrent requests for PayPal
             console.log(`Set maxConcurrent to 2 for ${selectedGateway}`);
         } else {
             maxConcurrent = 3; // 3 concurrent requests for all other gateways
