@@ -151,11 +151,23 @@ document.addEventListener('DOMContentLoaded', function() {
             statusEmoji = '✅';
         }
         
-        // Format gateway name in capital letters
-        const gatewayName = selectedGateway
-            .replace('gate/', '')
-            .replace('.php', '')
-            .toUpperCase();
+        // Format gateway name properly
+        function formatGatewayName(gateway) {
+            // Remove the 'gate/' prefix and '.php' suffix
+            let name = gateway.replace('gate/', '').replace('.php', '');
+            
+            // Add space between name and amount if needed
+            if (name === 'PAYPAL0.1$') name = 'PAYPAL 0.1$';
+            else if (name === 'razorpay0.10$') name = 'Razorpay 0.10$';
+            else if (name === 'authnet1$') name = 'Authnet 1$';
+            else if (name === 'shopify1$') name = 'Shopify 1$';
+            else if (name === 'stripe1$') name = 'Stripe 1$';
+            else if (name === 'stripeauth') name = 'Stripe Auth';
+            
+            return name;
+        }
+        
+        const gatewayName = formatGatewayName(selectedGateway);
         
         // Escape all text for HTML
         const escapedUserName = escapeHtml(userName);
@@ -164,12 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Create the HTML message with the exact format
         const message = `<b>✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦</b>\n` +
-                       `<a href="${groupLink}">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href="${userProfileUrl}">${escapedUserName}</a>\n` +
-                       `<a href="${groupLink}">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${status} ${statusEmoji}\n` +
-                       `<a href="${groupLink}">[⌇]</a> 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}\n` +
-                       `<a href="${groupLink}">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>${escapedResponse}</i>\n` +
-                       `<b>―――――――――――――――</b>\n` +
-                       `<a href="${groupLink}">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href="https://cxchk.site">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>`;
+                   `<a href="${groupLink}">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href="${userProfileUrl}">${escapedUserName}</a>\n` +
+                   `<a href="${groupLink}">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>${status} ${statusEmoji}</b>\n` +
+                   `<a href="${groupLink}">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}</b>\n` +
+                   `<a href="${groupLink}">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <b>${escapedResponse}</b>\n` +
+                   `<b>―――――――――――――――</b>\n` +
+                   `<a href="${groupLink}">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href="https://cxchk.site">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>`;
         
         // Prepare data for API call
         const telegramData = {
