@@ -131,29 +131,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to send Telegram notification for approved/charged cards
     function sendTelegramNotification(cardData, status, response) {
-        // Get the user's name from the DOM
+        // Get the user's name and username from the DOM
         const userNameElement = document.querySelector('.user-name');
+        const userUsernameElement = document.querySelector('.user-username');
         const userName = userNameElement ? userNameElement.textContent.trim() : 'CardxChk User';
+        const userUsername = userUsernameElement ? userUsernameElement.textContent.trim().replace('@', '') : '';
         
-        // Create user profile URL
-        const userProfileUrl = `${window.location.origin}/user/${userName.replace(/\s+/g, '_').toLowerCase()}`;
+        // Create user profile URL (using username if available)
+        const userProfileUrl = userUsername ? `https://t.me/${userUsername}` : '#';
+        
+        // Your group link for the [⌇] symbols
+        const groupLink = 'https://t.me/+zkYtLxcu7QYxODg1';
         
         // Format status with emoji
-        const statusEmoji = status === 'CHARGED' ? '🔥' : '✅';
+        let statusEmoji = '';
+        if (status === 'CHARGED') {
+            statusEmoji = '🔥';
+        } else if (status === 'APPROVED') {
+            statusEmoji = '✅';
+        }
+        
+        // Format gateway name in capital letters
+        const gatewayName = selectedGateway
+            .replace('gate/', '')
+            .replace('.php', '')
+            .toUpperCase();
         
         // Escape all text for HTML
         const escapedUserName = escapeHtml(userName);
-        const escapedGateway = escapeHtml(selectedGateway.replace('gate/', '').replace('.php', ''));
+        const escapedGateway = escapeHtml(gatewayName);
         const escapedResponse = escapeHtml(response);
         
-        // Create a simpler HTML message
+        // Create the HTML message with the exact format
         const message = `<b>✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦</b>\n` +
-                       `<a href="${userProfileUrl}">𝐔𝐬𝐞𝐫 ➳ ${escapedUserName}</a>\n` +
-                       `𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}\n` +
-                       `𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${statusEmoji}\n` +
-                       `𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>${escapedResponse}</i>\n` +
-                       `<b>――――――――――――――</b>\n` +
-                       `<a href="https://cxchk.site">𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>`;
+                       `<a href="${groupLink}">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href="${userProfileUrl}">${escapedUserName}</a>\n` +
+                       `<a href="${groupLink}">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${status} ${statusEmoji}\n` +
+                       `<a href="${groupLink}">[⌇]</a> 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}\n` +
+                       `<a href="${groupLink}">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>${escapedResponse}</i>\n` +
+                       `<b>―――――――――――――――</b>\n` +
+                       `<a href="${groupLink}">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href="https://cxchk.site">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>`;
         
         // Prepare data for API call
         const telegramData = {
@@ -184,11 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error sending Telegram notification:', error);
             // Try to send a simpler message if the complex one fails
             const simpleMessage = `✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦\n` +
-                                  `User: ${userName}\n` +
-                                  `Gateway: ${selectedGateway.replace('gate/', '').replace('.php', '')}\n` +
-                                  `Status: ${status}\n` +
-                                  `Response: ${response}\n\n` +
-                                  `HIT VIA - 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲`;
+                                  `[⌇] 𝐔𝐬𝐞𝐫 ➳ ${userName}\n` +
+                                  `[⌇] 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ ${status} ${statusEmoji}\n` +
+                                  `[⌇] 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${gatewayName}\n` +
+                                  `[⌇] 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ ${response}\n` +
+                                  `―――――――――――――――\n` +
+                                  `[⌇] 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 (https://cxchk.site)`;
             
             const simpleTelegramData = {
                 chat_id: '-1003044358879',
