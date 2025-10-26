@@ -6,8 +6,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/stripe1_debug.log');
 
 // Include cron_sync.php for validateApiKey
-require_once __DIR__ . '/cron_sync.php';
-
+require_once __DIR__ . '/refresh.php';
 // Start session for user authentication
 session_start([
     'cookie_secure' => isset($_SERVER['HTTPS']),
