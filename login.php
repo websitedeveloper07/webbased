@@ -1,4 +1,8 @@
 <?php
+require_once 'banned.php';
+
+// Rest of your script...
+
 // -------------------------------
 // SESSION & INITIAL CONFIG
 // -------------------------------
