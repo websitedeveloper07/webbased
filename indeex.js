@@ -1,1934 +1,1813 @@
-<?php
-session_start();
-
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// MAINTENANCE MODE CHECK
-// Maintenance flag file path - using /tmp/.maintenance as specified
-define('MAINTENANCE_FLAG', '/tmp/.maintenance');
-
-// Check if maintenance mode is active
-if (file_exists(MAINTENANCE_FLAG)) {
-    // Get the current script name
-    $current_page = basename($_SERVER['PHP_SELF']);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing JavaScript...');
     
-    // Allow access to maintenance page and admin panel
-    if ($current_page === 'maintenance.php' || $current_page === 'adminaccess_panel.php') {
-        // Continue with normal execution
-    } else {
-        // Check if admin is logged in
-        if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
-            // Admin can continue - bypass normal user authentication
-            $adminBypass = true;
+    // Global variables
+    let selectedGateway = 'gate/stripe1$.php';
+    let isProcessing = false;
+    let isStopping = false;
+    let activeRequests = 0;
+    let cardQueue = [];
+    const MAX_RETRIES = 2;
+    let abortControllers = [];
+    let totalCards = 0;
+    let chargedCards = [];
+    let approvedCards = [];
+    let threeDSCards = [];
+    let declinedCards = [];
+    let sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    let sidebarOpen = false;
+    let generatedCardsData = [];
+    let activityUpdateInterval = null;
+    let lastActivityUpdate = 0;
+    let API_KEY = null; // Will be loaded from cron_sync.php
+    let keyRotationInterval = null;
+    let isApiKeyValid = false;
+
+    // Function to update maxConcurrent based on selected gateway
+    function updateMaxConcurrent() {
+        if (selectedGateway === 'gate/stripe1$.php') {
+            maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
+        } else if (selectedGateway === 'gate/paypal0.1$.php') {
+            maxConcurrent = 2; // 5 concurrent requests for PayPal
+            console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
         } else {
-            // Redirect to maintenance page
-            header("Location: /maintenance.php");
-            exit();
+            maxConcurrent = 3; // 3 concurrent requests for all other gateways
+            console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
         }
     }
-}
 
-// Enable error reporting for debugging (disable in production)
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-
-// Log session state
-error_log("Checking session in index.php: " . json_encode($_SESSION));
-
-// Check if user is authenticated OR if admin is authenticated during maintenance
- $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
-if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
-    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
-    header('Location: login.php');
-    exit;
-}
-
-// Load environment variables manually
- $envFile = __DIR__ . '/.env';
- $_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-} else {
-    error_log("Environment file (.env) not found in " . __DIR__);
-}
-
-// Get user information for display
- $userName = $_SESSION['user']['name'] ?? 'User';
- $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
- $userUsername = $_SESSION['user']['username'] ?? null;
-
-// Generate avatar URL if no photo is available
-if (empty($userPhotoUrl)) {
-    $initials = '';
-    $words = explode(' ', trim($userName));
-    foreach ($words as $word) {
-        if (!empty($word)) {
-            $initials .= strtoupper(substr($word, 0, 1));
-            if (strlen($initials) >= 2) break;
-        }
-    }
-    if (empty($initials)) $initials = 'U';
-    $userPhotoUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
-}
-
-// Format username with @ symbol
- $formattedUsername = $userUsername ? '@' . $userUsername : '';
-
-// Function to verify Turnstile token
-function verifyTurnstileToken($token) {
-    $secret = $_ENV['CLOUDFLARE_TURNSTILE_SECRET'] ?? '';
-    if (empty($secret)) {
-        error_log('Turnstile secret key is not set');
-        return false;
-    }
-
-    $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-    $data = [
-        'secret' => $secret,
-        'response' => $token
-    ];
-
-    $options = [
-        'http' => [
-            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method' => 'POST',
-            'content' => http_build_query($data)
-        ]
-    ];
-
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-    if ($response === false) {
-        error_log('Failed to contact Turnstile verification service');
-        return false;
-    }
-
-    $result = json_decode($response, true);
-    if (!isset($result['success'])) {
-        error_log('Invalid response from Turnstile verification service');
-        return false;
-    }
-
-    return $result['success'];
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        :root {
-            --primary-bg: #0a0e27; --secondary-bg: #131937; --card-bg: #1a1f3a;
-            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
-            --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
-            --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
-            --success-green: #22c55e; --declined-red: #ef4444;
-            /* Enhanced color palette for stats */
-            --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
-            --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        [data-theme="light"] {
-            --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
-            --text-primary: #0f172a; --text-secondary: #475569; --border-color: #e2e8f0;
-            /* Light mode adjustments for stats */
-            --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
-            --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        body {
-            font-family: Inter, sans-serif; background: var(--primary-bg);
-            color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
-        }
-        .navbar {
-            position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10,14,39,0.95); backdrop-filter: blur(10px);
-            padding: 0.5rem 1rem; display: flex; justify-content: space-between;
-            align-items: center; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);
-            height: 50px;
-        }
-        .navbar-brand {
-            display: flex; align-items: center; gap: 0.5rem;
-            font-size: 1.2rem; font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .navbar-brand i { font-size: 1.2rem; }
-        .navbar-actions { display: flex; align-items: center; gap: 0.5rem; }
-        .theme-toggle {
-            width: 40px; height: 20px; background: var(--secondary-bg);
-            border-radius: 10px; cursor: pointer; border: 1px solid var(--border-color);
-            position: relative; transition: all 0.3s;
-        }
-        .theme-toggle-slider {
-            position: absolute; width: 16px; height: 16px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            left: 2px; transition: transform 0.3s; display: flex;
-            align-items: center; justify-content: center; color: white; font-size: 0.5rem;
-        }
-        [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
-        .user-info {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.1);
-            border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .user-avatar {
-            width: 28px; height: 28px; border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--accent-blue);
-            flex-shrink: 0;
-        }
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .user-name {
-            font-weight: 600; color: #ffffff;
-            max-width: 80px; overflow: hidden; text-overflow: ellipsis;
-            white-space: nowrap; font-size: 0.85rem;
-        }
-        .user-username {
-            font-size: 0.7rem; color: var(--text-secondary);
-            max-width: 80px; overflow: hidden; text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .menu-toggle {
-            color: #ffffff !important; font-size: 1.2rem; 
-            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.1);
-            flex-shrink: 0; cursor: pointer;
-        }
-        .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.2); }
-        .sidebar {
-            position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
-            background: var(--card-bg); border-right: 1px solid var(--border-color);
-            padding: 1rem 0; z-index: 999; overflow-y: auto;
-            transform: translateX(-100%); transition: transform 0.3s ease;
-        }
-        .sidebar.open {
-            transform: translateX(0);
-        }
-        .sidebar-menu { list-style: none; }
-        .sidebar-item { margin: 0.3rem 0.5rem; }
-        .sidebar-link {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 0.75rem; color: var(--text-secondary);
-            border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
-        }
-        .sidebar-link:hover {
-            background: rgba(59,130,246,0.1); color: var(--accent-blue);
-            transform: translateX(5px);
-        }
-        .sidebar-link.active {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-        }
-        .sidebar-link i { width: 15px; text-align: center; font-size: 0.9rem; }
-        .sidebar-divider { height: 1px; background: var(--border-color); margin: 1rem 0.5rem; }
-        .main-content {
-            margin-left: 0; margin-top: 50px; padding: 1rem;
-            min-height: calc(100vh - 50px); position: relative; z-index: 1;
-            transition: margin-left 0.3s ease;
-        }
-        .main-content.sidebar-open { margin-left: 70vw; }
-        .page-section { display: none; }
-        .page-section.active { display: block; }
-        .page-title {
-            font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
-        
-        /* Custom Banner */
-        .custom-banner {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            border-radius: 16px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .custom-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
-            animation: gradientShift 5s ease infinite;
-        }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .banner-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        
-        .banner-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: textGlow 3s ease-in-out infinite alternate;
-        }
-        
-        .banner-divider {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: rgba(139, 92, 246, 0.7);
-        }
-        
-        @keyframes textGlow {
-            from {
-                filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
-            }
-            to {
-                filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
-            }
-        }
-        
-        /* Enhanced Dashboard Stats */
-        .dashboard-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        /* Welcome banner */
-        .welcome-banner {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .welcome-content {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .welcome-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-        }
-        
-        .welcome-text h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.3rem;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .welcome-text p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .dashboard-content {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .stats-grid {
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.2rem; 
-            margin-bottom: 1.5rem;
-        }
-        
-        .stat-card {
-            background: var(--card-bg); 
-            border-radius: 16px; 
-            padding: 1.5rem; 
-            position: relative;
-            transition: all 0.3s; 
-            box-shadow: 0 4px 20px var(--shadow); 
-            min-height: 140px;
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-        
-        .stat-card.total::before { background: var(--stat-total); }
-        .stat-card.charged::before { background: var(--stat-charged); }
-        .stat-card.approved::before { background: var(--stat-approved); }
-        .stat-card.threeds::before { background: var(--stat-threeds); }
-        .stat-card.declined::before { background: var(--stat-declined); }
-        .stat-card.checked::before { background: var(--stat-checked); }
-        .stat-card.online::before { background: var(--stat-online); }
-        
-        .stat-card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 8px 30px var(--shadow);
-        }
-        
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        
-        .stat-icon {
-            width: 45px; 
-            height: 45px; 
-            border-radius: 12px;
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            font-size: 1.3rem; 
-            color: white;
-        }
-        
-        .stat-card.total .stat-icon { background: var(--stat-total); }
-        .stat-card.charged .stat-icon { background: var(--stat-charged); }
-        .stat-card.approved .stat-icon { background: var(--stat-approved); }
-        .stat-card.threeds .stat-icon { background: var(--stat-threeds); }
-        .stat-card.declined .stat-icon { background: var(--stat-declined); }
-        .stat-card.checked .stat-icon { background: var(--stat-checked); }
-        .stat-card.online .stat-icon { background: var(--stat-online); }
-        
-        .stat-value { 
-            font-size: 2rem; 
-            font-weight: 700; 
-            margin-bottom: 0.5rem;
-            line-height: 1;
-        }
-        
-        .stat-label {
-            color: var(--text-secondary); 
-            font-size: 0.85rem; 
-            text-transform: uppercase; 
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Fixed: Changed color for declined cards to red */
-        .stat-card.declined .stat-value { color: var(--declined-red); }
-        .stat-card.charged .stat-value { color: var(--success-green); }
-        .stat-card.approved .stat-value { color: var(--success-green); }
-        .stat-card.threeds .stat-value { color: var(--success-green); }
-        .stat-card.online .stat-value { color: var(--accent-cyan); }
-        
-        [data-theme="light"] .stat-card.declined .stat-value { color: var(--declined-red); }
-        [data-theme="light"] .stat-card.charged .stat-value { color: var(--success-green); }
-        [data-theme="light"] .stat-card.approved .stat-value { color: var(--success-green); }
-        [data-theme="light"] .stat-card.threeds .stat-value { color: var(--success-green); }
-        [data-theme="light"] .stat-card.online .stat-value { color: var(--accent-cyan); }
-        
-        .stat-indicator {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-        }
-        
-        .stat-card.total .stat-indicator { background: rgba(118, 75, 162, 0.7); }
-        .stat-card.charged .stat-indicator { background: rgba(245, 87, 108, 0.7); }
-        .stat-card.approved .stat-indicator { background: rgba(0, 242, 254, 0.7); }
-        .stat-card.threeds .stat-indicator { background: rgba(56, 249, 215, 0.7); }
-        .stat-card.declined .stat-indicator { background: rgba(239, 68, 68, 0.7); }
-        .stat-card.checked .stat-indicator { background: rgba(48, 207, 208, 0.7); }
-        .stat-card.online .stat-indicator { background: rgba(79, 172, 254, 0.7); }
-        
-        .dashboard-bottom {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 1.5rem;
-        }
-        
-        .recent-activity {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
-        }
-        
-        .activity-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
-        }
-        
-        .activity-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .activity-title i {
-            color: var(--accent-green);
-        }
-        
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
-        }
-        
-        /* Custom scrollbar */
-        .activity-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .activity-list::-webkit-scrollbar-track {
-            background: var(--secondary-bg);
-            border-radius: 3px;
-        }
-        
-        .activity-list::-webkit-scrollbar-thumb {
-            background: var(--accent-blue);
-            border-radius: 3px;
-        }
-        
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-        }
-        
-        .activity-item:hover {
-            transform: translateX(5px);
-            border-color: var(--accent-blue);
-        }
-        
-        .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9rem;
-        }
-        
-        .activity-item.charged .activity-icon { background: var(--stat-charged); }
-        .activity-item.approved .activity-icon { background: var(--stat-approved); }
-        .activity-item.threeds .activity-icon { background: var(--stat-threeds); }
-        .activity-item.declined .activity-icon { background: var(--stat-declined); }
-        
-        .activity-content {
-            flex: 1;
-        }
-        
-        .activity-card {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 0.2rem;
-        }
-        
-        .activity-status {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        /* Fixed: Changed color for declined cards to red in activity feed */
-        .activity-item.charged .activity-status { color: var(--success-green); }
-        .activity-item.approved .activity-status { color: var(--success-green); }
-        .activity-item.threeds .activity-status { color: var(--success-green); }
-        .activity-item.declined .activity-status { color: var(--declined-red); }
-        
-        .activity-time {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-        }
-        
-        /* Enhanced Online Users Section */
-        .online-users-section {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
-            height: fit-content;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .online-users-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
-        }
-        
-        .online-users-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .online-users-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .online-users-title i {
-            color: var(--accent-cyan);
-        }
-        
-        .online-users-count {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            background: rgba(59, 130, 246, 0.1);
-            padding: 0.3rem 0.6rem;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        
-        .online-users-count i {
-            color: var(--success-green);
-            font-size: 0.8rem;
-        }
-        
-        .online-users-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
-        }
-        
-        /* Custom scrollbar */
-        .online-users-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .online-users-list::-webkit-scrollbar-track {
-            background: var(--secondary-bg);
-            border-radius: 3px;
-        }
-        
-        .online-users-list::-webkit-scrollbar-thumb {
-            background: var(--accent-blue);
-            border-radius: 3px;
-        }
-        
-        .online-user-item {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-            position: relative;
-        }
-        
-        .online-user-item:hover {
-            transform: translateX(5px);
-            border-color: var(--accent-blue);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-        }
-        
-        .online-user-avatar-container {
-            position: relative;
-        }
-        
-        .online-user-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--accent-blue);
-            flex-shrink: 0;
-        }
-        
-        .online-indicator {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 14px;
-            height: 14px;
-            background-color: var(--success-green);
-            border: 2px solid var(--card-bg);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-            }
-        }
-        
-        .online-user-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .online-user-name {
-            font-weight: 600;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-primary);
-        }
-        
-        .online-user-username {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.2rem;
-        }
-        
-        /* Hide any potential role elements */
-        .online-user-role,
-        .role-badge,
-        .user-role {
-            display: none !important;
-        }
-        
-        .checker-section, .generator-section {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
-        }
-        .checker-header, .generator-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
-        }
-        .checker-title, .generator-title {
-            font-size: 1.2rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .checker-title i, .generator-title i { color: var(--accent-cyan); font-size: 1rem; }
-        .settings-btn {
-            padding: 0.3rem 0.6rem; border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.05); color: var(--text-primary);
-            cursor: pointer; font-weight: 500; display: flex;
-            align-items: center; gap: 0.3rem; font-size: 0.8rem;
-        }
-        .settings-btn:hover {
-            border-color: var(--accent-blue); color: var(--accent-blue);
-            transform: translateY(-2px);
-        }
-        .input-section { margin-bottom: 1rem; }
-        .input-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;
-        }
-        .input-label { font-weight: 600; font-size: 0.9rem; }
-        .card-textarea {
-            width: 100%; min-height: 150px; background: var(--secondary-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            padding: 0.75rem; color: var(--text-primary);
-            font-family: 'Courier New', monospace; resize: vertical;
-            font-size: 0.9rem; transition: all 0.3s;
-        }
-        .card-textarea:focus {
-            outline: none; border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-control {
-            width: 100%; padding: 0.75rem; background: var(--secondary-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            color: var(--text-primary); font-size: 0.9rem; transition: all 0.3s;
-        }
-        .form-control:focus {
-            outline: none; border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
-        }
-        .form-row {
-            display: flex; gap: 1rem; flex-wrap: wrap;
-        }
-        .form-col {
-            flex: 1; min-width: 120px;
-        }
-        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
-        .btn {
-            padding: 0.5rem 1rem; border-radius: 8px; border: none;
-            font-weight: 600; cursor: pointer; display: flex;
-            align-items: center; gap: 0.3rem; min-width: 100px;
-            font-size: 0.9rem; transition: all 0.3s;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-        }
-        .btn-primary:hover { transform: translateY(-2px); }
-        .btn-secondary {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color); color: var(--text-primary);
-        }
-        .results-section {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
-        }
-        .results-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
-        }
-        .results-title {
-            font-size: 1.2rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .results-title i { color: var(--accent-green); font-size: 1rem; }
-        .results-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-        .filter-btn {
-            padding: 0.3rem 0.6rem; border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.03); color: var(--text-secondary);
-            cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
-        }
-        .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
-        .filter-btn.active {
-            background: var(--accent-blue); border-color: var(--accent-blue); color: white;
-        }
-        .empty-state {
-            text-align: center; padding: 1.5rem 0.5rem; color: var(--text-secondary);
-        }
-        .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3; }
-        .empty-state h3 { font-size: 1rem; margin-bottom: 0.3rem; }
-        .settings-popup {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center; z-index: 10000;
-        }
-        .settings-popup.active { display: flex; }
-        .settings-content {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; max-width: 90vw; width: 90%;
-            max-height: 80vh; overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .settings-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .settings-title {
-            font-size: 1.1rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .settings-close {
-            width: 25px; height: 25px; border-radius: 6px; border: none;
-            background: rgba(255,255,255,0.05); color: var(--text-secondary);
-            cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 0.9rem; transition: all 0.3s;
-        }
-        .settings-close:hover {
-            background: var(--error); color: white; transform: rotate(90deg);
-        }
-        .gateway-group { margin-bottom: 1rem; }
-        .gateway-group-title {
-            font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
-            display: flex; align-items: center; gap: 0.3rem;
-        }
-        .gateway-options { display: grid; gap: 0.5rem; }
-        .gateway-option {
-            display: flex; align-items: center; padding: 0.5rem;
-            background: var(--secondary-bg); border: 1px solid var(--border-color);
-            border-radius: 8px; cursor: pointer; transition: all 0.3s;
-            position: relative;
-        }
-        .gateway-option:hover {
-            border-color: var(--accent-blue); transform: translateX(3px);
-        }
-        .gateway-option input[type="radio"] {
-            width: 15px; height: 15px; margin-right: 0.5rem;
-            cursor: pointer; accent-color: var(--accent-blue);
-        }
-        .gateway-option-content { flex: 1; }
-        .gateway-option-name {
-            font-weight: 600; display: flex; align-items: center;
-            gap: 0.3rem; margin-bottom: 0.2rem; font-size: 0.9rem;
-        }
-        .gateway-option-desc { font-size: 0.7rem; color: var(--text-secondary); }
-        .gateway-badge {
-            padding: 0.2rem 0.5rem; border-radius: 4px;
-            font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
-        }
-        .badge-charge { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .badge-auth { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
-        .badge-maintenance {
-            background-color: #ef4444;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.6rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-left: 5px;
-        }
-        .settings-footer {
-            display: flex; gap: 0.5rem; margin-top: 1rem;
-            padding-top: 0.5rem; border-top: 1px solid var(--border-color);
-        }
-        .btn-save {
-            flex: 1; padding: 0.5rem; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
-        }
-        .btn-save:hover { transform: translateY(-2px); }
-        .btn-cancel {
-            flex: 1; padding: 0.5rem; border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.05); color: var(--text-primary);
-            font-weight: 600; cursor: pointer; font-size: 0.9rem;
-        }
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #ec4899;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
-            display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
-        
-        /* Fixed: Changed color for declined cards to red in results */
-        .result-item.declined .stat-label { color: var(--declined-red); }
-        .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
-        
-        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
-        .copy-btn:hover { color: var(--accent-purple); }
-        .stat-content { display: flex; align-items: center; justify-content: space-between; }
-        .sidebar-link.logout {
-            color: var(--error);
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--error);
-        }
-        .sidebar-link.logout:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--error);
-            transform: translateX(5px);
-        }
-        .generated-cards-container {
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            white-space: pre-wrap;
-            word-break: break-all;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-        .custom-select {
-            position: relative;
-            display: flex;
-            width: 100%;
-        }
-        .custom-select select {
-            appearance: none;
-            width: 100%;
-            padding: 0.75rem;
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .custom-select select:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-        .custom-select::after {
-            content: '\f078';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            position: absolute;
-            top: 50%;
-            right: 0.75rem;
-            transform: translateY(-50%);
-            pointer-events: none;
-            color: var(--text-secondary);
-        }
-        .custom-input-group {
-            display: flex;
-            width: 100%;
-        }
-        .custom-input-group input {
-            flex: 1;
-            padding: 0.75rem;
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px 0 0 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-        .custom-input-group input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-        .custom-input-group .input-group-append {
-            display: flex;
-        }
-        .custom-input-group .input-group-text {
-            display: flex;
-            align-items: center;
-            padding: 0 0.75rem;
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-left: none;
-            border-radius: 0 8px 8px 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .custom-input-group .input-group-text:hover {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-blue);
-        }
-        .copy-all-btn, .clear-all-btn {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid var(--accent-blue);
-            color: var(--accent-blue);
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        .copy-all-btn:hover, .clear-all-btn:hover {
-            background: var(--accent-blue);
-            color: white;
-        }
-        .clear-all-btn {
-            border-color: var(--error);
-            color: var(--error);
-            background: rgba(239, 68, 68, 0.1);
-        }
-        .clear-all-btn:hover {
-            background: var(--error);
-            color: white;
-        }
-        .results-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-        
-        /* Hide any undefined or empty elements */
-        .online-user-info:empty,
-        .online-user-username:empty,
-        .online-user-name:empty,
-        [data-undefined],
-        [undefined] {
-            display: none !important;
-        }
-        
-        /* Mobile-specific styles */
-        @media (max-width: 768px) {
-            body { font-size: 14px; }
-            .navbar { 
-                padding: 0.4rem 0.6rem; 
-                height: 48px;
-            }
-            .navbar-brand { 
-                font-size: 1rem; 
-                margin-left: 0.5rem;
-            }
-            .navbar-brand i { font-size: 1rem; }
-            .user-avatar { width: 24px; height: 24px; }
-            .user-name { 
-                max-width: 60px; 
-                font-size: 0.75rem;
-            }
-            .user-username {
-                max-width: 60px;
-                font-size: 0.65rem;
-            }
-            .sidebar { width: 75vw; }
-            .page-title { font-size: 1.2rem; }
-            .page-subtitle { font-size: 0.8rem; }
-            .dashboard-content {
-                flex-direction: column;
-            }
-            .dashboard-bottom {
-                grid-template-columns: 1fr;
-            }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-            .stat-card { padding: 1rem; min-height: 100px; }
-            .stat-icon { width: 32px; height: 32px; font-size: 1rem; }
-            .stat-value { font-size: 1.4rem; }
-            .stat-label { font-size: 0.7rem; }
-            .welcome-banner { padding: 1rem; }
-            .welcome-icon { width: 40px; height: 40px; font-size: 1.2rem; }
-            .welcome-text h2 { font-size: 1.2rem; }
-            .welcome-text p { font-size: 0.8rem; }
-            .checker-section, .generator-section { padding: 0.75rem; }
-            .checker-title, .generator-title { font-size: 1rem; }
-            .checker-title i, .generator-title i { font-size: 0.8rem; }
-            .settings-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
-            .input-label { font-size: 0.8rem; }
-            .card-textarea { min-height: 100px; padding: 0.5rem; font-size: 0.8rem; }
-            .btn { padding: 0.4rem 0.8rem; min-width: 80px; font-size: 0.8rem; }
-            .results-section { padding: 0.75rem; }
-            .results-title { font-size: 1rem; }
-            .results-title i { font-size: 0.8rem; }
-            .filter-btn { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
-            .generated-cards-container { max-height: 200px; font-size: 0.7rem; padding: 0.5rem; }
-            .copy-all-btn, .clear-all-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
-            .form-row { flex-direction: column; gap: 0.5rem; }
-            .form-col { min-width: 100%; }
-            .settings-content { max-width: 95vw; }
-            .gateway-option { padding: 0.5rem; }
-            .gateway-option-name { font-size: 0.8rem; }
-            .gateway-option-desc { font-size: 0.65rem; }
-            .menu-toggle {
-                position: absolute;
-                left: 0.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 32px;
-                height: 32px;
-            }
-            .navbar-brand {
-                margin-left: 2.2rem;
-            }
-            .theme-toggle {
-                width: 32px;
-                height: 16px;
-            }
-            .theme-toggle-slider {
-                width: 12px;
-                height: 12px;
-                left: 2px;
-            }
-            [data-theme="light"] .theme-toggle-slider { transform: translateX(14px); }
-            .user-info {
-                padding: 0.1rem 0.3rem;
-                gap: 0.3rem;
-            }
-            .online-users-section {
-                margin-top: 1rem;
-            }
-            .online-users-list {
-                max-height: 250px;
-            }
-            .online-user-avatar {
-                width: 38px;
-                height: 38px;
-            }
-            .online-user-name {
-                font-size: 0.85rem;
-            }
-            
-            /* Custom banner mobile adjustments */
-            .custom-banner {
-                padding: 0.8rem;
-                margin-bottom: 1rem;
-            }
-            
-            .banner-content {
-                flex-direction: column;
-                gap: 0.3rem;
-            }
-            
-            .banner-text {
-                font-size: 1rem;
-            }
-            
-            .banner-divider {
-                transform: rotate(90deg);
-                font-size: 1.2rem;
-                height: 1.2rem;
-                width: 1.2rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-        }
-        
-        /* For very small screens */
-        @media (max-width: 480px) {
-            .navbar { padding: 0.3rem 0.5rem; }
-            .navbar-brand { font-size: 0.9rem; }
-            .user-avatar { width: 22px; height: 22px; }
-            .user-name { 
-                max-width: 50px; 
-                font-size: 0.7rem;
-            }
-            .user-username {
-                max-width: 50px;
-                font-size: 0.6rem;
-            }
-            .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
-            .sidebar { width: 85vw; }
-            .page-title { font-size: 1.1rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
-            .stat-card { padding: 0.8rem; min-height: 90px; }
-            .stat-value { font-size: 1.2rem; }
-            .stat-label { font-size: 0.65rem; }
-            .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
-            
-            /* Custom banner for very small screens */
-            .custom-banner {
-                padding: 0.6rem;
-            }
-            
-            .banner-content {
-                gap: 0.2rem;
-            }
-            
-            .banner-text {
-                font-size: 0.9rem;
-            }
-            
-            .banner-divider {
-                font-size: 1rem;
-                height: 1rem;
-                width: 1rem;
-            }
-        }
-    </style>
-</head>
-<body data-theme="light">
-    <nav class="navbar">
-        <div class="menu-toggle" id="menuToggle">
-            <i class="fas fa-bars"></i>
-        </div>
-        <div class="navbar-brand">
-            <i class="fas fa-credit-card"></i>
-            <span class="brand-text">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</span>
-        </div>
-        <div class="navbar-actions">
-            <div class="theme-toggle" onclick="toggleTheme()">
-                <div class="theme-toggle-slider"><i class="fas fa-sun"></i></div>
-            </div>
-            <div class="user-info">
-                <img src="<?php echo htmlspecialchars($userPhotoUrl); ?>" alt="Profile" class="user-avatar">
-                <div class="user-details">
-                    <span class="user-name"><?php echo htmlspecialchars($userName); ?></span>
-                    <?php if (!empty($formattedUsername)): ?>
-                        <span class="user-username"><?php echo htmlspecialchars($formattedUsername); ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <aside class="sidebar" id="sidebar">
-        <ul class="sidebar-menu">
-            <li class="sidebar-item">
-                <a class="sidebar-link active" onclick="showPage('home'); closeSidebar()">
-                    <i class="fas fa-home"></i><span>Home</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('checking'); closeSidebar()">
-                    <i class="fas fa-credit-card"></i><span>Card Checking</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('generator'); closeSidebar()">
-                    <i class="fas fa-magic"></i><span>Card Generator</span>
-                </a>
-            </li>
-            <div class="sidebar-divider"></div>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
-                    <i class="fas fa-plus"></i><span>More Coming Soon</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link logout" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-                </a>
-            </li>
-        </ul>
-    </aside>
-
-    <main class="main-content">
-        <section class="page-section active" id="page-home">
-            <!-- Custom Banner -->
-            <div class="custom-banner">
-                <div class="banner-content">
-                    <span class="banner-text">@SajagOG</span>
-                    <span class="banner-text">MADARCHOD HAI</span>
-                </div>
-            </div>
-            
-            <div class="dashboard-container">
-                <div class="welcome-banner">
-                    <div class="welcome-content">
-                        <div class="welcome-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="welcome-text">
-                            <h2>Dashboard Overview</h2>
-                            <p>Track your card checking performance</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-content">
-                    <div class="stats-grid" id="statsGrid">
-                        <div class="stat-card total">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-credit-card"></i>
-                                </div>
-                            </div>
-                            <div id="total-value" class="stat-value">0</div>
-                            <div class="stat-label">TOTAL</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card charged">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                            </div>
-                            <div id="charged-value" class="stat-value">0</div>
-                            <div class="stat-label">HIT|CHARGED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card approved">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                            </div>
-                            <div id="approved-value" class="stat-value">0</div>
-                            <div class="stat-label">LIVE|APPROVED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card threeds">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                            </div>
-                            <div id="threed-value" class="stat-value">0</div>
-                            <div class="stat-label">3DS</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card declined">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-times-circle"></i>
-                                </div>
-                            </div>
-                            <div id="declined-value" class="stat-value">0</div>
-                            <div class="stat-label">DEAD|DECLINED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card checked">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-check-double"></i>
-                                </div>
-                            </div>
-                            <div id="checked-value" class="stat-value">0 / 0</div>
-                            <div class="stat-label">CHECKED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-bottom">
-                        <div class="recent-activity">
-                            <div class="activity-header">
-                                <div class="activity-title">
-                                    <i class="fas fa-history"></i> Recent Activity
-                                </div>
-                            </div>
-                            <div class="activity-list" id="activityList">
-                                <div class="empty-state">
-                                    <i class="fas fa-inbox"></i>
-                                    <h3>No Activity Yet</h3>
-                                    <p>Start checking cards to see activity here</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="online-users-section">
-                            <div class="online-users-header">
-                                <div class="online-users-title">
-                                    <i class="fas fa-users"></i> Online Users
-                                </div>
-                                <div class="online-users-count" id="onlineUsersCount">
-                                    <i class="fas fa-circle"></i>
-                                    <span id="onlineCount">0</span> online
-                                </div>
-                            </div>
-                            <div class="online-users-list" id="onlineUsersList">
-                                <div class="empty-state">
-                                    <i class="fas fa-user-slash"></i>
-                                    <h3>No Users Online</h3>
-                                    <p>No other users are currently online</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
-
-            <div class="checker-section">
-                <div class="checker-header">
-                    <div class="checker-title">
-                        <i class="fas fa-shield-alt"></i> Card Checker
-                    </div>
-                    <button class="settings-btn" onclick="openGatewaySettings()">
-                        <i class="fas fa-cog"></i> Gateway Settings
-                    </button>
-                </div>
-
-                <div class="input-section">
-                    <div class="input-header">
-                        <label class="input-label">Enter Card Details</label>
-                        <span class="card-count" id="cardCount">
-                            <i class="fas fa-list"></i> 0 valid cards detected
-                        </span>
-                    </div>
-                    <textarea id="cardInput" class="card-textarea" 
-                        placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
-                </div>
-
-                <!-- Cloudflare Turnstile Widget -->
-                <div id="turnstile-widget" class="cf-turnstile" 
-                     data-sitekey="0x4AAAAAAB8uqZTEm07M817T" 
-                     data-size="invisible" 
-                     data-callback="onTurnstileSuccess"
-                     data-error-callback="onTurnstileError">
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="startBtn">
-                        <i class="fas fa-play"></i> Start Check
-                    </button>
-                    <button class="btn btn-secondary" id="stopBtn" disabled>
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                    <button class="btn btn-secondary" id="clearBtn">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                    <button class="btn btn-secondary" id="exportBtn">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-                <div class="loader" id="loader"></div>
-                <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
-            </div>
-
-            <div class="results-section" id="checkingResults">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list-check"></i> Recent Results
-                    </div>
-                    <div class="results-filters">
-                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
-                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
-                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
-                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
-                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
-                    </div>
-                </div>
-                <div id="checkingResultsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Results Yet</h3>
-                    <p>Start checking cards to see results here</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑻𝑶𝑹</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞 𝐯𝐚𝐥𝐢𝐝 𝐜𝐫𝐞𝐝𝐢𝐭 𝐜𝐚𝐫𝐝𝐬 𝐰𝐢𝐭𝐡 𝐋𝐮𝐡𝐧 𝐜𝐡𝐞𝐜𝐤𝐬𝐮𝐦</p>
-
-            <div class="generator-section">
-                <div class="generator-header">
-                    <div class="generator-title">
-                        <i class="fas fa-magic"></i> Card Generator
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="input-label">BIN (6-8 digits)</label>
-                    <input type="text" id="binInput" class="form-control" placeholder="Enter BIN (e.g., 414740)" maxlength="8">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="input-label">Month</label>
-                        <div class="custom-select">
-                            <select id="monthSelect" class="form-control">
-                                <option value="rnd">rnd</option>
-                                <option value="01">01</option>
-                                <option value="02">02</option>
-                                <option value="03">03</option>
-                                <option value="04">04</option>
-                                <option value="05">05</option>
-                                <option value="06">06</option>
-                                <option value="07">07</option>
-                                <option value="08">08</option>
-                                <option value="09">09</option>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <label class="input-label">Year</label>
-                        <div class="custom-input-group">
-                            <input type="text" id="yearInput" class="form-control" placeholder="Year (e.g., 30, 2030)" maxlength="4">
-                            <div class="input-group-append">
-                                <span class="input-group-text" onclick="setYearRnd()">rnd</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <label class="input-label">CVV</label>
-                        <div class="custom-input-group">
-                            <input type="text" id="cvvInput" class="form-control" placeholder="CVV (e.g., 123)" maxlength="4">
-                            <div class="input-group-append">
-                                <span class="input-group-text" onclick="setCvvRnd()">rnd</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="input-label">Number of Cards</label>
-                    <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="5000">
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="generateBtn">
-                        <i class="fas fa-magic"></i> Generate Cards
-                    </button>
-                    <button class="btn btn-secondary" id="clearGenBtn">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                </div>
-                <div class="loader" id="genLoader"></div>
-                <div id="genStatusLog" class="text-sm text-gray-500 mt-2"></div>
-            </div>
-
-            <div class="results-section" id="generatorResults">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-list"></i> Generated Cards
-                    </div>
-                    <div class="results-actions">
-                        <button class="copy-all-btn" id="copyAllBtn" style="display: none;">
-                            <i class="fas fa-copy"></i> Copy All
-                        </button>
-                        <button class="clear-all-btn" id="clearAllBtn" style="display: none;">
-                            <i class="fas fa-trash"></i> Clear
-                        </button>
-                    </div>
-                </div>
-                <div id="generatedCardsList" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Cards Generated Yet</h3>
-                    <p>Generate cards to see them here</p>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div class="settings-popup" id="gatewaySettings">
-        <div class="settings-content">
-            <div class="settings-header">
-                <div class="settings-title">
-                    <i class="fas fa-cog"></i> Gateway Settings
-                </div>
-                <button class="settings-close" onclick="closeGatewaySettings()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="gateway-group">
-                <div class="gateway-group-title">
-                    <i class="fas fa-bolt"></i> Charge Gateways
-                </div>
-                <div class="gateway-options">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripe1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $1 charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option" id="razorpay-gateway">
-                        <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:15px; height:15px; object-fit:contain;">Razorpay
-                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
-                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
-                            </div>
-                            <div class="gateway-option-desc">Indian payment gateway</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/authnet1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Authnet
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorize.net payment gateway</div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div class="gateway-group">
-                <div class="gateway-group-title">
-                    <i class="fas fa-shield-alt"></i> Auth Gateways
-                </div>
-                <div class="gateway-options">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-auth">0.1$ Auth</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorization only, no charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripeauth.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-auth">Auth</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorization only, no charge</div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div class="settings-footer">
-                <button class="btn-save" onclick="saveGatewaySettings()">
-                    <i class="fas fa-check"></i> Save Settings
-                </button>
-                <button class="btn-cancel" onclick="closeGatewaySettings()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script src="indeex.js?v=<?= time(); ?>"></script>
+    // Dynamic MAX_CONCURRENT based on selected gateway
+    let maxConcurrent = 10; // Default for stripe1$ 
     
-    <script>
-        // Cloudflare Turnstile handling
-        let turnstileToken = null;
-        let turnstileWidgetId = null;
-        
-        // Initialize Turnstile widget when script loads
-        window.onloadTurnstileCallback = function() {
-            turnstileWidgetId = turnstile.render('#turnstile-widget');
-        };
-        
-        // Called when Turnstile verification is successful
-        function onTurnstileSuccess(token) {
-            turnstileToken = token;
-            // Now we can proceed with the original form submission
-            proceedWithCardCheck();
+    // Load API key from cron_sync.php using POST
+    function loadApiKey() {
+        return fetch('/gate/cron_sync.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load API key: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.apiKey) {
+                API_KEY = data.apiKey;
+                console.log('API key loaded successfully');
+                isApiKeyValid = true;
+                return true;
+            } else {
+                throw new Error('Invalid API key response');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading API key:', error);
+            isApiKeyValid = false;
+            return false;
+        });
+    }
+
+    // Start rotating API keys every hour
+    function startKeyRotation() {
+        // Clear any existing interval
+        if (keyRotationInterval) {
+            clearInterval(keyRotationInterval);
         }
         
-        // Called when Turnstile verification fails
-        function onTurnstileError() {
-            Swal.fire({
-                title: 'Verification Failed',
-                text: 'Please complete the verification challenge to continue.',
-                icon: 'error',
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'OK'
+        // Rotate keys every hour (3600000 milliseconds)
+        keyRotationInterval = setInterval(() => {
+            console.log('Rotating API key...');
+            loadApiKey().then(success => {
+                if (success) {
+                    console.log('API key rotated successfully');
+                    // Show notification
+                    if (window.Swal) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'info',
+                            title: 'API Key Rotated',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                } else {
+                    console.error('Failed to rotate API key');
+                }
             });
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('startBtn').disabled = false;
-        }
+        }, 3600000);
         
-        // Function to proceed with card checking after Turnstile verification
-        function proceedWithCardCheck() {
-            // Add the token to the form data
-            const cardInput = document.getElementById('cardInput').value;
-            const formData = new FormData();
-            formData.append('cards', cardInput);
-            formData.append('cf-turnstile-response', turnstileToken);
-            
-            // Get selected gateway
-            const selectedGateway = document.querySelector('input[name="gateway"]:checked');
-            if (selectedGateway) {
-                formData.append('gateway', selectedGateway.value);
+        console.log('API key rotation started. Keys will rotate every hour.');
+    }
+
+    // Get current API key with fallback
+    function getCurrentApiKey() {
+        if (!API_KEY) {
+            console.warn('API key is not set!');
+        }
+        return API_KEY || '';
+    }
+
+    // Check if API key is valid
+    function isApiKeyValidated() {
+        return isApiKeyValid;
+    }
+
+    // Initialize the application
+    function initializeApp() {
+        // Disable copy, context menu, and dev tools, but allow pasting in the textarea
+        document.addEventListener('contextmenu', e => {
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && 
+                e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('copy', e => {
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && 
+                e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('cut', e => {
+            if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && 
+                e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('paste', e => {
+            if (e.target.id === 'cardInput' || e.target.id === 'binInput' || 
+                e.target.id === 'cvvInput' || e.target.id === 'yearInput') {
+                const pastedText = e.clipboardData.getData('text');
+                const cursorPos = e.target.selectionStart;
+                const textBefore = e.target.value.substring(0, cursorPos);
+                const textAfter = e.target.value.substring(e.target.selectionEnd);
+                e.target.value = textBefore + pastedText + textAfter;
+                e.target.selectionStart = e.target.selectionEnd = cursorPos + pastedText.length;
+                e.preventDefault();
+                if (e.target.id === 'cardInput') updateCardCount();
+            } else {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 73 || 
+                e.keyCode === 74 || e.keyCode === 83)) {
+                if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && 
+                    e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') {
+                    e.preventDefault();
+                }
+            } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && 
+                (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
+                e.preventDefault();
+            }
+        });
+
+        localStorage.setItem('theme', 'light');
+        document.body.setAttribute('data-theme', 'light');
+
+        // Theme toggle function
+        function toggleTheme() {
+            const body = document.body;
+            const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            const icon = document.querySelector('.theme-toggle-slider i');
+            if (icon) {
+                icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             }
             
-            // Make the AJAX request to your backend
-            fetch('api/check_cards.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Handle the response from your backend
-                if (data.success) {
-                    // Process successful card check
-                    document.getElementById('statusLog').innerText = 'Card check completed successfully';
-                    // Update UI with results
-                    updateResults(data.results);
-                } else {
-                    // Handle error
-                    document.getElementById('statusLog').innerText = 'Error: ' + data.message;
+            if (window.Swal) {
+                Swal.fire({
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'success',
+                    title: `${theme === 'light' ? 'Light' : 'Dark'} Mode`,
+                    showConfirmButton: false, 
+                    timer: 1500
+                });
+            }
+        }
+
+        // Page navigation function
+        function showPage(pageName) {
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.remove('active');
+            });
+            const pageElement = document.getElementById('page-' + pageName);
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            if (event && event.target) {
+                const eventTarget = event.target.closest('.sidebar-link');
+                if (eventTarget) {
+                    eventTarget.classList.add('active');
+                }
+            }
+        }
+
+        // Sidebar functions
+        function closeSidebar() {
+            sidebarOpen = false;
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            if (sidebar) sidebar.classList.remove('open');
+            if (mainContent) mainContent.classList.remove('sidebar-open');
+        }
+
+        // Gateway settings functions
+        function openGatewaySettings() {
+            const gatewaySettings = document.getElementById('gatewaySettings');
+            if (gatewaySettings) {
+                gatewaySettings.classList.add('active');
+                const radio = document.querySelector(`input[value="${selectedGateway}"]`);
+                if (radio) radio.checked = true;
+            }
+        }
+
+        function closeGatewaySettings() {
+            const gatewaySettings = document.getElementById('gatewaySettings');
+            if (gatewaySettings) {
+                gatewaySettings.classList.remove('active');
+            }
+        }
+
+        function saveGatewaySettings() {
+            const selected = document.querySelector('input[name="gateway"]:checked');
+            if (selected) {
+                selectedGateway = selected.value;
+                
+                // Update maxConcurrent based on selected gateway
+                updateMaxConcurrent();
+                
+                const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
+                const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
+                
+                if (window.Swal) {
                     Swal.fire({
-                        title: 'Error',
-                        text: data.message,
-                        icon: 'error',
-                        confirmButtonColor: '#ef4444',
-                        confirmButtonText: 'OK'
+                        icon: 'success', 
+                        title: 'Gateway Updated!',
+                        text: `Now using: ${nameText}`,
+                        confirmButtonColor: '#10b981'
                     });
                 }
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('startBtn').disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('statusLog').innerText = 'An error occurred during card checking';
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('startBtn').disabled = false;
+                closeGatewaySettings();
+            } else {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning', 
+                        title: 'No Gateway Selected',
+                        text: 'Please select a gateway', 
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+            }
+        }
+
+        // Card counting function
+        function updateCardCount() {
+            const cardInput = document.getElementById('cardInput');
+            const cardCount = document.getElementById('cardCount');
+            if (cardInput && cardCount) {
+                const lines = cardInput.value.trim().split('\n').filter(line => line.trim() !== '');
+                const validCards = lines.filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()));
+                cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected (max 1000)`;
+            }
+        }
+
+        // Stats update function
+        function updateStats(total, charged, approved, threeDS, declined) {
+            const totalElement = document.getElementById('total-value');
+            const chargedElement = document.getElementById('charged-value');
+            const approvedElement = document.getElementById('approved-value');
+            const threedElement = document.getElementById('threed-value');
+            const declinedElement = document.getElementById('declined-value');
+            const checkedElement = document.getElementById('checked-value');
+            
+            if (totalElement) totalElement.textContent = total;
+            if (chargedElement) chargedElement.textContent = charged;
+            if (approvedElement) approvedElement.textContent = approved;
+            if (threedElement) threedElement.textContent = threeDS;
+            if (declinedElement) declinedElement.textContent = declined;
+            if (checkedElement) checkedElement.textContent = `${charged + approved + threeDS + declined} / ${total}`;
+        }
+
+        // Result display function
+        function addResult(card, status, response) {
+            const resultsList = document.getElementById('checkingResultsList');
+            if (!resultsList) return;
+            
+            const cardClass = status.toLowerCase();
+            const icon = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 
+                'fas fa-check-circle' : 'fas fa-times-circle';
+            const color = (status === 'APPROVED' || status === 'CHARGED' || status === '3DS') ? 
+                'var(--success-green)' : 'var(--declined-red)';
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `stat-card ${cardClass} result-item`;
+            resultDiv.innerHTML = `
+                <div class="stat-icon" style="background: rgba(var(${color}), 0.15); color: ${color}; width: 20px; height: 20px; font-size: 0.8rem;">
+                    <i class="${icon}"></i>
+                </div>
+                <div class="stat-content">
+                    <div>
+                        <div class="stat-value" style="font-size: 0.9rem;">${card.displayCard}</div>
+                        <div class="stat-label" style="color: ${color}; font-size: 0.7rem;">${status} - ${response}</div>
+                    </div>
+                    <button class="copy-btn"><i class="fas fa-copy"></i></button>
+                </div>
+            `;
+            
+            // Add event listener to the copy button
+            const copyButton = resultDiv.querySelector('.copy-btn');
+            if (copyButton) {
+                copyButton.addEventListener('click', () => copyToClipboard(card.displayCard));
+            }
+            
+            // Remove empty state if exists
+            if (resultsList.classList.contains('empty-state')) {
+                resultsList.classList.remove('empty-state');
+                resultsList.innerHTML = '';
+            }
+            
+            resultsList.insertBefore(resultDiv, resultsList.firstChild);
+            
+            // Add to activity feed
+            addActivityItem(card, status);
+        }
+
+        // Activity feed function
+        function addActivityItem(card, status) {
+            const activityList = document.getElementById('activityList');
+            if (!activityList) return;
+            
+            // Remove empty state if it exists
+            if (activityList.querySelector('.empty-state')) {
+                activityList.innerHTML = '';
+            }
+            
+            const activityItem = document.createElement('div');
+            activityItem.className = `activity-item ${status.toLowerCase()}`;
+            
+            // Format time
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            activityItem.innerHTML = `
+                <div class="activity-icon">
+                    ${status === 'CHARGED' ? '<i class="fas fa-bolt"></i>' : 
+                      status === 'APPROVED' ? '<i class="fas fa-check-circle"></i>' :
+                      status === '3DS' ? '<i class="fas fa-lock"></i>' :
+                      '<i class="fas fa-times-circle"></i>'}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-card">${card.displayCard}</div>
+                    <div class="activity-status">${status}</div>
+                </div>
+                <div class="activity-time">${timeString}</div>
+            `;
+            
+            // Add to the top of the list
+            activityList.insertBefore(activityItem, activityList.firstChild);
+            
+            // Keep only the last 5 activities
+            while (activityList.children.length > 5) {
+                activityList.removeChild(activityList.lastChild);
+            }
+        }
+
+        // Generated cards display function
+        function displayGeneratedCards(cards) {
+            const cardsList = document.getElementById('generatedCardsList');
+            if (!cardsList) return;
+            
+            // Remove empty state if exists
+            if (cardsList.classList.contains('empty-state')) {
+                cardsList.classList.remove('empty-state');
+                cardsList.innerHTML = '';
+            }
+            
+            // Create a single container for all cards
+            const cardsContainer = document.createElement('div');
+            cardsContainer.className = 'generated-cards-container';
+            cardsContainer.textContent = cards.join('\n');
+            
+            // Clear previous cards and add the new container
+            cardsList.innerHTML = '';
+            cardsList.appendChild(cardsContainer);
+            
+            // Show action buttons
+            const copyAllBtn = document.getElementById('copyAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            if (copyAllBtn) copyAllBtn.style.display = 'flex';
+            if (clearAllBtn) clearAllBtn.style.display = 'flex';
+            
+            // Store the cards data
+            generatedCardsData = cards;
+        }
+
+        // Clipboard functions
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true, 
+                        position: 'top-end', 
+                        icon: 'success',
+                        title: 'Copied!', 
+                        showConfirmButton: false, 
+                        timer: 1500
+                    });
+                }
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true, 
+                        position: 'top-end', 
+                        icon: 'error',
+                        title: 'Failed to copy!', 
+                        showConfirmButton: false, 
+                        timer: 1500
+                    });
+                }
             });
         }
-        
-        // Override the start button click to trigger Turnstile
-        document.addEventListener('DOMContentLoaded', function() {
-            const startBtn = document.getElementById('startBtn');
-            if (startBtn) {
-                startBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
+
+        function copyAllGeneratedCards() {
+            if (generatedCardsData.length === 0) {
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true, 
+                        position: 'top-end', 
+                        icon: 'warning',
+                        title: 'No cards to copy', 
+                        showConfirmButton: false, 
+                        timer: 1500
+                    });
+                }
+                return;
+            }
+            
+            const allCardsText = generatedCardsData.join('\n');
+            navigator.clipboard.writeText(allCardsText).then(() => {
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true, 
+                        position: 'top-end', 
+                        icon: 'success',
+                        title: 'All cards copied!', 
+                        showConfirmButton: false, 
+                        timer: 1500
+                    });
+                }
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function clearAllGeneratedCards() {
+            const cardsList = document.getElementById('generatedCardsList');
+            if (cardsList) {
+                cardsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Cards Generated Yet</h3>
+                        <p>Generate cards to see them here</p>
+                    </div>
+                `;
+            }
+            
+            const copyAllBtn = document.getElementById('copyAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            if (copyAllBtn) copyAllBtn.style.display = 'none';
+            if (clearAllBtn) clearAllBtn.style.display = 'none';
+            generatedCardsData = [];
+            
+            if (window.Swal) {
+                Swal.fire({
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'success',
+                    title: 'Cleared!', 
+                    showConfirmButton: false, 
+                    timer: 1500
+                });
+            }
+        }
+
+        // Filter results function
+        function filterResults(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            const items = document.querySelectorAll('.result-item');
+            items.forEach(item => {
+                const status = item.className.split(' ')[1];
+                item.style.display = filter === 'all' || status === filter ? 'block' : 'none';
+            });
+            
+            if (window.Swal) {
+                Swal.fire({
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'info',
+                    title: `Filter: ${filter.charAt(0).toUpperCase() + filter.slice(1)}`,
+                    showConfirmButton: false, 
+                    timer: 1500
+                });
+            }
+        }
+
+        // Gateway response parser
+        function parseGatewayResponse(response) {
+            let status = 'DECLINED';
+            let message = 'Card declined';
+            
+            // Handle different response types
+            if (typeof response === 'string') {
+                // Try to parse as JSON first
+                try {
+                    response = JSON.parse(response);
+                } catch (e) {
+                    // Not JSON, continue with string processing
+                    const responseStr = response.toUpperCase();
                     
-                    // Validate card input
-                    const cardInput = document.getElementById('cardInput').value.trim();
-                    if (!cardInput) {
-                        Swal.fire({
-                            title: 'No Cards Entered',
-                            text: 'Please enter card details to check.',
-                            icon: 'warning',
-                            confirmButtonColor: '#f59e0b',
-                            confirmButtonText: 'OK'
+                    if (responseStr.includes('CHARGED')) {
+                        status = 'CHARGED';
+                    } else if (responseStr.includes('APPROVED')) {
+                        status = 'APPROVED';
+                    } else if (responseStr.includes('3D_AUTHENTICATION') || 
+                              responseStr.includes('3DS') || 
+                              responseStr.includes('THREE_D_SECURE') ||
+                              responseStr.includes('REDIRECT')) {
+                        status = '3DS';
+                    } else if (responseStr.includes('AUTHENTICATION FAILED') || 
+                              responseStr.includes('INVALID API KEY') || 
+                              responseStr.includes('MISSING API KEY') ||
+                              responseStr.includes('UNAUTHORIZED') ||
+                              responseStr.includes('401')) {
+                        status = 'ERROR';
+                        message = 'Authentication failed: Invalid or missing API key';
+                    }
+                    
+                    message = response;
+                    return { status, message };
+                }
+            }
+            
+            // Now we have a JSON object
+            if (typeof response === 'object') {
+                // Check for status field in various formats
+                if (response.status) {
+                    status = String(response.status).toUpperCase();
+                } else if (response.result) {
+                    status = String(response.result).toUpperCase();
+                } else if (response.response) {
+                    // Try to extract status from response field
+                    const responseStr = String(response.response).toUpperCase();
+                    if (responseStr.includes('CHARGED')) {
+                        status = 'CHARGED';
+                    } else if (responseStr.includes('APPROVED')) {
+                        status = 'APPROVED';
+                    } else if (responseStr.includes('3D') || responseStr.includes('THREE_D')) {
+                        status = '3DS';
+                    } else if (responseStr.includes('AUTHENTICATION FAILED') || 
+                              responseStr.includes('INVALID API KEY') || 
+                              responseStr.includes('MISSING API KEY') ||
+                              responseStr.includes('UNAUTHORIZED') ||
+                              responseStr.includes('401')) {
+                        status = 'ERROR';
+                        message = 'Authentication failed: Invalid or missing API key';
+                    }
+                }
+                
+                // Get message from various possible fields
+                message = response.message || 
+                         response.response || 
+                         response.result || 
+                         response.error || 
+                         response.description ||
+                         response.reason ||
+                         JSON.stringify(response);
+                         
+                // Check for HTTP status code if available
+                if (response.httpCode && response.httpCode === 401) {
+                    status = 'ERROR';
+                    message = 'Authentication failed: Invalid or missing API key';
+                }
+            }
+            
+            // Normalize status to one of our standard values
+            if (status !== 'CHARGED' && status !== 'APPROVED' && status !== '3DS' && status !== 'ERROR') {
+                status = 'DECLINED';
+            }
+            
+            return { status, message };
+        }
+
+        // Card processing function
+        function processCard(card, controller, retryCount = 0) {
+            if (!isProcessing) return null;
+
+            return new Promise((resolve) => {
+                const formData = new FormData();
+                let normalizedYear = card.exp_year;
+                if (normalizedYear.length === 2) {
+                    normalizedYear = (parseInt(normalizedYear) < 50 ? '20' : '19') + normalizedYear;
+                }
+                formData.append('card[number]', card.number);
+                formData.append('card[exp_month]', card.exp_month);
+                formData.append('card[exp_year]', normalizedYear);
+                formData.append('card[cvc]', card.cvv);
+
+                const apiKey = getCurrentApiKey();
+                console.log(`X-API-KEY header: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+
+                const statusLog = document.getElementById('statusLog');
+                if (statusLog) statusLog.textContent = `Processing card: ${card.displayCard}`;
+                console.log(`Starting request for card: ${card.displayCard}`);
+
+                fetch(selectedGateway, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-API-KEY': apiKey
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Check for 401 Unauthorized
+                        if (response.status === 401) {
+                            throw new Error('Authentication failed: Invalid or missing API key');
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(data);
+                    } catch (e) {
+                        parsedData = data;
+                    }
+                    const parsedResponse = parseGatewayResponse(parsedData);
+                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                    
+                    if (parsedResponse.status === 'ERROR') {
+                        // Show authentication error
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Authentication Error',
+                                text: parsedResponse.message,
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
+                        
+                        // Try to refresh the API key
+                        refreshApiKey();
+                    }
+                    
+                    resolve({
+                        status: parsedResponse.status,
+                        response: parsedResponse.message,
+                        card: card,
+                        displayCard: card.displayCard
+                    });
+                })
+                .catch(error => {
+                    const statusLog = document.getElementById('statusLog');
+                    if (statusLog) statusLog.textContent = `Error on card: ${card.displayCard} - ${error.message}`;
+                    console.error(`Error for card: ${card.displayCard}, Error: ${error.message}`);
+
+                    if (error.name === 'AbortError') {
+                        resolve(null);
+                        return;
+                    }
+
+                    // Check for authentication error
+                    if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Authentication Error',
+                                text: error.message,
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
+                        
+                        // Try to refresh the API key
+                        refreshApiKey().then(() => {
+                            // Retry the request with the new API key
+                            if (retryCount < MAX_RETRIES && isProcessing) {
+                                setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
+                            } else {
+                                resolve({
+                                    status: 'ERROR',
+                                    response: error.message,
+                                    card: card,
+                                    displayCard: card.displayCard
+                                });
+                            }
                         });
                         return;
                     }
-                    
-                    // Show loader
-                    document.getElementById('loader').style.display = 'block';
-                    document.getElementById('startBtn').disabled = true;
-                    
-                    // Trigger Turnstile challenge
-                    if (window.turnstile && turnstileWidgetId) {
-                        turnstile.reset(turnstileWidgetId); // Reset in case it was used before
-                        turnstile.execute(turnstileWidgetId); // Execute the challenge
+
+                    let errorResponse = `Declined [Request failed: ${error.message}]`;
+                    if (error.message.includes('HTTP error')) {
+                        try {
+                            const errorData = JSON.parse(error.message.split('HTTP error! ')[1]);
+                            const parsedError = parseGatewayResponse(errorData);
+                            errorResponse = parsedError.message;
+                        } catch (e) {
+                            // Use raw error message
+                        }
+                    }
+
+                    if ((error.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
+                        setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
                     } else {
-                        // Fallback if Turnstile isn't loaded
-                        Swal.fire({
-                            title: 'Security Check',
-                            text: 'Loading security verification, please wait...',
-                            icon: 'info',
-                            confirmButtonColor: '#3b82f6',
-                            confirmButtonText: 'OK'
+                        resolve({
+                            status: 'DECLINED',
+                            response: errorResponse,
+                            card: card,
+                            displayCard: card.displayCard
                         });
-                        document.getElementById('loader').style.display = 'none';
-                        document.getElementById('startBtn').disabled = false;
+                    }
+                });
+            });
+        }
+
+        // Function to refresh API key when authentication fails
+        function refreshApiKey() {
+            console.log('Refreshing API key due to authentication error...');
+            
+            return fetch('/gate/cron_sync.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to refresh API key: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.apiKey) {
+                    API_KEY = data.apiKey;
+                    isApiKeyValid = true;
+                    console.log('API key refreshed successfully');
+                    
+                    if (window.Swal) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'API Key Refreshed',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                    
+                    return true;
+                } else {
+                    throw new Error('Invalid API key response during refresh');
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing API key:', error);
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'API Key Refresh Failed',
+                        text: 'Could not refresh API key. Please try again later.',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                
+                return false;
+            });
+        }
+
+        // Main card processing function
+        async function processCards() {
+            if (isProcessing) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Processing in progress',
+                        text: 'Please wait until current process completes',
+                        icon: 'warning',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                return;
+            }
+
+            // Check if API key is valid before processing
+            if (!isApiKeyValidated()) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'API Key Invalid',
+                        text: 'The API key is not valid. Attempting to refresh...',
+                        icon: 'warning',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+                
+                const refreshed = await refreshApiKey();
+                if (!refreshed) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'API Key Error',
+                            text: 'Could not validate API key. Please try again later.',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    return;
+                }
+            }
+
+            const cardInput = document.getElementById('cardInput');
+            const cardText = cardInput ? cardInput.value.trim() : '';
+            const lines = cardText.split('\n').filter(line => line.trim());
+            const validCards = lines
+                .map(line => line.trim())
+                .filter(line => /^\d{13,19}\|\d{1,2}\|\d{2,4}\|\d{3,4}$/.test(line.trim()))
+                .map(line => {
+                    const [number, exp_month, exp_year, cvc] = line.split('|');
+                    return { number, exp_month, exp_year, cvv: cvc, displayCard: `${number}|${exp_month}|${exp_year}|${cvc}` };
+                });
+
+            if (validCards.length === 0) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'No valid cards!',
+                        text: 'Please check your card format',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                return;
+            }
+
+            if (validCards.length > 1000) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Limit exceeded!',
+                        text: 'Maximum 1000 cards allowed!',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                return;
+            }
+
+            isProcessing = true;
+            isStopping = false;
+            activeRequests = 0;
+            abortControllers = [];
+            cardQueue = [...validCards];
+            totalCards = validCards.length;
+            chargedCards = [];
+            approvedCards = [];
+            threeDSCards = [];
+            declinedCards = [];
+            
+            // Store in session storage
+            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+            
+            updateStats(totalCards, 0, 0, 0, 0);
+            
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const loader = document.getElementById('loader');
+            const checkingResultsList = document.getElementById('checkingResultsList');
+            const statusLog = document.getElementById('statusLog');
+            
+            if (startBtn) startBtn.disabled = true;
+            if (stopBtn) stopBtn.disabled = false;
+            if (loader) loader.style.display = 'block';
+            if (checkingResultsList) checkingResultsList.innerHTML = '';
+            if (statusLog) statusLog.textContent = `Starting processing with ${maxConcurrent} concurrent requests...`;
+
+            // Create a worker pool for true concurrency
+            const workers = Array(maxConcurrent).fill(null).map(() => ({
+                busy: false,
+                currentCard: null,
+                controller: null
+            }));
+
+            // Function to assign a card to a worker
+            const assignCardToWorker = async (workerIndex) => {
+                if (!isProcessing || cardQueue.length === 0 || isStopping) {
+                    // Check if all workers are idle
+                    if (workers.every(w => !w.busy)) {
+                        finishProcessing();
+                    }
+                    return;
+                }
+
+                const worker = workers[workerIndex];
+                if (worker.busy) return;
+
+                // Get next card from queue
+                const card = cardQueue.shift();
+                if (!card) {
+                    // No more cards, check if all workers are idle
+                    if (workers.every(w => !w.busy)) {
+                        finishProcessing();
+                    }
+                    return;
+                }
+
+                worker.busy = true;
+                worker.currentCard = card;
+                worker.controller = new AbortController();
+                abortControllers.push(worker.controller);
+                activeRequests++;
+
+                console.log(`Worker ${workerIndex} processing card: ${card.displayCard} (Active: ${activeRequests}/${maxConcurrent})`);
+
+                try {
+                    const result = await processCard(card, worker.controller);
+                    
+                    if (result) {
+                        const cardEntry = { response: result.response, displayCard: result.displayCard };
+                        if (result.status === 'CHARGED') {
+                            chargedCards.push(cardEntry);
+                            sessionStorage.setItem(`chargedCards-${sessionId}`, JSON.stringify(chargedCards));
+                        } else if (result.status === 'APPROVED') {
+                            approvedCards.push(cardEntry);
+                            sessionStorage.setItem(`approvedCards-${sessionId}`, JSON.stringify(approvedCards));
+                        } else if (result.status === '3DS') {
+                            threeDSCards.push(cardEntry);
+                            sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
+                        } else {
+                            declinedCards.push(cardEntry);
+                            sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
+                        }
+
+                        addResult(card, result.status, result.response);
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                    }
+                } catch (error) {
+                    console.error(`Worker ${workerIndex} error:`, error);
+                } finally {
+                    // Mark worker as idle and assign next card
+                    worker.busy = false;
+                    worker.currentCard = null;
+                    activeRequests--;
+                    
+                    // Immediately assign next card to this worker
+                    setTimeout(() => assignCardToWorker(workerIndex), 0);
+                }
+            };
+
+            // Start all workers
+            for (let i = 0; i < maxConcurrent; i++) {
+                setTimeout(() => assignCardToWorker(i), i * 10); // Stagger start slightly to avoid browser limits
+            }
+        }
+
+        // Finish processing
+        function finishProcessing() {
+            isProcessing = false;
+            isStopping = false;
+            activeRequests = 0;
+            cardQueue = [];
+            abortControllers = [];
+            
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const loader = document.getElementById('loader');
+            const cardInput = document.getElementById('cardInput');
+            const statusLog = document.getElementById('statusLog');
+            
+            if (startBtn) startBtn.disabled = false;
+            if (stopBtn) stopBtn.disabled = true;
+            if (loader) loader.style.display = 'none';
+            if (cardInput) cardInput.value = '';
+            if (statusLog) statusLog.textContent = 'Processing completed.';
+            
+            updateCardCount();
+            
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Processing complete!',
+                    text: 'All cards results below.',
+                    icon: 'success',
+                    confirmButtonColor: '#ec4899'
+                });
+            }
+        }
+
+        // Card generator functions
+        function setYearRnd() {
+            const yearInput = document.getElementById('yearInput');
+            if (yearInput) yearInput.value = 'rnd';
+        }
+
+        function setCvvRnd() {
+            const cvvInput = document.getElementById('cvvInput');
+            if (cvvInput) cvvInput.value = 'rnd';
+        }
+
+        function generateCards() {
+            const binInput = document.getElementById('binInput');
+            const monthSelect = document.getElementById('monthSelect');
+            const yearInput = document.getElementById('yearInput');
+            const cvvInput = document.getElementById('cvvInput');
+            const numCardsInput = document.getElementById('numCardsInput');
+            
+            const bin = binInput ? binInput.value.trim() : '';
+            const month = monthSelect ? monthSelect.value : 'rnd';
+            let year = yearInput ? yearInput.value.trim() : 'rnd';
+            const cvv = cvvInput ? cvvInput.value.trim() : 'rnd';
+            const numCards = numCardsInput ? parseInt(numCardsInput.value) : 10;
+            
+            if (!/^\d{6,8}$/.test(bin)) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Invalid BIN!',
+                        text: 'Please enter a valid 6-8 digit BIN',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                return;
+            }
+            
+            if (isNaN(numCards) || numCards < 1 || numCards > 5000) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Invalid Number!',
+                        text: 'Please enter a number between 1 and 5000',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                return;
+            }
+            
+            if (numCards > 1000) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Large Number of Cards',
+                        text: `You are about to generate ${numCards} cards. This may take a while and use significant resources. Continue?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#10b981',
+                        cancelButtonColor: '#ef4444',
+                        confirmButtonText: 'Yes, generate'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            continueGenerateCards(bin, month, year, cvv, numCards);
+                        }
+                    });
+                }
+            } else {
+                continueGenerateCards(bin, month, year, cvv, numCards);
+            }
+        }
+
+        function continueGenerateCards(bin, month, year, cvv, numCards) {
+            if (year !== 'rnd') {
+                if (year.length === 2) {
+                    const currentYear = new Date().getFullYear();
+                    const currentCentury = Math.floor(currentYear / 100) * 100;
+                    const twoDigitYear = parseInt(year);
+                    year = (twoDigitYear < 50 ? currentCentury : currentCentury - 100) + twoDigitYear;
+                }
+                
+                if (!/^\d{4}$/.test(year) || parseInt(year) < 2000 || parseInt(year) > 2099) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Invalid Year!',
+                            text: 'Please enter a valid year (e.g., 2025, 30, or "rnd")',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    return;
+                }
+            }
+            
+            if (cvv !== 'rnd' && !/^\d{3,4}$/.test(cvv)) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Invalid CVV!',
+                        text: 'Please enter a valid 3-4 digit CVV or "rnd"',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                return;
+            }
+            
+            let params = bin;
+            if (month !== 'rnd') params += '|' + month;
+            if (year !== 'rnd') params += '|' + year;
+            if (cvv !== 'rnd') params += '|' + cvv;
+            
+            const genLoader = document.getElementById('genLoader');
+            const genStatusLog = document.getElementById('genStatusLog');
+            
+            if (genLoader) genLoader.style.display = 'block';
+            if (genStatusLog) genStatusLog.textContent = 'Generating cards...';
+            
+            const url = `/gate/ccgen.php?bin=${encodeURIComponent(params)}&num=${numCards}&format=0`;
+            console.log(`Fetching cards from: ${url}`);
+            
+            const apiKey = getCurrentApiKey();
+            console.log(`X-API-KEY header for ccgen: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-API-KEY': apiKey
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Check for 401 Unauthorized
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed: Invalid or missing API key');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(response => {
+                if (genLoader) genLoader.style.display = 'none';
+                
+                if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
+                    if (genStatusLog) genStatusLog.textContent = `Generated ${response.cards.length} cards successfully!`;
+                    displayGeneratedCards(response.cards);
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: `Generated ${response.cards.length} cards`,
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        });
+                    }
+                } else if (response.error) {
+                    if (genStatusLog) genStatusLog.textContent = 'Error: ' + response.error;
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.error,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                } else {
+                    if (genStatusLog) genStatusLog.textContent = 'No cards generated';
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'No Cards!',
+                            text: 'Could not generate cards with the provided parameters',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b'
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                if (genLoader) genLoader.style.display = 'none';
+                if (genStatusLog) genStatusLog.textContent = 'Error: ' + error.message;
+                console.error(`Card generation error: ${error.message}`);
+                
+                // Check for authentication error
+                if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Authentication Error',
+                            text: error.message,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    
+                    // Try to refresh the API key
+                    refreshApiKey();
+                } else {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: `Failed to generate cards: ${error.message}`,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                }
+            });
+        }
+
+        // Logout function
+        function logout() {
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'You will be logged out and returned to the login page.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#d1d5db',
+                    confirmButtonText: 'Yes, logout'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Clear key rotation interval
+                        if (keyRotationInterval) {
+                            clearInterval(keyRotationInterval);
+                        }
+                        
+                        sessionStorage.clear();
+                        window.location.href = 'login.php';
+                    }
+                });
+            } else {
+                // Fallback if Swal is not available
+                if (confirm('Are you sure you want to logout?')) {
+                    if (keyRotationInterval) {
+                        clearInterval(keyRotationInterval);
+                    }
+                    sessionStorage.clear();
+                    window.location.href = 'login.php';
+                }
+            }
+        }
+
+        // User activity update function
+        function updateUserActivity() {
+            console.log("Updating user activity at", new Date().toISOString());
+            
+            // Skip if an update is already in progress
+            if (window.activityRequest) {
+                console.log("Previous activity request still pending, skipping...");
+                return;
+            }
+            
+            // Create a new AbortController for this request
+            const controller = new AbortController();
+            window.activityRequest = controller;
+            
+            // Set a longer timeout (30 seconds) to prevent premature abortion
+            const timeoutId = setTimeout(() => {
+                if (window.activityRequest === controller) {
+                    controller.abort();
+                    window.activityRequest = null;
+                    console.log("Activity request timed out after 30 seconds");
+                }
+            }, 30000);
+            
+            const apiKey = getCurrentApiKey();
+            console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+            
+            fetch('/update_activity.php', {
+                method: 'GET',
+                signal: controller.signal,
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'X-API-KEY': apiKey
+                }
+            })
+            .then(response => {
+                // Clear the timeout
+                clearTimeout(timeoutId);
+                window.activityRequest = null;
+                
+                if (!response.ok) {
+                    // Check for 401 Unauthorized
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed: Invalid or missing API key');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                console.log("Activity update response:", data);
+                
+                if (data.success) {
+                    // Update online count
+                    const onlineCountElement = document.getElementById('onlineCount');
+                    if (onlineCountElement) {
+                        onlineCountElement.textContent = data.count;
+                        console.log("Updated online count to:", data.count);
+                    } else {
+                        console.error("Element #onlineCount not found");
+                    }
+                    
+                    // Update current user profile
+                    const currentUser = data.users ? data.users.find(u => u.is_currently_online) : null;
+                    if (currentUser) {
+                        // Update profile picture
+                        const profilePicElement = document.querySelector('.user-avatar');
+                        if (profilePicElement) {
+                            profilePicElement.src = currentUser.photo_url || 
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name ? currentUser.name[0] : 'U')}&background=3b82f6&color=fff&size=64`;
+                            console.log("Updated profile picture");
+                        } else {
+                            console.error("Element .user-avatar not found");
+                        }
+                        
+                        // Update user name
+                        const userNameElement = document.querySelector('.user-name');
+                        if (userNameElement) {
+                            userNameElement.textContent = currentUser.name || 'Unknown User';
+                            console.log("Updated user name to:", currentUser.name);
+                        } else {
+                            console.error("Element .user-name not found");
+                        }
+                    } else {
+                        console.error("Current user not found in response");
+                    }
+                    
+                    // Display online users
+                    if (data.users) {
+                        displayOnlineUsers(data.users);
+                    }
+                    
+                } else {
+                    console.error('Activity update failed:', data.message || 'No error message provided');
+                }
+            })
+            .catch(error => {
+                // Clear the timeout
+                clearTimeout(timeoutId);
+                window.activityRequest = null;
+                
+                console.error('Activity update error:', error);
+                
+                if (error.name !== 'AbortError') {
+                    let errorMessage = 'Error fetching online users';
+                    
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMessage = 'Network error - please check your connection';
+                    } else if (error.message.includes('HTTP error')) {
+                        errorMessage = 'Server error - please try again later';
+                    } else if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                        errorMessage = 'Authentication error - please refresh the page';
+                        // Try to refresh the API key
+                        refreshApiKey();
+                    }
+                    
+                    const homePage = document.getElementById('page-home');
+                    if (homePage && homePage.classList.contains('active') && window.Swal) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'error',
+                            title: errorMessage,
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                }
+            });
+        }
+
+        // Display online users function
+        function displayOnlineUsers(users) {
+            console.log("displayOnlineUsers called with users:", users);
+            
+            const onlineUsersList = document.getElementById('onlineUsersList');
+            if (!onlineUsersList) {
+                console.error("Element #onlineUsersList not found in DOM");
+                return;
+            }
+            
+            console.log("onlineUsersList element found:", onlineUsersList);
+            
+            // Clear existing content
+            onlineUsersList.innerHTML = '';
+            
+            if (!Array.isArray(users) || users.length === 0) {
+                console.log("No users to display or invalid users array");
+                onlineUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Users Online</h3>
+                        <p>No users are currently online</p>
+                    </div>`;
+                return;
+            }
+            
+            console.log("Rendering", users.length, "users");
+            
+            // Create a document fragment to improve performance
+            const fragment = document.createDocumentFragment();
+            
+            users.forEach((user, index) => {
+                console.log(`Processing user ${index + 1}:`, user);
+                
+                // Safely extract user data with defaults
+                const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+                const username = (user.username && typeof user.username === 'string') ? user.username : '';
+                const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+                    user.photo_url : 
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+                
+                // Create user item element
+                const userItem = document.createElement('div');
+                userItem.className = 'online-user-item';
+                userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+                
+                // Create avatar container
+                const avatarContainer = document.createElement('div');
+                avatarContainer.className = 'online-user-avatar-container';
+                
+                // Create avatar image
+                const avatar = document.createElement('img');
+                avatar.src = photoUrl;
+                avatar.alt = name;
+                avatar.className = 'online-user-avatar';
+                avatar.onerror = function() {
+                    this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+                };
+                
+                // Create online indicator
+                const indicator = document.createElement('div');
+                indicator.className = 'online-indicator';
+                
+                // Assemble avatar container
+                avatarContainer.appendChild(avatar);
+                avatarContainer.appendChild(indicator);
+                
+                // Create user info container
+                const userInfo = document.createElement('div');
+                userInfo.className = 'online-user-info';
+                
+                // Create name element
+                const nameElement = document.createElement('div');
+                nameElement.className = 'online-user-name';
+                nameElement.textContent = name;
+                
+                // Create username element only if username exists
+                if (username) {
+                    const usernameElement = document.createElement('div');
+                    usernameElement.className = 'online-user-username';
+                    usernameElement.textContent = username;
+                    userInfo.appendChild(nameElement);
+                    userInfo.appendChild(usernameElement);
+                } else {
+                    userInfo.appendChild(nameElement);
+                }
+                
+                // Assemble user item
+                userItem.appendChild(avatarContainer);
+                userItem.appendChild(userInfo);
+                
+                // Add to fragment
+                fragment.appendChild(userItem);
+            });
+            
+            // Clear the list and add all users at once
+            onlineUsersList.innerHTML = '';
+            onlineUsersList.appendChild(fragment);
+            
+            console.log("Successfully rendered online users list");
+        }
+
+        // Initialize activity updates when the page loads
+        function initializeActivityUpdates() {
+            // Clear any existing interval
+            if (activityUpdateInterval) {
+                clearInterval(activityUpdateInterval);
+            }
+            
+            // Initial update
+            updateUserActivity();
+            
+            // Set up interval to update every 25 seconds
+            activityUpdateInterval = setInterval(() => {
+                if (!window.activityRequest) {
+                    updateUserActivity();
+                }
+            }, 25000);
+            
+            // Update on user interaction, but not more than once every 25 seconds
+            if (window.$) {
+                $(document).on('click mousemove keypress scroll', function() {
+                    const now = new Date().getTime();
+                    if (now - lastActivityUpdate >= 25000 && !window.activityRequest) {
+                        console.log("User interaction detected, updating activity...");
+                        updateUserActivity();
+                        lastActivityUpdate = now;
                     }
                 });
             }
             
-            // Reset Turnstile when clear button is clicked
-            const clearBtn = document.getElementById('clearBtn');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function() {
-                    if (window.turnstile && turnstileWidgetId) {
-                        turnstile.reset(turnstileWidgetId);
+            // Clean up on page unload
+            if (window.$) {
+                $(window).on('unload', function() {
+                    if (activityUpdateInterval) {
+                        clearInterval(activityUpdateInterval);
                     }
-                    turnstileToken = null;
+                    if (window.activityRequest) {
+                        window.activityRequest.abort();
+                    }
+                    if (keyRotationInterval) {
+                        clearInterval(keyRotationInterval);
+                    }
+                    console.log("Cleared intervals on page unload");
                 });
             }
-        });
-        
-        // Disable Razorpay 0.10$ gateway and show maintenance popup
-        document.addEventListener('DOMContentLoaded', function() {
-            const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
-            if (razorpayGateway) {
-                // Disable the radio button
-                razorpayGateway.disabled = true;
+        }
+
+        // Make functions globally accessible
+        window.toggleTheme = toggleTheme;
+        window.showPage = showPage;
+        window.closeSidebar = closeSidebar;
+        window.openGatewaySettings = openGatewaySettings;
+        window.closeGatewaySettings = closeGatewaySettings;
+        window.saveGatewaySettings = saveGatewaySettings;
+        window.updateCardCount = updateCardCount;
+        window.filterResults = filterResults;
+        window.setYearRnd = setYearRnd;
+        window.setCvvRnd = setCvvRnd;
+        window.logout = logout;
+
+        // Initialize everything when jQuery is ready
+        if (window.$) {
+            $(document).ready(function() {
+                console.log("jQuery ready, initializing...");
                 
-                // Find the parent label
-                const parentLabel = razorpayGateway.closest('label');
-                if (parentLabel) {
-                    // Add visual styling to show it's disabled
-                    parentLabel.style.opacity = '0.6';
-                    parentLabel.style.cursor = 'not-allowed';
-                    parentLabel.style.position = 'relative';
+                // Set up event listeners
+                const startBtn = document.getElementById('startBtn');
+                const generateBtn = document.getElementById('generateBtn');
+                const copyAllBtn = document.getElementById('copyAllBtn');
+                const clearAllBtn = document.getElementById('clearAllBtn');
+                const stopBtn = document.getElementById('stopBtn');
+                const clearBtn = document.getElementById('clearBtn');
+                const clearGenBtn = document.getElementById('clearGenBtn');
+                const exportBtn = document.getElementById('exportBtn');
+                const cardInput = document.getElementById('cardInput');
+                const menuToggle = document.getElementById('menuToggle');
+                
+                if (startBtn) startBtn.addEventListener('click', processCards);
+                if (generateBtn) generateBtn.addEventListener('click', generateCards);
+                if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllGeneratedCards);
+                if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllGeneratedCards);
+
+                if (stopBtn) stopBtn.addEventListener('click', function() {
+                    if (!isProcessing || isStopping) return;
+
+                    isProcessing = false;
+                    isStopping = true;
+                    cardQueue = [];
+                    abortControllers.forEach(controller => controller.abort());
+                    abortControllers = [];
+                    activeRequests = 0;
+                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
                     
-                    // Add click event to show popup
-                    parentLabel.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
+                    if (startBtn) startBtn.disabled = false;
+                    if (stopBtn) stopBtn.disabled = true;
+                    const loader = document.getElementById('loader');
+                    const statusLog = document.getElementById('statusLog');
+                    if (loader) loader.style.display = 'none';
+                    if (statusLog) statusLog.textContent = 'Processing stopped.';
+                    
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Stopped!',
+                            text: 'Checking has been stopped',
+                            icon: 'warning',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                });
+
+                if (clearBtn) clearBtn.addEventListener('click', function() {
+                    if (cardInput && cardInput.value.trim()) {
                         if (window.Swal) {
                             Swal.fire({
-                                title: 'Gateway Under Maintenance',
-                                text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
-                                icon: 'error',
-                                confirmButtonColor: '#ef4444', // Red color
-                                confirmButtonText: 'OK'
+                                title: 'Clear Input?', text: 'Remove all entered cards',
+                                icon: 'warning', showCancelButton: true,
+                                confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    cardInput.value = '';
+                                    updateCardCount();
+                                    if (window.Swal) {
+                                        Swal.fire({
+                                            toast: true, position: 'top-end', icon: 'success',
+                                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                                        });
+                                    }
+                                }
                             });
                         } else {
-                            alert('Gateway under maintenance. Please select another gateway.');
+                            // Fallback if Swal is not available
+                            if (confirm('Remove all entered cards?')) {
+                                cardInput.value = '';
+                                updateCardCount();
+                            }
                         }
+                    }
+                });
+
+                if (clearGenBtn) clearGenBtn.addEventListener('click', function() {
+                    const binInput = document.getElementById('binInput');
+                    const monthSelect = document.getElementById('monthSelect');
+                    const yearInput = document.getElementById('yearInput');
+                    const cvvInput = document.getElementById('cvvInput');
+                    const numCardsInput = document.getElementById('numCardsInput');
+                    const generatedCardsList = document.getElementById('generatedCardsList');
+                    const genStatusLog = document.getElementById('genStatusLog');
+                    
+                    if (binInput) binInput.value = '';
+                    if (monthSelect) monthSelect.value = 'rnd';
+                    if (yearInput) yearInput.value = '';
+                    if (cvvInput) cvvInput.value = '';
+                    if (numCardsInput) numCardsInput.value = '10';
+                    if (generatedCardsList) generatedCardsList.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Cards Generated Yet</h3><p>Generate cards to see them here</p></div>';
+                    if (genStatusLog) genStatusLog.textContent = '';
+                    generatedCardsData = [];
+                    
+                    if (copyAllBtn) copyAllBtn.style.display = 'none';
+                    if (clearAllBtn) clearAllBtn.style.display = 'none';
+                    
+                    if (window.Swal) {
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success',
+                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                        });
+                    }
+                });
+
+                if (exportBtn) exportBtn.addEventListener('click', function() {
+                    const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
+                    if (allCards.length === 0) {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'No data to export!',
+                                text: 'Please check some cards first.',
+                                icon: 'warning',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
+                        return;
+                    }
+                    let csvContent = "Card,Status,Response\n";
+                    allCards.forEach(card => {
+                        const status = card.response.includes('CHARGED') ? 'CHARGED' :
+                                     card.response.includes('APPROVED') ? 'APPROVED' :
+                                     card.response.includes('3DS') ? '3DS' : 'DECLINED';
+                        csvContent += `${card.displayCard},${status},${card.response}\n`;
                     });
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    if (window.Swal) {
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success',
+                            title: 'Exported!', showConfirmButton: false, timer: 1500
+                        });
+                    }
+                });
+
+                if (cardInput) cardInput.addEventListener('input', updateCardCount);
+
+                document.addEventListener('click', function(e) {
+                    if (e.target === document.getElementById('gatewaySettings')) {
+                        closeGatewaySettings();
+                    }
+                });
+
+                if (menuToggle) menuToggle.addEventListener('click', function() {
+                    sidebarOpen = !sidebarOpen;
+                    const sidebar = document.getElementById('sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    if (sidebar) sidebar.classList.toggle('open', sidebarOpen);
+                    if (mainContent) mainContent.classList.toggle('sidebar-open', sidebarOpen);
+                });
+                
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.body.setAttribute('data-theme', savedTheme);
+                const themeIcon = document.querySelector('.theme-toggle-slider i');
+                if (themeIcon) themeIcon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+                
+                console.log("Page loaded, initializing user activity update...");
+                
+                // Initialize activity updates
+                initializeActivityUpdates();
+                
+                // Initialize maxConcurrent based on selected gateway
+                updateMaxConcurrent();
+                
+                // RAZORPAY GATEWAY MAINTENANCE FEATURE
+                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
+                if (razorpayGateway) {
+                    // Disable the radio button
+                    razorpayGateway.disabled = true;
+                    
+                    // Find the parent label
+                    const parentLabel = razorpayGateway.closest('label');
+                    if (parentLabel) {
+                        // Add visual styling to show it's disabled
+                        parentLabel.style.opacity = '0.6';
+                        parentLabel.style.cursor = 'not-allowed';
+                        parentLabel.style.position = 'relative';
+                        
+                        // Add a maintenance badge
+                        const badge = document.createElement('span');
+                        badge.textContent = 'Maintenance';
+                        badge.style.position = 'absolute';
+                        badge.style.top = '5px';
+                        badge.style.right = '5px';
+                        badge.style.backgroundColor = '#ef4444'; // Red color
+                        badge.style.color = 'white';
+                        badge.style.padding = '2px 6px';
+                        badge.style.borderRadius = '4px';
+                        badge.style.fontSize = '0.7rem';
+                        badge.style.fontWeight = 'bold';
+                        parentLabel.appendChild(badge);
+                        
+                        // Add click event to show popup
+                        parentLabel.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (window.Swal) {
+                                Swal.fire({
+                                    title: 'Gateway Under Maintenance',
+                                    text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444', // Red color
+                                    confirmButtonText: 'OK'
+                                });
+                            } else {
+                                alert('Gateway under maintenance. Please select another gateway.');
+                            }
+                        });
+                    }
                 }
+            });
+        } else {
+            console.error("jQuery not loaded, some functionality may not work");
+        }
+    }
+
+    // Load API key and initialize the app
+    loadApiKey().then(success => {
+        if (!success) {
+            console.warn('Proceeding without valid API key');
+            // Show a warning if API key loading fails
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'API Key Issue',
+                    text: 'Could not load API key. Some features may not work properly.',
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b'
+                });
             }
-        });
-    </script>
-</body>
-</html>
+        }
+        
+        // Start key rotation
+        startKeyRotation();
+        
+        // Initialize the app
+        initializeApp();
+    });
+});
