@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cloudflare Turnstile variables
     let turnstileToken = null;
     let turnstileWidgetId = null;
+    let isCheckingCards = false;
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -152,12 +153,46 @@ document.addEventListener('DOMContentLoaded', function() {
         const loader = document.getElementById('loader');
         if (startBtn) startBtn.disabled = false;
         if (loader) loader.style.display = 'none';
+        isCheckingCards = false;
     }
 
     // Function to proceed with card checking after Turnstile verification
     function proceedWithCardCheck() {
         // Now we can proceed with the original card processing
         processCards();
+    }
+
+    // Function to reset Turnstile widget
+    function resetTurnstile() {
+        if (turnstileWidgetId !== null) {
+            turnstile.reset(turnstileWidgetId);
+            turnstileToken = null;
+        }
+    }
+
+    // Function to execute Turnstile verification
+    function executeTurnstile() {
+        if (isCheckingCards) return;
+        
+        isCheckingCards = true;
+        const startBtn = document.getElementById('startBtn');
+        const loader = document.getElementById('loader');
+        const statusLog = document.getElementById('statusLog');
+        
+        if (startBtn) startBtn.disabled = true;
+        if (loader) loader.style.display = 'block';
+        if (statusLog) statusLog.textContent = 'Verifying...';
+        
+        // Reset Turnstile before executing
+        resetTurnstile();
+        
+        // Execute Turnstile
+        if (turnstileWidgetId !== null) {
+            turnstile.execute(turnstileWidgetId);
+        } else {
+            console.error('Turnstile widget not initialized');
+            onTurnstileError();
+        }
     }
 
     // Initialize the application
@@ -1609,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.setYearRnd = setYearRnd;
         window.setCvvRnd = setCvvRnd;
         window.logout = logout;
+        window.executeTurnstile = executeTurnstile;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
