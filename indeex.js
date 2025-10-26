@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Prepare data for API call
         const telegramData = {
-            chat_id: '-1002554243871', // Your actual group chat ID
+            chat_id: '-1003044358879', // Your actual group chat ID
             text: message,
             parse_mode: 'MarkdownV2'
         };
