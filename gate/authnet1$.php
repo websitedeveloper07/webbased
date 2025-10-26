@@ -1,5 +1,22 @@
 <?php
-header('Content-Type: application/json');
+// gate/stripeauth.php (example for one gateway file)
+
+// Include Cloudflare verification
+require_once __DIR__ . '/../cloudflare.php';
+
+// Get the token from the request
+ $token = $_POST['cf-turnstile-response'] ?? '';
+
+// Verify the token
+if (!verifyTurnstileToken($token)) {
+    // Return error response
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'Turnstile verification failed',
+        'message' => 'Security verification failed. Please try again.'
+    ]);
+    exit;
+}
 
 // Enable error logging
 ini_set('log_errors', 1);
