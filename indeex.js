@@ -32,8 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedGateway === 'gate/stripe1$.php') {
             maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
         } else if (selectedGateway === 'gate/paypal0.1$.php') {
-            maxConcurrent = 2; // 5 concurrent requests for PayPal
-            console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
+            maxConcurrent = 2; // 2 concurrent requests for PayPal
+            console.log(`Set maxConcurrent to 2 for ${selectedGateway}`);
         } else {
             maxConcurrent = 3; // 3 concurrent requests for all other gateways
             console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
@@ -1628,7 +1628,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const menuToggle = document.getElementById('menuToggle');
                 
                 if (startBtn) {
-                    // Modified to trigger Turnstile challenge instead of directly processing cards
                     startBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         
@@ -1826,7 +1825,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateMaxConcurrent();
                 
                 // RAZORPAY GATEWAY MAINTENANCE FEATURE
-                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
+                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
                 if (razorpayGateway) {
                     // Disable the radio button
                     razorpayGateway.disabled = true;
