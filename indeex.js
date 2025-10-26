@@ -22,11 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let API_KEY = null; // Will be loaded from cron_sync.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
-    
-    // Cloudflare Turnstile variables
-    let turnstileToken = null;
-    let turnstileWidgetId = null;
-    let isCheckingCards = false;
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -120,79 +115,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if API key is valid
     function isApiKeyValidated() {
         return isApiKeyValid;
-    }
-
-    // Initialize Turnstile widget when script loads
-    window.onloadTurnstileCallback = function() {
-        if (document.getElementById('turnstile-widget')) {
-            turnstileWidgetId = turnstile.render('#turnstile-widget');
-            console.log('Turnstile widget initialized with ID:', turnstileWidgetId);
-        }
-    };
-
-    // Called when Turnstile verification is successful
-    function onTurnstileSuccess(token) {
-        turnstileToken = token;
-        console.log('Turnstile verification successful');
-        proceedWithCardCheck();
-    }
-
-    // Called when Turnstile verification fails
-    function onTurnstileError() {
-        console.error('Turnstile verification failed');
-        Swal.fire({
-            title: 'Verification Failed',
-            text: 'Please complete the verification challenge to continue.',
-            icon: 'error',
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: 'OK'
-        });
-        
-        // Reset UI state
-        const startBtn = document.getElementById('startBtn');
-        const loader = document.getElementById('loader');
-        if (startBtn) startBtn.disabled = false;
-        if (loader) loader.style.display = 'none';
-        isCheckingCards = false;
-    }
-
-    // Function to proceed with card checking after Turnstile verification
-    function proceedWithCardCheck() {
-        // Now we can proceed with the original card processing
-        processCards();
-    }
-
-    // Function to reset Turnstile widget
-    function resetTurnstile() {
-        if (turnstileWidgetId !== null) {
-            turnstile.reset(turnstileWidgetId);
-            turnstileToken = null;
-        }
-    }
-
-    // Function to execute Turnstile verification
-    function executeTurnstile() {
-        if (isCheckingCards) return;
-        
-        isCheckingCards = true;
-        const startBtn = document.getElementById('startBtn');
-        const loader = document.getElementById('loader');
-        const statusLog = document.getElementById('statusLog');
-        
-        if (startBtn) startBtn.disabled = true;
-        if (loader) loader.style.display = 'block';
-        if (statusLog) statusLog.textContent = 'Verifying...';
-        
-        // Reset Turnstile before executing
-        resetTurnstile();
-        
-        // Execute Turnstile
-        if (turnstileWidgetId !== null) {
-            turnstile.execute(turnstileWidgetId);
-        } else {
-            console.error('Turnstile widget not initialized');
-            onTurnstileError();
-        }
     }
 
     // Initialize the application
@@ -715,11 +637,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('card[exp_month]', card.exp_month);
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvv);
-                
-                // Add Turnstile token to the request
-                if (turnstileToken) {
-                    formData.append('cf-turnstile-response', turnstileToken);
-                }
 
                 const apiKey = getCurrentApiKey();
                 console.log(`X-API-KEY header: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
@@ -1644,7 +1561,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.setYearRnd = setYearRnd;
         window.setCvvRnd = setCvvRnd;
         window.logout = logout;
-        window.executeTurnstile = executeTurnstile;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
@@ -1680,27 +1596,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             return;
                         }
                         
-                        // Show loader
-                        const loader = document.getElementById('loader');
-                        if (loader) loader.style.display = 'block';
-                        if (startBtn) startBtn.disabled = true;
-                        
-                        // Trigger Turnstile challenge
-                        if (window.turnstile && turnstileWidgetId) {
-                            turnstile.reset(turnstileWidgetId); // Reset in case it was used before
-                            turnstile.execute(turnstileWidgetId); // Execute the challenge
-                        } else {
-                            // Fallback if Turnstile isn't loaded
-                            Swal.fire({
-                                title: 'Security Check',
-                                text: 'Loading security verification, please wait...',
-                                icon: 'info',
-                                confirmButtonColor: '#3b82f6',
-                                confirmButtonText: 'OK'
-                            });
-                            if (loader) loader.style.display = 'none';
-                            if (startBtn) startBtn.disabled = false;
-                        }
+                        // Directly start processing without any security check
+                        processCards();
                     });
                 }
                 
