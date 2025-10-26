@@ -22,6 +22,52 @@ document.addEventListener('DOMContentLoaded', function() {
     let API_KEY = null; // Will be loaded from cron_sync.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
+    
+    // Cloudflare Turnstile variables
+    let turnstileToken = '';
+    let tokenRefreshPromise = null;
+    
+    // Function to get a fresh Turnstile token
+    async function getTurnstileToken() {
+        // If we already have a valid token, return it
+        if (turnstileToken) {
+            return turnstileToken;
+        }
+        
+        // If we're already refreshing the token, wait for that promise
+        if (tokenRefreshPromise) {
+            return tokenRefreshPromise;
+        }
+        
+        // Create a new promise to refresh the token
+        tokenRefreshPromise = new Promise((resolve, reject) => {
+            // Check if token is available after a short delay
+            const checkToken = setInterval(() => {
+                if (turnstileToken) {
+                    clearInterval(checkToken);
+                    tokenRefreshPromise = null;
+                    resolve(turnstileToken);
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkToken);
+                tokenRefreshPromise = null;
+                reject(new Error('Turnstile token timeout'));
+            }, 5000);
+        });
+        
+        return tokenRefreshPromise;
+    }
+    
+    // Function to reset the Turnstile token
+    function resetTurnstileToken() {
+        turnstileToken = '';
+        if (typeof turnstile !== 'undefined' && turnstile.reset) {
+            turnstile.reset();
+        }
+    }
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -40,21 +86,26 @@ document.addEventListener('DOMContentLoaded', function() {
     let maxConcurrent = 10; // Default for stripe1$ 
     
     // Load API key from cron_sync.php using POST
-    function loadApiKey() {
-        return fetch('/gate/cron_sync.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
-            }
-        })
-        .then(response => {
+    async function loadApiKey() {
+        try {
+            // Get Turnstile token before making the request
+            const token = await getTurnstileToken();
+            
+            const response = await fetch('/gate/cron_sync.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'X-Turnstile-Token': token
+                }
+            });
+            
             if (!response.ok) {
                 throw new Error(`Failed to load API key: ${response.status}`);
             }
-            return response.json();
-        })
-        .then(data => {
+            
+            const data = await response.json();
+            
             if (data && data.apiKey) {
                 API_KEY = data.apiKey;
                 console.log('API key loaded successfully');
@@ -63,12 +114,14 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 throw new Error('Invalid API key response');
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error loading API key:', error);
             isApiKeyValid = false;
             return false;
-        });
+        } finally {
+            // Reset token after use
+            resetTurnstileToken();
+        }
     }
 
     // Start rotating API keys every hour
@@ -79,26 +132,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Rotate keys every hour (3600000 milliseconds)
-        keyRotationInterval = setInterval(() => {
+        keyRotationInterval = setInterval(async () => {
             console.log('Rotating API key...');
-            loadApiKey().then(success => {
-                if (success) {
-                    console.log('API key rotated successfully');
-                    // Show notification
-                    if (window.Swal) {
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'info',
-                            title: 'API Key Rotated',
-                            showConfirmButton: false,
-                            timer: 3000
-                        });
-                    }
-                } else {
-                    console.error('Failed to rotate API key');
+            const success = await loadApiKey();
+            if (success) {
+                console.log('API key rotated successfully');
+                // Show notification
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'API Key Rotated',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
                 }
-            });
+            } else {
+                console.error('Failed to rotate API key');
+            }
         }, 3600000);
         
         console.log('API key rotation started. Keys will rotate every hour.');
@@ -118,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize the application
-    function initializeApp() {
+    async function initializeApp() {
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
         document.addEventListener('contextmenu', e => {
             if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && 
@@ -623,11 +675,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return { status, message };
         }
 
-        // Card processing function
-        function processCard(card, controller, retryCount = 0) {
+        // Card processing function with Turnstile integration
+        async function processCard(card, controller, retryCount = 0) {
             if (!isProcessing) return null;
 
-            return new Promise((resolve) => {
+            try {
+                // Get a fresh Turnstile token for each request
+                const token = await getTurnstileToken();
+                if (!token) {
+                    throw new Error('Security verification incomplete');
+                }
+
                 const formData = new FormData();
                 let normalizedYear = card.exp_year;
                 if (normalizedYear.length === 2) {
@@ -645,138 +703,144 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (statusLog) statusLog.textContent = `Processing card: ${card.displayCard}`;
                 console.log(`Starting request for card: ${card.displayCard}`);
 
-                fetch(selectedGateway, {
+                const response = await fetch(selectedGateway, {
                     method: 'POST',
                     body: formData,
                     signal: controller.signal,
                     headers: {
                         'Accept': 'application/json',
-                        'X-API-KEY': apiKey
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        // Check for 401 Unauthorized
-                        if (response.status === 401) {
-                            throw new Error('Authentication failed: Invalid or missing API key');
-                        }
-                        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
-                    }
-                    return response.text();
-                })
-                .then(data => {
-                    let parsedData;
-                    try {
-                        parsedData = JSON.parse(data);
-                    } catch (e) {
-                        parsedData = data;
-                    }
-                    const parsedResponse = parseGatewayResponse(parsedData);
-                    console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
-                    
-                    if (parsedResponse.status === 'ERROR') {
-                        // Show authentication error
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'Authentication Error',
-                                text: parsedResponse.message,
-                                icon: 'error',
-                                confirmButtonColor: '#ec4899'
-                            });
-                        }
-                        
-                        // Try to refresh the API key
-                        refreshApiKey();
-                    }
-                    
-                    resolve({
-                        status: parsedResponse.status,
-                        response: parsedResponse.message,
-                        card: card,
-                        displayCard: card.displayCard
-                    });
-                })
-                .catch(error => {
-                    const statusLog = document.getElementById('statusLog');
-                    if (statusLog) statusLog.textContent = `Error on card: ${card.displayCard} - ${error.message}`;
-                    console.error(`Error for card: ${card.displayCard}, Error: ${error.message}`);
-
-                    if (error.name === 'AbortError') {
-                        resolve(null);
-                        return;
-                    }
-
-                    // Check for authentication error
-                    if (error.message.includes('Authentication failed') || error.message.includes('401')) {
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'Authentication Error',
-                                text: error.message,
-                                icon: 'error',
-                                confirmButtonColor: '#ec4899'
-                            });
-                        }
-                        
-                        // Try to refresh the API key
-                        refreshApiKey().then(() => {
-                            // Retry the request with the new API key
-                            if (retryCount < MAX_RETRIES && isProcessing) {
-                                setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                            } else {
-                                resolve({
-                                    status: 'ERROR',
-                                    response: error.message,
-                                    card: card,
-                                    displayCard: card.displayCard
-                                });
-                            }
-                        });
-                        return;
-                    }
-
-                    let errorResponse = `Declined [Request failed: ${error.message}]`;
-                    if (error.message.includes('HTTP error')) {
-                        try {
-                            const errorData = JSON.parse(error.message.split('HTTP error! ')[1]);
-                            const parsedError = parseGatewayResponse(errorData);
-                            errorResponse = parsedError.message;
-                        } catch (e) {
-                            // Use raw error message
-                        }
-                    }
-
-                    if ((error.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
-                        setTimeout(() => processCard(card, controller, retryCount + 1).then(resolve), 2000);
-                    } else {
-                        resolve({
-                            status: 'DECLINED',
-                            response: errorResponse,
-                            card: card,
-                            displayCard: card.displayCard
-                        });
+                        'X-API-KEY': apiKey,
+                        'X-Turnstile-Token': token
                     }
                 });
-            });
+                
+                if (!response.ok) {
+                    // Check for 401 Unauthorized
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed: Invalid or missing API key');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                }
+                
+                const data = await response.text();
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(data);
+                } catch (e) {
+                    parsedData = data;
+                }
+                
+                const parsedResponse = parseGatewayResponse(parsedData);
+                console.log(`Completed request for card: ${card.displayCard}, Status: ${parsedResponse.status}, Response: ${parsedResponse.message}`);
+                
+                if (parsedResponse.status === 'ERROR') {
+                    // Show authentication error
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Authentication Error',
+                            text: parsedResponse.message,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    
+                    // Try to refresh the API key
+                    await refreshApiKey();
+                }
+                
+                return {
+                    status: parsedResponse.status,
+                    response: parsedResponse.message,
+                    card: card,
+                    displayCard: card.displayCard
+                };
+            } catch (error) {
+                const statusLog = document.getElementById('statusLog');
+                if (statusLog) statusLog.textContent = `Error on card: ${card.displayCard} - ${error.message}`;
+                console.error(`Error for card: ${card.displayCard}, Error: ${error.message}`);
+
+                if (error.name === 'AbortError') {
+                    return null;
+                }
+
+                // Check for authentication error
+                if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Authentication Error',
+                            text: error.message,
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                    
+                    // Try to refresh the API key
+                    const refreshed = await refreshApiKey();
+                    if (refreshed && retryCount < MAX_RETRIES && isProcessing) {
+                        // Retry the request with the new API key
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        return processCard(card, controller, retryCount + 1);
+                    } else {
+                        return {
+                            status: 'ERROR',
+                            response: error.message,
+                            card: card,
+                            displayCard: card.displayCard
+                        };
+                    }
+                }
+
+                let errorResponse = `Declined [Request failed: ${error.message}]`;
+                if (error.message.includes('HTTP error')) {
+                    try {
+                        const errorData = JSON.parse(error.message.split('HTTP error! ')[1]);
+                        const parsedError = parseGatewayResponse(errorData);
+                        errorResponse = parsedError.message;
+                    } catch (e) {
+                        // Use raw error message
+                    }
+                }
+
+                if ((error.message.includes('HTTP error') && error.message.match(/status: (0|5\d{2})/)) && retryCount < MAX_RETRIES && isProcessing) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return processCard(card, controller, retryCount + 1);
+                } else {
+                    return {
+                        status: 'DECLINED',
+                        response: errorResponse,
+                        card: card,
+                        displayCard: card.displayCard
+                    };
+                }
+            } finally {
+                // Reset token after use
+                resetTurnstileToken();
+            }
         }
 
         // Function to refresh API key when authentication fails
-        function refreshApiKey() {
+        async function refreshApiKey() {
             console.log('Refreshing API key due to authentication error...');
             
-            return fetch('/gate/cron_sync.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
-                }
-            })
-            .then(response => {
+            try {
+                // Get Turnstile token before making the request
+                const token = await getTurnstileToken();
+                
+                const response = await fetch('/gate/cron_sync.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'X-Turnstile-Token': token
+                    }
+                });
+                
                 if (!response.ok) {
                     throw new Error(`Failed to refresh API key: ${response.status}`);
                 }
-                return response.json();
-            })
-            .then(data => {
+                
+                const data = await response.json();
+                
                 if (data && data.apiKey) {
                     API_KEY = data.apiKey;
                     isApiKeyValid = true;
@@ -797,8 +861,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     throw new Error('Invalid API key response during refresh');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error refreshing API key:', error);
                 
                 if (window.Swal) {
@@ -811,7 +874,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 return false;
-            });
+            } finally {
+                // Reset token after use
+                resetTurnstileToken();
+            }
         }
 
         // Main card processing function
@@ -1041,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (cvvInput) cvvInput.value = 'rnd';
         }
 
-        function generateCards() {
+        async function generateCards() {
             const binInput = document.getElementById('binInput');
             const monthSelect = document.getElementById('monthSelect');
             const yearInput = document.getElementById('yearInput');
@@ -1099,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        function continueGenerateCards(bin, month, year, cvv, numCards) {
+        async function continueGenerateCards(bin, month, year, cvv, numCards) {
             if (year !== 'rnd') {
                 if (year.length === 2) {
                     const currentYear = new Date().getFullYear();
@@ -1147,17 +1213,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = `/gate/ccgen.php?bin=${encodeURIComponent(params)}&num=${numCards}&format=0`;
             console.log(`Fetching cards from: ${url}`);
             
-            const apiKey = getCurrentApiKey();
-            console.log(`X-API-KEY header for ccgen: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
-            
-            fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-API-KEY': apiKey
+            try {
+                // Get Turnstile token before making the request
+                const token = await getTurnstileToken();
+                if (!token) {
+                    throw new Error('Security verification incomplete');
                 }
-            })
-            .then(response => {
+                
+                const apiKey = getCurrentApiKey();
+                console.log(`X-API-KEY header for ccgen: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-API-KEY': apiKey,
+                        'X-Turnstile-Token': token
+                    }
+                });
+                
                 if (!response.ok) {
                     // Check for 401 Unauthorized
                     if (response.status === 401) {
@@ -1165,28 +1239,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
                 }
-                return response.json();
-            })
-            .then(response => {
+                
+                const data = await response.json();
+                
                 if (genLoader) genLoader.style.display = 'none';
                 
-                if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
-                    if (genStatusLog) genStatusLog.textContent = `Generated ${response.cards.length} cards successfully!`;
-                    displayGeneratedCards(response.cards);
+                if (data.cards && Array.isArray(data.cards) && data.cards.length > 0) {
+                    if (genStatusLog) genStatusLog.textContent = `Generated ${data.cards.length} cards successfully!`;
+                    displayGeneratedCards(data.cards);
                     if (window.Swal) {
                         Swal.fire({
                             title: 'Success!',
-                            text: `Generated ${response.cards.length} cards`,
+                            text: `Generated ${data.cards.length} cards`,
                             icon: 'success',
                             confirmButtonColor: '#10b981'
                         });
                     }
-                } else if (response.error) {
-                    if (genStatusLog) genStatusLog.textContent = 'Error: ' + response.error;
+                } else if (data.error) {
+                    if (genStatusLog) genStatusLog.textContent = 'Error: ' + data.error;
                     if (window.Swal) {
                         Swal.fire({
                             title: 'Error!',
-                            text: response.error,
+                            text: data.error,
                             icon: 'error',
                             confirmButtonColor: '#ec4899'
                         });
@@ -1202,8 +1276,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 if (genLoader) genLoader.style.display = 'none';
                 if (genStatusLog) genStatusLog.textContent = 'Error: ' + error.message;
                 console.error(`Card generation error: ${error.message}`);
@@ -1220,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Try to refresh the API key
-                    refreshApiKey();
+                    await refreshApiKey();
                 } else {
                     if (window.Swal) {
                         Swal.fire({
@@ -1231,7 +1304,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-            });
+            } finally {
+                // Reset token after use
+                resetTurnstileToken();
+            }
         }
 
         // Logout function
@@ -1268,8 +1344,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // User activity update function
-        function updateUserActivity() {
+        // User activity update function with Turnstile integration
+        async function updateUserActivity() {
             console.log("Updating user activity at", new Date().toISOString());
             
             // Skip if an update is already in progress
@@ -1291,20 +1367,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 30000);
             
-            const apiKey = getCurrentApiKey();
-            console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
-            
-            fetch('/update_activity.php', {
-                method: 'GET',
-                signal: controller.signal,
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'X-API-KEY': apiKey
+            try {
+                // Get Turnstile token before making the request
+                const token = await getTurnstileToken();
+                if (!token) {
+                    throw new Error('Security verification incomplete');
                 }
-            })
-            .then(response => {
+                
+                const apiKey = getCurrentApiKey();
+                console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+                
+                const response = await fetch('/update_activity.php', {
+                    method: 'GET',
+                    signal: controller.signal,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'X-API-KEY': apiKey,
+                        'X-Turnstile-Token': token
+                    }
+                });
+                
                 // Clear the timeout
                 clearTimeout(timeoutId);
                 window.activityRequest = null;
@@ -1317,9 +1401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
                 }
                 
-                return response.json();
-            })
-            .then(data => {
+                const data = await response.json();
                 console.log("Activity update response:", data);
                 
                 if (data.success) {
@@ -1365,8 +1447,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     console.error('Activity update failed:', data.message || 'No error message provided');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 // Clear the timeout
                 clearTimeout(timeoutId);
                 window.activityRequest = null;
@@ -1383,7 +1464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (error.message.includes('Authentication failed') || error.message.includes('401')) {
                         errorMessage = 'Authentication error - please refresh the page';
                         // Try to refresh the API key
-                        refreshApiKey();
+                        await refreshApiKey();
                     }
                     
                     const homePage = document.getElementById('page-home');
@@ -1398,7 +1479,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-            });
+            } finally {
+                // Reset token after use
+                resetTurnstileToken();
+            }
         }
 
         // Display online users function
