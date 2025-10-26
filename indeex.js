@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let API_KEY = null; // Will be loaded from cron_sync.php
     let keyRotationInterval = null;
     let isApiKeyValid = false;
+    
+    // Cloudflare Turnstile variables
+    let turnstileToken = null;
+    let turnstileWidgetId = null;
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -115,6 +119,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if API key is valid
     function isApiKeyValidated() {
         return isApiKeyValid;
+    }
+
+    // Initialize Turnstile widget when script loads
+    window.onloadTurnstileCallback = function() {
+        if (document.getElementById('turnstile-widget')) {
+            turnstileWidgetId = turnstile.render('#turnstile-widget');
+            console.log('Turnstile widget initialized with ID:', turnstileWidgetId);
+        }
+    };
+
+    // Called when Turnstile verification is successful
+    function onTurnstileSuccess(token) {
+        turnstileToken = token;
+        console.log('Turnstile verification successful');
+        proceedWithCardCheck();
+    }
+
+    // Called when Turnstile verification fails
+    function onTurnstileError() {
+        console.error('Turnstile verification failed');
+        Swal.fire({
+            title: 'Verification Failed',
+            text: 'Please complete the verification challenge to continue.',
+            icon: 'error',
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'OK'
+        });
+        
+        // Reset UI state
+        const startBtn = document.getElementById('startBtn');
+        const loader = document.getElementById('loader');
+        if (startBtn) startBtn.disabled = false;
+        if (loader) loader.style.display = 'none';
+    }
+
+    // Function to proceed with card checking after Turnstile verification
+    function proceedWithCardCheck() {
+        // Now we can proceed with the original card processing
+        processCards();
     }
 
     // Initialize the application
@@ -637,6 +680,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('card[exp_month]', card.exp_month);
                 formData.append('card[exp_year]', normalizedYear);
                 formData.append('card[cvc]', card.cvv);
+                
+                // Add Turnstile token to the request
+                if (turnstileToken) {
+                    formData.append('cf-turnstile-response', turnstileToken);
+                }
 
                 const apiKey = getCurrentApiKey();
                 console.log(`X-API-KEY header: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
@@ -1579,7 +1627,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 const cardInput = document.getElementById('cardInput');
                 const menuToggle = document.getElementById('menuToggle');
                 
-                if (startBtn) startBtn.addEventListener('click', processCards);
+                if (startBtn) {
+                    // Modified to trigger Turnstile challenge instead of directly processing cards
+                    startBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // Validate card input
+                        const cardInputValue = cardInput ? cardInput.value.trim() : '';
+                        if (!cardInputValue) {
+                            Swal.fire({
+                                title: 'No Cards Entered',
+                                text: 'Please enter card details to check.',
+                                icon: 'warning',
+                                confirmButtonColor: '#f59e0b',
+                                confirmButtonText: 'OK'
+                            });
+                            return;
+                        }
+                        
+                        // Show loader
+                        const loader = document.getElementById('loader');
+                        if (loader) loader.style.display = 'block';
+                        if (startBtn) startBtn.disabled = true;
+                        
+                        // Trigger Turnstile challenge
+                        if (window.turnstile && turnstileWidgetId) {
+                            turnstile.reset(turnstileWidgetId); // Reset in case it was used before
+                            turnstile.execute(turnstileWidgetId); // Execute the challenge
+                        } else {
+                            // Fallback if Turnstile isn't loaded
+                            Swal.fire({
+                                title: 'Security Check',
+                                text: 'Loading security verification, please wait...',
+                                icon: 'info',
+                                confirmButtonColor: '#3b82f6',
+                                confirmButtonText: 'OK'
+                            });
+                            if (loader) loader.style.display = 'none';
+                            if (startBtn) startBtn.disabled = false;
+                        }
+                    });
+                }
+                
                 if (generateBtn) generateBtn.addEventListener('click', generateCards);
                 if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllGeneratedCards);
                 if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllGeneratedCards);
