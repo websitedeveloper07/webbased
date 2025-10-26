@@ -48,7 +48,7 @@ if (empty($chatId) || empty($text)) {
  $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
 
 // Your chat ID (already provided)
- $targetChatId = '-1003044358879';
+ $targetChatId = '-1002554243871';
 
 // Override chat ID with the one provided in the request if it's different
 if ($chatId !== $targetChatId) {
