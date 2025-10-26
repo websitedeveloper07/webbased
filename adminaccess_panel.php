@@ -12,6 +12,35 @@ define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
 // Maintenance flag file path
 define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
+// Database connection parameters
+$databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
+// === DATABASE CONNECTION ===
+try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName",
+        $user,
+        $pass,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch (Exception $e) {
+    error_log("Database connection error: " . $e->getMessage());
+    $error = "Database connection failed. Please try again later.";
+}
+
 // Check if admin is logged in
 if (isset($_POST['access_key'])) {
     if ($_POST['access_key'] === ADMIN_ACCESS_KEY) {
@@ -21,8 +50,9 @@ if (isset($_POST['access_key'])) {
     }
 }
 
-// Handle maintenance toggle
+// Handle actions for authenticated admins
 if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
+    // Handle maintenance toggle
     if (isset($_POST['maintenance_action'])) {
         if ($_POST['maintenance_action'] === 'enable') {
             if (file_put_contents(MAINTENANCE_FLAG, '1') !== false) {
@@ -42,7 +72,57 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             }
         }
     }
-    
+
+    // Handle ban user
+    if (isset($_POST['ban_action']) && $_POST['ban_action'] === 'ban' && isset($_POST['telegram_id'])) {
+        $telegramId = trim($_POST['telegram_id']);
+        if (empty($telegramId) || !is_string($telegramId)) {
+            $error = "Invalid Telegram ID.";
+        } else {
+            try {
+                // Check if user is already banned
+                $stmt = $pdo->prepare("SELECT 1 FROM banned_users WHERE telegram_id = ?");
+                $stmt->execute([$telegramId]);
+                if ($stmt->fetch()) {
+                    $error = "User with Telegram ID $telegramId is already banned.";
+                } else {
+                    // Ban the user
+                    $stmt = $pdo->prepare("INSERT INTO banned_users (telegram_id) VALUES (?)");
+                    $stmt->execute([$telegramId]);
+                    $status_message = "User with Telegram ID $telegramId banned successfully.";
+                }
+            } catch (Exception $e) {
+                error_log("Ban user error: " . $e->getMessage());
+                $error = "Failed to ban user. Database error.";
+            }
+        }
+    }
+
+    // Handle unban user
+    if (isset($_POST['ban_action']) && $_POST['ban_action'] === 'unban' && isset($_POST['telegram_id'])) {
+        $telegramId = trim($_POST['telegram_id']);
+        if (empty($telegramId) || !is_string($telegramId)) {
+            $error = "Invalid Telegram ID.";
+        } else {
+            try {
+                // Check if user is banned
+                $stmt = $pdo->prepare("SELECT 1 FROM banned_users WHERE telegram_id = ?");
+                $stmt->execute([$telegramId]);
+                if (!$stmt->fetch()) {
+                    $error = "User with Telegram ID $telegramId is not banned.";
+                } else {
+                    // Unban the user
+                    $stmt = $pdo->prepare("DELETE FROM banned_users WHERE telegram_id = ?");
+                    $stmt->execute([$telegramId]);
+                    $status_message = "User with Telegram ID $telegramId unbanned successfully.";
+                }
+            } catch (Exception $e) {
+                error_log("Unban user error: " . $e->getMessage());
+                $error = "Failed to unban user. Database error.";
+            }
+        }
+    }
+
     // Handle logout
     if (isset($_GET['logout'])) {
         session_unset();
@@ -129,6 +209,15 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             letter-spacing: 1px;
         }
         
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin: 20px 0 15px;
+            text-align: center;
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
@@ -140,7 +229,7 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             color: #c4b5fd;
         }
         
-        input[type="password"] {
+        input[type="password"], input[type="text"] {
             width: 100%;
             padding: 12px 15px;
             background: rgba(255, 255, 255, 0.1);
@@ -152,7 +241,7 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             transition: all 0.3s ease;
         }
         
-        input[type="password"]:focus {
+        input[type="password"]:focus, input[type="text"]:focus {
             outline: none;
             border-color: rgba(167, 139, 250, 0.6);
             box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
@@ -232,6 +321,14 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             background: linear-gradient(90deg, #10b981, #4ade80);
         }
         
+        .ban-btn {
+            background: linear-gradient(90deg, #dc2626, #f87171);
+        }
+        
+        .unban-btn {
+            background: linear-gradient(90deg, #059669, #34d399);
+        }
+        
         .logout-btn {
             background: linear-gradient(90deg, #6b7280, #9ca3af);
             margin-top: 20px;
@@ -299,7 +396,7 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                 padding: 30px 20px;
             }
             
-            h1 {
+            h1, h2 {
                 font-size: 1.6rem;
             }
             
@@ -317,6 +414,10 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             h1 {
                 font-size: 1.4rem;
                 margin-bottom: 20px;
+            }
+            
+            h2 {
+                font-size: 1.2rem;
             }
             
             .logo {
@@ -350,7 +451,7 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                 <button type="submit">Authenticate</button>
             </form>
         <?php else: ?>
-            <h1>Maintenance Control Panel</h1>
+            <h1>Admin Control Panel</h1>
             
             <?php if (isset($status_message)): ?>
                 <div class="success"><?php echo htmlspecialchars($status_message); ?></div>
@@ -358,6 +459,8 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                 <div class="error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
+            <!-- Maintenance Control Section -->
+            <h2>Maintenance Control</h2>
             <div class="maintenance-status <?php echo file_exists(MAINTENANCE_FLAG) ? 'status-enabled' : 'status-disabled'; ?>">
                 <div class="status-text">
                     Maintenance Mode: <?php echo file_exists(MAINTENANCE_FLAG) ? 'ENABLED' : 'DISABLED'; ?>
@@ -380,6 +483,23 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                     </button>
                     <button type="submit" name="maintenance_action" value="disable" class="disable-btn <?php echo !file_exists(MAINTENANCE_FLAG) ? 'hidden' : ''; ?>">
                         <i class="fas fa-power-off"></i> Disable Maintenance
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Ban/Unban User Section -->
+            <h2>User Ban Management</h2>
+            <form id="ban-user-form" method="post">
+                <div class="form-group">
+                    <label for="telegram_id">Enter Telegram ID</label>
+                    <input type="text" id="telegram_id" name="telegram_id" required placeholder="e.g., 8306709243">
+                </div>
+                <div class="control-buttons">
+                    <button type="submit" name="ban_action" value="ban" class="ban-btn">
+                        <i class="fas fa-ban"></i> Ban User
+                    </button>
+                    <button type="submit" name="ban_action" value="unban" class="unban-btn">
+                        <i class="fas fa-unlock"></i> Unban User
                     </button>
                 </div>
             </form>
