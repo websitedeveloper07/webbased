@@ -25,7 +25,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 }
 
 // Validate API key
-$validation = validateApiKey();
+ $validation = validateApiKey();
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => '@Sajagog THE FUCKING ASSHOLE', 'response' => '@Sajagog THE FUCKING ASSHOLE'];
@@ -34,8 +34,8 @@ if (!$validation['valid']) {
     exit;
 }
 
-$expectedApiKey = $validation['response']['apiKey'];
-$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+ $expectedApiKey = $validation['response']['apiKey'];
+ $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => '@Sajagog THE FUCKING ASSHOLE', 'response' => '@Sajagog THE FUCKING ASSHOLE'];
@@ -88,8 +88,15 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     $status = strtoupper($result['status']);
     $response_msg = htmlspecialchars($result['response'], ENT_QUOTES, 'UTF-8'); // Sanitize response message
 
+    // Check if response contains "Succeeded" (case-insensitive)
+    $is_succeeded = stripos($response_msg, 'Succeeded') !== false;
+    
     // Output based on status
-    if ($status === "APPROVED") {
+    if ($status === "APPROVED" || $is_succeeded) {
+        // If it's a "Succeeded" response, change the message
+        if ($is_succeeded) {
+            return "[Payment Method added successfully.]";
+        }
         return "[$response_msg]";
     } elseif ($status === "DECLINED") {
         return "[$response_msg]";
@@ -104,8 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array
     exit;
 }
 
-$card = $_POST['card'];
-$required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
+ $card = $_POST['card'];
+ $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 
 // Validate card data
 foreach ($required_fields as $field) {
@@ -116,13 +123,13 @@ foreach ($required_fields as $field) {
 }
 
 // Sanitize inputs
-$card_number = preg_replace('/[^0-9]/', '', $card['number']);
-$exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
-$exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
-$cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
+ $card_number = preg_replace('/[^0-9]/', '', $card['number']);
+ $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
+ $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
+ $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
 
 // Normalize exp_month to 2 digits
-$exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
+ $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
 if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
     echo "DECLINED [Invalid exp_month format]";
     exit;
@@ -156,8 +163,8 @@ if (!preg_match('/^\d{3,4}$/', $cvc)) {
 }
 
 // Validate logical expiry
-$expiry_timestamp = strtotime("$exp_year-$exp_month-01");
-$current_timestamp = strtotime('first day of this month');
+ $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
+ $current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
     echo "DECLINED [Card expired]";
     exit;
