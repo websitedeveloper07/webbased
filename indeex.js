@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
         if (selectedGateway === 'gate/stripe1$.php') {
-            maxConcurrent = 10; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
+            maxConcurrent = 5; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
         } else if (selectedGateway === 'gate/paypal0.1$.php') {
             maxConcurrent = 3; // 2 concurrent requests for PayPal
             console.log(`Set maxConcurrent to 2 for ${selectedGateway}`);
