@@ -25,7 +25,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 }
 
 // Validate API key
-$validation = validateApiKey();
+ $validation = validateApiKey();
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
@@ -34,8 +34,8 @@ if (!$validation['valid']) {
     exit;
 }
 
-$expectedApiKey = $validation['response']['apiKey'];
-$providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+ $expectedApiKey = $validation['response']['apiKey'];
+ $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
@@ -49,7 +49,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Optional file-based logging for debugging
-$log_file = __DIR__ . '/paypal0.1$_debug.log';
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
 function log_message($message) {
     global $log_file;
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
@@ -113,24 +113,32 @@ function sendTelegramNotification($card_details, $status, $response) {
     $payload = [
         'chat_id' => $chat_id,
         'text' => $message,
-        'parse_mode' => 'HTML'
-        'disable_web_page_preview' => true
+        'parse_mode' => 'HTML',
+        'disable_web_page_preview' => true  // Added to prevent link previews
     ];
 
     $ch = curl_init($telegram_url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; enable in production
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Changed to true for security
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Added timeout
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
     curl_close($ch);
 
     if ($http_code !== 200 || !$result) {
-        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Response: " . ($result ?: 'No response'));
+        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
     } else {
         log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
     }
+}
+
+// Check if card details are provided
+if (!isset($_POST['card']) || !is_array($_POST['card'])) {
+    echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
+    exit;
 }
 
 // Get card details from POST request
