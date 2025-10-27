@@ -221,12 +221,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const escapedResponse = escapeHtml(formattedResponse);
         
         // Create the HTML message with the exact format
-        const message = `<b>✦━━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━━✦</b>\n` +
+        const message = `<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n` +
                    `<a href="${groupLink}">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href="${userProfileUrl}">${escapedUserName}</a>\n` +
                    `<a href="${groupLink}">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>${status} ${statusEmoji}</b>\n` +
                    `<a href="${groupLink}">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ ${escapedGateway}</b>\n` +
                    `<a href="${groupLink}">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>${escapedResponse}</i>\n` +
-                   `<b>―――――――――――――――</b>\n` +
+                   `<b>――――――――――――</b>\n` +
                    `<a href="${groupLink}">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href="https://cxchk.site">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>`;
         
         // Prepare data for API call
