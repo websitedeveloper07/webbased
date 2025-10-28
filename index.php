@@ -1647,12 +1647,13 @@ if (empty($userPhotoUrl)) {
                             <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
+                    <label class="gateway-option" id="paypal-gateway">
+                        <input type="radio" name="gateway" value="gate/paypal0.1$.php" disabled>
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
                                 <span class="gateway-badge badge-charge">0.1$ Charge</span>
+                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                             </div>
                             <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
                         </div>
@@ -1716,6 +1717,7 @@ if (empty($userPhotoUrl)) {
     <script>
         // Disable Razorpay 0.10$ gateway and show maintenance popup
         document.addEventListener('DOMContentLoaded', function() {
+            // Razorpay gateway
             const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
             if (razorpayGateway) {
                 // Disable the radio button
@@ -1748,7 +1750,17 @@ if (empty($userPhotoUrl)) {
                     });
                 }
             }
-        });
-    </script>
-</body>
-</html>
+            
+            // PayPal gateway
+            const paypalGateway = document.querySelector('input[name="gateway"][value="gate/paypal0.1$.php"]');
+            if (paypalGateway) {
+                // Disable the radio button
+                paypalGateway.disabled = true;
+                
+                // Find the parent label
+                const parentLabel = paypalGateway.closest('label');
+                if (parentLabel) {
+                    // Add visual styling to show it's disabled
+                    parentLabel.style.opacity = '0.6';
+                    parentLabel.style.cursor = 'not-allowed';
+                    parentLabel.style.position = 'relative';
