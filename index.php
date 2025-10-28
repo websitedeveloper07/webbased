@@ -1717,7 +1717,6 @@ if (empty($userPhotoUrl)) {
     <script>
         // Disable Razorpay 0.10$ gateway and show maintenance popup
         document.addEventListener('DOMContentLoaded', function() {
-            // Razorpay gateway
             const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
             if (razorpayGateway) {
                 // Disable the radio button
@@ -1751,7 +1750,7 @@ if (empty($userPhotoUrl)) {
                 }
             }
             
-            // PayPal gateway
+            // Disable PayPal 0.1$ gateway and show maintenance popup
             const paypalGateway = document.querySelector('input[name="gateway"][value="gate/paypal0.1$.php"]');
             if (paypalGateway) {
                 // Disable the radio button
@@ -1764,3 +1763,27 @@ if (empty($userPhotoUrl)) {
                     parentLabel.style.opacity = '0.6';
                     parentLabel.style.cursor = 'not-allowed';
                     parentLabel.style.position = 'relative';
+                    
+                    // Add click event to show popup
+                    parentLabel.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Gateway Under Maintenance',
+                                text: 'The PayPal gateway is currently undergoing maintenance. Please select another gateway.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444', // Red color
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Gateway under maintenance. Please select another gateway.');
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
