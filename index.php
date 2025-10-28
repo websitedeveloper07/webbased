@@ -1,4 +1,5 @@
 <?php
+require_once 'maintenance_check.php';
 session_start();
 
 // Enable error reporting for debugging
