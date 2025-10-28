@@ -12,6 +12,18 @@ define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
 // Maintenance flag file path
 define('MAINTENANCE_FLAG', '/tmp/.maintenance');
 
+// Check if maintenance mode is enabled and redirect if not on admin panel
+if (file_exists(MAINTENANCE_FLAG)) {
+    // Allow access to admin panel even during maintenance
+    $current_page = basename($_SERVER['PHP_SELF']);
+    
+    // If not on admin panel or maintenance page, redirect to maintenance page
+    if ($current_page !== 'adminaccess_panel.php' && $current_page !== 'maintenance.php') {
+        header("Location: /maintenance.php");
+        exit();
+    }
+}
+
 // Check if admin is logged in
 if (isset($_POST['access_key'])) {
     if ($_POST['access_key'] === ADMIN_ACCESS_KEY) {
@@ -26,14 +38,14 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
     if (isset($_POST['maintenance_action'])) {
         if ($_POST['maintenance_action'] === 'enable') {
             if (file_put_contents(MAINTENANCE_FLAG, '1') !== false) {
-                $status_message = "Maintenance mode has been enabled.";
+                $status_message = "Maintenance mode has been enabled. All users (including logged-in) will be blocked.";
             } else {
                 $error = "Failed to enable maintenance mode. Check file permissions for /tmp/.maintenance.";
             }
         } elseif ($_POST['maintenance_action'] === 'disable') {
             if (file_exists(MAINTENANCE_FLAG)) {
                 if (unlink(MAINTENANCE_FLAG)) {
-                    $status_message = "Maintenance mode has been disabled.";
+                    $status_message = "Maintenance mode has been disabled. Users can now access the site.";
                 } else {
                     $error = "Failed to disable maintenance mode. Check file permissions for /tmp/.maintenance.";
                 }
@@ -257,6 +269,16 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
             text-align: center;
         }
         
+        .warning {
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
         .particles {
             position: fixed;
             top: 0;
@@ -358,6 +380,13 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                 <div class="error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
+            <?php if (file_exists(MAINTENANCE_FLAG)): ?>
+                <div class="warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Maintenance mode is active. All users (including logged-in) are blocked from accessing the site.
+                </div>
+            <?php endif; ?>
+            
             <div class="maintenance-status <?php echo file_exists(MAINTENANCE_FLAG) ? 'status-enabled' : 'status-disabled'; ?>">
                 <div class="status-text">
                     Maintenance Mode: <?php echo file_exists(MAINTENANCE_FLAG) ? 'ENABLED' : 'DISABLED'; ?>
@@ -365,7 +394,7 @@ if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] 
                 <div class="status-desc">
                     <?php 
                     if (file_exists(MAINTENANCE_FLAG)) {
-                        echo "Visitors are currently seeing the maintenance page.";
+                        echo "All visitors, including logged-in users, are currently seeing the maintenance page.";
                     } else {
                         echo "Visitors can access the website normally.";
                     }
