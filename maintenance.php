@@ -1,10 +1,4 @@
 <?php
-require_once __DIR__ . '/banned.php';
-// rest of the script...
-
-
-// Rest of your script...
-
 session_start();
 
 // Enable error reporting for debugging
