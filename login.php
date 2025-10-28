@@ -1,4 +1,5 @@
 <?php
+require_once 'maintenance_check.php';
 // -------------------------------
 // SESSION & INITIAL CONFIG
 // -------------------------------
