@@ -1647,13 +1647,12 @@ if (empty($userPhotoUrl)) {
                             <div class="gateway-option-desc">E-commerce payment processing</div>
                         </div>
                     </label>
-                    <label class="gateway-option" id="paypal-gateway">
-                        <input type="radio" name="gateway" value="gate/paypal0.1$.php" disabled>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
                                 <span class="gateway-badge badge-charge">0.1$ Charge</span>
-                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                             </div>
                             <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
                         </div>
@@ -1739,40 +1738,6 @@ if (empty($userPhotoUrl)) {
                             Swal.fire({
                                 title: 'Gateway Under Maintenance',
                                 text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
-                                icon: 'error',
-                                confirmButtonColor: '#ef4444', // Red color
-                                confirmButtonText: 'OK'
-                            });
-                        } else {
-                            alert('Gateway under maintenance. Please select another gateway.');
-                        }
-                    });
-                }
-            }
-            
-            // Disable PayPal 0.1$ gateway and show maintenance popup
-            const paypalGateway = document.querySelector('input[name="gateway"][value="gate/paypal0.1$.php"]');
-            if (paypalGateway) {
-                // Disable the radio button
-                paypalGateway.disabled = true;
-                
-                // Find the parent label
-                const parentLabel = paypalGateway.closest('label');
-                if (parentLabel) {
-                    // Add visual styling to show it's disabled
-                    parentLabel.style.opacity = '0.6';
-                    parentLabel.style.cursor = 'not-allowed';
-                    parentLabel.style.position = 'relative';
-                    
-                    // Add click event to show popup
-                    parentLabel.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'Gateway Under Maintenance',
-                                text: 'The PayPal gateway is currently undergoing maintenance. Please select another gateway.',
                                 icon: 'error',
                                 confirmButtonColor: '#ef4444', // Red color
                                 confirmButtonText: 'OK'
