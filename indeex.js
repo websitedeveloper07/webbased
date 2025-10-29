@@ -50,11 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
-        if (selectedGateway === 'gate/stripe1$.php') {
-            maxConcurrent = 5; // 10 concurrent requests for Stripe 1$             console.log(`Set maxConcurrent to 10 for ${selectedGateway}`);
+        if (selectedGateway === 'gate/stripe1$.php' || selectedGateway === 'gate/stripe5$.php') {
+            maxConcurrent = 5; // 5 concurrent requests for Stripe gateways
+            console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
         } else if (selectedGateway === 'gate/paypal0.1$.php') {
-            maxConcurrent = 3; // 2 concurrent requests for PayPal
-            console.log(`Set maxConcurrent to 2 for ${selectedGateway}`);
+            maxConcurrent = 3; // 3 concurrent requests for PayPal
+            console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
         } else {
             maxConcurrent = 3; // 3 concurrent requests for all other gateways
             console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
@@ -62,8 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Dynamic MAX_CONCURRENT based on selected gateway
-    let maxConcurrent = 10; // Default for stripe1$ 
-    
+    let maxConcurrent = 5; // Default for stripe1$ and stripe5$     
     // Load API key from refresh.php using POST
     function loadApiKey() {
         return fetch('/gate/refresh.php', {
