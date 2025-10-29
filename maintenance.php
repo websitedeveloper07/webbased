@@ -26,8 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     
     // Check if password matches
     if ($submitted_password === ADMIN_ACCESS_KEY) {
-        // Set session variable
+        // Set session variables
         $_SESSION['admin_authenticated'] = true;
+        $_SESSION['maintenance_bypass'] = true;
         
         // Clear any output buffers
         while (ob_get_level()) {
