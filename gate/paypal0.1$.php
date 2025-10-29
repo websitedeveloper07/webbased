@@ -298,6 +298,7 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
     echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
     exit;
 }
+
 // Function to check a single card via PayPal 0.1$ API
 function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
