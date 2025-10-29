@@ -98,7 +98,7 @@ function showForbiddenPage() {
           <p>Access to this resource on the server is denied!</p> 
           </div></div></body></html>';
     
-    exit;
+    exit; // Ensure script execution stops completely
 }
 
 // Get user's IP address and check for proxy - FOR ALL REQUESTS
@@ -108,6 +108,7 @@ log_message("Request received from IP: $user_ip");
 if (checkProxyIP($user_ip)) {
     log_message("ACCESS DENIED - Proxy detected for IP: $user_ip");
     showForbiddenPage();
+    exit; // Double ensure script execution stops
 }
 
 // --- END OF PROXY DETECTION LOGIC ---
