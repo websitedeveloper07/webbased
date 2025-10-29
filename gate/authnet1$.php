@@ -44,6 +44,90 @@ if ($providedApiKey !== $expectedApiKey) {
     exit;
 }
 
+// Function to check if IP is a proxy
+function checkProxyIP($ip) {
+    $api_url = "https://api.isproxyip.com/v1/check.php?key=zHwDyAMU6bJMIHCKfcDGnjMi7zq3S743dQXWBoqKNPCPEW4z94&ip=" . urlencode($ip) . "&format=json";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) {
+        log_message("Proxy check CURL error: $error");
+        return false; // Default to not blocking on error
+    }
+    
+    if ($http_code !== 200) {
+        log_message("Proxy check HTTP error: $http_code");
+        return false; // Default to not blocking on error
+    }
+    
+    $data = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        log_message("Proxy check JSON decode error: " . json_last_error_msg());
+        return false; // Default to not blocking on error
+    }
+    
+    // Log the proxy check result
+    log_message("Proxy check for IP $ip: " . json_encode($data));
+    
+    // Return true if proxy is detected (value > 0)
+    return isset($data['proxy']) && $data['proxy'] > 0;
+}
+
+// Get user's IP address
+function getUserIP() {
+    // Check for shared internet/ISP IP
+    if (!empty($_SERVER['HTTP_CLIENT_IP']) && filter_var($_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    }
+    
+    // Check for IPs passing through proxies
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        // Check if multiple IPs exist
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        foreach ($ips as $ip) {
+            $ip = trim($ip);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
+            }
+        }
+    }
+    
+    if (!empty($_SERVER['HTTP_X_REAL_IP']) && filter_var($_SERVER['HTTP_X_REAL_IP'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+        return $_SERVER['HTTP_X_REAL_IP'];
+    }
+    
+    if (!empty($_SERVER['HTTP_X_CLUSTER_CLIENT_IP']) && filter_var($_SERVER['HTTP_X_CLUSTER_CLIENT_IP'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+        return $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
+    }
+    
+    if (!empty($_SERVER['HTTP_FORWARDED_FOR']) && filter_var($_SERVER['HTTP_FORWARDED_FOR'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+        return $_SERVER['HTTP_FORWARDED_FOR'];
+    }
+    
+    // Default to remote address
+    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+}
+
+// Check if user's IP is a proxy
+ $user_ip = getUserIP();
+log_message("Checking IP for proxy detection: $user_ip");
+
+if (checkProxyIP($user_ip)) {
+    http_response_code(403);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'you are not allowed to access these resources', 'response' => 'Proxy detected'];
+    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: Proxy detected for IP ' . $user_ip . PHP_EOL, FILE_APPEND);
+    echo json_encode($errorMsg);
+    exit;
+}
+
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
