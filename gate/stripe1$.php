@@ -435,7 +435,7 @@ while ($retryCount < $maxRetries) {
         unlink($cookieJar);
         $responseMsg = [
             'status' => 'CHARGED',
-            'message' => 'Charged $1 successfully',
+            'message' => 'Your card has been charged $1.00 successfully.',
             'response' => "CHARGED",
             'payment_method_id' => $pid
         ];
