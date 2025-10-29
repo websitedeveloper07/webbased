@@ -1,9 +1,139 @@
 <?php
+// Check if this is a GET request and show the HTML page immediately
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Content-Type: text/html; charset=utf-8');
+    http_response_code(403);
+    
+    echo '<html style="height:100%"> 
+          <head> 
+          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
+          <title> 403 Forbidden </title>
+          <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
+          </head> 
+          <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
+          <div style="height:auto; min-height:100%; "> 
+          <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
+          <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
+          <p>Access to this resource on the server is denied!</p> 
+          </div></div></body></html>';
+    
+    exit;
+}
+
 header('Content-Type: application/json');
 
 // Enable error logging
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
+
+// --- MOVED log_message function to the top to prevent 500 errors ---
+// Optional file-based logging for debugging
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
+function log_message($message) {
+    global $log_file;
+    $timestamp = date('Y-m-d H:i:s');
+    // Ensure the message is a string
+    $log_entry = is_array($message) || is_object($message) ? json_encode($message) : $message;
+    file_put_contents($log_file, "$timestamp - $log_entry\n", FILE_APPEND);
+}
+
+// --- PROXY DETECTION LOGIC - MOVED TO TOP FOR ALL REQUESTS ---
+
+// Function to get the real user IP address
+function getUserIP() {
+    $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'REMOTE_ADDR'];
+    foreach ($ip_keys as $key) {
+        if (array_key_exists($key, $_SERVER) === true) {
+            foreach (explode(',', $_SERVER[$key]) as $ip) {
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+}
+
+// Function to check if IP is a proxy
+function checkProxyIP($ip) {
+    // Check if cURL is available
+    if (!function_exists('curl_init')) {
+        log_message("cURL extension is not installed. Cannot perform proxy check.");
+        return false; // Fail open (allow access) if we can't check
+    }
+
+    $api_url = "https://api.isproxyip.com/v1/check.php?key=zHwDyAMU6bJMIHCKfcDGnjMi7zq3S743dQXWBoqKNPCPEW4z94&ip=" . urlencode($ip) . "&format=json";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10-second timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) {
+        log_message("Proxy check CURL error for IP $ip: $error");
+        return false; // Fail open on error
+    }
+    
+    if ($http_code !== 200) {
+        log_message("Proxy check HTTP error for IP $ip: Status Code $http_code. Response: $response");
+        return false; // Fail open on error
+    }
+    
+    $data = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($data['proxy'])) {
+        log_message("Proxy check JSON decode error or missing 'proxy' key for IP $ip. Response: $response");
+        return false; // Fail open on error
+    }
+    
+    // Log the proxy check result
+    log_message("Proxy check result for IP $ip: " . json_encode($data));
+    
+    // Return true if proxy is detected (value > 0)
+    return (int)$data['proxy'] > 0;
+}
+
+// Function to display simple 403 Forbidden page
+function showForbiddenPage() {
+    // Reset content type to HTML
+    header('Content-Type: text/html; charset=utf-8');
+    http_response_code(403);
+    
+    echo '<html style="height:100%"> 
+          <head> 
+          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
+          <title> 403 Forbidden </title>
+          <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
+          </head> 
+          <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
+          <div style="height:auto; min-height:100%; "> 
+          <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
+          <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
+          <p>Access to this resource on the server is denied!</p> 
+          </div></div></body></html>';
+    
+    exit; // Ensure script execution stops completely
+}
+
+// Get user's IP address and check for proxy - FOR ALL REQUESTS
+ $user_ip = getUserIP();
+log_message("Request received from IP: $user_ip");
+
+if (checkProxyIP($user_ip)) {
+    log_message("ACCESS DENIED - Proxy detected for IP: $user_ip");
+    showForbiddenPage();
+    exit; // Double ensure script execution stops
+}
+
+// --- END OF PROXY DETECTION LOGIC ---
 
 // Include cron_sync.php for validateApiKey
 require_once __DIR__ . '/refresh.php';
@@ -168,7 +298,6 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
     echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
     exit;
 }
-
 // Function to check a single card via PayPal 0.1$ API
 function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
     $card_details = "$card_number|$exp_month|$exp_year|$cvc";
