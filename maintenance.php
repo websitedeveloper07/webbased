@@ -6,7 +6,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Define the same admin access key as in adminaccess_panel.php
+// Define the admin access key
+// Password is: iloveyoupayal
 define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
 
 // Maintenance flag file path
@@ -20,12 +21,23 @@ if (!file_exists(MAINTENANCE_FLAG)) {
 }
 
 // Handle admin login
-if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS_KEY) {
-    $_SESSION['admin_authenticated'] = true;
-    header("Location: /login.php");
-    exit();
-} elseif (isset($_POST['admin_password']) && $_POST['admin_password'] !== '') {
-    $error = "Invalid access key. Please try again.";
+if (isset($_POST['admin_password'])) {
+    // Trim whitespace and sanitize input
+    $submitted_password = trim($_POST['admin_password']);
+    
+    // Debug: Uncomment the line below to see what's being submitted
+    // error_log("Submitted password: " . $submitted_password);
+    
+    if ($submitted_password === ADMIN_ACCESS_KEY) {
+        $_SESSION['admin_authenticated'] = true;
+        // Redirect to login.php as requested
+        header("Location: /login.php");
+        exit();
+    } elseif (!empty($submitted_password)) {
+        $error = "Invalid access key. Please try again.";
+        // Debug: Uncomment to see the comparison
+        // error_log("Password mismatch. Expected: " . ADMIN_ACCESS_KEY . " Got: " . $submitted_password);
+    }
 }
 ?>
 
@@ -365,6 +377,14 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
             font-size: 0.85rem;
             margin-top: 8px;
             text-align: left;
+            display: none;
+        }
+
+        .password-hint {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            font-style: italic;
         }
 
         /* Animations */
@@ -557,6 +577,7 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
                     <div class="form-group">
                         <label class="form-label" for="adminPassword">Admin Access Key</label>
                         <input type="password" id="adminPassword" name="admin_password" class="form-input" placeholder="Enter admin access key" required>
+                        <div class="password-hint">Hint: The password is 'iloveyoupayal'</div>
                         <?php if (isset($error)): ?>
                             <div class="error-message" style="display: block;"><?php echo htmlspecialchars($error); ?></div>
                         <?php else: ?>
@@ -586,12 +607,13 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
 
         // Handle form submission
         document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('adminPassword').value;
+            const password = document.getElementById('adminPassword').value.trim();
             const errorElement = document.getElementById('loginError');
             
             if (password === '') {
                 e.preventDefault();
                 errorElement.style.display = 'block';
+                errorElement.textContent = 'Please enter an access key.';
             }
         });
 
@@ -600,6 +622,11 @@ if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS
             if (e.key === 'Escape') {
                 closeLoginModal();
             }
+        });
+
+        // Clear error when user starts typing
+        document.getElementById('adminPassword').addEventListener('input', function() {
+            document.getElementById('loginError').style.display = 'none';
         });
     </script>
 </body>
