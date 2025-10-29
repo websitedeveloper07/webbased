@@ -7,7 +7,6 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Define the admin access key
-// Password is: iloveyoupayal
 define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
 
 // Maintenance flag file path
@@ -21,22 +20,26 @@ if (!file_exists(MAINTENANCE_FLAG)) {
 }
 
 // Handle admin login
-if (isset($_POST['admin_password'])) {
-    // Trim whitespace and sanitize input
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
+    // Get and sanitize the password
     $submitted_password = trim($_POST['admin_password']);
     
-    // Debug: Uncomment the line below to see what's being submitted
-    // error_log("Submitted password: " . $submitted_password);
-    
+    // Check if password matches
     if ($submitted_password === ADMIN_ACCESS_KEY) {
+        // Set session variable
         $_SESSION['admin_authenticated'] = true;
-        // Redirect to login.php as requested
+        
+        // Clear any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Redirect to login.php
         header("Location: /login.php");
         exit();
-    } elseif (!empty($submitted_password)) {
+    } else {
+        // Set error message
         $error = "Invalid access key. Please try again.";
-        // Debug: Uncomment to see the comparison
-        // error_log("Password mismatch. Expected: " . ADMIN_ACCESS_KEY . " Got: " . $submitted_password);
     }
 }
 ?>
@@ -380,13 +383,6 @@ if (isset($_POST['admin_password'])) {
             display: none;
         }
 
-        .password-hint {
-            color: #6b7280;
-            font-size: 0.8rem;
-            margin-top: 4px;
-            font-style: italic;
-        }
-
         /* Animations */
         @keyframes fadeIn {
             from {
@@ -573,11 +569,10 @@ if (isset($_POST['admin_password'])) {
                 <button class="modal-close" onclick="closeLoginModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="adminLoginForm" method="post">
+                <form id="adminLoginForm" method="post" action="">
                     <div class="form-group">
                         <label class="form-label" for="adminPassword">Admin Access Key</label>
                         <input type="password" id="adminPassword" name="admin_password" class="form-input" placeholder="Enter admin access key" required>
-                        <div class="password-hint">Hint: The password is 'iloveyoupayal'</div>
                         <?php if (isset($error)): ?>
                             <div class="error-message" style="display: block;"><?php echo htmlspecialchars($error); ?></div>
                         <?php else: ?>
