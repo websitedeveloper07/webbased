@@ -16,46 +16,7 @@ function log_message($message) {
     file_put_contents($log_file, "$timestamp - $log_entry\n", FILE_APPEND);
 }
 
-// Include cron_sync.php for validateApiKey
-require_once __DIR__ . '/refresh.php';
-
-// Start session for user authentication
-session_start([
-    'cookie_secure' => isset($_SERVER['HTTPS']),
-    'cookie_httponly' => true,
-    'use_strict_mode' => true,
-]);
-
-// Check if user is authenticated
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// Validate API key
- $validation = validateApiKey();
-if (!$validation['valid']) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
- $expectedApiKey = $validation['response']['apiKey'];
- $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-if ($providedApiKey !== $expectedApiKey) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// --- NEW PROXY DETECTION LOGIC ---
+// --- PROXY DETECTION LOGIC - MOVED TO TOP FOR ALL REQUESTS ---
 
 // Function to get the real user IP address
 function getUserIP() {
@@ -117,19 +78,78 @@ function checkProxyIP($ip) {
     return (int)$data['proxy'] > 0;
 }
 
-// Get user's IP address and check for proxy
+// Function to display simple 403 Forbidden page
+function showForbiddenPage() {
+    // Reset content type to HTML
+    header('Content-Type: text/html; charset=utf-8');
+    http_response_code(403);
+    
+    echo '<html style="height:100%"> 
+          <head> 
+          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
+          <title> 403 Forbidden </title>
+          <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
+          </head> 
+          <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
+          <div style="height:auto; min-height:100%; "> 
+          <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
+          <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
+          <p>Access to this resource on the server is denied!</p> 
+          </div></div></body></html>';
+    
+    exit;
+}
+
+// Get user's IP address and check for proxy - FOR ALL REQUESTS
  $user_ip = getUserIP();
 log_message("Request received from IP: $user_ip");
 
 if (checkProxyIP($user_ip)) {
-    http_response_code(403);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'you are not allowed to access these resources', 'response' => 'Proxy/VPN detected'];
     log_message("ACCESS DENIED - Proxy detected for IP: $user_ip");
+    showForbiddenPage();
+}
+
+// --- END OF PROXY DETECTION LOGIC ---
+
+// Include cron_sync.php for validateApiKey
+require_once __DIR__ . '/refresh.php';
+
+// Start session for user authentication
+session_start([
+    'cookie_secure' => isset($_SERVER['HTTPS']),
+    'cookie_httponly' => true,
+    'use_strict_mode' => true,
+]);
+
+// Check if user is authenticated
+if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
+    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
 
-// --- END OF PROXY DETECTION LOGIC ---
+// Validate API key
+ $validation = validateApiKey();
+if (!$validation['valid']) {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
+    log_message('Error 401: ' . json_encode($errorMsg));
+    echo json_encode($errorMsg);
+    exit;
+}
+
+ $expectedApiKey = $validation['response']['apiKey'];
+ $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+if ($providedApiKey !== $expectedApiKey) {
+    http_response_code(401);
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
+    log_message('Error 401: ' . json_encode($errorMsg));
+    echo json_encode($errorMsg);
+    exit;
+}
 
 // Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 0);
