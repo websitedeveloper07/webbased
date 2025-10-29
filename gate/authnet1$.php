@@ -1,4 +1,8 @@
 <?php
+// FOR DEBUGGING: If you get a 500 error, uncomment the lines below to see the exact error
+// ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: text/html; charset=utf-8');
@@ -132,7 +136,6 @@ if (checkProxyIP($user_ip)) {
     showForbiddenPage();
     exit; // Double ensure script execution stops
 }
-
 // --- END OF PROXY DETECTION LOGIC ---
 
 // Include cron_sync.php for validateApiKey
