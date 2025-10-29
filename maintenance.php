@@ -22,7 +22,7 @@ if (!file_exists(MAINTENANCE_FLAG)) {
 // Handle admin login
 if (isset($_POST['admin_password']) && $_POST['admin_password'] === ADMIN_ACCESS_KEY) {
     $_SESSION['admin_authenticated'] = true;
-    header("Location: /adminaccess_panel.php");
+    header("Location: /login.php");
     exit();
 } elseif (isset($_POST['admin_password']) && $_POST['admin_password'] !== '') {
     $error = "Invalid access key. Please try again.";
