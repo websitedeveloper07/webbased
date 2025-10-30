@@ -143,6 +143,10 @@ try {
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
             'totalLive' => $totalLive,
+            'total3DS' => $total3DS,
+            'totalDeclined' => $totalDeclined,
+            'successRate' => $successRate,
+            'topUsers' => $formattedTopUsers
         ]
     ]);
     
