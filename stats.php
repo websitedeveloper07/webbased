@@ -3,7 +3,7 @@
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
-header('Content-Type: 'application/json');
+header('Content-Type: application/json');
 
 // Set timeout and memory limits
 set_time_limit(30); // 30 seconds max execution time
@@ -79,9 +79,35 @@ try {
                 id SERIAL PRIMARY KEY,
                 telegram_id BIGINT UNIQUE,
                 name VARCHAR(255),
+                username VARCHAR(255),
+                photo_url VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ");
+            );
         ");
+    } else {
+        // Check if username column exists in users table
+        $columnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'username'
+        ")->fetchColumn();
+        
+        // Add username column if it doesn't exist
+        if (!$columnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
+        }
+        
+        // Check if photo_url column exists in users table
+        $photoColumnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'photo_url'
+        ")->fetchColumn();
+        
+        // Add photo_url column if it doesn't exist
+        if (!$photoColumnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
+        }
     }
     
     // === GLOBAL STATISTICS CALCULATION ===
@@ -102,38 +128,8 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'APPROVED'");
     $totalLive = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get total 3DS cards
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = '3DS'");
-    $total3DS = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Get total declined cards
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'DECLINED'");
-    $totalDeclined = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Calculate success rate
-    $successRate = $totalChecked > 0 ? round((($totalCharged + $totalLive + $total3DS) / $totalChecked) * 100, 2) : 0;
-    
-    // Get top users (by number of charged cards)
-    $stmt = $pdo->query("
-        SELECT u.name, u.photo_url, COUNT(c.id) as hits
-        FROM users u
-        JOIN card_checks c ON u.id = c.user_id
-        WHERE c.status = 'CHARGED'
-        GROUP BY u.id
-        ORDER BY hits DESC
-        LIMIT 5
-    ");
-    $topUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format top users data
-    $formattedTopUsers = [];
-    foreach ($topUsers as $user) {
-        $formattedTopUsers[] = [
-            'name' => $user['name'],
-            'photo_url' => $user['photo_url'],
-            'hits' => $user['hits']
-        ];
-    }
+    // Calculate success rate (excluding 3DS and declined)
+    $successRate = $totalChecked > 0 ? round((($totalCharged + $totalLive) / $totalChecked) * 100, 2) : 0;
     
     // Return success response with all data
     echo json_encode([
@@ -143,10 +139,7 @@ try {
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
             'totalLive' => $totalLive,
-            'total3DS' => $total3DS,
-            'totalDeclined' => $totalDeclined,
-            'successRate' => $successRate,
-            'topUsers' => $formattedTopUsers
+            'successRate' => $successRate
         ]
     ]);
     
