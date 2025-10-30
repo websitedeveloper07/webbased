@@ -85,7 +85,27 @@ try {
             );
         ");
     }
-
+    
+    // Check if user_stats table exists (for aggregated stats)
+    $userStatsTableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
+    
+    if (!$userStatsTableExists) {
+        // Create user_stats table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE user_stats (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT REFERENCES users(id),
+                charged_count INTEGER DEFAULT 0,
+                approved_count INTEGER DEFAULT 0,
+                threeds_count INTEGER DEFAULT 0,
+                declined_count INTEGER DEFAULT 0,
+                total_checked INTEGER DEFAULT 0,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id)
+            );
+        ");
+    }
+    
     // Get total users count
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM users");
     $totalUsers = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
@@ -102,14 +122,38 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'APPROVED'");
     $totalLive = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Return success response with only the counts
+    // Get top users (by number of charged cards)
+    $stmt = $pdo->query("
+        SELECT u.name, u.username, u.photo_url, COUNT(c.id) as hits
+        FROM users u
+        JOIN card_checks c ON u.id = c.user_id
+        WHERE c.status = 'CHARGED'
+        GROUP BY u.id
+        ORDER BY hits DESC
+        LIMIT 5
+    ");
+    $topUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Format top users data
+    $formattedTopUsers = [];
+    foreach ($topUsers as $user) {
+        $formattedTopUsers[] = [
+            'name' => $user['name'],
+            'username' => $user['username'],
+            'photo_url' => $user['photo_url'],
+            'hits' => $user['hits']
+        ];
+    }
+    
+    // Return success response with all data
     echo json_encode([
         'success' => true,
         'data' => [
             'totalUsers' => $totalUsers,
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
-            'totalLive' => $totalLive
+            'totalLive' => $totalLive,
+            'topUsers' => $formattedTopUsers
         ]
     ]);
     
