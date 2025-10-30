@@ -7,7 +7,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Admin access key
-define('ADMIN_ACCESS_KEY', 'iloveyoupayal');
+define('ADMIN_ACCESS_KEY', 'iloveyoupayall');
 
 // Maintenance flag file path
 define('MAINTENANCE_FLAG', '/tmp/.maintenance');
