@@ -960,7 +960,7 @@ if (empty($userPhotoUrl)) {
             color: var(--text-secondary);
         }
         .custom-input-group {
-            display: flex;
+            display: flex,
             width: 100%;
         }
         .custom-input-group input {
@@ -1031,19 +1031,21 @@ if (empty($userPhotoUrl)) {
             flex-wrap: wrap;
         }
         
-        /* Profile Page Styles */
+        /* Profile Page Styles - BEAST LEVEL */
         .profile-container {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
         
+        /* Profile Header with Glassmorphism */
         .profile-header {
-            background: var(--card-bg);
-            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
             padding: 2rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             position: relative;
             overflow: hidden;
         }
@@ -1056,12 +1058,19 @@ if (empty($userPhotoUrl)) {
             right: 0;
             height: 5px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         .profile-info {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 2rem;
             flex-wrap: wrap;
         }
         
@@ -1076,6 +1085,11 @@ if (empty($userPhotoUrl)) {
             object-fit: cover;
             border: 4px solid var(--accent-blue);
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-avatar:hover {
+            transform: scale(1.05);
         }
         
         .profile-status {
@@ -1095,12 +1109,13 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-name {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 2.5rem;
+            font-weight: 800;
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
         
         .profile-username {
@@ -1123,18 +1138,22 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             gap: 0.3rem;
+            backdrop-filter: blur(5px);
         }
         
         .badge-member {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(59, 130, 246, 0.2);
             color: var(--accent-blue);
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
         
         .badge-active {
-            background: rgba(34, 197, 94, 0.1);
+            background: rgba(34, 197, 94, 0.2);
             color: var(--success-green);
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
         
+        /* Compact Stats Section */
         .profile-stats-container {
             background: var(--card-bg);
             border-radius: 16px;
@@ -1165,7 +1184,7 @@ if (empty($userPhotoUrl)) {
         
         .profile-stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.5rem;
         }
         
@@ -1207,13 +1226,13 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: white;
         }
         
@@ -1224,7 +1243,7 @@ if (empty($userPhotoUrl)) {
         .profile-stat-card.declined .profile-stat-icon { background: var(--stat-declined); }
         
         .profile-stat-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
@@ -1237,7 +1256,7 @@ if (empty($userPhotoUrl)) {
         
         .profile-stat-label {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.5px;
@@ -1261,6 +1280,140 @@ if (empty($userPhotoUrl)) {
         .profile-stat-card.approved .profile-stat-progress-bar { background: var(--stat-approved); }
         .profile-stat-card.threeds .profile-stat-progress-bar { background: var(--stat-threeds); }
         .profile-stat-card.declined .profile-stat-progress-bar { background: var(--stat-declined); }
+        
+        /* Global Stats Section */
+        .global-stats-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .global-stats-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+        }
+        
+        .global-stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .global-stats-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .global-stats-title i {
+            color: var(--accent-cyan);
+        }
+        
+        .global-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .global-stat-card {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .global-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        
+        .global-stat-card.total::before { background: var(--stat-total); }
+        .global-stat-card.charged::before { background: var(--stat-charged); }
+        .global-stat-card.approved::before { background: var(--stat-approved); }
+        
+        .global-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .global-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .global-stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .global-stat-card.total .global-stat-icon { background: var(--stat-total); }
+        .global-stat-card.charged .global-stat-icon { background: var(--stat-charged); }
+        .global-stat-card.approved .global-stat-icon { background: var(--stat-approved); }
+        
+        .global-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .global-stat-card.total .global-stat-value { color: var(--accent-purple); }
+        .global-stat-card.charged .global-stat-value { color: var(--success-green); }
+        .global-stat-card.approved .global-stat-value { color: var(--success-green); }
+        
+        .global-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .global-stat-change {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        
+        .global-stat-change.positive {
+            color: var(--success-green);
+        }
+        
+        .global-stat-change.negative {
+            color: var(--declined-red);
+        }
         
         /* Hide any potential role elements */
         .profile-role,
@@ -1391,7 +1544,7 @@ if (empty($userPhotoUrl)) {
             }
             
             .profile-name {
-                font-size: 1.5rem;
+                font-size: 2rem;
             }
             
             .profile-username {
@@ -1408,12 +1561,20 @@ if (empty($userPhotoUrl)) {
             }
             
             .profile-stat-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
             }
             
             .profile-stat-value {
+                font-size: 1.8rem;
+            }
+            
+            .global-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .global-stat-value {
                 font-size: 2rem;
             }
         }
@@ -1451,7 +1612,7 @@ if (empty($userPhotoUrl)) {
             }
             
             .profile-name {
-                font-size: 1.3rem;
+                font-size: 1.8rem;
             }
             
             .profile-username {
@@ -1463,6 +1624,10 @@ if (empty($userPhotoUrl)) {
             }
             
             .profile-stat-value {
+                font-size: 1.6rem;
+            }
+            
+            .global-stat-value {
                 font-size: 1.8rem;
             }
         }
@@ -1903,6 +2068,55 @@ if (empty($userPhotoUrl)) {
                             <div class="profile-stat-label">DEAD|DECLINED</div>
                             <div class="profile-stat-progress">
                                 <div class="profile-stat-progress-bar" id="profile-declined-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="global-stats-container">
+                    <div class="global-stats-header">
+                        <h2 class="global-stats-title">
+                            <i class="fas fa-globe"></i> Global Statistics
+                        </h2>
+                    </div>
+                    
+                    <div class="global-stats-grid">
+                        <div class="global-stat-card total">
+                            <div class="global-stat-header">
+                                <div class="global-stat-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                            </div>
+                            <div class="global-stat-value" id="global-total-value">0</div>
+                            <div class="global-stat-label">TOTAL CHECKED</div>
+                            <div class="global-stat-change positive">
+                                <i class="fas fa-arrow-up"></i> <span id="global-total-change">0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="global-stat-card charged">
+                            <div class="global-stat-header">
+                                <div class="global-stat-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                            </div>
+                            <div class="global-stat-value" id="global-charged-value">0</div>
+                            <div class="global-stat-label">HIT|CHARGED</div>
+                            <div class="global-stat-change positive">
+                                <i class="fas fa-arrow-up"></i> <span id="global-charged-change">0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="global-stat-card approved">
+                            <div class="global-stat-header">
+                                <div class="global-stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="global-stat-value" id="global-approved-value">0</div>
+                            <div class="global-stat-label">LIVE|APPROVED</div>
+                            <div class="global-stat-change positive">
+                                <i class="fas fa-arrow-up"></i> <span id="global-approved-change">0%</span>
                             </div>
                         </div>
                     </div>
