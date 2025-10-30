@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache'
+                'X-API-KEY': apiKey
             }
         })
         .then(response => {
