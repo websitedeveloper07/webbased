@@ -356,6 +356,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     
     log_message("$our_status for $card_details: $our_message");
     
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $card_number, $our_status, $our_message);
+    
     // Send Telegram notification for APPROVED status
     if ($our_status === 'APPROVED') {
         sendTelegramNotification($card_details, $our_status, $our_message, $response);
