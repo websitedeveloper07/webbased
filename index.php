@@ -131,6 +131,11 @@ if (empty($userPhotoUrl)) {
             --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            
+            /* Admin color */
+            --admin-color: #ef4444;
+            --admin-bg: rgba(239, 68, 68, 0.1);
+            --admin-border: rgba(239, 68, 68, 0.3);
         }
         
         /* Smooth transition for theme switching */
@@ -389,6 +394,105 @@ if (empty($userPhotoUrl)) {
             color: white !important;
         }
         
+        /* Stats cards with consistent colors in both themes */
+        .stat-card {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        
+        body[data-theme="dark"] .stat-card {
+            background: var(--dark-card-bg) !important;
+            border: 1px solid var(--dark-border-color) !important;
+        }
+        
+        .stat-card.charged::before { background: var(--stat-charged) !important; }
+        .stat-card.approved::before { background: var(--stat-approved) !important; }
+        .stat-card.declined::before { background: var(--stat-declined) !important; }
+        .stat-card.checked::before { background: var(--stat-checked) !important; }
+        .stat-card.online::before { background: var(--stat-online) !important; }
+        
+        .stat-card.charged .stat-icon { background: var(--stat-charged) !important; }
+        .stat-card.approved .stat-icon { background: var(--stat-approved) !important; }
+        .stat-card.declined .stat-icon { background: var(--stat-declined) !important; }
+        .stat-card.checked .stat-icon { background: var(--stat-checked) !important; }
+        .stat-card.online .stat-icon { background: var(--stat-online) !important; }
+        
+        /* Global stats with consistent colors in both themes */
+        .gs-card {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        
+        body[data-theme="dark"] .gs-card {
+            background: var(--dark-card-bg) !important;
+            border: 1px solid var(--dark-border-color) !important;
+        }
+        
+        .gs-blue { 
+            background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)) !important;
+            border: 1px solid rgba(59,130,246,0.3) !important;
+        }
+        
+        .gs-green  { 
+            background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.2)) !important;
+            border: 1px solid rgba(16,185,129,0.3) !important;
+        }
+        
+        .gs-red    { 
+            background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)) !important;
+            border: 1px solid rgba(239,68,68,0.3) !important;
+        }
+        
+        .gs-purple { 
+            background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(124,58,237,0.2)) !important;
+            border: 1px solid rgba(139,92,246,0.3) !important;
+        }
+        
+        /* Online users with no grey color */
+        .online-user-item {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        
+        body[data-theme="dark"] .online-user-item {
+            background: var(--dark-card-bg) !important;
+            border: 1px solid var(--dark-border-color) !important;
+        }
+        
+        .online-user-name {
+            color: var(--text-primary) !important;
+        }
+        
+        body[data-theme="dark"] .online-user-name {
+            color: var(--dark-text-primary) !important;
+        }
+        
+        /* Admin user styling */
+        .online-user-item.admin {
+            background: var(--admin-bg) !important;
+            border: 1px solid var(--admin-border) !important;
+        }
+        
+        .online-user-item.admin .online-user-name {
+            color: var(--admin-color) !important;
+            font-weight: 700 !important;
+        }
+        
+        .online-user-item.admin .online-indicator {
+            background-color: var(--admin-color) !important;
+        }
+        
+        .admin-badge {
+            background-color: var(--admin-color) !important;
+            color: white !important;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 4px;
+        }
+        
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
             background: #1a1a1a; /* Always dark header */
@@ -610,12 +714,6 @@ if (empty($userPhotoUrl)) {
             height: 3px;
         }
         
-        .stat-card.charged::before { background: var(--stat-charged); }
-        .stat-card.approved::before { background: var(--stat-approved); }
-        .stat-card.declined::before { background: var(--stat-declined); }
-        .stat-card.checked::before { background: var(--stat-checked); }
-        .stat-card.online::before { background: var(--stat-online); }
-        
         .stat-card:hover { 
             transform: translateY(-3px); 
             box-shadow: 0 8px 30px var(--shadow);
@@ -640,12 +738,6 @@ if (empty($userPhotoUrl)) {
             font-size: 0.8rem; /* Reduced from 0.9rem */
             color: white;
         }
-        
-        .stat-card.charged .stat-icon { background: var(--stat-charged); }
-        .stat-card.approved .stat-icon { background: var(--stat-approved); }
-        .stat-card.declined .stat-icon { background: var(--stat-declined); }
-        .stat-card.checked .stat-icon { background: var(--stat-checked); }
-        .stat-card.online .stat-icon { background: var(--stat-online); }
         
         .stat-value { 
             font-size: 1.3rem; /* Reduced from 1.4rem */
@@ -733,24 +825,6 @@ if (empty($userPhotoUrl)) {
         .gs-card .gs-icon svg{width:14px;height:14px;display:block;opacity:.95}
         .gs-num{font-weight:800;font-size:16px;line-height:1}
         .gs-label{font-size:9px;color:var(--text-secondary);margin-top:3px}
-        
-        /* Enhanced colors for global stats with better visibility */
-        .gs-blue   { 
-            background:linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2));
-            border: 1px solid rgba(59,130,246,0.3);
-        }
-        .gs-green  { 
-            background:linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.2));
-            border: 1px solid rgba(16,185,129,0.3);
-        }
-        .gs-red    { 
-            background:linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2));
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-        .gs-purple { 
-            background:linear-gradient(135deg, rgba(139,92,246,0.3), rgba(124,58,237,0.2));
-            border: 1px solid rgba(139,92,246,0.3);
-        }
         
         /* Enhanced Online Users Section */
         .online-users-section {
@@ -843,7 +917,7 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem;
-            background: var(--secondary-bg);
+            background: var(--card-bg);
             border-radius: 8px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
@@ -995,7 +1069,7 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem;
-            background: var(--secondary-bg);
+            background: var(--card-bg);
             border-radius: 8px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
@@ -1606,7 +1680,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 0.6rem;
-            background: var(--secondary-bg);
+            background: var(--card-bg);
             border-radius: 10px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
@@ -1626,6 +1700,8 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.charged::before { background: var(--stat-charged); }
         .user-stat-item.approved::before { background: var(--stat-approved); }
         .user-stat-item.declined::before { background: var(--stat-declined); }
+        .user-stat-item.threeds::before { background: var(--stat-threeds); }
+        .user-stat-item.checked::before { background: var(--stat-checked); }
         
         .user-stat-item:hover {
             transform: translateX(5px);
@@ -1647,6 +1723,8 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.charged .user-stat-icon { background: var(--stat-charged); }
         .user-stat-item.approved .user-stat-icon { background: var(--stat-approved); }
         .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
+        .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
+        .user-stat-item.checked .user-stat-icon { background: var(--stat-checked); }
         
         .user-stat-content {
             flex: 1;
@@ -1672,6 +1750,8 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.charged .user-stat-value { color: var(--success-green); }
         .user-stat-item.approved .user-stat-value { color: var(--success-green); }
         .user-stat-item.declined .user-stat-value { color: var(--declined-red); }
+        .user-stat-item.threeds .user-stat-value { color: var(--accent-cyan); }
+        .user-stat-item.checked .user-stat-value { color: var(--accent-purple); }
         
         /* Hide any potential role elements */
         .profile-role,
@@ -2179,7 +2259,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑶</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥 𝐰𝐢𝐢𝐥𝐥𝐬 𝐰𝐢𝐡𝐧𝐡</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥 𝐰𝐢𝐢𝐥𝐥𝐬 𝐰𝐢𝐭𝐡𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -2327,6 +2407,16 @@ if (empty($userPhotoUrl)) {
                             </div>
                         </div>
                         
+                        <div class="user-stat-item threeds">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">3DS</div>
+                                <div class="user-stat-value" id="profile-threeds-value">0</div>
+                            </div>
+                        </div>
+                        
                         <div class="user-stat-item declined">
                             <div class="user-stat-icon">
                                 <i class="fas fa-times-circle"></i>
@@ -2334,6 +2424,16 @@ if (empty($userPhotoUrl)) {
                             <div class="user-stat-content">
                                 <div class="user-stat-label">Declined</div>
                                 <div class="user-stat-value" id="profile-declined-value">0</div>
+                            </div>
+                        </div>
+                        
+                        <div class="user-stat-item checked">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">Total Checked</div>
+                                <div class="user-stat-value" id="profile-checked-value">0</div>
                             </div>
                         </div>
                     </div>
@@ -2507,10 +2607,13 @@ if (empty($userPhotoUrl)) {
             }
         });
         
-        // Theme toggle function
+        // Theme toggle function with smooth animation
         function toggleTheme() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            // Add transition class for smooth animation
+            document.body.style.transition = 'background-color 0.4s ease, color 0.4s ease';
             
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
