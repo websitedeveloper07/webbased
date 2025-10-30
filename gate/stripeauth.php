@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/globalstats.php';
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: text/html; charset=utf-8');
