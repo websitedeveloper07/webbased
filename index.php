@@ -115,14 +115,14 @@ if (empty($userPhotoUrl)) {
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
-            /* Dark theme colors */
-            --dark-primary-bg: #1a1a1a;
-            --dark-secondary-bg: #2d2d2d;
-            --dark-card-bg: #252525;
-            --dark-text-primary: #f8f9fa;
-            --dark-text-secondary: #adb5bd;
-            --dark-border-color: #404040;
-            --dark-shadow: rgba(0,0,0,0.3);
+            /* Dark theme colors - softer dark */
+            --dark-primary-bg: #1e293b;
+            --dark-secondary-bg: #334155;
+            --dark-card-bg: #1e293b;
+            --dark-text-primary: #f1f5f9;
+            --dark-text-secondary: #94a3b8;
+            --dark-border-color: #475569;
+            --dark-shadow: rgba(0,0,0,0.2);
             
             /* Enhanced color palette for stats - same in both modes */
             --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -157,7 +157,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .navbar {
-            background: #0f0f0f;
+            background: #0f172a;
         }
         
         body[data-theme="dark"] .sidebar {
@@ -183,8 +183,6 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .welcome-banner,
-        body[data-theme="dark"] .stat-card,
-        body[data-theme="dark"] .gs-panel,
         body[data-theme="dark"] .online-users-section,
         body[data-theme="dark"] .top-users-section,
         body[data-theme="dark"] .checker-section,
@@ -192,6 +190,12 @@ if (empty($userPhotoUrl)) {
         body[data-theme="dark"] .results-section,
         body[data-theme="dark"] .profile-header,
         body[data-theme="dark"] .profile-stats-container {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+            box-shadow: var(--dark-shadow);
+        }
+        
+        body[data-theme="dark"] .gs-panel {
             background: var(--dark-card-bg);
             border-color: var(--dark-border-color);
             box-shadow: var(--dark-shadow);
@@ -248,9 +252,26 @@ if (empty($userPhotoUrl)) {
             -webkit-text-fill-color: transparent;
         }
         
-        body[data-theme="dark"] .page-subtitle,
-        body[data-theme="dark"] .stat-label,
-        body[data-theme="dark"] .gs-label,
+        body[data-theme="dark"] .page-subtitle {
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .stat-label {
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .gs-label {
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .gs-title {
+            color: var(--dark-text-primary);
+        }
+        
+        body[data-theme="dark"] .gs-sub {
+            color: var(--dark-text-secondary);
+        }
+        
         body[data-theme="dark"] .online-user-username,
         body[data-theme="dark"] .top-user-username,
         body[data-theme="dark"] .user-stat-label,
@@ -301,13 +322,6 @@ if (empty($userPhotoUrl)) {
             border-color: var(--error);
             color: var(--error);
             background: rgba(239, 68, 68, 0.1);
-        }
-        
-        body[data-theme="dark"] .gs-blue,
-        body[data-theme="dark"] .gs-green,
-        body[data-theme="dark"] .gs-red,
-        body[data-theme="dark"] .gs-purple {
-            border-color: var(--dark-border-color);
         }
         
         body[data-theme="dark"] .online-users-list::-webkit-scrollbar-track,
@@ -403,6 +417,15 @@ if (empty($userPhotoUrl)) {
         body[data-theme="dark"] .stat-card {
             background: var(--dark-card-bg) !important;
             border: 1px solid var(--dark-border-color) !important;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
         }
         
         .stat-card.charged::before { background: var(--stat-charged) !important; }
@@ -703,15 +726,6 @@ if (empty($userPhotoUrl)) {
             justify-content: space-between;
             overflow: hidden;
             border: 1px solid var(--border-color);
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
         }
         
         .stat-card:hover { 
@@ -2258,7 +2272,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑶</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑬𝑹</h1>
             <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥 𝐰𝐢𝐢𝐥𝐥𝐬 𝐰𝐢𝐭𝐡𝐧𝐡</p>
 
             <div class="generator-section">
