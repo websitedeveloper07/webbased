@@ -112,6 +112,13 @@ if (empty($userPhotoUrl)) {
             --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            
+            /* Dark theme colors from example */
+            --dark-bg: #0b1220;
+            --dark-card: rgba(15, 23, 42, 0.82);
+            --dark-border: rgba(255,255,255,.08);
+            --dark-text: #e5e7eb;
+            --dark-secondary: #9aa4b2;
         }
         [data-theme="light"] {
             --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
@@ -124,6 +131,14 @@ if (empty($userPhotoUrl)) {
             --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        [data-theme="dark"] {
+            --primary-bg: var(--dark-bg);
+            --secondary-bg: var(--dark-card);
+            --card-bg: var(--dark-card);
+            --text-primary: var(--dark-text);
+            --text-secondary: var(--dark-secondary);
+            --border-color: var(--dark-border);
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
@@ -1206,138 +1221,69 @@ if (empty($userPhotoUrl)) {
         .profile-stat-card.threeds .profile-stat-progress-bar { background: var(--stat-threeds); }
         .profile-stat-card.declined .profile-stat-progress-bar { background: var(--stat-declined); }
         
-        /* Global Stats Section */
-        .global-stats-container {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .global-stats-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
-        }
-        
-        .global-stats-header {
+        /* User Stats Column Layout */
+        .user-stats-column {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
+            flex-direction: column;
+            gap: 1rem;
         }
         
-        .global-stats-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
+        .user-stat-item {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .global-stats-title i {
-            color: var(--accent-cyan);
-        }
-        
-        .global-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .global-stat-card {
+            padding: 1rem;
             background: var(--secondary-bg);
             border-radius: 12px;
-            padding: 1.5rem;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
         }
         
-        .global-stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
+        .user-stat-item:hover {
+            transform: translateX(5px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
         }
         
-        .global-stat-card.total::before { background: var(--stat-total); }
-        .global-stat-card.charged::before { background: var(--stat-charged); }
-        .global-stat-card.approved::before { background: var(--stat-approved); }
-        
-        .global-stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-        
-        .global-stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .global-stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+        .user-stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: white;
+            margin-right: 1rem;
         }
         
-        .global-stat-card.total .global-stat-icon { background: var(--stat-total); }
-        .global-stat-card.charged .global-stat-icon { background: var(--stat-charged); }
-        .global-stat-card.approved .global-stat-icon { background: var(--stat-approved); }
+        .user-stat-item.total .user-stat-icon { background: var(--stat-total); }
+        .user-stat-item.charged .user-stat-icon { background: var(--stat-charged); }
+        .user-stat-item.approved .user-stat-icon { background: var(--stat-approved); }
+        .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
+        .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
         
-        .global-stat-value {
-            font-size: 2.5rem;
+        .user-stat-content {
+            flex: 1;
+        }
+        
+        .user-stat-value {
+            font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         
-        .global-stat-card.total .global-stat-value { color: var(--accent-purple); }
-        .global-stat-card.charged .global-stat-value { color: var(--success-green); }
-        .global-stat-card.approved .global-stat-value { color: var(--success-green); }
+        .user-stat-item.total .user-stat-value { color: var(--accent-purple); }
+        .user-stat-item.charged .user-stat-value { color: var(--success-green); }
+        .user-stat-item.approved .user-stat-value { color: var(--success-green); }
+        .user-stat-item.threeds .user-stat-value { color: var(--success-green); }
+        .user-stat-item.declined .user-stat-value { color: var(--declined-red); }
         
-        .global-stat-label {
+        .user-stat-label {
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.5px;
-        }
-        
-        .global-stat-change {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.2rem;
-        }
-        
-        .global-stat-change.positive {
-            color: var(--success-green);
-        }
-        
-        .global-stat-change.negative {
-            color: var(--declined-red);
         }
         
         /* Hide any potential role elements */
@@ -1495,12 +1441,22 @@ if (empty($userPhotoUrl)) {
                 font-size: 1.8rem;
             }
             
-            .global-stats-grid {
-                grid-template-columns: 1fr;
+            .user-stats-column {
+                gap: 0.8rem;
             }
             
-            .global-stat-value {
-                font-size: 2rem;
+            .user-stat-item {
+                padding: 0.8rem;
+            }
+            
+            .user-stat-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+            
+            .user-stat-value {
+                font-size: 1.5rem;
             }
         }
         
@@ -1552,8 +1508,22 @@ if (empty($userPhotoUrl)) {
                 font-size: 1.6rem;
             }
             
-            .global-stat-value {
-                font-size: 1.8rem;
+            .user-stats-column {
+                gap: 0.6rem;
+            }
+            
+            .user-stat-item {
+                padding: 0.6rem;
+            }
+            
+            .user-stat-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+            }
+            
+            .user-stat-value {
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -1780,8 +1750,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑪𝑲𝑬𝑹</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐩𝐥𝐞 𝐠𝐚𝐭𝐞𝐰𝐚𝐲𝐬</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑹</h1>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥𝐥</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -1844,8 +1814,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑹𝑨𝑻𝑶𝑹</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞 𝐯𝐚𝐥𝐢𝐝 𝐜𝐫𝐞𝐝𝐢𝐭 𝐜𝐚𝐫𝐝𝐬 𝐰𝐢𝐭𝐡 𝐋𝐮𝐡𝐧 𝐜𝐡𝐞𝐜𝐤𝐬𝐮𝐦</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑶</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥𝐥𝐬 𝐰𝐢𝐢𝐥𝐥𝐥 𝐰𝐢𝐡𝐡𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -1972,118 +1942,54 @@ if (empty($userPhotoUrl)) {
                         </h2>
                     </div>
                     
-                    <div class="profile-stats-grid">
-                        <div class="profile-stat-card total">
-                            <div class="profile-stat-header">
-                                <div class="profile-stat-icon">
-                                    <i class="fas fa-credit-card"></i>
-                                </div>
+                    <div class="user-stats-column">
+                        <div class="user-stat-item total">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="profile-stat-value" id="profile-total-value">0</div>
-                            <div class="profile-stat-label">TOTAL CHECKED</div>
-                            <div class="profile-stat-progress">
-                                <div class="profile-stat-progress-bar" id="profile-total-progress" style="width: 0%"></div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-value" id="profile-total-value">0</div>
+                                <div class="user-stat-label">TOTAL CHECKED</div>
                             </div>
                         </div>
                         
-                        <div class="profile-stat-card charged">
-                            <div class="profile-stat-header">
-                                <div class="profile-stat-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
+                        <div class="user-stat-item charged">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-bolt"></i>
                             </div>
-                            <div class="profile-stat-value" id="profile-charged-value">0</div>
-                            <div class="profile-stat-label">HIT|CHARGED</div>
-                            <div class="profile-stat-progress">
-                                <div class="profile-stat-progress-bar" id="profile-charged-progress" style="width: 0%"></div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-value" id="profile-charged-value">0</div>
+                                <div class="user-stat-label">HIT|CHARGED</div>
                             </div>
                         </div>
                         
-                        <div class="profile-stat-card approved">
-                            <div class="profile-stat-header">
-                                <div class="profile-stat-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
+                        <div class="user-stat-item approved">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-check-circle"></i>
                             </div>
-                            <div class="profile-stat-value" id="profile-approved-value">0</div>
-                            <div class="profile-stat-label">LIVE|APPROVED</div>
-                            <div class="profile-stat-progress">
-                                <div class="profile-stat-progress-bar" id="profile-approved-progress" style="width: 0%"></div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-value" id="profile-approved-value">0</div>
+                                <div class="user-stat-label">LIVE|APPROVED</div>
                             </div>
                         </div>
                         
-                        <div class="profile-stat-card threeds">
-                            <div class="profile-stat-header">
-                                <div class="profile-stat-icon">
-                                    <i class="fas fa-lock"></i>
-                                </div>
+                        <div class="user-stat-item threeds">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-lock"></i>
                             </div>
-                            <div class="profile-stat-value" id="profile-threeds-value">0</div>
-                            <div class="profile-stat-label">3DS</div>
-                            <div class="profile-stat-progress">
-                                <div class="profile-stat-progress-bar" id="profile-threeds-progress" style="width: 0%"></div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-value" id="profile-threeds-value">0</div>
+                                <div class="user-stat-label">3DS</div>
                             </div>
                         </div>
                         
-                        <div class="profile-stat-card declined">
-                            <div class="profile-stat-header">
-                                <div class="profile-stat-icon">
-                                    <i class="fas fa-times-circle"></i>
-                                </div>
+                        <div class="user-stat-item declined">
+                            <div class="user-stat-icon">
+                                <i class="fas fa-times-circle"></i>
                             </div>
-                            <div class="profile-stat-value" id="profile-declined-value">0</div>
-                            <div class="profile-stat-label">DEAD|DECLINED</div>
-                            <div class="profile-stat-progress">
-                                <div class="profile-stat-progress-bar" id="profile-declined-progress" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="global-stats-container">
-                    <div class="global-stats-header">
-                        <h2 class="global-stats-title">
-                            <i class="fas fa-globe"></i> Global Statistics
-                        </h2>
-                    </div>
-                    
-                    <div class="global-stats-grid">
-                        <div class="global-stat-card total">
-                            <div class="global-stat-header">
-                                <div class="global-stat-icon">
-                                    <i class="fas fa-credit-card"></i>
-                                </div>
-                            </div>
-                            <div class="global-stat-value" id="global-total-value">0</div>
-                            <div class="global-stat-label">TOTAL CHECKED</div>
-                            <div class="global-stat-change positive">
-                                <i class="fas fa-arrow-up"></i> <span id="global-total-change">0%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="global-stat-card charged">
-                            <div class="global-stat-header">
-                                <div class="global-stat-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                            </div>
-                            <div class="global-stat-value" id="global-charged-value">0</div>
-                            <div class="global-stat-label">HIT|CHARGED</div>
-                            <div class="global-stat-change positive">
-                                <i class="fas fa-arrow-up"></i> <span id="global-charged-change">0%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="global-stat-card approved">
-                            <div class="global-stat-header">
-                                <div class="global-stat-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                            </div>
-                            <div class="global-stat-value" id="global-approved-value">0</div>
-                            <div class="global-stat-label">LIVE|APPROVED</div>
-                            <div class="global-stat-change positive">
-                                <i class="fas fa-arrow-up"></i> <span id="global-approved-change">0%</span>
+                            <div class="user-stat-content">
+                                <div class="user-stat-value" id="profile-declined-value">0</div>
+                                <div class="user-stat-label">DEAD|DECLINED</div>
                             </div>
                         </div>
                     </div>
