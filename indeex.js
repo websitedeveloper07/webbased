@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let keyRotationInterval = null;
     let isApiKeyValid = false;
     let activityRequestTimeout = null; // Track activity request timeout
+    let globalStatsInterval = null; // Interval for updating global stats
 
     // Function to format the response by removing status prefix and brackets
     function formatResponse(response) {
@@ -64,6 +65,162 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 5; // Default for stripe1$ and stripe5$     
+    
+    // Function to update global statistics
+    function updateGlobalStats() {
+        console.log("Updating global statistics at", new Date().toISOString());
+        
+        fetch('/stats.php', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Global stats response:", data);
+            
+            if (data.success) {
+                // Update global statistics elements
+                const totalUsersElement = document.getElementById('gTotalUsers');
+                const totalHitsElement = document.getElementById('gTotalHits');
+                const chargeCardsElement = document.getElementById('gChargeCards');
+                const liveCardsElement = document.getElementById('gLiveCards');
+                
+                if (totalUsersElement) totalUsersElement.textContent = data.data.totalUsers;
+                if (totalHitsElement) totalHitsElement.textContent = data.data.totalChecked;
+                if (chargeCardsElement) chargeCardsElement.textContent = data.data.totalCharged;
+                if (liveCardsElement) liveCardsElement.textContent = data.data.totalLive;
+                
+                // Update top users list
+                if (data.data.topUsers && data.data.topUsers.length > 0) {
+                    displayTopUsers(data.data.topUsers);
+                }
+                
+                console.log("Global statistics updated successfully");
+            } else {
+                console.error('Failed to update global statistics:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating global statistics:', error);
+            
+            // Only show error if on home page
+            const homePage = document.getElementById('page-home');
+            if (homePage && homePage.classList.contains('active') && window.Swal) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Failed to update global statistics',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        });
+    }
+
+    // Function to display top users
+    function displayTopUsers(users) {
+        const topUsersList = document.getElementById('topUsersList');
+        if (!topUsersList) {
+            console.error("Element #topUsersList not found in DOM");
+            return;
+        }
+        
+        // Clear existing content
+        topUsersList.innerHTML = '';
+        
+        if (!Array.isArray(users) || users.length === 0) {
+            topUsersList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>No Top Users</h3>
+                    <p>No top users data available</p>
+                </div>`;
+            return;
+        }
+        
+        // Create a document fragment to improve performance
+        const fragment = document.createDocumentFragment();
+        
+        users.forEach((user, index) => {
+            // Safely extract user data with defaults
+            const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+            const username = (user.username && typeof user.username === 'string') ? user.username : '';
+            const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+                user.photo_url : 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+            const hits = user.hits || 0;
+            
+            // Create user item element
+            const userItem = document.createElement('div');
+            userItem.className = 'top-user-item';
+            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+            
+            // Create avatar container
+            const avatarContainer = document.createElement('div');
+            avatarContainer.className = 'top-user-avatar-container';
+            
+            // Create avatar image
+            const avatar = document.createElement('img');
+            avatar.src = photoUrl;
+            avatar.alt = name;
+            avatar.className = 'top-user-avatar';
+            avatar.onerror = function() {
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+            };
+            
+            // Assemble avatar container
+            avatarContainer.appendChild(avatar);
+            
+            // Create user info container
+            const userInfo = document.createElement('div');
+            userInfo.className = 'top-user-info';
+            
+            // Create name element
+            const nameElement = document.createElement('div');
+            nameElement.className = 'top-user-name';
+            nameElement.textContent = name;
+            
+            // Create username element only if username exists
+            if (username) {
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'top-user-username';
+                usernameElement.textContent = username;
+                userInfo.appendChild(nameElement);
+                userInfo.appendChild(usernameElement);
+            } else {
+                userInfo.appendChild(nameElement);
+            }
+            
+            // Create hits element
+            const hitsElement = document.createElement('div');
+            hitsElement.className = 'top-user-hits';
+            hitsElement.textContent = hits + ' hits';
+            
+            // Assemble user item
+            userItem.appendChild(avatarContainer);
+            userItem.appendChild(userInfo);
+            userItem.appendChild(hitsElement);
+            
+            // Add to fragment
+            fragment.appendChild(userItem);
+        });
+        
+        // Clear the list and add all users at once
+        topUsersList.innerHTML = '';
+        topUsersList.appendChild(fragment);
+        
+        console.log("Successfully rendered top users list");
+    }
+
     // Load API key from refresh.php using POST
     function loadApiKey() {
         return fetch('/gate/refresh.php', {
@@ -182,10 +339,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const stats = getUserStatistics();
         
         // Update statistics values
-        updateProfileStat('total', stats.total || 0);
         updateProfileStat('charged', stats.charged || 0);
         updateProfileStat('approved', stats.approved || 0);
-        updateProfileStat('threeds', stats.threeds || 0);
         updateProfileStat('declined', stats.declined || 0);
         
         // Update progress bars
@@ -365,6 +520,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load profile data when profile page is shown
                 if (pageName === 'profile') {
                     loadUserProfile();
+                }
+                
+                // Update global stats when home page is shown
+                if (pageName === 'home') {
+                    updateGlobalStats();
                 }
             }
             
@@ -1425,6 +1585,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             clearInterval(activityUpdateInterval);
                         }
                         
+                        // Clear global stats interval
+                        if (globalStatsInterval) {
+                            clearInterval(globalStatsInterval);
+                        }
+                        
                         // Clear any pending activity request
                         if (window.activityRequest) {
                             window.activityRequest.abort();
@@ -1451,6 +1616,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (activityUpdateInterval) {
                         clearInterval(activityUpdateInterval);
+                    }
+                    
+                    if (globalStatsInterval) {
+                        clearInterval(globalStatsInterval);
                     }
                     
                     if (window.activityRequest) {
@@ -1762,9 +1931,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (keyRotationInterval) {
                         clearInterval(keyRotationInterval);
                     }
+                    if (globalStatsInterval) {
+                        clearInterval(globalStatsInterval);
+                    }
                     console.log("Cleared intervals on page unload");
                 });
             }
+        }
+
+        // Initialize global stats updates
+        function initializeGlobalStatsUpdates() {
+            // Clear any existing interval
+            if (globalStatsInterval) {
+                clearInterval(globalStatsInterval);
+            }
+            
+            // Initial update
+            updateGlobalStats();
+            
+            // Set up interval to update every 30 seconds
+            globalStatsInterval = setInterval(() => {
+                updateGlobalStats();
+            }, 30000);
+            
+            console.log("Global stats updates initialized. Stats will update every 30 seconds.");
         }
 
         // Make functions globally accessible
@@ -1952,6 +2142,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Initialize activity updates
                 initializeActivityUpdates();
+                
+                // Initialize global stats updates
+                initializeGlobalStatsUpdates();
                 
                 // Initialize maxConcurrent based on selected gateway
                 updateMaxConcurrent();
