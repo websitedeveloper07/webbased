@@ -80,7 +80,7 @@ try {
                 telegram_id BIGINT UNIQUE,
                 name VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+            ");
         ");
     }
     
@@ -107,8 +107,8 @@ try {
     $total3DS = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // Get total declined cards
-    $stmt = $query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'DECLINED'");
-    $totalDeclined = $totalDeclined;
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'DECLINED'");
+    $totalDeclined = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // Calculate success rate
     $successRate = $totalChecked > 0 ? round((($totalCharged + $totalLive + $total3DS) / $totalChecked) * 100, 2) : 0;
@@ -143,10 +143,6 @@ try {
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
             'totalLive' => $totalLive,
-            'total3DS' => $total3DS,
-            'totalDeclined' => $totalDeclined,
-            'successRate' => $successRate,
-            'topUsers' => $formattedTopUsers
         ]
     ]);
     
