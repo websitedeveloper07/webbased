@@ -473,6 +473,9 @@ if ($our_status === 'DECLINED') {
 // Prepare output message
  $our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
 
+// Record the card check result in the database
+recordCardCheck($GLOBALS['pdo'], $card_number, $our_status, $our_message);
+
 // Send Telegram notification for CHARGED status
 if ($our_status === 'CHARGED') {
     sendTelegramNotification($cc, $our_status, $our_message);
