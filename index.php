@@ -115,7 +115,7 @@ if (empty($userPhotoUrl)) {
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
-            /* Enhanced color palette for stats */
+            /* Enhanced color palette for stats - same in both modes */
             --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
@@ -125,36 +125,60 @@ if (empty($userPhotoUrl)) {
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         [data-theme="dark"] {
-            /* Dark theme colors - improved for better appearance */
-            --primary-bg: #0f172a;
-            --secondary-bg: #1e293b;
-            --card-bg: #1e293b;
+            /* Dark theme colors - beast level */
+            --primary-bg: #0a0e1a;
+            --secondary-bg: #141824;
+            --card-bg: #1a1f2e;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --accent-blue: #3b82f6; 
-            --accent-cyan: #06b6d4;
+            --border-color: #2a3142;
+            --accent-blue: #4a9eff; 
+            --accent-cyan: #00d4ff;
             --accent-green: #10b981; 
             --error: #ef4444; 
             --warning: #f59e0b; 
-            --shadow: rgba(0,0,0,0.3);
+            --shadow: rgba(0,0,0,0.5);
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
-            /* Dark mode stat colors with better contrast */
-            --stat-total: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            --stat-charged: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            --stat-approved: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            --stat-threeds: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            --stat-declined: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            --stat-checked: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-            --stat-online: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            /* Shining effects for dark mode */
+            --shine-1: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+            --shine-2: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 50%, rgba(255,255,255,0) 100%);
+            --glow-blue: 0 0 20px rgba(74,158,255,0.3);
+            --glow-cyan: 0 0 20px rgba(0,212,255,0.3);
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
             color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
+        
+        /* Dark mode background with shining effect */
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #0a0e1a 0%, #141824 100%);
+            position: relative;
+        }
+        
+        [data-theme="dark"] body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(74,158,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0,212,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(139,92,246,0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: shimmer 20s infinite linear;
+        }
+        
+        @keyframes shimmer {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.5; }
+            100% { opacity: 0.3; }
+        }
+        
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
             background: var(--card-bg); backdrop-filter: blur(10px);
@@ -163,12 +187,26 @@ if (empty($userPhotoUrl)) {
             height: 50px;
             box-shadow: var(--shadow);
         }
+        
+        /* Dark mode navbar with shining effect */
+        [data-theme="dark"] .navbar {
+            background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(20,24,36,0.9) 100%);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
         .navbar-brand {
             display: flex; align-items: center; gap: 0.5rem;
             font-size: 1.2rem; font-weight: 700;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
+        
+        /* Dark mode navbar brand with glow effect */
+        [data-theme="dark"] .navbar-brand {
+            text-shadow: 0 0 10px rgba(74,158,255,0.5);
+        }
+        
         .navbar-brand i { font-size: 1.2rem; }
         .navbar-actions { display: flex; align-items: center; gap: 0.5rem; }
         .theme-toggle {
@@ -176,24 +214,50 @@ if (empty($userPhotoUrl)) {
             border-radius: 10px; cursor: pointer; border: 1px solid var(--border-color);
             position: relative; transition: all 0.3s;
         }
+        
+        /* Dark mode theme toggle with glow effect */
+        [data-theme="dark"] .theme-toggle {
+            background: linear-gradient(135deg, #2a3142 0%, #1a1f2e 100%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
         .theme-toggle-slider {
             position: absolute; width: 16px; height: 16px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             left: 2px; transition: transform 0.3s; display: flex;
             align-items: center; justify-content: center; color: white; font-size: 0.5rem;
         }
+        
+        /* Dark mode theme toggle slider with glow effect */
+        [data-theme="dark"] .theme-toggle-slider {
+            box-shadow: 0 0 10px rgba(74,158,255,0.5);
+        }
+        
         [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
             display: flex; align-items: center; gap: 0.5rem;
             padding: 0.2rem 0.5rem; background: var(--secondary-bg);
             border-radius: 8px; border: 1px solid var(--border-color);
         }
+        
+        /* Dark mode user info with glow effect */
+        [data-theme="dark"] .user-info {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            box-shadow: var(--glow-blue);
+        }
+        
         .user-avatar {
             width: 28px; height: 28px; border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-blue);
             flex-shrink: 0;
         }
+        
+        /* Dark mode user avatar with glow effect */
+        [data-theme="dark"] .user-avatar {
+            box-shadow: 0 0 10px rgba(74,158,255,0.5);
+        }
+        
         .user-details {
             display: flex;
             flex-direction: column;
@@ -216,6 +280,13 @@ if (empty($userPhotoUrl)) {
             flex-shrink: 0; cursor: pointer;
             border: 1px solid var(--border-color);
         }
+        
+        /* Dark mode menu toggle with glow effect */
+        [data-theme="dark"] .menu-toggle {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            box-shadow: var(--glow-blue);
+        }
+        
         .menu-toggle:hover { transform: scale(1.1); background: var(--accent-blue); color: white !important; }
         .sidebar {
             position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
@@ -225,6 +296,14 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
         }
+        
+        /* Dark mode sidebar with shining effect */
+        [data-theme="dark"] .sidebar {
+            background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(20,24,36,0.95) 100%);
+            backdrop-filter: blur(15px);
+            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+        }
+        
         .sidebar.open {
             transform: translateX(0);
         }
@@ -240,6 +319,13 @@ if (empty($userPhotoUrl)) {
             padding: 0.5rem 0.75rem; color: var(--text-secondary);
             border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
         }
+        
+        /* Dark mode sidebar link with hover effect */
+        [data-theme="dark"] .sidebar-link:hover {
+            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
+            box-shadow: var(--glow-blue);
+        }
+        
         .sidebar-link:hover {
             background: rgba(59,130,246,0.1); color: var(--accent-blue);
             transform: translateX(5px);
@@ -248,6 +334,12 @@ if (empty($userPhotoUrl)) {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
         }
+        
+        /* Dark mode active sidebar link with glow effect */
+        [data-theme="dark"] .sidebar-link.active {
+            box-shadow: var(--glow-blue);
+        }
+        
         .sidebar-link i { width: 15px; text-align: center; font-size: 0.9rem; }
         .sidebar-divider { height: 1px; background: var(--border-color); margin: 1rem 0.5rem; }
         .main-content {
@@ -263,6 +355,12 @@ if (empty($userPhotoUrl)) {
             background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
+        
+        /* Dark mode page title with glow effect */
+        [data-theme="dark"] .page-title {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+        
         .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         
         /* Enhanced Dashboard Stats */
@@ -287,10 +385,37 @@ if (empty($userPhotoUrl)) {
             gap: 1rem;
         }
         
+        /* Dark mode welcome banner with shining effect */
+        [data-theme="dark"] .welcome-banner {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-2);
+            animation: shine 8s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 100%; }
+            100% { left: 100%; }
+        }
+        
         .welcome-content {
             display: flex;
             align-items: center;
             gap: 1rem;
+            position: relative;
+            z-index: 1;
         }
         
         .welcome-icon {
@@ -305,12 +430,22 @@ if (empty($userPhotoUrl)) {
             font-size: 1.5rem;
         }
         
+        /* Dark mode welcome icon with glow effect */
+        [data-theme="dark"] .welcome-icon {
+            box-shadow: var(--glow-blue);
+        }
+        
         .welcome-text h2 {
             font-size: 1.5rem;
             margin-bottom: 0.3rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        
+        /* Dark mode welcome text with glow effect */
+        [data-theme="dark"] .welcome-text h2 {
+            text-shadow: 0 0 10px rgba(74,158,255,0.5);
         }
         
         .welcome-text p {
@@ -346,6 +481,26 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color);
         }
         
+        /* Dark mode stat card with shining effect */
+        [data-theme="dark"] .stat-card {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+            animation-delay: calc(var(--i) * 0.5s);
+        }
+        
         .stat-card::before {
             content: '';
             position: absolute;
@@ -368,11 +523,18 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 8px 30px var(--shadow);
         }
         
+        /* Dark mode stat card hover with glow effect */
+        [data-theme="dark"] .stat-card:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        
         .stat-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
         }
         
         .stat-icon {
@@ -394,11 +556,18 @@ if (empty($userPhotoUrl)) {
         .stat-card.checked .stat-icon { background: var(--stat-checked); }
         .stat-card.online .stat-icon { background: var(--stat-online); }
         
+        /* Dark mode stat icon with glow effect */
+        [data-theme="dark"] .stat-icon {
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+        
         .stat-value { 
             font-size: 2rem; 
             font-weight: 700; 
             margin-bottom: 0.5rem;
             line-height: 1;
+            position: relative;
+            z-index: 1;
         }
         
         .stat-label {
@@ -407,6 +576,8 @@ if (empty($userPhotoUrl)) {
             text-transform: uppercase; 
             font-weight: 600;
             letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
         }
         
         /* Fixed: Changed color for declined cards to red */
@@ -436,53 +607,121 @@ if (empty($userPhotoUrl)) {
         
         .dashboard-bottom {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1.5fr 1fr; /* Adjusted ratio to make global stats more compact */
             gap: 1.5rem;
         }
         
-        /* Global Statistics Section - Updated for better visibility */
+        /* Global Statistics Section - Updated for better visibility and shining effect */
         .gs-panel{
-            border-radius:16px; padding:16px 16px 18px;
+            border-radius:16px; padding:14px 14px 16px; /* Reduced padding for more compact look */
             background: var(--card-bg);
             border:1px solid var(--border-color);
             box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
         }
         
-        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-        .gs-chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+        /* Dark mode global stats panel with shining effect */
+        [data-theme="dark"] .gs-panel {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        [data-theme="dark"] .gs-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-2);
+            animation: shine 8s infinite linear;
+        }
+        
+        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:12px; /* Reduced margin */}
+        .gs-chip{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
             background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
         .gs-title{font-weight:600;color:var(--text-primary)}
         .gs-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
-        .gs-grid{display:grid;gap:16px}
+        .gs-grid{display:grid;gap:14px} /* Reduced gap */
         @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
         .gs-card{
-            position:relative;border-radius:14px;padding:18px 16px;
+            position:relative;border-radius:12px;padding:14px 12px; /* Reduced padding */
             border:1px solid var(--border-color);
             box-shadow: var(--shadow);
             color:var(--text-primary);
+            overflow: hidden;
+        }
+        
+        /* Dark mode global stat card with shining effect */
+        [data-theme="dark"] .gs-card {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        [data-theme="dark"] .gs-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .gs-card .gs-icon{
-            width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-            margin-bottom:10px;border:1px solid var(--border-color)
+            width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+            margin-bottom:8px;border:1px solid var(--border-color)
         }
-        .gs-card .gs-icon svg{width:18px;height:18px;display:block;opacity:.95}
-        .gs-num{font-weight:800;font-size:28px;line-height:1}
-        .gs-label{font-size:12px;color:var(--text-secondary);margin-top:6px}
-        .gs-blue   { background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); }
-        .gs-green  { background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1)); }
-        .gs-red    { background:linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1)); }
-        .gs-purple { background:linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.1)); }
+        .gs-card .gs-icon svg{width:16px;height:16px;display:block;opacity:.95}
+        .gs-num{font-weight:800;font-size:24px;line-height:1} /* Reduced font size */
+        .gs-label{font-size:11px;color:var(--text-secondary);margin-top:4px} /* Reduced font size */
         
-        /* Dark mode colors for stat cards */
-        [data-theme="dark"] .gs-blue   { background:linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)); }
-        [data-theme="dark"] .gs-green  { background:linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.2)); }
-        [data-theme="dark"] .gs-red    { background:linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); }
-        [data-theme="dark"] .gs-purple { background:linear-gradient(135deg, rgba(139,92,246,0.3), rgba(124,58,237,0.2)); }
+        /* Enhanced colors for global stats with better visibility */
+        .gs-blue   { 
+            background:linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2));
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+        .gs-green  { 
+            background:linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.2));
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+        .gs-red    { 
+            background:linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2));
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .gs-purple { 
+            background:linear-gradient(135deg, rgba(139,92,246,0.3), rgba(124,58,237,0.2));
+            border: 1px solid rgba(139,92,246,0.3);
+        }
         
-        /* Enhanced Online Users Section */
+        /* Dark mode colors for stat cards with enhanced visibility */
+        [data-theme="dark"] .gs-blue   { 
+            background:linear-gradient(135deg, rgba(74,158,255,0.4), rgba(37,99,235,0.3));
+            border: 1px solid rgba(74,158,255,0.4);
+            box-shadow: 0 0 15px rgba(74,158,255,0.2);
+        }
+        [data-theme="dark"] .gs-green  { 
+            background:linear-gradient(135deg, rgba(16,185,129,0.4), rgba(5,150,105,0.3));
+            border: 1px solid rgba(16,185,129,0.4);
+            box-shadow: 0 0 15px rgba(16,185,129,0.2);
+        }
+        [data-theme="dark"] .gs-red    { 
+            background:linear-gradient(135deg, rgba(239,68,68,0.4), rgba(220,38,38,0.3));
+            border: 1px solid rgba(239,68,68,0.4);
+            box-shadow: 0 0 15px rgba(239,68,68,0.2);
+        }
+        [data-theme="dark"] .gs-purple { 
+            background:linear-gradient(135deg, rgba(139,92,246,0.4), rgba(124,58,237,0.3));
+            border: 1px solid rgba(139,92,246,0.4);
+            box-shadow: 0 0 15px rgba(139,92,246,0.2);
+        }
+        
+        /* Enhanced Online Users Section - Expanded */
         .online-users-section {
             background: var(--card-bg);
             border-radius: 16px;
@@ -492,6 +731,23 @@ if (empty($userPhotoUrl)) {
             height: fit-content;
             position: relative;
             overflow: hidden;
+        }
+        
+        /* Dark mode online users section with shining effect */
+        [data-theme="dark"] .online-users-section {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        [data-theme="dark"] .online-users-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-2);
+            animation: shine 8s infinite linear;
         }
         
         .online-users-section::before {
@@ -504,11 +760,18 @@ if (empty($userPhotoUrl)) {
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
         }
         
+        /* Dark mode online users section header with glow effect */
+        [data-theme="dark"] .online-users-section::before {
+            box-shadow: 0 0 10px rgba(74,158,255,0.5);
+        }
+        
         .online-users-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
         }
         
         .online-users-title {
@@ -518,6 +781,11 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+        
+        /* Dark mode online users title with glow effect */
+        [data-theme="dark"] .online-users-title {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
         }
         
         .online-users-title i {
@@ -535,6 +803,12 @@ if (empty($userPhotoUrl)) {
             gap: 0.3rem;
         }
         
+        /* Dark mode online users count with glow effect */
+        [data-theme="dark"] .online-users-count {
+            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
+            box-shadow: var(--glow-blue);
+        }
+        
         .online-users-count i {
             color: var(--success-green);
             font-size: 0.8rem;
@@ -547,6 +821,8 @@ if (empty($userPhotoUrl)) {
             max-height: 400px;
             overflow-y: auto;
             padding-right: 0.5rem;
+            position: relative;
+            z-index: 1;
         }
         
         /* Custom scrollbar */
@@ -564,6 +840,12 @@ if (empty($userPhotoUrl)) {
             border-radius: 3px;
         }
         
+        /* Dark mode scrollbar with glow effect */
+        [data-theme="dark"] .online-users-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            box-shadow: var(--glow-blue);
+        }
+        
         .online-user-item {
             display: flex;
             align-items: center;
@@ -576,10 +858,33 @@ if (empty($userPhotoUrl)) {
             position: relative;
         }
         
+        /* Dark mode online user item with shining effect */
+        [data-theme="dark"] .online-user-item {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
+        [data-theme="dark"] .online-user-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+            animation-delay: calc(var(--i) * 0.5s);
+        }
+        
         .online-user-item:hover {
             transform: translateX(5px);
             border-color: var(--accent-blue);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Dark mode online user item hover with glow effect */
+        [data-theme="dark"] .online-user-item:hover {
+            box-shadow: var(--glow-blue);
         }
         
         .online-user-avatar-container {
@@ -595,6 +900,11 @@ if (empty($userPhotoUrl)) {
             flex-shrink: 0;
         }
         
+        /* Dark mode online user avatar with glow effect */
+        [data-theme="dark"] .online-user-avatar {
+            box-shadow: 0 0 10px rgba(74,158,255,0.5);
+        }
+        
         .online-indicator {
             position: absolute;
             bottom: 0;
@@ -605,6 +915,11 @@ if (empty($userPhotoUrl)) {
             border: 2px solid var(--card-bg);
             border-radius: 50%;
             animation: pulse 2s infinite;
+        }
+        
+        /* Dark mode online indicator with glow effect */
+        [data-theme="dark"] .online-indicator {
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
         }
         
         @keyframes pulse {
@@ -651,14 +966,45 @@ if (empty($userPhotoUrl)) {
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
             box-shadow: var(--shadow);
         }
+        
+        /* Dark mode sections with shining effect */
+        [data-theme="dark"] .checker-section, 
+        [data-theme="dark"] .generator-section {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .checker-section::before, 
+        [data-theme="dark"] .generator-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+        }
+        
         .checker-header, .generator-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
+            position: relative;
+            z-index: 1;
         }
         .checker-title, .generator-title {
             font-size: 1.2rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
+        
+        /* Dark mode section titles with glow effect */
+        [data-theme="dark"] .checker-title, 
+        [data-theme="dark"] .generator-title {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+        
         .checker-title i, .generator-title i { color: var(--accent-cyan); font-size: 1rem; }
         .settings-btn {
             padding: 0.3rem 0.6rem; border-radius: 8px;
@@ -667,10 +1013,23 @@ if (empty($userPhotoUrl)) {
             cursor: pointer; font-weight: 500; display: flex;
             align-items: center; gap: 0.3rem; font-size: 0.8rem;
         }
+        
+        /* Dark mode settings button with glow effect */
+        [data-theme="dark"] .settings-btn {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .settings-btn:hover {
             border-color: var(--accent-blue); color: var(--accent-blue);
             transform: translateY(-2px);
         }
+        
+        /* Dark mode settings button hover with glow effect */
+        [data-theme="dark"] .settings-btn:hover {
+            box-shadow: var(--glow-blue);
+        }
+        
         .input-section { margin-bottom: 1rem; }
         .input-header {
             display: flex; justify-content: space-between;
@@ -684,10 +1043,23 @@ if (empty($userPhotoUrl)) {
             font-family: 'Courier New', monospace; resize: vertical;
             font-size: 0.9rem; transition: all 0.3s;
         }
+        
+        /* Dark mode textarea with glow effect */
+        [data-theme="dark"] .card-textarea {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .card-textarea:focus {
             outline: none; border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
+        
+        /* Dark mode textarea focus with glow effect */
+        [data-theme="dark"] .card-textarea:focus {
+            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
+        }
+        
         .form-group {
             margin-bottom: 1rem;
         }
@@ -696,10 +1068,23 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color); border-radius: 8px;
             color: var(--text-primary); font-size: 0.9rem; transition: all 0.3s;
         }
+        
+        /* Dark mode form control with glow effect */
+        [data-theme="dark"] .form-control {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .form-control:focus {
             outline: none; border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
+        
+        /* Dark mode form control focus with glow effect */
+        [data-theme="dark"] .form-control:focus {
+            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
+        }
+        
         .form-row {
             display: flex; gap: 1rem; flex-wrap: wrap;
         }
@@ -717,24 +1102,72 @@ if (empty($userPhotoUrl)) {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
         }
+        
+        /* Dark mode primary button with glow effect */
+        [data-theme="dark"] .btn-primary {
+            box-shadow: var(--glow-blue);
+        }
+        
         .btn-primary:hover { transform: translateY(-2px); }
         .btn-secondary {
             background: var(--secondary-bg);
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
+        
+        /* Dark mode secondary button with glow effect */
+        [data-theme="dark"] .btn-secondary {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
+        .btn-secondary:hover { transform: translateY(-2px); }
+        
+        /* Dark mode secondary button hover with glow effect */
+        [data-theme="dark"] .btn-secondary:hover {
+            box-shadow: var(--glow-blue);
+        }
+        
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
             box-shadow: var(--shadow);
         }
+        
+        /* Dark mode results section with shining effect */
+        [data-theme="dark"] .results-section {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .results-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+        }
+        
         .results-header {
             display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
+            position: relative;
+            z-index: 1;
         }
         .results-title {
             font-size: 1.2rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
+        
+        /* Dark mode results title with glow effect */
+        [data-theme="dark"] .results-title {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+        
         .results-title i { color: var(--accent-green); font-size: 1rem; }
         .results-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .filter-btn {
@@ -743,10 +1176,23 @@ if (empty($userPhotoUrl)) {
             background: var(--secondary-bg); color: var(--text-secondary);
             cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
         }
+        
+        /* Dark mode filter button with glow effect */
+        [data-theme="dark"] .filter-btn {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
         .filter-btn.active {
             background: var(--accent-blue); border-color: var(--accent-blue); color: white;
         }
+        
+        /* Dark mode active filter button with glow effect */
+        [data-theme="dark"] .filter-btn.active {
+            box-shadow: var(--glow-blue);
+        }
+        
         .empty-state {
             text-align: center; padding: 1.5rem 0.5rem; color: var(--text-secondary);
         }
@@ -765,6 +1211,13 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             animation: slideUp 0.3s ease;
         }
+        
+        /* Dark mode settings popup with shining effect */
+        [data-theme="dark"] .settings-content {
+            background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(20,24,36,0.95) 100%);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -778,12 +1231,25 @@ if (empty($userPhotoUrl)) {
             font-size: 1.1rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
+        
+        /* Dark mode settings title with glow effect */
+        [data-theme="dark"] .settings-title {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+        
         .settings-close {
             width: 25px; height: 25px; border-radius: 6px; border: none;
             background: var(--secondary-bg); color: var(--text-secondary);
             cursor: pointer; display: flex; align-items: center;
             justify-content: center; font-size: 0.9rem; transition: all 0.3s;
         }
+        
+        /* Dark mode settings close button with glow effect */
+        [data-theme="dark"] .settings-close {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .settings-close:hover {
             background: var(--error); color: white; transform: rotate(90deg);
         }
@@ -799,9 +1265,34 @@ if (empty($userPhotoUrl)) {
             border-radius: 8px; cursor: pointer; transition: all 0.3s;
             position: relative;
         }
+        
+        /* Dark mode gateway option with shining effect */
+        [data-theme="dark"] .gateway-option {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
+        [data-theme="dark"] .gateway-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+            animation-delay: calc(var(--i) * 0.5s);
+        }
+        
         .gateway-option:hover {
             border-color: var(--accent-blue); transform: translateX(3px);
         }
+        
+        /* Dark mode gateway option hover with glow effect */
+        [data-theme="dark"] .gateway-option:hover {
+            box-shadow: var(--glow-blue);
+        }
+        
         .gateway-option input[type="radio"] {
             width: 15px; height: 15px; margin-right: 0.5rem;
             cursor: pointer; accent-color: var(--accent-blue);
@@ -837,6 +1328,12 @@ if (empty($userPhotoUrl)) {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
         }
+        
+        /* Dark mode save button with glow effect */
+        [data-theme="dark"] .btn-save {
+            box-shadow: var(--glow-blue);
+        }
+        
         .btn-save:hover { transform: translateY(-2px); }
         .btn-cancel {
             flex: 1; padding: 0.5rem; border-radius: 8px;
@@ -844,6 +1341,20 @@ if (empty($userPhotoUrl)) {
             background: var(--secondary-bg); color: var(--text-primary);
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
         }
+        
+        /* Dark mode cancel button with glow effect */
+        [data-theme="dark"] .btn-cancel {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
+        .btn-cancel:hover { transform: translateY(-2px); }
+        
+        /* Dark mode cancel button hover with glow effect */
+        [data-theme="dark"] .btn-cancel:hover {
+            box-shadow: var(--glow-blue);
+        }
+        
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #ec4899;
@@ -871,11 +1382,24 @@ if (empty($userPhotoUrl)) {
             margin-top: auto;
             margin-bottom: 1rem;
         }
+        
+        /* Dark mode logout button with glow effect */
+        [data-theme="dark"] .sidebar-link.logout {
+            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(220,38,38,0.1) 100%);
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        
         .sidebar-link.logout:hover {
             background: rgba(239, 68, 68, 0.2);
             color: var(--error);
             transform: translateX(5px);
         }
+        
+        /* Dark mode logout button hover with glow effect */
+        [data-theme="dark"] .sidebar-link.logout:hover {
+            box-shadow: 0 0 10px rgba(239,68,68,0.3);
+        }
+        
         .generated-cards-container {
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
@@ -890,6 +1414,13 @@ if (empty($userPhotoUrl)) {
             color: var(--text-primary);
             margin-bottom: 1rem;
         }
+        
+        /* Dark mode generated cards container with glow effect */
+        [data-theme="dark"] .generated-cards-container {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .custom-select {
             position: relative;
             display: flex,
@@ -907,11 +1438,24 @@ if (empty($userPhotoUrl)) {
             cursor: pointer;
             transition: all 0.3s;
         }
+        
+        /* Dark mode select with glow effect */
+        [data-theme="dark"] .custom-select select {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .custom-select select:focus {
             outline: none;
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
+        
+        /* Dark mode select focus with glow effect */
+        [data-theme="dark"] .custom-select select:focus {
+            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
+        }
+        
         .custom-select::after {
             content: '\f078';
             font-family: 'Font Awesome 6 Free';
@@ -937,11 +1481,24 @@ if (empty($userPhotoUrl)) {
             font-size: 0.9rem;
             transition: all 0.3s;
         }
+        
+        /* Dark mode input with glow effect */
+        [data-theme="dark"] .custom-input-group input {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
         .custom-input-group input:focus {
             outline: none;
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
+        
+        /* Dark mode input focus with glow effect */
+        [data-theme="dark"] .custom-input-group input:focus {
+            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
+        }
+        
         .custom-input-group .input-group-append {
             display: flex;
         }
@@ -958,10 +1515,25 @@ if (empty($userPhotoUrl)) {
             cursor: pointer;
             transition: all 0.3s;
         }
+        
+        /* Dark mode input group text with glow effect */
+        [data-theme="dark"] .custom-input-group .input-group-text {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+            border-left: none;
+        }
+        
         .custom-input-group .input-group-text:hover {
             background: rgba(59, 130, 246, 0.1);
             color: var(--accent-blue);
         }
+        
+        /* Dark mode input group text hover with glow effect */
+        [data-theme="dark"] .custom-input-group .input-group-text:hover {
+            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
+            box-shadow: var(--glow-blue);
+        }
+        
         .copy-all-btn, .clear-all-btn {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid var(--accent-blue);
@@ -976,18 +1548,36 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.3rem;
         }
+        
+        /* Dark mode copy/clear buttons with glow effect */
+        [data-theme="dark"] .copy-all-btn {
+            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
+            border: 1px solid rgba(74,158,255,0.3);
+        }
+        
+        [data-theme="dark"] .clear-all-btn {
+            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(220,38,38,0.1) 100%);
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        
         .copy-all-btn:hover, .clear-all-btn:hover {
             background: var(--accent-blue);
             color: white;
         }
+        
+        /* Dark mode copy/clear buttons hover with glow effect */
+        [data-theme="dark"] .copy-all-btn:hover {
+            box-shadow: var(--glow-blue);
+        }
+        
+        [data-theme="dark"] .clear-all-btn:hover {
+            box-shadow: 0 0 10px rgba(239,68,68,0.3);
+        }
+        
         .clear-all-btn {
             border-color: var(--error);
             color: var(--error);
             background: rgba(239, 68, 68, 0.1);
-        }
-        .clear-all-btn:hover {
-            background: var(--error);
-            color: white;
         }
         .results-actions {
             display: flex;
@@ -1014,6 +1604,23 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
         }
         
+        /* Dark mode profile header with shining effect */
+        [data-theme="dark"] .profile-header {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        [data-theme="dark"] .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-2);
+            animation: shine 8s infinite linear;
+        }
+        
         .profile-header::before {
             content: '';
             position: absolute;
@@ -1023,6 +1630,11 @@ if (empty($userPhotoUrl)) {
             height: 5px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 5s ease infinite;
+        }
+        
+        /* Dark mode profile header gradient with glow effect */
+        [data-theme="dark"] .profile-header::before {
+            box-shadow: 0 0 10px rgba(74,158,255,0.5);
         }
         
         @keyframes gradientShift {
@@ -1036,6 +1648,8 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 2rem;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
         }
         
         .profile-avatar-container {
@@ -1050,6 +1664,11 @@ if (empty($userPhotoUrl)) {
             border: 4px solid var(--accent-blue);
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
             transition: transform 0.3s ease;
+        }
+        
+        /* Dark mode profile avatar with glow effect */
+        [data-theme="dark"] .profile-avatar {
+            box-shadow: 0 0 25px rgba(74,158,255,0.5);
         }
         
         .profile-avatar:hover {
@@ -1068,6 +1687,11 @@ if (empty($userPhotoUrl)) {
             animation: pulse 2s infinite;
         }
         
+        /* Dark mode profile status with glow effect */
+        [data-theme="dark"] .profile-status {
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+        
         .profile-details {
             flex: 1;
         }
@@ -1082,12 +1706,16 @@ if (empty($userPhotoUrl)) {
             letter-spacing: -0.5px;
         }
         
+        /* Dark mode profile name with glow effect */
+        [data-theme="dark"] .profile-name {
+            text-shadow: 0 0 10px rgba(74,158,255,0.5);
+        }
+        
         .profile-username {
             font-size: 1.2rem;
             color: var(--text-secondary);
             margin-bottom: 1rem;
         }
-        
         .profile-badges {
             display: flex;
             gap: 0.5rem;
@@ -1111,10 +1739,24 @@ if (empty($userPhotoUrl)) {
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
         
+        /* Dark mode member badge with glow effect */
+        [data-theme="dark"] .badge-member {
+            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
+            border: 1px solid rgba(74,158,255,0.3);
+            box-shadow: var(--glow-blue);
+        }
+        
         .badge-active {
             background: rgba(34, 197, 94, 0.2);
             color: var(--success-green);
             border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        /* Dark mode active badge with glow effect */
+        [data-theme="dark"] .badge-active {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.1) 100%);
+            border: 1px solid rgba(16,185,129,0.3);
+            box-shadow: 0 0 10px rgba(16,185,129,0.3);
         }
         
         /* Compact Stats Section */
@@ -1126,11 +1768,30 @@ if (empty($userPhotoUrl)) {
             box-shadow: var(--shadow);
         }
         
+        /* Dark mode profile stats container with shining effect */
+        [data-theme="dark"] .profile-stats-container {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        [data-theme="dark"] .profile-stats-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+        }
+        
         .profile-stats-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
         }
         
         .profile-stats-title {
@@ -1142,6 +1803,11 @@ if (empty($userPhotoUrl)) {
             gap: 0.5rem;
         }
         
+        /* Dark mode profile stats title with glow effect */
+        [data-theme="dark"] .profile-stats-title {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+        
         .profile-stats-title i {
             color: var(--accent-cyan);
         }
@@ -1151,6 +1817,8 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
+            position: relative;
+            z-index: 1;
         }
         
         .user-stat-item {
@@ -1162,6 +1830,24 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color);
             transition: all 0.3s;
             position: relative;
+        }
+        
+        /* Dark mode user stat item with shining effect */
+        [data-theme="dark"] .user-stat-item {
+            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
+            border: 1px solid rgba(74,158,255,0.2);
+        }
+        
+        [data-theme="dark"] .user-stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-1);
+            animation: shine 8s infinite linear;
+            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .user-stat-item::before {
@@ -1185,6 +1871,11 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
+        /* Dark mode user stat item hover with glow effect */
+        [data-theme="dark"] .user-stat-item:hover {
+            box-shadow: var(--glow-blue);
+        }
+        
         .user-stat-icon {
             width: 40px;
             height: 40px;
@@ -1202,6 +1893,11 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.approved .user-stat-icon { background: var(--stat-approved); }
         .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
         .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
+        
+        /* Dark mode user stat icon with glow effect */
+        [data-theme="dark"] .user-stat-icon {
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
         
         .user-stat-content {
             flex: 1;
