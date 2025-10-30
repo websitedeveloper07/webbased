@@ -5,25 +5,87 @@ header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 header('Content-Type: application/json');
 
-// Database connection
- $host = 'localhost';
- $dbname = 'your_database_name';
- $username = 'your_username';
- $password = 'your_password';
+// Set timeout and memory limits
+set_time_limit(30); // 30 seconds max execution time
+ini_set('memory_limit', '128M'); // 128MB memory limit
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed',
-        'error' => $e->getMessage()
-    ]);
+// === STATIC API KEY ===
+ $STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu'; // Replace with your static key
+
+// === VALIDATE API KEY ===
+ $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
+
+if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Invalid API key']);
     exit;
 }
 
+// === DATABASE CONNECTION ===
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
 try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+    
+    // Set connection timeout with extended options and SSL mode
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 15, // Increased timeout
+            PDO::ATTR_PERSISTENT => false,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // === TABLE SETUP ===
+    // Check if card_checks table exists
+    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
+    
+    if (!$tableExists) {
+        // Create card_checks table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE card_checks (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                card_number VARCHAR(255),
+                status VARCHAR(50),
+                response TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+    }
+    
+    // Check if users table exists
+    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
+    
+    if (!$usersTableExists) {
+        // Create users table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE,
+                name VARCHAR(255),
+                username VARCHAR(255),
+                photo_url VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+    }
+
     // Get total users count
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM users");
     $totalUsers = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
@@ -76,10 +138,12 @@ try {
     ]);
     
 } catch (PDOException $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database query failed',
-        'error' => $e->getMessage()
-    ]);
+    error_log("Database PDO Error in stats.php: " . $e->getMessage());
+    http_response_code(503);
+    echo json_encode(['success' => false, 'message' => 'Database connection error', 'debug' => $e->getMessage()]);
+} catch (Exception $e) {
+    error_log("General Error in stats.php: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Server error', 'debug' => $e->getMessage()]);
 }
 ?>
