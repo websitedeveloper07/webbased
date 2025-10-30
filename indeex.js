@@ -70,16 +70,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateGlobalStats() {
         console.log("Updating global statistics at", new Date().toISOString());
         
+        const apiKey = getCurrentApiKey();
+        console.log(`X-API-KEY header for stats update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+        
         fetch('/stats.php', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
                 'X-API-KEY': apiKey
             }
         })
         .then(response => {
             if (!response.ok) {
+                // Check for 401 Unauthorized
+                if (response.status === 401) {
+                    throw new Error('Authentication failed: Invalid or missing API key');
+                }
                 throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
             }
             return response.json();
@@ -112,17 +119,32 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error updating global statistics:', error);
             
-            // Only show error if on home page
-            const homePage = document.getElementById('page-home');
-            if (homePage && homePage.classList.contains('active') && window.Swal) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: 'Failed to update global statistics',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+            // Check for authentication error
+            if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Authentication Error',
+                        text: error.message,
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+                
+                // Try to refresh the API key
+                refreshApiKey();
+            } else {
+                // Only show error if on home page
+                const homePage = document.getElementById('page-home');
+                if (homePage && homePage.classList.contains('active') && window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Failed to update global statistics',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                }
             }
         });
     }
