@@ -154,6 +154,126 @@ document.addEventListener('DOMContentLoaded', function() {
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
+    // Function to load user profile data
+    function loadUserProfile() {
+        // Get user data from session (you can also fetch from server if needed)
+        const userData = {
+            name: document.querySelector('.user-name') ? document.querySelector('.user-name').textContent : 'Unknown User',
+            username: document.querySelector('.user-username') ? document.querySelector('.user-username').textContent : '@unknown',
+            photo_url: document.querySelector('.user-avatar') ? document.querySelector('.user-avatar').src : 'https://ui-avatars.com/api/?name=U&background=3b82f6&color=fff&size=120'
+        };
+        
+        // Update profile information
+        const profileName = document.getElementById('profileName');
+        const profileUsername = document.getElementById('profileUsername');
+        const profileAvatar = document.getElementById('profileAvatar');
+        
+        if (profileName) profileName.textContent = userData.name || 'Unknown User';
+        if (profileUsername) profileUsername.textContent = userData.username || '@unknown';
+        if (profileAvatar) profileAvatar.src = userData.photo_url || 'https://ui-avatars.com/api/?name=U&background=3b82f6&color=fff&size=120';
+        
+        // Load user statistics
+        loadUserStatistics();
+    }
+
+    // Function to load user statistics
+    function loadUserStatistics() {
+        // Get statistics from localStorage or fetch from server
+        const stats = getUserStatistics();
+        
+        // Update statistics values
+        updateProfileStat('total', stats.total || 0);
+        updateProfileStat('charged', stats.charged || 0);
+        updateProfileStat('approved', stats.approved || 0);
+        updateProfileStat('threeds', stats.threeds || 0);
+        updateProfileStat('declined', stats.declined || 0);
+        
+        // Update progress bars
+        updateProgressBars(stats);
+    }
+
+    // Function to get user statistics
+    function getUserStatistics() {
+        // Try to get from localStorage first
+        let stats = localStorage.getItem('userStats');
+        if (stats) {
+            return JSON.parse(stats);
+        }
+        
+        // Default statistics
+        return {
+            total: 0,
+            charged: 0,
+            approved: 0,
+            threeds: 0,
+            declined: 0
+        };
+    }
+
+    // Function to update a single profile statistic
+    function updateProfileStat(type, value) {
+        const element = document.getElementById(`profile-${type}-value`);
+        if (element) {
+            element.textContent = value;
+            
+            // Add animation effect
+            element.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 300);
+        }
+    }
+
+    // Function to update progress bars
+    function updateProgressBars(stats) {
+        const total = stats.total || 1; // Avoid division by zero
+        
+        // Calculate percentages
+        const percentages = {
+            total: 100,
+            charged: (stats.charged / total) * 100,
+            approved: (stats.approved / total) * 100,
+            threeds: (stats.threeds / total) * 100,
+            declined: (stats.declined / total) * 100
+        };
+        
+        // Update progress bars with animation
+        Object.keys(percentages).forEach(key => {
+            const progressBar = document.getElementById(`profile-${key}-progress`);
+            if (progressBar) {
+                setTimeout(() => {
+                    progressBar.style.width = `${percentages[key]}%`;
+                }, 100);
+            }
+        });
+    }
+
+    // Function to update user statistics (call this when cards are checked)
+    function updateUserStatistics(result) {
+        const stats = getUserStatistics();
+        
+        // Update based on result
+        stats.total = (stats.total || 0) + 1;
+        
+        if (result.status === 'CHARGED') {
+            stats.charged = (stats.charged || 0) + 1;
+        } else if (result.status === 'APPROVED') {
+            stats.approved = (stats.approved || 0) + 1;
+        } else if (result.status === '3DS') {
+            stats.threeds = (stats.threeds || 0) + 1;
+        } else {
+            stats.declined = (stats.declined || 0) + 1;
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('userStats', JSON.stringify(stats));
+        
+        // Update profile if it's visible
+        if (document.getElementById('page-profile').classList.contains('active')) {
+            loadUserStatistics();
+        }
+    }
+
     // Initialize the application
     function initializeApp() {
         // Disable copy, context menu, and dev tools, but allow pasting in the textarea
@@ -241,6 +361,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const pageElement = document.getElementById('page-' + pageName);
             if (pageElement) {
                 pageElement.classList.add('active');
+                
+                // Load profile data when profile page is shown
+                if (pageName === 'profile') {
+                    loadUserProfile();
+                }
             }
             
             document.querySelectorAll('.sidebar-link').forEach(link => {
@@ -386,6 +511,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add to activity feed
             addActivityItem(card, status);
+            
+            // Update user statistics
+            updateUserStatistics({ status });
         }
 
         // Activity feed function
@@ -1310,6 +1438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         sessionStorage.clear();
+                        localStorage.clear(); // Clear user stats on logout
                         window.location.href = 'login.php';
                     }
                 });
@@ -1335,6 +1464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     sessionStorage.clear();
+                    localStorage.clear(); // Clear user stats on logout
                     window.location.href = 'login.php';
                 }
             }
@@ -1649,6 +1779,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.setYearRnd = setYearRnd;
         window.setCvvRnd = setCvvRnd;
         window.logout = logout;
+        window.loadUserProfile = loadUserProfile;
+        window.updateUserStatistics = updateUserStatistics;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
