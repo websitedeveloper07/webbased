@@ -51,65 +51,6 @@ try {
         ]
     );
     
-    // === TABLE SETUP ===
-    // Check if card_checks table exists
-    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
-    
-    if (!$tableExists) {
-        // Create card_checks table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE card_checks (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                card_number VARCHAR(255),
-                status VARCHAR(50),
-                response TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-    }
-    
-    // Check if users table exists
-    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
-    
-    if (!$usersTableExists) {
-        // Create users table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE users (
-                id SERIAL PRIMARY KEY,
-                telegram_id BIGINT UNIQUE,
-                name VARCHAR(255),
-                username VARCHAR(255),
-                photo_url VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-    } else {
-        // Check if username column exists in users table
-        $columnExists = $pdo->query("
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'username'
-        ")->fetchColumn();
-        
-        // Add username column if it doesn't exist
-        if (!$columnExists) {
-            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
-        }
-        
-        // Check if photo_url column exists in users table
-        $photoColumnExists = $pdo->query("
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'photo_url'
-        ")->fetchColumn();
-        
-        // Add photo_url column if it doesn't exist
-        if (!$photoColumnExists) {
-            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
-        }
-    }
-    
     // === GLOBAL STATISTICS CALCULATION ===
     
     // Get total users count
@@ -128,32 +69,6 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'APPROVED'");
     $totalApproved = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Calculate success rate (charged + approved)
-    $successRate = $totalChecked > 0 ? round((($totalCharged + $totalApproved) / $totalChecked) * 100, 2) : 0;
-    
-    // Get top users (by number of charged cards)
-    $stmt = $pdo->query("
-        SELECT u.name, u.username, u.photo_url, COUNT(c.id) as hits
-        FROM users u
-        JOIN card_checks c ON u.id = c.user_id
-        WHERE c.status = 'CHARGED'
-        GROUP BY u.id
-        ORDER BY hits DESC
-        LIMIT 5
-    ");
-    $topUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format top users data
-    $formattedTopUsers = [];
-    foreach ($topUsers as $user) {
-        $formattedTopUsers[] = [
-            'name' => $user['name'],
-            'username' => $user['username'],
-            'photo_url' => $user['photo_url'],
-            'hits' => $user['hits']
-        ];
-    }
-    
     // Return success response with all data
     echo json_encode([
         'success' => true,
@@ -161,19 +76,17 @@ try {
             'totalUsers' => $totalUsers,
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
-            'totalApproved' => $totalApproved, // Changed from totalLive to totalApproved
-            'successRate' => $successRate,
-            'topUsers' => $formattedTopUsers
+            'totalApproved' => $totalApproved
         ]
     ]);
     
 } catch (PDOException $e) {
     error_log("Database PDO Error in stats.php: " . $e->getMessage());
     http_response_code(503);
-    echo json_encode(['success' => false, 'message' => 'Database connection error', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Database connection error']);
 } catch (Exception $e) {
     error_log("General Error in stats.php: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Server error']);
 }
 ?>
