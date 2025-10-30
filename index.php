@@ -407,120 +407,45 @@ if (empty($userPhotoUrl)) {
         
         .dashboard-bottom {
             display: grid;
-            grid-template-columns: 1fr 380px;
+            grid-template-columns: 1fr;
             gap: 1.5rem;
         }
         
-        .recent-activity {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
+        /* Global Statistics Section - Exact Copy from Example */
+        .gs-panel{
+            border-radius:16px; padding:16px 16px 18px;
+            background: radial-gradient(1200px 600px at -20% -40%, rgba(59,130,246,.10), transparent 60%),
+                        radial-gradient(1200px 600px at 120% -40%, rgba(16,185,129,.10), transparent 60%),
+                        rgba(255,255,255,.03);
+            border:1px solid rgba(255,255,255,.10);
+            box-shadow: 0 12px 24px rgba(0,0,0,.25);
         }
-        
-        .activity-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
+        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+        .gs-chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+            background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
+        .gs-title{font-weight:600;color:#e5e7eb}
+        .gs-sub{font-size:12px;color:#9aa4b2;margin-top:2px}
+        .gs-grid{display:grid;gap:16px}
+        @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+        .gs-card{
+            position:relative;border-radius:14px;padding:18px 16px;
+            border:1px solid rgba(255,255,255,.08);
+            box-shadow: 0 10px 20px rgba(0,0,0,.24);
+            color:#e6e9ee;
         }
-        
-        .activity-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .gs-card .gs-icon{
+            width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+            margin-bottom:10px;border:1px solid rgba(255,255,255,.18)
         }
-        
-        .activity-title i {
-            color: var(--accent-green);
-        }
-        
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
-        }
-        
-        /* Custom scrollbar */
-        .activity-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .activity-list::-webkit-scrollbar-track {
-            background: var(--secondary-bg);
-            border-radius: 3px;
-        }
-        
-        .activity-list::-webkit-scrollbar-thumb {
-            background: var(--accent-blue);
-            border-radius: 3px;
-        }
-        
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-        }
-        
-        .activity-item:hover {
-            transform: translateX(5px);
-            border-color: var(--accent-blue);
-        }
-        
-        .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9rem;
-        }
-        
-        .activity-item.charged .activity-icon { background: var(--stat-charged); }
-        .activity-item.approved .activity-icon { background: var(--stat-approved); }
-        .activity-item.threeds .activity-icon { background: var(--stat-threeds); }
-        .activity-item.declined .activity-icon { background: var(--stat-declined); }
-        
-        .activity-content {
-            flex: 1;
-        }
-        
-        .activity-card {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 0.2rem;
-        }
-        
-        .activity-status {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        /* Fixed: Changed color for declined cards to red in activity feed */
-        .activity-item.charged .activity-status { color: var(--success-green); }
-        .activity-item.approved .activity-status { color: var(--success-green); }
-        .activity-item.threeds .activity-status { color: var(--success-green); }
-        .activity-item.declined .activity-status { color: var(--declined-red); }
-        
-        .activity-time {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-        }
+        .gs-card .gs-icon svg{width:18px;height:18px;display:block;opacity:.95}
+        .gs-num{font-weight:800;font-size:28px;line-height:1}
+        .gs-label{font-size:12px;color:#cbd5e1;margin-top:6px}
+        .gs-blue   { background:linear-gradient(135deg, rgba(30,58,138,.7), rgba(30,41,59,.65)); }
+        .gs-green  { background:linear-gradient(135deg, rgba(6,95,70,.75), rgba(15,118,110,.65)); }
+        .gs-red    { background:linear-gradient(135deg, rgba(88,28,28,.78), rgba(124,45,18,.65)); }
+        .gs-purple { background:linear-gradient(135deg, rgba(76,29,149,.75), rgba(88,28,135,.65)); }
         
         /* Enhanced Online Users Section */
         .online-users-section {
@@ -1661,6 +1586,11 @@ if (empty($userPhotoUrl)) {
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
+                <a class="sidebar-link" onclick="showPage('profile'); closeSidebar()">
+                    <i class="fas fa-user"></i><span>My Profile</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
                 <a class="sidebar-link active" onclick="showPage('home'); closeSidebar()">
                     <i class="fas fa-home"></i><span>Home</span>
                 </a>
@@ -1673,11 +1603,6 @@ if (empty($userPhotoUrl)) {
             <li class="sidebar-item">
                 <a class="sidebar-link" onclick="showPage('generator'); closeSidebar()">
                     <i class="fas fa-magic"></i><span>Card Generator</span>
-                </a>
-            </li>
-            <li class="sidebar-item">
-                <a class="sidebar-link" onclick="showPage('profile'); closeSidebar()">
-                    <i class="fas fa-user"></i><span>My Profile</span>
                 </a>
             </li>
             <div class="sidebar-divider"></div>
@@ -1773,22 +1698,64 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
 
-                    <div class="dashboard-bottom">
-                        <div class="recent-activity">
-                            <div class="activity-header">
-                                <div class="activity-title">
-                                    <i class="fas fa-history"></i> Recent Activity
-                                </div>
+                    <!-- Global Statistics Section - Exact Copy from Example -->
+                    <div class="gs-panel mt-6">
+                        <div class="gs-head">
+                            <div class="gs-chip">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
+                                </svg>
                             </div>
-                            <div class="activity-list" id="activityList">
-                                <div class="empty-state">
-                                    <i class="fas fa-inbox"></i>
-                                    <h3>No Activity Yet</h3>
-                                    <p>Start checking cards to see activity here</p>
-                                </div>
+                            <div>
+                                <div class="gs-title">Global Statistics</div>
+                                <div class="gs-sub">Platform-wide performance metrics</div>
                             </div>
                         </div>
-                        
+
+                        <div class="gs-grid">
+                            <div class="gs-card gs-blue">
+                                <div class="gs-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                    </svg>
+                                </div>
+                                <div id="gTotalUsers" class="gs-num">—</div>
+                                <div class="gs-label">Total Users</div>
+                            </div>
+
+                            <div class="gs-card gs-purple">
+                                <div class="gs-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 7a5 5 0 105 5 5.006 5.006 0 00-5-5zm0-5a10 10 0 11-10 10A10 10 0 0112 2zm1 9h3v2h-5V6h2z"/>
+                                    </svg>
+                                </div>
+                                <div id="gTotalHits" class="gs-num">—</div>
+                                <div class="gs-label">Total Hits</div>
+                            </div>
+
+                            <div class="gs-card gs-red">
+                                <div class="gs-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+                                    </svg>
+                                </div>
+                                <div id="gChargeCards" class="gs-num">—</div>
+                                <div class="gs-label">Charge Cards</div>
+                            </div>
+
+                            <div class="gs-card gs-green">
+                                <div class="gs-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                <div id="gLiveCards" class="gs-num">—</div>
+                                <div class="gs-label">Live Cards</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-bottom">
                         <div class="online-users-section">
                             <div class="online-users-header">
                                 <div class="online-users-title">
