@@ -79,6 +79,7 @@ try {
                 id SERIAL PRIMARY KEY,
                 telegram_id BIGINT UNIQUE,
                 name VARCHAR(255),
+                username VARCHAR(255),
                 photo_url VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -116,7 +117,7 @@ try {
     
     // Get top users (by number of charged cards)
     $stmt = $pdo->query("
-        SELECT u.name, u.photo_url, COUNT(c.id) as hits
+        SELECT u.name, u.username, u.photo_url, COUNT(c.id) as hits
         FROM users u
         JOIN card_checks c ON u.id = c.user_id
         WHERE c.status = 'CHARGED'
@@ -131,49 +132,11 @@ try {
     foreach ($topUsers as $user) {
         $formattedTopUsers[] = [
             'name' => $user['name'],
+            'username' => $user['username'],
             'photo_url' => $user['photo_url'],
             'hits' => $user['hits']
         ];
     }
-    
-    // Get today's statistics
-    $stmt = $pdo->query("
-        SELECT 
-            COUNT(*) as today_total,
-            COUNT(CASE WHEN status = 'CHARGED' THEN 1 END) as today_charged,
-            COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as today_approved,
-            COUNT(CASE WHEN status = '3DS' THEN 1 END) as today_threeds,
-            COUNT(CASE WHEN status = 'DECLINED' THEN 1 END) as today_declined
-        FROM card_checks 
-        WHERE DATE(created_at) = CURRENT_DATE
-    ");
-    $todayStats = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Get this week's statistics
-    $stmt = $pdo->query("
-        SELECT 
-            COUNT(*) as week_total,
-            COUNT(CASE WHEN status = 'CHARGED' THEN 1 END) as week_charged,
-            COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as week_approved,
-            COUNT(CASE WHEN status = '3DS' THEN 1 END) as week_threeds,
-            COUNT(CASE WHEN status = 'DECLINED' THEN 1 END) as week_declined
-        FROM card_checks 
-        WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
-    ");
-    $weekStats = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Get this month's statistics
-    $stmt = $pdo->query("
-        SELECT 
-            COUNT(*) as month_total,
-            COUNT(CASE WHEN status = 'CHARGED' THEN 1 END) as month_charged,
-            COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as month_approved,
-            COUNT(CASE WHEN status = '3DS' THEN 1 END) as month_threeds,
-            COUNT(CASE WHEN status = 'DECLINED' THEN 1 END) as month_declined
-        FROM card_checks 
-        WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
-    ");
-    $monthStats = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Return success response with all data
     echo json_encode([
@@ -186,111 +149,7 @@ try {
             'total3DS' => $total3DS,
             'totalDeclined' => $totalDeclined,
             'successRate' => $successRate,
-            'topUsers' => $formattedTopUsers,
-            'todayStats' => [
-                'total' => $todayStats['today_total'],
-                'charged' => $todayStats['today_charged'],
-                'approved' => $todayStats['today_approved'],
-                'threeds' => $todayStats['today_threeds'],
-                'declined' => $todayStats['today_declined']
-            ],
-            'weekStats' => [
-                'total' => $weekStats['week_total'],
-                'charged' => $weekStats['week_charged'],
-                'approved' => $weekStats['week_approved'],
-                'threeds' => $weekStats['week_threeds'],
-                'SELECT u.name, u.photo_url, COUNT(c.id) as hits
-        FROM users u
-        JOIN card_checks c ON u.id = c.user_id
-        WHERE c.status = 'CHARGED'
-        GROUP BY u.id
-        ORDER BY hits DESC
-        LIMIT 5
-    ");
-    $topUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format top users data
-    $formattedTopUsers = [];
-    foreach ($topUsers as $user) {
-        $formattedTopUsers[] = [
-            'name' => $user['name'],
-            'photo_url' => $user['photo_url'],
-            'hits' => $user['hits']
-        ];
-    }
-    
-    // Get today's statistics
-    $stmt = $pdo->query("
-        SELECT 
-            COUNT(*) as today_total,
-            COUNT(CASE WHEN status = 'CHARGED' THEN 1 END) as today_charged,
-            COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as today_approved,
-            COUNT(CASE WHEN status = '3DS' THEN 1 END) as today_threeds,
-            COUNT(CASE WHEN status = 'DECLINED' THEN 1 END) as today_declined
-        FROM card_checks 
-        WHERE DATE(created_at) = CURRENT_DATE
-    ");
-    $todayStats = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Get this week's statistics
-    $stmt = $pdo->query("
-        SELECT 
-            COUNT(*) as week_total,
-            COUNT(CASE WHEN status = 'CHARGED' THEN 1 END) as week_charged,
-            COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as week_approved,
-            COUNT(CASE WHEN status = '3DS' THEN 1 END) as week_threeds,
-            COUNT(CASE WHEN status = 'DECLINED' THEN 1 END) as week_declined
-        FROM card_checks 
-        WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
-    ");
-    $weekStats = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Get this month's statistics
-    $stmt = $pdo->query("
-        SELECT 
-            COUNT(*) as month_total,
-            COUNT(CASE WHEN status = 'CHARGED' THEN 1 END) as month_charged,
-            COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as month_approved,
-            COUNT(CASE WHEN status = '3DS' THEN 1 END) as month_threeds,
-            COUNT(CASE WHEN status = 'DECLINED' THEN 1 END) as month_declined
-        FROM card_checks 
-        WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
-    ");
-    $monthStats = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Return success response with all data
-    echo json_encode([
-        'success' => true,
-        'data' => [
-            'totalUsers' => $totalUsers,
-            'totalChecked' => $totalChecked,
-            'totalCharged' => $totalCharged,
-            'totalLive' => $totalLive,
-            'total3DS' => $total3DS,
-            'totalDeclined' => $totalDeclined,
-            'successRate' => $successRate,
-            'topUsers' => $formattedTopUsers,
-            'todayStats' => [
-                'total' => $todayStats['today_total'],
-                'charged' => $todayStats['today_charged'],
-                'approved' => $todayStats['today_approved'],
-                'threeds' => $todayStats['today_threeds'],
-                'declined' => $todayStats['today_declined']
-            ],
-            'weekStats' => [
-                'total' => $weekStats['week_total'],
-                'charged' => $weekStats['week_charged'],
-                'approved' => $weekStats['week_approved'],
-                'threeds' => $weekStats['week_threeds'],
-                'declined' => $weekStats['week_declined']
-            ],
-            'monthStats' => [
-                'total' => $monthStats['month_total'],
-                'charged' => $monthStats['month_charged'],
-                'approved' => $monthStats['month_approved'],
-                'threeds' => $monthStats['month_threeds'],
-                'declined' => $monthStats['month_declined']
-            ]
+            'topUsers' => $formattedTopUsers
         ]
     ]);
     
