@@ -113,9 +113,9 @@ if (empty($userPhotoUrl)) {
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             
-            /* Dark theme colors from example */
-            --dark-bg: #0b1220;
-            --dark-card: rgba(15, 23, 42, 0.82);
+            /* Dark theme colors - updated to avoid purple */
+            --dark-bg: #0f172a;
+            --dark-card: rgba(30, 41, 59, 0.82);
             --dark-border: rgba(255,255,255,.08);
             --dark-text: #e5e7eb;
             --dark-secondary: #9aa4b2;
@@ -166,7 +166,7 @@ if (empty($userPhotoUrl)) {
         }
         .theme-toggle-slider {
             position: absolute; width: 16px; height: 16px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             left: 2px; transition: transform 0.3s; display: flex;
             align-items: center; justify-content: center; color: white; font-size: 0.5rem;
         }
@@ -209,11 +209,18 @@ if (empty($userPhotoUrl)) {
             background: var(--card-bg); border-right: 1px solid var(--border-color);
             padding: 1rem 0; z-index: 999; overflow-y: auto;
             transform: translateX(-100%); transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
         .sidebar.open {
             transform: translateX(0);
         }
-        .sidebar-menu { list-style: none; }
+        .sidebar-menu { 
+            list-style: none; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
         .sidebar-item { margin: 0.3rem 0.5rem; }
         .sidebar-link {
             display: flex; align-items: center; gap: 0.5rem;
@@ -225,7 +232,7 @@ if (empty($userPhotoUrl)) {
             transform: translateX(5px);
         }
         .sidebar-link.active {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
         }
         .sidebar-link i { width: 15px; text-align: center; font-size: 0.9rem; }
@@ -277,7 +284,7 @@ if (empty($userPhotoUrl)) {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -422,11 +429,11 @@ if (empty($userPhotoUrl)) {
         
         .dashboard-bottom {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 2fr 1fr;
             gap: 1.5rem;
         }
         
-        /* Global Statistics Section - Exact Copy from Example */
+        /* Global Statistics Section - Updated for better visibility */
         .gs-panel{
             border-radius:16px; padding:16px 16px 18px;
             background: radial-gradient(1200px 600px at -20% -40%, rgba(59,130,246,.10), transparent 60%),
@@ -435,11 +442,21 @@ if (empty($userPhotoUrl)) {
             border:1px solid rgba(255,255,255,.10);
             box-shadow: 0 12px 24px rgba(0,0,0,.25);
         }
+        
+        /* Ensure visibility in light mode */
+        [data-theme="light"] .gs-panel {
+            background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(16,185,129,0.05));
+            border: 1px solid rgba(59,130,246,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
         .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
         .gs-chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
             background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
         .gs-title{font-weight:600;color:#e5e7eb}
+        [data-theme="light"] .gs-title {color: #1e293b;}
         .gs-sub{font-size:12px;color:#9aa4b2;margin-top:2px}
+        [data-theme="light"] .gs-sub {color: #64748b;}
         .gs-grid{display:grid;gap:16px}
         @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -450,17 +467,36 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 10px 20px rgba(0,0,0,.24);
             color:#e6e9ee;
         }
+        
+        /* Ensure visibility in light mode */
+        [data-theme="light"] .gs-card {
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(59,130,246,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            color: #1e293b;
+        }
+        
         .gs-card .gs-icon{
             width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
             margin-bottom:10px;border:1px solid rgba(255,255,255,.18)
         }
+        [data-theme="light"] .gs-card .gs-icon {
+            border: 1px solid rgba(59,130,246,0.2);
+        }
         .gs-card .gs-icon svg{width:18px;height:18px;display:block;opacity:.95}
         .gs-num{font-weight:800;font-size:28px;line-height:1}
         .gs-label{font-size:12px;color:#cbd5e1;margin-top:6px}
+        [data-theme="light"] .gs-label {color: #64748b;}
         .gs-blue   { background:linear-gradient(135deg, rgba(30,58,138,.7), rgba(30,41,59,.65)); }
         .gs-green  { background:linear-gradient(135deg, rgba(6,95,70,.75), rgba(15,118,110,.65)); }
         .gs-red    { background:linear-gradient(135deg, rgba(88,28,28,.78), rgba(124,45,18,.65)); }
         .gs-purple { background:linear-gradient(135deg, rgba(76,29,149,.75), rgba(88,28,135,.65)); }
+        
+        /* Light mode colors for stat cards */
+        [data-theme="light"] .gs-blue   { background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); }
+        [data-theme="light"] .gs-green  { background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1)); }
+        [data-theme="light"] .gs-red    { background:linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1)); }
+        [data-theme="light"] .gs-purple { background:linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.1)); }
         
         /* Enhanced Online Users Section */
         .online-users-section {
@@ -481,7 +517,7 @@ if (empty($userPhotoUrl)) {
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
         }
         
         .online-users-header {
@@ -693,7 +729,7 @@ if (empty($userPhotoUrl)) {
             font-size: 0.9rem; transition: all 0.3s;
         }
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
         }
         .btn-primary:hover { transform: translateY(-2px); }
@@ -812,7 +848,7 @@ if (empty($userPhotoUrl)) {
         }
         .btn-save {
             flex: 1; padding: 0.5rem; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
         }
         .btn-save:hover { transform: translateY(-2px); }
@@ -846,6 +882,8 @@ if (empty($userPhotoUrl)) {
             color: var(--error);
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid var(--error);
+            margin-top: auto;
+            margin-bottom: 1rem;
         }
         .sidebar-link.logout:hover {
             background: rgba(239, 68, 68, 0.2);
@@ -980,7 +1018,7 @@ if (empty($userPhotoUrl)) {
         
         /* Profile Header with Glassmorphism */
         .profile-header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 2rem;
@@ -997,7 +1035,7 @@ if (empty($userPhotoUrl)) {
             left: 0;
             right: 0;
             height: 5px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 5s ease infinite;
         }
         
@@ -1119,7 +1157,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-stats-title i {
-            color: var(--accent-purple);
+            color: var(--accent-cyan);
         }
         
         .profile-stats-grid {
@@ -1136,6 +1174,10 @@ if (empty($userPhotoUrl)) {
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
         
         .profile-stat-card::before {
@@ -1158,34 +1200,11 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
         
-        .profile-stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .profile-stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-        }
-        
-        .profile-stat-card.total .profile-stat-icon { background: var(--stat-total); }
-        .profile-stat-card.charged .profile-stat-icon { background: var(--stat-charged); }
-        .profile-stat-card.approved .profile-stat-icon { background: var(--stat-approved); }
-        .profile-stat-card.threeds .profile-stat-icon { background: var(--stat-threeds); }
-        .profile-stat-card.declined .profile-stat-icon { background: var(--stat-declined); }
-        
         .profile-stat-value {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
+            line-height: 1;
         }
         
         .profile-stat-card.total .profile-stat-value { color: var(--accent-purple); }
@@ -1196,64 +1215,62 @@ if (empty($userPhotoUrl)) {
         
         .profile-stat-label {
             color: var(--text-secondary);
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.5px;
         }
         
-        .profile-stat-progress {
-            margin-top: 1rem;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        
-        .profile-stat-progress-bar {
-            height: 100%;
-            border-radius: 3px;
-        }
-        
-        .profile-stat-card.total .profile-stat-progress-bar { background: var(--stat-total); }
-        .profile-stat-card.charged .profile-stat-progress-bar { background: var(--stat-charged); }
-        .profile-stat-card.approved .profile-stat-progress-bar { background: var(--stat-approved); }
-        .profile-stat-card.threeds .profile-stat-progress-bar { background: var(--stat-threeds); }
-        .profile-stat-card.declined .profile-stat-progress-bar { background: var(--stat-declined); }
-        
-        /* User Stats Column Layout */
+        /* User Stats Column Layout - Updated */
         .user-stats-column {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
         }
         
         .user-stat-item {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            padding: 1rem;
+            text-align: center;
+            padding: 1.5rem;
             background: var(--secondary-bg);
             border-radius: 12px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
+            position: relative;
         }
         
+        .user-stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        
+        .user-stat-item.total::before { background: var(--stat-total); }
+        .user-stat-item.charged::before { background: var(--stat-charged); }
+        .user-stat-item.approved::before { background: var(--stat-approved); }
+        .user-stat-item.threeds::before { background: var(--stat-threeds); }
+        .user-stat-item.declined::before { background: var(--stat-declined); }
+        
         .user-stat-item:hover {
-            transform: translateX(5px);
-            border-color: var(--accent-blue);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
         
         .user-stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             color: white;
-            margin-right: 1rem;
+            margin-bottom: 1rem;
         }
         
         .user-stat-item.total .user-stat-icon { background: var(--stat-total); }
@@ -1262,14 +1279,11 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
         .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
         
-        .user-stat-content {
-            flex: 1;
-        }
-        
         .user-stat-value {
-            font-size: 1.8rem;
+            font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+            line-height: 1;
         }
         
         .user-stat-item.total .user-stat-value { color: var(--accent-purple); }
@@ -1279,7 +1293,7 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.declined .user-stat-value { color: var(--declined-red); }
         
         .user-stat-label {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
             text-transform: uppercase;
             font-weight: 600;
@@ -1442,21 +1456,22 @@ if (empty($userPhotoUrl)) {
             }
             
             .user-stats-column {
-                gap: 0.8rem;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
             }
             
             .user-stat-item {
-                padding: 0.8rem;
+                padding: 1rem;
             }
             
             .user-stat-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
             }
             
             .user-stat-value {
-                font-size: 1.5rem;
+                font-size: 2rem;
             }
         }
         
@@ -1509,21 +1524,22 @@ if (empty($userPhotoUrl)) {
             }
             
             .user-stats-column {
-                gap: 0.6rem;
+                grid-template-columns: 1fr;
+                gap: 1rem;
             }
             
             .user-stat-item {
-                padding: 0.6rem;
+                padding: 1rem;
             }
             
             .user-stat-icon {
-                width: 28px;
-                height: 28px;
-                font-size: 0.9rem;
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
             }
             
             .user-stat-value {
-                font-size: 1.3rem;
+                font-size: 1.8rem;
             }
         }
     </style>
@@ -1668,64 +1684,64 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
 
-                    <!-- Global Statistics Section - Exact Copy from Example -->
-                    <div class="gs-panel mt-6">
-                        <div class="gs-head">
-                            <div class="gs-chip">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="gs-title">Global Statistics</div>
-                                <div class="gs-sub">Platform-wide performance metrics</div>
-                            </div>
-                        </div>
-
-                        <div class="gs-grid">
-                            <div class="gs-card gs-blue">
-                                <div class="gs-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                                    </svg>
-                                </div>
-                                <div id="gTotalUsers" class="gs-num">—</div>
-                                <div class="gs-label">Total Users</div>
-                            </div>
-
-                            <div class="gs-card gs-purple">
-                                <div class="gs-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 7a5 5 0 105 5 5.006 5.006 0 00-5-5zm0-5a10 10 0 11-10 10A10 10 0 0112 2zm1 9h3v2h-5V6h2z"/>
-                                    </svg>
-                                </div>
-                                <div id="gTotalHits" class="gs-num">—</div>
-                                <div class="gs-label">Total Hits</div>
-                            </div>
-
-                            <div class="gs-card gs-red">
-                                <div class="gs-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
-                                    </svg>
-                                </div>
-                                <div id="gChargeCards" class="gs-num">—</div>
-                                <div class="gs-label">Charge Cards</div>
-                            </div>
-
-                            <div class="gs-card gs-green">
-                                <div class="gs-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </div>
-                                <div id="gLiveCards" class="gs-num">—</div>
-                                <div class="gs-label">Live Cards</div>
-                            </div>
-                        </div>
-                    </div>
-                    
+                    <!-- Global Statistics Section - Updated for better visibility -->
                     <div class="dashboard-bottom">
+                        <div class="gs-panel mt-6">
+                            <div class="gs-head">
+                                <div class="gs-chip">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="gs-title">Global Statistics</div>
+                                    <div class="gs-sub">Platform-wide performance metrics</div>
+                                </div>
+                            </div>
+
+                            <div class="gs-grid">
+                                <div class="gs-card gs-blue">
+                                    <div class="gs-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                        </svg>
+                                    </div>
+                                    <div id="gTotalUsers" class="gs-num">—</div>
+                                    <div class="gs-label">Total Users</div>
+                                </div>
+
+                                <div class="gs-card gs-purple">
+                                    <div class="gs-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 7a5 5 0 105 5 5.006 5.006 0 00-5-5zm0-5a10 10 0 11-10 10A10 10 0 0112 2zm1 9h3v2h-5V6h2z"/>
+                                        </svg>
+                                    </div>
+                                    <div id="gTotalHits" class="gs-num">—</div>
+                                    <div class="gs-label">Total Hits</div>
+                                </div>
+
+                                <div class="gs-card gs-red">
+                                    <div class="gs-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+                                        </svg>
+                                    </div>
+                                    <div id="gChargeCards" class="gs-num">—</div>
+                                    <div class="gs-label">Charge Cards</div>
+                                </div>
+
+                                <div class="gs-card gs-green">
+                                    <div class="gs-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </div>
+                                    <div id="gLiveCards" class="gs-num">—</div>
+                                    <div class="gs-label">Live Cards</div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="online-users-section">
                             <div class="online-users-header">
                                 <div class="online-users-title">
@@ -1751,7 +1767,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-checking">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑹</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥𝐥</p>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -1947,50 +1963,40 @@ if (empty($userPhotoUrl)) {
                             <div class="user-stat-icon">
                                 <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-value" id="profile-total-value">0</div>
-                                <div class="user-stat-label">TOTAL CHECKED</div>
-                            </div>
+                            <div class="user-stat-value" id="profile-total-value">0</div>
+                            <div class="user-stat-label">TOTAL CHECKED</div>
                         </div>
                         
                         <div class="user-stat-item charged">
                             <div class="user-stat-icon">
                                 <i class="fas fa-bolt"></i>
                             </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-value" id="profile-charged-value">0</div>
-                                <div class="user-stat-label">HIT|CHARGED</div>
-                            </div>
+                            <div class="user-stat-value" id="profile-charged-value">0</div>
+                            <div class="user-stat-label">HIT|CHARGED</div>
                         </div>
                         
                         <div class="user-stat-item approved">
                             <div class="user-stat-icon">
                                 <i class="fas fa-check-circle"></i>
                             </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-value" id="profile-approved-value">0</div>
-                                <div class="user-stat-label">LIVE|APPROVED</div>
-                            </div>
+                            <div class="user-stat-value" id="profile-approved-value">0</div>
+                            <div class="user-stat-label">LIVE|APPROVED</div>
                         </div>
                         
                         <div class="user-stat-item threeds">
                             <div class="user-stat-icon">
                                 <i class="fas fa-lock"></i>
                             </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-value" id="profile-threeds-value">0</div>
-                                <div class="user-stat-label">3DS</div>
-                            </div>
+                            <div class="user-stat-value" id="profile-threeds-value">0</div>
+                            <div class="user-stat-label">3DS</div>
                         </div>
                         
                         <div class="user-stat-item declined">
                             <div class="user-stat-icon">
                                 <i class="fas fa-times-circle"></i>
                             </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-value" id="profile-declined-value">0</div>
-                                <div class="user-stat-label">DEAD|DECLINED</div>
-                            </div>
+                            <div class="user-stat-value" id="profile-declined-value">0</div>
+                            <div class="user-stat-label">DEAD|DECLINED</div>
                         </div>
                     </div>
                 </div>
