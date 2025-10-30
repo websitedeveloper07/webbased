@@ -1,91 +1,4 @@
-<?php
-require_once 'maintenance_check.php';
-session_start();
 
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// MAINTENANCE MODE CHECK
-// Maintenance flag file path - using /tmp/.maintenance as specified
-define('MAINTENANCE_FLAG', '/tmp/.maintenance');
-
-// Check if maintenance mode is active
-if (file_exists(MAINTENANCE_FLAG)) {
-    // Get the current script name
-    $current_page = basename($_SERVER['PHP_SELF']);
-    
-    // Allow access to maintenance page and admin panel
-    if ($current_page === 'maintenance.php' || $current_page === 'adminaccess_panel.php') {
-        // Continue with normal execution
-    } else {
-        // Check if admin is logged in
-        if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
-            // Admin can continue - bypass normal user authentication
-            $adminBypass = true;
-        } else {
-            // Redirect to maintenance page
-            header("Location: /maintenance.php");
-            exit();
-        }
-    }
-}
-
-// Enable error reporting for debugging (disable in production)
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-
-// Log session state
-error_log("Checking session in index.php: " . json_encode($_SESSION));
-
-// Check if user is authenticated OR if admin is authenticated during maintenance
- $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
-if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
-    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
-    header('Location: login.php');
-    exit;
-}
-
-// Load environment variables manually
- $envFile = __DIR__ . '/.env';
- $_ENV = [];
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
-            continue;
-        }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-} else {
-    error_log("Environment file (.env) not found in " . __DIR__);
-}
-
-// Get user information for display
- $userName = $_SESSION['user']['name'] ?? 'User';
- $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
- $userUsername = $_SESSION['user']['username'] ?? null;
-
-// Generate avatar URL if no photo is available
-if (empty($userPhotoUrl)) {
-    $initials = '';
-    $words = explode(' ', trim($userName));
-    foreach ($words as $word) {
-        if (!empty($word)) {
-            $initials .= strtoupper(substr($word, 0, 1));
-            if (strlen($initials) >= 2) break;
-        }
-    }
-    if (empty($initials)) $initials = 'U';
-    $userPhotoUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
-}
-
-// Format username with @ symbol
- $formattedUsername = $userUsername ? '@' . $userUsername : '';
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,24 +12,23 @@ if (empty($userPhotoUrl)) {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
-            /* Light theme colors */
-            --primary-bg: #f8fafc; 
-            --secondary-bg: #ffffff; 
+            /* Light theme colors - less whitish */
+            --primary-bg: #f5f7fa; 
+            --secondary-bg: #e9ecef; 
             --card-bg: #ffffff;
-            --text-primary: #0f172a; 
-            --text-secondary: #475569; 
-            --border-color: #e2e8f0;
+            --text-primary: #212529; 
+            --text-secondary: #6c757d; 
+            --border-color: #dee2e6;
             --accent-blue: #3b82f6; 
             --accent-cyan: #06b6d4;
             --accent-green: #10b981; 
             --error: #ef4444; 
             --warning: #f59e0b; 
-            --shadow: rgba(0,0,0,0.1);
+            --shadow: rgba(0,0,0,0.08);
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
             /* Enhanced color palette for stats - same in both modes */
-            --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
@@ -124,66 +36,27 @@ if (empty($userPhotoUrl)) {
             --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
-        [data-theme="dark"] {
-            /* Dark theme colors - beast level */
-            --primary-bg: #0a0e1a;
-            --secondary-bg: #141824;
-            --card-bg: #1a1f2e;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #2a3142;
-            --accent-blue: #4a9eff; 
-            --accent-cyan: #00d4ff;
-            --accent-green: #10b981; 
-            --error: #ef4444; 
-            --warning: #f59e0b; 
-            --shadow: rgba(0,0,0,0.5);
-            --success-green: #22c55e; 
-            --declined-red: #ef4444;
-            
-            /* Glow effects for dark mode */
-            --glow-blue: 0 0 20px rgba(74,158,255,0.3);
-            --glow-cyan: 0 0 20px rgba(0,212,255,0.3);
+        
+        /* Smooth transition for theme switching */
+        body, .navbar, .sidebar, .card, .stat-card, .gs-card, .user-stat-item, 
+        .checker-section, .generator-section, .results-section, .online-users-section,
+        .profile-header, .profile-stats-container, .settings-content {
+            transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
         }
+        
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
             color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        
-        /* Dark mode background without animations */
-        [data-theme="dark"] body {
-            background: linear-gradient(135deg, #0a0e1a 0%, #141824 100%);
-            position: relative;
-        }
-        
-        [data-theme="dark"] body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(74,158,255,0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(0,212,255,0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 20%, rgba(139,92,246,0.05) 0%, transparent 50%);
-            z-index: -1;
         }
         
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
-            background: var(--card-bg); backdrop-filter: blur(10px);
+            background: #1a1a1a; /* Always dark header */
+            backdrop-filter: blur(10px);
             padding: 0.5rem 1rem; display: flex; justify-content: space-between;
-            align-items: center; z-index: 1000; border-bottom: 1px solid var(--border-color);
+            align-items: center; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);
             height: 50px;
-            box-shadow: var(--shadow);
-        }
-        
-        /* Dark mode navbar with glow effect */
-        [data-theme="dark"] .navbar {
-            background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(20,24,36,0.9) 100%);
-            backdrop-filter: blur(15px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
         .navbar-brand {
@@ -191,11 +64,6 @@ if (empty($userPhotoUrl)) {
             font-size: 1.2rem; font-weight: 700;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        
-        /* Dark mode navbar brand with glow effect - only in dark mode */
-        [data-theme="dark"] .navbar-brand {
-            text-shadow: 0 0 10px rgba(74,158,255,0.5);
         }
         
         .navbar-brand i { font-size: 1.2rem; }
@@ -206,12 +74,6 @@ if (empty($userPhotoUrl)) {
             position: relative; transition: all 0.3s;
         }
         
-        /* Dark mode theme toggle with glow effect */
-        [data-theme="dark"] .theme-toggle {
-            background: linear-gradient(135deg, #2a3142 0%, #1a1f2e 100%);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
         .theme-toggle-slider {
             position: absolute; width: 16px; height: 16px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
@@ -219,22 +81,11 @@ if (empty($userPhotoUrl)) {
             align-items: center; justify-content: center; color: white; font-size: 0.5rem;
         }
         
-        /* Dark mode theme toggle slider with glow effect */
-        [data-theme="dark"] .theme-toggle-slider {
-            box-shadow: 0 0 10px rgba(74,158,255,0.5);
-        }
-        
         [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
             display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.2rem 0.5rem; background: var(--secondary-bg);
-            border-radius: 8px; border: 1px solid var(--border-color);
-        }
-        
-        /* Dark mode user info with glow effect */
-        [data-theme="dark"] .user-info {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            box-shadow: var(--glow-blue);
+            padding: 0.2rem 0.5rem; background: rgba(0,0,0,0.7); /* Always dark user info */
+            border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
         }
         
         .user-avatar {
@@ -244,38 +95,27 @@ if (empty($userPhotoUrl)) {
             flex-shrink: 0;
         }
         
-        /* Dark mode user avatar with glow effect */
-        [data-theme="dark"] .user-avatar {
-            box-shadow: 0 0 10px rgba(74,158,255,0.5);
-        }
-        
         .user-details {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
         }
         .user-name {
-            font-weight: 600; color: var(--text-primary);
+            font-weight: 600; color: #ffffff; /* Always white text */
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap; font-size: 0.85rem;
         }
         .user-username {
-            font-size: 0.7rem; color: var(--text-secondary);
+            font-size: 0.7rem; color: rgba(255,255,255,0.7); /* Always light text */
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap;
         }
         .menu-toggle {
-            color: var(--text-primary) !important; font-size: 1.2rem; 
+            color: #ffffff !important; font-size: 1.2rem; 
             transition: all 0.3s; display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 8px; background: var(--secondary-bg);
+            width: 36px; height: 36px; border-radius: 8px; background: rgba(0,0,0,0.5);
             flex-shrink: 0; cursor: pointer;
-            border: 1px solid var(--border-color);
-        }
-        
-        /* Dark mode menu toggle with glow effect */
-        [data-theme="dark"] .menu-toggle {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            box-shadow: var(--glow-blue);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
         .menu-toggle:hover { transform: scale(1.1); background: var(--accent-blue); color: white !important; }
@@ -286,13 +126,6 @@ if (empty($userPhotoUrl)) {
             transform: translateX(-100%); transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
-        }
-        
-        /* Dark mode sidebar with glow effect */
-        [data-theme="dark"] .sidebar {
-            background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(20,24,36,0.95) 100%);
-            backdrop-filter: blur(15px);
-            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
         }
         
         .sidebar.open {
@@ -311,12 +144,6 @@ if (empty($userPhotoUrl)) {
             border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
         }
         
-        /* Dark mode sidebar link with hover effect */
-        [data-theme="dark"] .sidebar-link:hover {
-            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
-            box-shadow: var(--glow-blue);
-        }
-        
         .sidebar-link:hover {
             background: rgba(59,130,246,0.1); color: var(--accent-blue);
             transform: translateX(5px);
@@ -324,11 +151,6 @@ if (empty($userPhotoUrl)) {
         .sidebar-link.active {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
-        }
-        
-        /* Dark mode active sidebar link with glow effect */
-        [data-theme="dark"] .sidebar-link.active {
-            box-shadow: var(--glow-blue);
         }
         
         .sidebar-link i { width: 15px; text-align: center; font-size: 0.9rem; }
@@ -347,26 +169,21 @@ if (empty($userPhotoUrl)) {
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         
-        /* Dark mode page title with glow effect */
-        [data-theme="dark"] .page-title {
-            text-shadow: 0 0 10px rgba(0,212,255,0.3);
-        }
-        
         .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         
         /* Enhanced Dashboard Stats */
         .dashboard-container {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
         }
         
         /* Welcome banner */
         .welcome-banner {
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 0.8rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
             display: flex;
@@ -374,14 +191,6 @@ if (empty($userPhotoUrl)) {
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 1rem;
-        }
-        
-        /* Dark mode welcome banner with glow effect */
-        [data-theme="dark"] .welcome-banner {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            position: relative;
-            overflow: hidden;
         }
         
         .welcome-content {
@@ -393,74 +202,63 @@ if (empty($userPhotoUrl)) {
         }
         
         .welcome-icon {
-            width: 50px;
-            height: 50px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
-        }
-        
-        /* Dark mode welcome icon with glow effect */
-        [data-theme="dark"] .welcome-icon {
-            box-shadow: var(--glow-blue);
+            font-size: 1rem;
         }
         
         .welcome-text h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.3rem;
+            font-size: 1.2rem;
+            margin-bottom: 0.2rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        /* Dark mode welcome text with glow effect */
-        [data-theme="dark"] .welcome-text h2 {
-            text-shadow: 0 0 10px rgba(74,158,255,0.5);
-        }
-        
         .welcome-text p {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
         
         .dashboard-content {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 0.8rem;
+        }
+        
+        /* Progress Counters with Online Users - Two Column Layout */
+        .dashboard-top {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
         }
         
         .stats-grid {
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.2rem; 
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 0.6rem; 
         }
         
         .stat-card {
             background: var(--card-bg); 
-            border-radius: 16px; 
-            padding: 1.5rem; 
+            border-radius: 10px; 
+            padding: 0.6rem; 
             position: relative;
             transition: all 0.3s; 
             box-shadow: var(--shadow); 
-            min-height: 140px;
+            min-height: 65px; /* Further reduced from 75px */
             display: flex; 
             flex-direction: column; 
             justify-content: space-between;
             overflow: hidden;
             border: 1px solid var(--border-color);
-        }
-        
-        /* Dark mode stat card with glow effect */
-        [data-theme="dark"] .stat-card {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            position: relative;
-            overflow: hidden;
         }
         
         .stat-card::before {
@@ -469,64 +267,50 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 3px;
         }
         
-        .stat-card.total::before { background: var(--stat-total); }
         .stat-card.charged::before { background: var(--stat-charged); }
         .stat-card.approved::before { background: var(--stat-approved); }
-        .stat-card.threeds::before { background: var(--stat-threeds); }
         .stat-card.declined::before { background: var(--stat-declined); }
         .stat-card.checked::before { background: var(--stat-checked); }
         .stat-card.online::before { background: var(--stat-online); }
         
         .stat-card:hover { 
-            transform: translateY(-5px); 
+            transform: translateY(-3px); 
             box-shadow: 0 8px 30px var(--shadow);
-        }
-        
-        /* Dark mode stat card hover with glow effect */
-        [data-theme="dark"] .stat-card:hover {
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
         }
         
         .stat-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1rem;
+            margin-bottom: 0.3rem; /* Reduced from 0.4rem */
             position: relative;
             z-index: 1;
         }
         
         .stat-icon {
-            width: 45px; 
-            height: 45px; 
-            border-radius: 12px;
+            width: 22px; /* Reduced from 25px */
+            height: 22px; /* Reduced from 25px */
+            border-radius: 6px;
             display: flex; 
             align-items: center; 
             justify-content: center;
-            font-size: 1.3rem; 
+            font-size: 0.8rem; /* Reduced from 0.9rem */
             color: white;
         }
         
-        .stat-card.total .stat-icon { background: var(--stat-total); }
         .stat-card.charged .stat-icon { background: var(--stat-charged); }
         .stat-card.approved .stat-icon { background: var(--stat-approved); }
-        .stat-card.threeds .stat-icon { background: var(--stat-threeds); }
         .stat-card.declined .stat-icon { background: var(--stat-declined); }
         .stat-card.checked .stat-icon { background: var(--stat-checked); }
         .stat-card.online .stat-icon { background: var(--stat-online); }
         
-        /* Dark mode stat icon with glow effect */
-        [data-theme="dark"] .stat-icon {
-            box-shadow: 0 0 15px rgba(255,255,255,0.2);
-        }
-        
         .stat-value { 
-            font-size: 2rem; 
+            font-size: 1.3rem; /* Reduced from 1.4rem */
             font-weight: 700; 
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
             line-height: 1;
             position: relative;
             z-index: 1;
@@ -534,7 +318,7 @@ if (empty($userPhotoUrl)) {
         
         .stat-label {
             color: var(--text-secondary); 
-            font-size: 0.85rem; 
+            font-size: 0.6rem; /* Reduced from 0.65rem */
             text-transform: uppercase; 
             font-weight: 600;
             letter-spacing: 0.5px;
@@ -546,36 +330,34 @@ if (empty($userPhotoUrl)) {
         .stat-card.declined .stat-value { color: var(--declined-red); }
         .stat-card.charged .stat-value { color: var(--success-green); }
         .stat-card.approved .stat-value { color: var(--success-green); }
-        .stat-card.threeds .stat-value { color: var(--success-green); }
         .stat-card.online .stat-value { color: var(--accent-cyan); }
         
         .stat-indicator {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 8px;
-            height: 8px;
+            bottom: 6px;
+            right: 6px;
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
             background: rgba(255,255,255,0.3);
         }
         
-        .stat-card.total .stat-indicator { background: rgba(118, 75, 162, 0.7); }
         .stat-card.charged .stat-indicator { background: rgba(245, 87, 108, 0.7); }
         .stat-card.approved .stat-indicator { background: rgba(0, 242, 254, 0.7); }
-        .stat-card.threeds .stat-indicator { background: rgba(56, 249, 215, 0.7); }
         .stat-card.declined .stat-indicator { background: rgba(239, 68, 68, 0.7); }
         .stat-card.checked .stat-indicator { background: rgba(48, 207, 208, 0.7); }
         .stat-card.online .stat-indicator { background: rgba(79, 172, 254, 0.7); }
         
+        /* Global Statistics with Top Users - Two Column Layout */
         .dashboard-bottom {
             display: grid;
-            grid-template-columns: 1.5fr 1fr; /* Adjusted ratio to make global stats more compact */
-            gap: 1.5rem;
+            grid-template-columns: 2fr 1fr;
+            gap: 0.8rem;
         }
         
-        /* Global Statistics Section - Updated for better visibility */
+        /* Global Statistics Section - Line Layout */
         .gs-panel{
-            border-radius:16px; padding:14px 14px 16px; /* Reduced padding for more compact look */
+            border-radius:10px; padding:10px;
             background: var(--card-bg);
             border:1px solid var(--border-color);
             box-shadow: var(--shadow);
@@ -583,42 +365,34 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
         }
         
-        /* Dark mode global stats panel with glow effect */
-        [data-theme="dark"] .gs-panel {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        
-        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:12px; /* Reduced margin */}
-        .gs-chip{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+        .gs-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .gs-chip{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;
             background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
-        .gs-title{font-weight:600;color:var(--text-primary)}
-        .gs-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
-        .gs-grid{display:grid;gap:14px} /* Reduced gap */
-        @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+        .gs-title{font-weight:600;color:var(--text-primary);font-size:0.85rem}
+        .gs-sub{font-size:10px;color:var(--text-secondary);margin-top:2px}
+        .gs-grid{display:flex;gap:8px; justify-content: space-between;}
 
         .gs-card{
-            position:relative;border-radius:12px;padding:14px 12px; /* Reduced padding */
+            position:relative;border-radius:8px;padding:14px 8px; /* Increased padding from 10px to 14px */
             border:1px solid var(--border-color);
             box-shadow: var(--shadow);
             color:var(--text-primary);
             overflow: hidden;
-        }
-        
-        /* Dark mode global stat card with glow effect */
-        [data-theme="dark"] .gs-card {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 110px; /* Added min-height to increase overall height */
         }
         
         .gs-card .gs-icon{
-            width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-            margin-bottom:8px;border:1px solid var(--border-color)
+            width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+            margin-bottom:8px;border:1px solid var(--border-color) /* Increased margin from 6px to 8px */
         }
-        .gs-card .gs-icon svg{width:16px;height:16px;display:block;opacity:.95}
-        .gs-num{font-weight:800;font-size:24px;line-height:1} /* Reduced font size */
-        .gs-label{font-size:11px;color:var(--text-secondary);margin-top:4px} /* Reduced font size */
+        .gs-card .gs-icon svg{width:14px;height:14px;display:block;opacity:.95}
+        .gs-num{font-weight:800;font-size:16px;line-height:1}
+        .gs-label{font-size:9px;color:var(--text-secondary);margin-top:3px}
         
         /* Enhanced colors for global stats with better visibility */
         .gs-blue   { 
@@ -638,44 +412,16 @@ if (empty($userPhotoUrl)) {
             border: 1px solid rgba(139,92,246,0.3);
         }
         
-        /* Dark mode colors for stat cards with enhanced visibility */
-        [data-theme="dark"] .gs-blue   { 
-            background:linear-gradient(135deg, rgba(74,158,255,0.4), rgba(37,99,235,0.3));
-            border: 1px solid rgba(74,158,255,0.4);
-            box-shadow: 0 0 15px rgba(74,158,255,0.2);
-        }
-        [data-theme="dark"] .gs-green  { 
-            background:linear-gradient(135deg, rgba(16,185,129,0.4), rgba(5,150,105,0.3));
-            border: 1px solid rgba(16,185,129,0.4);
-            box-shadow: 0 0 15px rgba(16,185,129,0.2);
-        }
-        [data-theme="dark"] .gs-red    { 
-            background:linear-gradient(135deg, rgba(239,68,68,0.4), rgba(220,38,38,0.3));
-            border: 1px solid rgba(239,68,68,0.4);
-            box-shadow: 0 0 15px rgba(239,68,68,0.2);
-        }
-        [data-theme="dark"] .gs-purple { 
-            background:linear-gradient(135deg, rgba(139,92,246,0.4), rgba(124,58,237,0.3));
-            border: 1px solid rgba(139,92,246,0.4);
-            box-shadow: 0 0 15px rgba(139,92,246,0.2);
-        }
-        
-        /* Enhanced Online Users Section - Expanded */
+        /* Enhanced Online Users Section */
         .online-users-section {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 0.8rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
             height: fit-content;
             position: relative;
             overflow: hidden;
-        }
-        
-        /* Dark mode online users section with glow effect */
-        [data-theme="dark"] .online-users-section {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
         
         .online-users-section::before {
@@ -688,22 +434,17 @@ if (empty($userPhotoUrl)) {
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
         }
         
-        /* Dark mode online users section header with glow effect */
-        [data-theme="dark"] .online-users-section::before {
-            box-shadow: 0 0 10px rgba(74,158,255,0.5);
-        }
-        
         .online-users-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.8rem;
             position: relative;
             z-index: 1;
         }
         
         .online-users-title {
-            font-size: 1.3rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--text-primary);
             display: flex;
@@ -711,96 +452,68 @@ if (empty($userPhotoUrl)) {
             gap: 0.5rem;
         }
         
-        /* Dark mode online users title with glow effect */
-        [data-theme="dark"] .online-users-title {
-            text-shadow: 0 0 10px rgba(0,212,255,0.3);
-        }
-        
         .online-users-title i {
             color: var(--accent-cyan);
         }
         
         .online-users-count {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             color: var(--text-secondary);
             background: rgba(59, 130, 246, 0.1);
-            padding: 0.3rem 0.6rem;
+            padding: 0.2rem 0.4rem;
             border-radius: 20px;
             display: flex;
             align-items: center;
             gap: 0.3rem;
         }
         
-        /* Dark mode online users count with glow effect */
-        [data-theme="dark"] .online-users-count {
-            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
-            box-shadow: var(--glow-blue);
-        }
-        
         .online-users-count i {
             color: var(--success-green);
-            font-size: 0.8rem;
+            font-size: 0.6rem;
         }
         
         .online-users-list {
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
-            max-height: 400px;
+            gap: 0.5rem;
+            max-height: 250px;
             overflow-y: auto;
-            padding-right: 0.5rem;
+            padding-right: 0.2rem;
             position: relative;
             z-index: 1;
         }
         
         /* Custom scrollbar */
         .online-users-list::-webkit-scrollbar {
-            width: 6px;
+            width: 3px;
         }
         
         .online-users-list::-webkit-scrollbar-track {
             background: var(--secondary-bg);
-            border-radius: 3px;
+            border-radius: 2px;
         }
         
         .online-users-list::-webkit-scrollbar-thumb {
             background: var(--accent-blue);
-            border-radius: 3px;
-        }
-        
-        /* Dark mode scrollbar with glow effect */
-        [data-theme="dark"] .online-users-list::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            box-shadow: var(--glow-blue);
+            border-radius: 2px;
         }
         
         .online-user-item {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
+            gap: 0.5rem;
+            padding: 0.5rem;
             background: var(--secondary-bg);
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
             position: relative;
         }
         
-        /* Dark mode online user item with glow effect */
-        [data-theme="dark"] .online-user-item {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
-        }
-        
         .online-user-item:hover {
-            transform: translateX(5px);
+            transform: translateX(3px);
             border-color: var(--accent-blue);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-        }
-        
-        /* Dark mode online user item hover with glow effect */
-        [data-theme="dark"] .online-user-item:hover {
-            box-shadow: var(--glow-blue);
         }
         
         .online-user-avatar-container {
@@ -808,34 +521,24 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-avatar {
-            width: 45px;
-            height: 45px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-blue);
             flex-shrink: 0;
         }
         
-        /* Dark mode online user avatar with glow effect */
-        [data-theme="dark"] .online-user-avatar {
-            box-shadow: 0 0 10px rgba(74,158,255,0.5);
-        }
-        
         .online-indicator {
             position: absolute;
             bottom: 0;
             right: 0;
-            width: 14px;
-            height: 14px;
+            width: 8px;
+            height: 8px;
             background-color: var(--success-green);
             border: 2px solid var(--card-bg);
             border-radius: 50%;
             animation: pulse 2s infinite;
-        }
-        
-        /* Dark mode online indicator with glow effect */
-        [data-theme="dark"] .online-indicator {
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
         }
         
         @keyframes pulse {
@@ -857,7 +560,7 @@ if (empty($userPhotoUrl)) {
         
         .online-user-name {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -865,9 +568,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-username {
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             color: var(--text-secondary);
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.1rem;
         }
         
         /* Hide any potential role elements */
@@ -877,51 +580,164 @@ if (empty($userPhotoUrl)) {
             display: none !important;
         }
         
-        .checker-section, .generator-section {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
+        /* Top Users Section */
+        .top-users-section {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
-        }
-        
-        /* Dark mode sections with glow effect */
-        [data-theme="dark"] .checker-section, 
-        [data-theme="dark"] .generator-section {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            height: fit-content;
             position: relative;
             overflow: hidden;
         }
         
+        .top-users-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+        }
+        
+        .top-users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .top-users-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .top-users-title i {
+            color: var(--accent-purple);
+        }
+        
+        .top-users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Custom scrollbar */
+        .top-users-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        
+        .top-users-list::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+            border-radius: 2px;
+        }
+        
+        .top-users-list::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 2px;
+        }
+        
+        .top-user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .top-user-item:hover {
+            transform: translateX(3px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+        }
+        
+        .top-user-avatar-container {
+            position: relative;
+        }
+        
+        .top-user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-purple);
+            flex-shrink: 0;
+        }
+        
+        .top-user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .top-user-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+        
+        .top-user-username {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.1rem;
+        }
+        
+        .top-user-hits {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 0.1rem 0.3rem;
+            border-radius: 5px;
+            background-color: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .checker-section, .generator-section {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 0.8rem; margin-bottom: 0.8rem;
+            box-shadow: var(--shadow);
+        }
+        
         .checker-header, .generator-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
+            margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;
             position: relative;
             z-index: 1;
         }
         .checker-title, .generator-title {
-            font-size: 1.2rem; font-weight: 700;
+            font-size: 1.1rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
         
-        /* Dark mode section titles with glow effect */
-        [data-theme="dark"] .checker-title, 
-        [data-theme="dark"] .generator-title {
-            text-shadow: 0 0 10px rgba(0,212,255,0.3);
-        }
-        
-        .checker-title i, .generator-title i { color: var(--accent-cyan); font-size: 1rem; }
+        .checker-title i, .generator-title i { color: var(--accent-cyan); font-size: 0.9rem; }
         .settings-btn {
-            padding: 0.3rem 0.6rem; border-radius: 8px;
+            padding: 0.25rem 0.5rem; border-radius: 6px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); color: var(--text-primary);
             cursor: pointer; font-weight: 500; display: flex;
-            align-items: center; gap: 0.3rem; font-size: 0.8rem;
-        }
-        
-        /* Dark mode settings button with glow effect */
-        [data-theme="dark"] .settings-btn {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            align-items: center; gap: 0.3rem; font-size: 0.75rem;
         }
         
         .settings-btn:hover {
@@ -929,29 +745,18 @@ if (empty($userPhotoUrl)) {
             transform: translateY(-2px);
         }
         
-        /* Dark mode settings button hover with glow effect */
-        [data-theme="dark"] .settings-btn:hover {
-            box-shadow: var(--glow-blue);
-        }
-        
-        .input-section { margin-bottom: 1rem; }
+        .input-section { margin-bottom: 0.8rem; }
         .input-header {
             display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;
         }
-        .input-label { font-weight: 600; font-size: 0.9rem; }
+        .input-label { font-weight: 600; font-size: 0.85rem; }
         .card-textarea {
-            width: 100%; min-height: 150px; background: var(--secondary-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            padding: 0.75rem; color: var(--text-primary);
+            width: 100%; min-height: 120px; background: var(--secondary-bg);
+            border: 1px solid var(--border-color); border-radius: 6px;
+            padding: 0.6rem; color: var(--text-primary);
             font-family: 'Courier New', monospace; resize: vertical;
-            font-size: 0.9rem; transition: all 0.3s;
-        }
-        
-        /* Dark mode textarea with glow effect */
-        [data-theme="dark"] .card-textarea {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            font-size: 0.85rem; transition: all 0.3s;
         }
         
         .card-textarea:focus {
@@ -959,24 +764,13 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
         
-        /* Dark mode textarea focus with glow effect */
-        [data-theme="dark"] .card-textarea:focus {
-            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
-        }
-        
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
         .form-control {
-            width: 100%; padding: 0.75rem; background: var(--secondary-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            color: var(--text-primary); font-size: 0.9rem; transition: all 0.3s;
-        }
-        
-        /* Dark mode form control with glow effect */
-        [data-theme="dark"] .form-control {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            width: 100%; padding: 0.6rem; background: var(--secondary-bg);
+            border: 1px solid var(--border-color); border-radius: 6px;
+            color: var(--text-primary); font-size: 0.85rem; transition: all 0.3s;
         }
         
         .form-control:focus {
@@ -984,32 +778,22 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
         
-        /* Dark mode form control focus with glow effect */
-        [data-theme="dark"] .form-control:focus {
-            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
-        }
-        
         .form-row {
-            display: flex; gap: 1rem; flex-wrap: wrap;
+            display: flex; gap: 0.8rem; flex-wrap: wrap;
         }
         .form-col {
-            flex: 1; min-width: 120px;
+            flex: 1; min-width: 100px;
         }
         .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
         .btn {
-            padding: 0.5rem 1rem; border-radius: 8px; border: none;
+            padding: 0.4rem 0.8rem; border-radius: 6px; border: none;
             font-weight: 600; cursor: pointer; display: flex;
-            align-items: center; gap: 0.3rem; min-width: 100px;
-            font-size: 0.9rem; transition: all 0.3s;
+            align-items: center; gap: 0.3rem; min-width: 90px;
+            font-size: 0.85rem; transition: all 0.3s;
         }
         .btn-primary {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
-        }
-        
-        /* Dark mode primary button with glow effect */
-        [data-theme="dark"] .btn-primary {
-            box-shadow: var(--glow-blue);
         }
         
         .btn-primary:hover { transform: translateY(-2px); }
@@ -1018,62 +802,32 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
         
-        /* Dark mode secondary button with glow effect */
-        [data-theme="dark"] .btn-secondary {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
-        }
-        
         .btn-secondary:hover { transform: translateY(-2px); }
-        
-        /* Dark mode secondary button hover with glow effect */
-        [data-theme="dark"] .btn-secondary:hover {
-            box-shadow: var(--glow-blue);
-        }
         
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
+            border-radius: 10px; padding: 0.8rem; margin-bottom: 0.8rem;
             box-shadow: var(--shadow);
-        }
-        
-        /* Dark mode results section with glow effect */
-        [data-theme="dark"] .results-section {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            position: relative;
-            overflow: hidden;
         }
         
         .results-header {
             display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
+            align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;
             position: relative;
             z-index: 1;
         }
         .results-title {
-            font-size: 1.2rem; font-weight: 700;
+            font-size: 1.1rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
         
-        /* Dark mode results title with glow effect */
-        [data-theme="dark"] .results-title {
-            text-shadow: 0 0 10px rgba(0,212,255,0.3);
-        }
-        
-        .results-title i { color: var(--accent-green); font-size: 1rem; }
+        .results-title i { color: var(--accent-green); font-size: 0.9rem; }
         .results-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .filter-btn {
-            padding: 0.3rem 0.6rem; border-radius: 6px;
+            padding: 0.25rem 0.5rem; border-radius: 5px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); color: var(--text-secondary);
-            cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
-        }
-        
-        /* Dark mode filter button with glow effect */
-        [data-theme="dark"] .filter-btn {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            cursor: pointer; font-size: 0.65rem; transition: all 0.3s;
         }
         
         .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
@@ -1081,16 +835,11 @@ if (empty($userPhotoUrl)) {
             background: var(--accent-blue); border-color: var(--accent-blue); color: white;
         }
         
-        /* Dark mode active filter button with glow effect */
-        [data-theme="dark"] .filter-btn.active {
-            box-shadow: var(--glow-blue);
-        }
-        
         .empty-state {
-            text-align: center; padding: 1.5rem 0.5rem; color: var(--text-secondary);
+            text-align: center; padding: 1.2rem 0.5rem; color: var(--text-secondary);
         }
-        .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3; }
-        .empty-state h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+        .empty-state i { font-size: 1.8rem; margin-bottom: 0.4rem; opacity: 0.3; }
+        .empty-state h3 { font-size: 0.9rem; margin-bottom: 0.2rem; }
         .settings-popup {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
@@ -1099,16 +848,10 @@ if (empty($userPhotoUrl)) {
         .settings-popup.active { display: flex; }
         .settings-content {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; max-width: 90vw; width: 90%;
+            border-radius: 10px; padding: 0.8rem; max-width: 90vw; width: 90%;
             max-height: 80vh; overflow-y: auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             animation: slideUp 0.3s ease;
-        }
-        
-        /* Dark mode settings popup with glow effect */
-        [data-theme="dark"] .settings-content {
-            background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(20,24,36,0.95) 100%);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
         
         @keyframes slideUp {
@@ -1117,124 +860,86 @@ if (empty($userPhotoUrl)) {
         }
         .settings-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; padding-bottom: 0.5rem;
+            margin-bottom: 0.8rem; padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--border-color);
         }
         .settings-title {
-            font-size: 1.1rem; font-weight: 700;
+            font-size: 1rem; font-weight: 700;
             display: flex; align-items: center; gap: 0.5rem;
         }
         
-        /* Dark mode settings title with glow effect */
-        [data-theme="dark"] .settings-title {
-            text-shadow: 0 0 10px rgba(0,212,255,0.3);
-        }
-        
         .settings-close {
-            width: 25px; height: 25px; border-radius: 6px; border: none;
+            width: 22px; height: 22px; border-radius: 5px; border: none;
             background: var(--secondary-bg); color: var(--text-secondary);
             cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 0.9rem; transition: all 0.3s;
-        }
-        
-        /* Dark mode settings close button with glow effect */
-        [data-theme="dark"] .settings-close {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            justify-content: center; font-size: 0.8rem; transition: all 0.3s;
         }
         
         .settings-close:hover {
             background: var(--error); color: white; transform: rotate(90deg);
         }
-        .gateway-group { margin-bottom: 1rem; }
+        .gateway-group { margin-bottom: 0.8rem; }
         .gateway-group-title {
-            font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
+            font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;
             display: flex; align-items: center; gap: 0.3rem;
         }
         .gateway-options { display: grid; gap: 0.5rem; }
         .gateway-option {
             display: flex; align-items: center; padding: 0.5rem;
             background: var(--secondary-bg); border: 1px solid var(--border-color);
-            border-radius: 8px; cursor: pointer; transition: all 0.3s;
+            border-radius: 6px; cursor: pointer; transition: all 0.3s;
             position: relative;
-        }
-        
-        /* Dark mode gateway option with glow effect */
-        [data-theme="dark"] .gateway-option {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
         }
         
         .gateway-option:hover {
             border-color: var(--accent-blue); transform: translateX(3px);
         }
         
-        /* Dark mode gateway option hover with glow effect */
-        [data-theme="dark"] .gateway-option:hover {
-            box-shadow: var(--glow-blue);
-        }
-        
         .gateway-option input[type="radio"] {
-            width: 15px; height: 15px; margin-right: 0.5rem;
+            width: 14px; height: 14px; margin-right: 0.5rem;
             cursor: pointer; accent-color: var(--accent-blue);
         }
         .gateway-option-content { flex: 1; }
         .gateway-option-name {
             font-weight: 600; display: flex; align-items: center;
-            gap: 0.3rem; margin-bottom: 0.2rem; font-size: 0.9rem;
+            gap: 0.3rem; margin-bottom: 0.2rem; font-size: 0.85rem;
         }
-        .gateway-option-desc { font-size: 0.7rem; color: var(--text-secondary); }
+        .gateway-option-desc { font-size: 0.65rem; color: var(--text-secondary); }
         .gateway-badge {
-            padding: 0.2rem 0.5rem; border-radius: 4px;
-            font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+            padding: 0.15rem 0.4rem; border-radius: 3px;
+            font-size: 0.55rem; font-weight: 600; text-transform: uppercase;
         }
         .badge-charge { background: rgba(245,158,11,0.15); color: var(--warning); }
         .badge-auth { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
         .badge-maintenance {
             background-color: #ef4444;
             color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.6rem;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.55rem;
             font-weight: 600;
             text-transform: uppercase;
-            margin-left: 5px;
+            margin-left: 4px;
         }
         .settings-footer {
-            display: flex; gap: 0.5rem; margin-top: 1rem;
+            display: flex; gap: 0.5rem; margin-top: 0.8rem;
             padding-top: 0.5rem; border-top: 1px solid var(--border-color);
         }
         .btn-save {
-            flex: 1; padding: 0.5rem; border-radius: 8px; border: none;
+            flex: 1; padding: 0.4rem; border-radius: 6px; border: none;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
-        }
-        
-        /* Dark mode save button with glow effect */
-        [data-theme="dark"] .btn-save {
-            box-shadow: var(--glow-blue);
+            color: white; font-weight: 600; cursor: pointer; font-size: 0.85rem;
         }
         
         .btn-save:hover { transform: translateY(-2px); }
         .btn-cancel {
-            flex: 1; padding: 0.5rem; border-radius: 8px;
+            flex: 1; padding: 0.4rem; border-radius: 6px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); color: var(--text-primary);
-            font-weight: 600; cursor: pointer; font-size: 0.9rem;
-        }
-        
-        /* Dark mode cancel button with glow effect */
-        [data-theme="dark"] .btn-cancel {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            font-weight: 600; cursor: pointer; font-size: 0.85rem;
         }
         
         .btn-cancel:hover { transform: translateY(-2px); }
-        
-        /* Dark mode cancel button hover with glow effect */
-        [data-theme="dark"] .btn-cancel:hover {
-            box-shadow: var(--glow-blue);
-        }
         
         .loader {
             border: 3px solid #f3f3f3;
@@ -1247,13 +952,13 @@ if (empty($userPhotoUrl)) {
             display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.8rem; }
+        #statusLog, #genStatusLog { margin-top: 0.5rem; color: var(--text-secondary); text-align: center; font-size: 0.75rem; }
         
         /* Fixed: Changed color for declined cards to red in results */
         .result-item.declined .stat-label { color: var(--declined-red); }
         .result-item.approved .stat-label, .result-item.charged .stat-label, .result-item.threeds .stat-label { color: var(--success-green); }
         
-        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.8rem; margin-left: auto; }
+        .copy-btn { background: transparent; border: none; cursor: pointer; color: var(--accent-blue); font-size: 0.75rem; margin-left: auto; }
         .copy-btn:hover { color: var(--accent-purple); }
         .stat-content { display: flex; align-items: center; justify-content: space-between; }
         .sidebar-link.logout {
@@ -1264,42 +969,25 @@ if (empty($userPhotoUrl)) {
             margin-bottom: 1rem;
         }
         
-        /* Dark mode logout button with glow effect */
-        [data-theme="dark"] .sidebar-link.logout {
-            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(220,38,38,0.1) 100%);
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-        
         .sidebar-link.logout:hover {
             background: rgba(239, 68, 68, 0.2);
             color: var(--error);
             transform: translateX(5px);
         }
         
-        /* Dark mode logout button hover with glow effect */
-        [data-theme="dark"] .sidebar-link.logout:hover {
-            box-shadow: 0 0 10px rgba(239,68,68,0.3);
-        }
-        
         .generated-cards-container {
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
-            max-height: 300px;
+            border-radius: 6px;
+            padding: 0.6rem;
+            max-height: 250px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             white-space: pre-wrap;
             word-break: break-all;
             color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-        
-        /* Dark mode generated cards container with glow effect */
-        [data-theme="dark"] .generated-cards-container {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
+            margin-bottom: 0.8rem;
         }
         
         .custom-select {
@@ -1310,20 +998,14 @@ if (empty($userPhotoUrl)) {
         .custom-select select {
             appearance: none;
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.6rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s;
-        }
-        
-        /* Dark mode select with glow effect */
-        [data-theme="dark"] .custom-select select {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
         }
         
         .custom-select select:focus {
@@ -1332,18 +1014,13 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
         
-        /* Dark mode select focus with glow effect */
-        [data-theme="dark"] .custom-select select:focus {
-            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
-        }
-        
         .custom-select::after {
             content: '\f078';
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             position: absolute;
             top: 50%;
-            right: 0.75rem;
+            right: 0.6rem;
             transform: translateY(-50%);
             pointer-events: none;
             color: var(--text-secondary);
@@ -1354,19 +1031,13 @@ if (empty($userPhotoUrl)) {
         }
         .custom-input-group input {
             flex: 1;
-            padding: 0.75rem;
+            padding: 0.6rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px 0 0 8px;
+            border-radius: 6px 0 0 6px;
             color: var(--text-primary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all 0.3s;
-        }
-        
-        /* Dark mode input with glow effect */
-        [data-theme="dark"] .custom-input-group input {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
         }
         
         .custom-input-group input:focus {
@@ -1375,33 +1046,21 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
         
-        /* Dark mode input focus with glow effect */
-        [data-theme="dark"] .custom-input-group input:focus {
-            box-shadow: 0 0 0 2px rgba(74,158,255,0.3);
-        }
-        
         .custom-input-group .input-group-append {
             display: flex;
         }
         .custom-input-group .input-group-text {
             display: flex;
             align-items: center;
-            padding: 0 0.75rem;
+            padding: 0 0.6rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
             border-left: none;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 6px 6px 0;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s;
-        }
-        
-        /* Dark mode input group text with glow effect */
-        [data-theme="dark"] .custom-input-group .input-group-text {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
-            border-left: none;
         }
         
         .custom-input-group .input-group-text:hover {
@@ -1409,19 +1068,13 @@ if (empty($userPhotoUrl)) {
             color: var(--accent-blue);
         }
         
-        /* Dark mode input group text hover with glow effect */
-        [data-theme="dark"] .custom-input-group .input-group-text:hover {
-            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
-            box-shadow: var(--glow-blue);
-        }
-        
         .copy-all-btn, .clear-all-btn {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid var(--accent-blue);
             color: var(--accent-blue);
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.75rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -1430,29 +1083,9 @@ if (empty($userPhotoUrl)) {
             gap: 0.3rem;
         }
         
-        /* Dark mode copy/clear buttons with glow effect */
-        [data-theme="dark"] .copy-all-btn {
-            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
-            border: 1px solid rgba(74,158,255,0.3);
-        }
-        
-        [data-theme="dark"] .clear-all-btn {
-            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(220,38,38,0.1) 100%);
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-        
         .copy-all-btn:hover, .clear-all-btn:hover {
             background: var(--accent-blue);
             color: white;
-        }
-        
-        /* Dark mode copy/clear buttons hover with glow effect */
-        [data-theme="dark"] .copy-all-btn:hover {
-            box-shadow: var(--glow-blue);
-        }
-        
-        [data-theme="dark"] .clear-all-btn:hover {
-            box-shadow: 0 0 10px rgba(239,68,68,0.3);
         }
         
         .clear-all-btn {
@@ -1470,25 +1103,19 @@ if (empty($userPhotoUrl)) {
         .profile-container {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1.2rem;
         }
         
         /* Profile Header with Glassmorphism */
         .profile-header {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem;
+            border-radius: 16px;
+            padding: 1.5rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
             position: relative;
             overflow: hidden;
-        }
-        
-        /* Dark mode profile header with glow effect */
-        [data-theme="dark"] .profile-header {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
         
         .profile-header::before {
@@ -1497,14 +1124,9 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 5px;
+            height: 4px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 5s ease infinite;
-        }
-        
-        /* Dark mode profile header gradient with glow effect */
-        [data-theme="dark"] .profile-header::before {
-            box-shadow: 0 0 10px rgba(74,158,255,0.5);
         }
         
         @keyframes gradientShift {
@@ -1516,7 +1138,7 @@ if (empty($userPhotoUrl)) {
         .profile-info {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 1.5rem;
             flex-wrap: wrap;
             position: relative;
             z-index: 1;
@@ -1527,18 +1149,13 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-avatar {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid var(--accent-blue);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            border: 3px solid var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
             transition: transform 0.3s ease;
-        }
-        
-        /* Dark mode profile avatar with glow effect */
-        [data-theme="dark"] .profile-avatar {
-            box-shadow: 0 0 25px rgba(74,158,255,0.5);
         }
         
         .profile-avatar:hover {
@@ -1547,19 +1164,14 @@ if (empty($userPhotoUrl)) {
         
         .profile-status {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 24px;
-            height: 24px;
+            bottom: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
             background-color: var(--success-green);
-            border: 3px solid var(--card-bg);
+            border: 2px solid var(--card-bg);
             border-radius: 50%;
             animation: pulse 2s infinite;
-        }
-        
-        /* Dark mode profile status with glow effect */
-        [data-theme="dark"] .profile-status {
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
         }
         
         .profile-details {
@@ -1567,35 +1179,30 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-name {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.5px;
         }
         
-        /* Dark mode profile name with glow effect */
-        [data-theme="dark"] .profile-name {
-            text-shadow: 0 0 10px rgba(74,158,255,0.5);
-        }
-        
         .profile-username {
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: var(--text-secondary);
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
         .profile-badges {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             flex-wrap: wrap;
         }
         
         .profile-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -1609,62 +1216,37 @@ if (empty($userPhotoUrl)) {
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
         
-        /* Dark mode member badge with glow effect */
-        [data-theme="dark"] .badge-member {
-            background: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 100%);
-            border: 1px solid rgba(74,158,255,0.3);
-            box-shadow: var(--glow-blue);
-        }
-        
         .badge-active {
             background: rgba(34, 197, 94, 0.2);
             color: var(--success-green);
             border: 1px solid rgba(34, 197, 94, 0.3);
         }
         
-        /* Dark mode active badge with glow effect */
-        [data-theme="dark"] .badge-active {
-            background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.1) 100%);
-            border: 1px solid rgba(16,185,129,0.3);
-            box-shadow: 0 0 10px rgba(16,185,129,0.3);
-        }
-        
         /* Compact Stats Section */
         .profile-stats-container {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: 12px;
+            padding: 1.2rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
-        }
-        
-        /* Dark mode profile stats container with glow effect */
-        [data-theme="dark"] .profile-stats-container {
-            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
         
         .profile-stats-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
             position: relative;
             z-index: 1;
         }
         
         .profile-stats-title {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
-        }
-        
-        /* Dark mode profile stats title with glow effect */
-        [data-theme="dark"] .profile-stats-title {
-            text-shadow: 0 0 10px rgba(0,212,255,0.3);
         }
         
         .profile-stats-title i {
@@ -1675,7 +1257,7 @@ if (empty($userPhotoUrl)) {
         .user-stats-column {
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
+            gap: 0.6rem;
             position: relative;
             z-index: 1;
         }
@@ -1683,18 +1265,12 @@ if (empty($userPhotoUrl)) {
         .user-stat-item {
             display: flex;
             align-items: center;
-            padding: 0.8rem;
+            padding: 0.6rem;
             background: var(--secondary-bg);
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
             transition: all 0.3s;
             position: relative;
-        }
-        
-        /* Dark mode user stat item with glow effect */
-        [data-theme="dark"] .user-stat-item {
-            background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
-            border: 1px solid rgba(74,158,255,0.2);
         }
         
         .user-stat-item::before {
@@ -1703,14 +1279,12 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             height: 100%;
-            width: 4px;
-            border-radius: 4px 0 0 4px;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
         }
         
-        .user-stat-item.total::before { background: var(--stat-total); }
         .user-stat-item.charged::before { background: var(--stat-charged); }
         .user-stat-item.approved::before { background: var(--stat-approved); }
-        .user-stat-item.threeds::before { background: var(--stat-threeds); }
         .user-stat-item.declined::before { background: var(--stat-declined); }
         
         .user-stat-item:hover {
@@ -1718,33 +1292,21 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
-        /* Dark mode user stat item hover with glow effect */
-        [data-theme="dark"] .user-stat-item:hover {
-            box-shadow: var(--glow-blue);
-        }
-        
         .user-stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: white;
-            margin-right: 1rem;
+            margin-right: 0.8rem;
         }
         
-        .user-stat-item.total .user-stat-icon { background: var(--stat-total); }
         .user-stat-item.charged .user-stat-icon { background: var(--stat-charged); }
         .user-stat-item.approved .user-stat-icon { background: var(--stat-approved); }
-        .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
         .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
-        
-        /* Dark mode user stat icon with glow effect */
-        [data-theme="dark"] .user-stat-icon {
-            box-shadow: 0 0 15px rgba(255,255,255,0.2);
-        }
         
         .user-stat-content {
             flex: 1;
@@ -1754,7 +1316,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .user-stat-label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
             font-weight: 600;
             text-transform: uppercase;
@@ -1762,15 +1324,13 @@ if (empty($userPhotoUrl)) {
         }
         
         .user-stat-value {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
             line-height: 1;
         }
         
-        .user-stat-item.total .user-stat-value { color: var(--accent-purple); }
         .user-stat-item.charged .user-stat-value { color: var(--success-green); }
         .user-stat-item.approved .user-stat-value { color: var(--success-green); }
-        .user-stat-item.threeds .user-stat-value { color: var(--success-green); }
         .user-stat-item.declined .user-stat-value { color: var(--declined-red); }
         
         /* Hide any potential role elements */
@@ -1813,82 +1373,85 @@ if (empty($userPhotoUrl)) {
             .sidebar { width: 75vw; }
             .page-title { font-size: 1.2rem; }
             .page-subtitle { font-size: 0.8rem; }
-            .dashboard-content {
-                flex-direction: column;
+            
+            /* Mobile layout for dashboard */
+            .dashboard-top {
+                grid-template-columns: 1fr;
             }
             .dashboard-bottom {
                 grid-template-columns: 1fr;
             }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-            .stat-card { padding: 1rem; min-height: 100px; }
-            .stat-icon { width: 32px; height: 32px; font-size: 1rem; }
-            .stat-value { font-size: 1.4rem; }
-            .stat-label { font-size: 0.7rem; }
-            .welcome-banner { padding: 1rem; }
-            .welcome-icon { width: 40px; height: 40px; font-size: 1.2rem; }
-            .welcome-text h2 { font-size: 1.2rem; }
-            .welcome-text p { font-size: 0.8rem; }
-            .checker-section, .generator-section { padding: 0.75rem; }
-            .checker-title, .generator-title { font-size: 1rem; }
-            .checker-title i, .generator-title i { font-size: 0.8rem; }
-            .settings-btn { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
-            .input-label { font-size: 0.8rem; }
-            .card-textarea { min-height: 100px; padding: 0.5rem; font-size: 0.8rem; }
-            .btn { padding: 0.4rem 0.8rem; min-width: 80px; font-size: 0.8rem; }
-            .results-section { padding: 0.75rem; }
-            .results-title { font-size: 1rem; }
-            .results-title i { font-size: 0.8rem; }
-            .filter-btn { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
-            .generated-cards-container { max-height: 200px; font-size: 0.7rem; padding: 0.5rem; }
-            .copy-all-btn, .clear-all-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+            
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+            .stat-card { padding: 0.6rem; min-height: 60px; }
+            .stat-icon { width: 20px; height: 20px; font-size: 0.7rem; }
+            .stat-value { font-size: 1.1rem; }
+            .stat-label { font-size: 0.55rem; }
+            .welcome-banner { padding: 0.6rem; }
+            .welcome-icon { width: 30px; height: 30px; font-size: 0.9rem; }
+            .welcome-text h2 { font-size: 1rem; }
+            .welcome-text p { font-size: 0.75rem; }
+            .checker-section, .generator-section { padding: 0.6rem; }
+            .checker-title, .generator-title { font-size: 0.9rem; }
+            .checker-title i, .generator-title i { font-size: 0.7rem; }
+            .settings-btn { padding: 0.2rem 0.3rem; font-size: 0.65rem; }
+            .input-label { font-size: 0.75rem; }
+            .card-textarea { min-height: 90px; padding: 0.4rem; font-size: 0.75rem; }
+            .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
+            .results-section { padding: 0.6rem; }
+            .results-title { font-size: 0.9rem; }
+            .results-title i { font-size: 0.7rem; }
+            .filter-btn { padding: 0.2rem 0.3rem; font-size: 0.6rem; }
+            .generated-cards-container { max-height: 180px; font-size: 0.65rem; padding: 0.4rem; }
+            .copy-all-btn, .clear-all-btn { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
             .form-row { flex-direction: column; gap: 0.5rem; }
             .form-col { min-width: 100%; }
             .settings-content { max-width: 95vw; }
-            .gateway-option { padding: 0.5rem; }
-            .gateway-option-name { font-size: 0.8rem; }
-            .gateway-option-desc { font-size: 0.65rem; }
+            .gateway-option { padding: 0.4rem; }
+            .gateway-option-name { font-size: 0.75rem; }
+            .gateway-option-desc { font-size: 0.6rem; }
             .menu-toggle {
                 position: absolute;
                 left: 0.5rem;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 32px;
-                height: 32px;
+                width: 30px;
+                height: 30px;
             }
             .navbar-brand {
-                margin-left: 2.2rem;
+                margin-left: 2rem;
             }
             .theme-toggle {
-                width: 32px;
-                height: 16px;
+                width: 30px;
+                height: 15px;
             }
             .theme-toggle-slider {
-                width: 12px;
-                height: 12px;
+                width: 11px;
+                height: 11px;
                 left: 2px;
             }
-            [data-theme="light"] .theme-toggle-slider { transform: translateX(14px); }
+            [data-theme="light"] .theme-toggle-slider { transform: translateX(13px); }
             .user-info {
-                padding: 0.1rem 0.3rem;
-                gap: 0.3rem;
+                padding: 0.1rem 0.2rem;
+                gap: 0.2rem;
             }
-            .online-users-section {
-                margin-top: 1rem;
+            .online-users-section, .top-users-section {
+                margin-top: 0.5rem;
             }
-            .online-users-list {
-                max-height: 250px;
+            .online-users-list, .top-users-list {
+                max-height: 180px;
             }
-            .online-user-avatar {
-                width: 38px;
-                height: 38px;
+            .online-user-avatar, .top-user-avatar {
+                width: 25px;
+                height: 25px;
             }
-            .online-user-name {
-                font-size: 0.85rem;
+            .online-user-name, .top-user-name {
+                font-size: 0.75rem;
             }
             
             /* Profile page mobile adjustments */
             .profile-header {
-                padding: 1.5rem;
+                padding: 1.2rem;
             }
             
             .profile-info {
@@ -1897,71 +1460,12 @@ if (empty($userPhotoUrl)) {
             }
             
             .profile-avatar {
-                width: 100px;
-                height: 100px;
-            }
-            
-            .profile-name {
-                font-size: 2rem;
-            }
-            
-            .profile-username {
-                font-size: 1rem;
-            }
-            
-            .user-stats-column {
-                gap: 0.6rem;
-            }
-            
-            .user-stat-item {
-                padding: 0.8rem;
-            }
-            
-            .user-stat-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
-            }
-            
-            .user-stat-value {
-                font-size: 1.3rem;
-            }
-        }
-        
-        /* For very small screens */
-        @media (max-width: 480px) {
-            .navbar { padding: 0.3rem 0.5rem; }
-            .navbar-brand { font-size: 0.9rem; }
-            .user-avatar { width: 22px; height: 22px; }
-            .user-name { 
-                max-width: 50px; 
-                font-size: 0.7rem;
-            }
-            .user-username {
-                max-width: 50px;
-                font-size: 0.6rem;
-            }
-            .menu-toggle { width: 30px; height: 30px; font-size: 1rem; }
-            .sidebar { width: 85vw; }
-            .page-title { font-size: 1.1rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
-            .stat-card { padding: 0.8rem; min-height: 90px; }
-            .stat-value { font-size: 1.2rem; }
-            .stat-label { font-size: 0.65rem; }
-            .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
-            
-            /* Profile page for very small screens */
-            .profile-header {
-                padding: 1rem;
-            }
-            
-            .profile-avatar {
                 width: 80px;
                 height: 80px;
             }
             
             .profile-name {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
             }
             
             .profile-username {
@@ -1986,9 +1490,68 @@ if (empty($userPhotoUrl)) {
                 font-size: 1.2rem;
             }
         }
+        
+        /* For very small screens */
+        @media (max-width: 480px) {
+            .navbar { padding: 0.3rem 0.5rem; }
+            .navbar-brand { font-size: 0.9rem; }
+            .user-avatar { width: 22px; height: 22px; }
+            .user-name { 
+                max-width: 50px; 
+                font-size: 0.7rem;
+            }
+            .user-username {
+                max-width: 50px;
+                font-size: 0.6rem;
+            }
+            .menu-toggle { width: 28px; height: 28px; font-size: 0.9rem; }
+            .sidebar { width: 85vw; }
+            .page-title { font-size: 1.1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+            .stat-card { padding: 0.5rem; min-height: 55px; }
+            .stat-value { font-size: 1rem; }
+            .stat-label { font-size: 0.5rem; }
+            .btn { padding: 0.3rem 0.6rem; min-width: 60px; font-size: 0.7rem; }
+            
+            /* Profile page for very small screens */
+            .profile-header {
+                padding: 1rem;
+            }
+            
+            .profile-avatar {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .profile-name {
+                font-size: 1.4rem;
+            }
+            
+            .profile-username {
+                font-size: 0.8rem;
+            }
+            
+            .user-stats-column {
+                gap: 0.4rem;
+            }
+            
+            .user-stat-item {
+                padding: 0.5rem;
+            }
+            
+            .user-stat-icon {
+                width: 25px;
+                height: 25px;
+                font-size: 0.8rem;
+            }
+            
+            .user-stat-value {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
-<body data-theme="light">
+<body>
     <nav class="navbar">
         <div class="menu-toggle" id="menuToggle">
             <i class="fas fa-bars"></i>
@@ -2065,71 +1628,75 @@ if (empty($userPhotoUrl)) {
                 </div>
 
                 <div class="dashboard-content">
-                    <div class="stats-grid" id="statsGrid">
-                        <div class="stat-card total">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-credit-card"></i>
+                    <!-- Progress Counters with Online Users -->
+                    <div class="dashboard-top">
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-card charged">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
                                 </div>
+                                <div id="charged-value" class="stat-value">0</div>
+                                <div class="stat-label">HIT|CHARGED</div>
+                                <div class="stat-indicator"></div>
                             </div>
-                            <div id="total-value" class="stat-value">0</div>
-                            <div class="stat-label">TOTAL</div>
-                            <div class="stat-indicator"></div>
+                            <div class="stat-card approved">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+                                <div id="approved-value" class="stat-value">0</div>
+                                <div class="stat-label">LIVE|APPROVED</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card declined">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                </div>
+                                <div id="declined-value" class="stat-value">0</div>
+                                <div class="stat-label">DEAD|DECLINED</div>
+                                <div class="stat-indicator"></div>
+                            </div>
+                            <div class="stat-card checked">
+                                <div class="stat-header">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                </div>
+                                <div id="checked-value" class="stat-value">0 / 0</div>
+                                <div class="stat-label">CHECKED</div>
+                                <div class="stat-indicator"></div>
+                            </div>
                         </div>
-                        <div class="stat-card charged">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-bolt"></i>
+                        
+                        <!-- Online Users Section -->
+                        <div class="online-users-section">
+                            <div class="online-users-header">
+                                <div class="online-users-title">
+                                    <i class="fas fa-users"></i> Online Users
+                                </div>
+                                <div class="online-users-count" id="onlineUsersCount">
+                                    <i class="fas fa-circle"></i>
+                                    <span id="onlineCount">0</span> online
                                 </div>
                             </div>
-                            <div id="charged-value" class="stat-value">0</div>
-                            <div class="stat-label">HIT|CHARGED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card approved">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-check-circle"></i>
+                            <div class="online-users-list" id="onlineUsersList">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-slash"></i>
+                                    <h3>No Users Online</h3>
+                                    <p>No other users are currently online</p>
                                 </div>
                             </div>
-                            <div id="approved-value" class="stat-value">0</div>
-                            <div class="stat-label">LIVE|APPROVED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card threeds">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                            </div>
-                            <div id="threed-value" class="stat-value">0</div>
-                            <div class="stat-label">3DS</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card declined">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-times-circle"></i>
-                                </div>
-                            </div>
-                            <div id="declined-value" class="stat-value">0</div>
-                            <div class="stat-label">DEAD|DECLINED</div>
-                            <div class="stat-indicator"></div>
-                        </div>
-                        <div class="stat-card checked">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-check-double"></i>
-                                </div>
-                            </div>
-                            <div id="checked-value" class="stat-value">0 / 0</div>
-                            <div class="stat-label">CHECKED</div>
-                            <div class="stat-indicator"></div>
                         </div>
                     </div>
 
-                    <!-- Global Statistics Section - Updated for better visibility -->
+                    <!-- Global Statistics with Top Users -->
                     <div class="dashboard-bottom">
+                        <!-- Global Statistics Section - Line Layout -->
                         <div class="gs-panel mt-6">
                             <div class="gs-head">
                                 <div class="gs-chip">
@@ -2186,21 +1753,18 @@ if (empty($userPhotoUrl)) {
                             </div>
                         </div>
                         
-                        <div class="online-users-section">
-                            <div class="online-users-header">
-                                <div class="online-users-title">
-                                    <i class="fas fa-users"></i> Online Users
-                                </div>
-                                <div class="online-users-count" id="onlineUsersCount">
-                                    <i class="fas fa-circle"></i>
-                                    <span id="onlineCount">0</span> online
+                        <!-- Top Users Section -->
+                        <div class="top-users-section">
+                            <div class="top-users-header">
+                                <div class="top-users-title">
+                                    <i class="fas fa-trophy"></i> Top Users
                                 </div>
                             </div>
-                            <div class="online-users-list" id="onlineUsersList">
+                            <div class="top-users-list" id="topUsersList">
                                 <div class="empty-state">
-                                    <i class="fas fa-user-slash"></i>
-                                    <h3>No Users Online</h3>
-                                    <p>No other users are currently online</p>
+                                    <i class="fas fa-chart-line"></i>
+                                    <h3>No Top Users</h3>
+                                    <p>No top users data available</p>
                                 </div>
                             </div>
                         </div>
@@ -2210,7 +1774,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑹</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑹</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
@@ -2275,7 +1839,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑶</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥𝐥𝐬 𝐰𝐢𝐢𝐥𝐥𝐥 𝐰𝐢𝐡𝐡𝐧𝐡</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥𝐬 𝐰𝐢𝐢𝐥𝐥𝐥𝐬 𝐰𝐢𝐡𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -2403,16 +1967,6 @@ if (empty($userPhotoUrl)) {
                     </div>
                     
                     <div class="user-stats-column">
-                        <div class="user-stat-item total">
-                            <div class="user-stat-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-label">Total Checked</div>
-                                <div class="user-stat-value" id="profile-total-value">0</div>
-                            </div>
-                        </div>
-                        
                         <div class="user-stat-item charged">
                             <div class="user-stat-icon">
                                 <i class="fas fa-bolt"></i>
@@ -2430,16 +1984,6 @@ if (empty($userPhotoUrl)) {
                             <div class="user-stat-content">
                                 <div class="user-stat-label">Approved</div>
                                 <div class="user-stat-value" id="profile-approved-value">0</div>
-                            </div>
-                        </div>
-                        
-                        <div class="user-stat-item threeds">
-                            <div class="user-stat-icon">
-                                <i class="fas fa-lock"></i>
-                            </div>
-                            <div class="user-stat-content">
-                                <div class="user-stat-label">3DS</div>
-                                <div class="user-stat-value" id="profile-threeds-value">0</div>
                             </div>
                         </div>
                         
@@ -2605,7 +2149,31 @@ if (empty($userPhotoUrl)) {
                     });
                 }
             }
+            
+            // Set profile information
+            document.getElementById('profileAvatar').src = '<?php echo htmlspecialchars($userPhotoUrl); ?>';
+            document.getElementById('profileName').textContent = '<?php echo htmlspecialchars($userName); ?>';
+            document.getElementById('profileUsername').textContent = '<?php echo htmlspecialchars($formattedUsername); ?>';
         });
+        
+        // Theme toggle function
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+        
+        function updateThemeIcon(theme) {
+            const icon = document.querySelector('.theme-toggle-slider i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-moon';
+            } else {
+                icon.className = 'fas fa-sun';
+            }
+        }
     </script>
 </body>
 </html>
