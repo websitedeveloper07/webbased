@@ -141,9 +141,7 @@ if (empty($userPhotoUrl)) {
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
-            /* Shining effects for dark mode */
-            --shine-1: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
-            --shine-2: linear-gradient(135deg, rgba(74,158,255,0.2) 0%, rgba(0,212,255,0.1) 50%, rgba(255,255,255,0) 100%);
+            /* Glow effects for dark mode */
             --glow-blue: 0 0 20px rgba(74,158,255,0.3);
             --glow-cyan: 0 0 20px rgba(0,212,255,0.3);
         }
@@ -153,7 +151,7 @@ if (empty($userPhotoUrl)) {
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* Dark mode background with shining effect */
+        /* Dark mode background without animations */
         [data-theme="dark"] body {
             background: linear-gradient(135deg, #0a0e1a 0%, #141824 100%);
             position: relative;
@@ -166,17 +164,10 @@ if (empty($userPhotoUrl)) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(74,158,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(0,212,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 20%, rgba(139,92,246,0.1) 0%, transparent 50%);
+            background: radial-gradient(circle at 20% 50%, rgba(74,158,255,0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0,212,255,0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(139,92,246,0.05) 0%, transparent 50%);
             z-index: -1;
-            animation: shimmer 20s infinite linear;
-        }
-        
-        @keyframes shimmer {
-            0% { opacity: 0.3; }
-            50% { opacity: 0.5; }
-            100% { opacity: 0.3; }
         }
         
         .navbar {
@@ -188,7 +179,7 @@ if (empty($userPhotoUrl)) {
             box-shadow: var(--shadow);
         }
         
-        /* Dark mode navbar with shining effect */
+        /* Dark mode navbar with glow effect */
         [data-theme="dark"] .navbar {
             background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(20,24,36,0.9) 100%);
             backdrop-filter: blur(15px);
@@ -202,7 +193,7 @@ if (empty($userPhotoUrl)) {
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         
-        /* Dark mode navbar brand with glow effect */
+        /* Dark mode navbar brand with glow effect - only in dark mode */
         [data-theme="dark"] .navbar-brand {
             text-shadow: 0 0 10px rgba(74,158,255,0.5);
         }
@@ -297,7 +288,7 @@ if (empty($userPhotoUrl)) {
             flex-direction: column;
         }
         
-        /* Dark mode sidebar with shining effect */
+        /* Dark mode sidebar with glow effect */
         [data-theme="dark"] .sidebar {
             background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(20,24,36,0.95) 100%);
             backdrop-filter: blur(15px);
@@ -385,29 +376,12 @@ if (empty($userPhotoUrl)) {
             gap: 1rem;
         }
         
-        /* Dark mode welcome banner with shining effect */
+        /* Dark mode welcome banner with glow effect */
         [data-theme="dark"] .welcome-banner {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             position: relative;
             overflow: hidden;
-        }
-        
-        [data-theme="dark"] .welcome-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-2);
-            animation: shine 8s infinite linear;
-        }
-        
-        @keyframes shine {
-            0% { left: -100%; }
-            20% { left: 100%; }
-            100% { left: 100%; }
         }
         
         .welcome-content {
@@ -481,24 +455,12 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color);
         }
         
-        /* Dark mode stat card with shining effect */
+        /* Dark mode stat card with glow effect */
         [data-theme="dark"] .stat-card {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             position: relative;
             overflow: hidden;
-        }
-        
-        [data-theme="dark"] .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
-            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .stat-card::before {
@@ -611,7 +573,7 @@ if (empty($userPhotoUrl)) {
             gap: 1.5rem;
         }
         
-        /* Global Statistics Section - Updated for better visibility and shining effect */
+        /* Global Statistics Section - Updated for better visibility */
         .gs-panel{
             border-radius:16px; padding:14px 14px 16px; /* Reduced padding for more compact look */
             background: var(--card-bg);
@@ -621,21 +583,10 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
         }
         
-        /* Dark mode global stats panel with shining effect */
+        /* Dark mode global stats panel with glow effect */
         [data-theme="dark"] .gs-panel {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        
-        [data-theme="dark"] .gs-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-2);
-            animation: shine 8s infinite linear;
         }
         
         .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:12px; /* Reduced margin */}
@@ -655,22 +606,10 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
         }
         
-        /* Dark mode global stat card with shining effect */
+        /* Dark mode global stat card with glow effect */
         [data-theme="dark"] .gs-card {
             background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        
-        [data-theme="dark"] .gs-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
-            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .gs-card .gs-icon{
@@ -733,21 +672,10 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
         }
         
-        /* Dark mode online users section with shining effect */
+        /* Dark mode online users section with glow effect */
         [data-theme="dark"] .online-users-section {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        
-        [data-theme="dark"] .online-users-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-2);
-            animation: shine 8s infinite linear;
         }
         
         .online-users-section::before {
@@ -858,22 +786,10 @@ if (empty($userPhotoUrl)) {
             position: relative;
         }
         
-        /* Dark mode online user item with shining effect */
+        /* Dark mode online user item with glow effect */
         [data-theme="dark"] .online-user-item {
             background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
             border: 1px solid rgba(74,158,255,0.2);
-        }
-        
-        [data-theme="dark"] .online-user-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
-            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .online-user-item:hover {
@@ -967,25 +883,13 @@ if (empty($userPhotoUrl)) {
             box-shadow: var(--shadow);
         }
         
-        /* Dark mode sections with shining effect */
+        /* Dark mode sections with glow effect */
         [data-theme="dark"] .checker-section, 
         [data-theme="dark"] .generator-section {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             position: relative;
             overflow: hidden;
-        }
-        
-        [data-theme="dark"] .checker-section::before, 
-        [data-theme="dark"] .generator-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
         }
         
         .checker-header, .generator-header {
@@ -1133,23 +1037,12 @@ if (empty($userPhotoUrl)) {
             box-shadow: var(--shadow);
         }
         
-        /* Dark mode results section with shining effect */
+        /* Dark mode results section with glow effect */
         [data-theme="dark"] .results-section {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             position: relative;
             overflow: hidden;
-        }
-        
-        [data-theme="dark"] .results-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
         }
         
         .results-header {
@@ -1212,7 +1105,7 @@ if (empty($userPhotoUrl)) {
             animation: slideUp 0.3s ease;
         }
         
-        /* Dark mode settings popup with shining effect */
+        /* Dark mode settings popup with glow effect */
         [data-theme="dark"] .settings-content {
             background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(20,24,36,0.95) 100%);
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
@@ -1266,22 +1159,10 @@ if (empty($userPhotoUrl)) {
             position: relative;
         }
         
-        /* Dark mode gateway option with shining effect */
+        /* Dark mode gateway option with glow effect */
         [data-theme="dark"] .gateway-option {
             background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
             border: 1px solid rgba(74,158,255,0.2);
-        }
-        
-        [data-theme="dark"] .gateway-option::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
-            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .gateway-option:hover {
@@ -1604,21 +1485,10 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
         }
         
-        /* Dark mode profile header with shining effect */
+        /* Dark mode profile header with glow effect */
         [data-theme="dark"] .profile-header {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        
-        [data-theme="dark"] .profile-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-2);
-            animation: shine 8s infinite linear;
         }
         
         .profile-header::before {
@@ -1768,21 +1638,10 @@ if (empty($userPhotoUrl)) {
             box-shadow: var(--shadow);
         }
         
-        /* Dark mode profile stats container with shining effect */
+        /* Dark mode profile stats container with glow effect */
         [data-theme="dark"] .profile-stats-container {
             background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(20,24,36,0.8) 100%);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        
-        [data-theme="dark"] .profile-stats-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
         }
         
         .profile-stats-header {
@@ -1832,22 +1691,10 @@ if (empty($userPhotoUrl)) {
             position: relative;
         }
         
-        /* Dark mode user stat item with shining effect */
+        /* Dark mode user stat item with glow effect */
         [data-theme="dark"] .user-stat-item {
             background: linear-gradient(135deg, rgba(42,49,66,0.8) 0%, rgba(26,31,46,0.8) 100%);
             border: 1px solid rgba(74,158,255,0.2);
-        }
-        
-        [data-theme="dark"] .user-stat-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--shine-1);
-            animation: shine 8s infinite linear;
-            animation-delay: calc(var(--i) * 0.5s);
         }
         
         .user-stat-item::before {
