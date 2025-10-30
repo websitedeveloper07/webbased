@@ -124,12 +124,35 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'CHARGED'");
     $totalCharged = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get total live cards (only approved, not charged)
+    // Get total approved/live cards (both are the same)
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'APPROVED'");
-    $totalLive = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $totalApproved = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Calculate success rate (excluding 3DS and declined)
-    $successRate = $totalChecked > 0 ? round((($totalCharged + $totalLive) / $totalChecked) * 100, 2) : 0;
+    // Calculate success rate (charged + approved)
+    $successRate = $totalChecked > 0 ? round((($totalCharged + $totalApproved) / $totalChecked) * 100, 2) : 0;
+    
+    // Get top users (by number of charged cards)
+    $stmt = $pdo->query("
+        SELECT u.name, u.username, u.photo_url, COUNT(c.id) as hits
+        FROM users u
+        JOIN card_checks c ON u.id = c.user_id
+        WHERE c.status = 'CHARGED'
+        GROUP BY u.id
+        ORDER BY hits DESC
+        LIMIT 5
+    ");
+    $topUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Format top users data
+    $formattedTopUsers = [];
+    foreach ($topUsers as $user) {
+        $formattedTopUsers[] = [
+            'name' => $user['name'],
+            'username' => $user['username'],
+            'photo_url' => $user['photo_url'],
+            'hits' => $user['hits']
+        ];
+    }
     
     // Return success response with all data
     echo json_encode([
@@ -138,8 +161,9 @@ try {
             'totalUsers' => $totalUsers,
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
-            'totalLive' => $totalLive,
-            'successRate' => $successRate
+            'totalApproved' => $totalApproved, // Changed from totalLive to totalApproved
+            'successRate' => $successRate,
+            'topUsers' => $formattedTopUsers
         ]
     ]);
     
