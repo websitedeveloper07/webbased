@@ -98,42 +98,18 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'CHARGED'");
     $totalCharged = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get total live cards (approved + charged)
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status IN ('APPROVED', 'CHARGED')");
+    // Get total live cards (only approved, not charged)
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'APPROVED'");
     $totalLive = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get top users (by number of charged cards)
-    $stmt = $pdo->query("
-        SELECT u.name, u.username, u.photo_url, COUNT(c.id) as hits
-        FROM users u
-        JOIN card_checks c ON u.id = c.user_id
-        WHERE c.status = 'CHARGED'
-        GROUP BY u.id
-        ORDER BY hits DESC
-        LIMIT 5
-    ");
-    $topUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format top users data
-    $formattedTopUsers = [];
-    foreach ($topUsers as $user) {
-        $formattedTopUsers[] = [
-            'name' => $user['name'],
-            'username' => $user['username'],
-            'photo_url' => $user['photo_url'],
-            'hits' => $user['hits']
-        ];
-    }
-    
-    // Return success response with all data
+    // Return success response with only the counts
     echo json_encode([
         'success' => true,
         'data' => [
             'totalUsers' => $totalUsers,
             'totalChecked' => $totalChecked,
             'totalCharged' => $totalCharged,
-            'totalLive' => $totalLive,
-            'topUsers' => $formattedTopUsers
+            'totalLive' => $totalLive
         ]
     ]);
     
