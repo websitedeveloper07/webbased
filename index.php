@@ -1,4 +1,91 @@
+<?php
+require_once 'maintenance_check.php';
+session_start();
 
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// MAINTENANCE MODE CHECK
+// Maintenance flag file path - using /tmp/.maintenance as specified
+define('MAINTENANCE_FLAG', '/tmp/.maintenance');
+
+// Check if maintenance mode is active
+if (file_exists(MAINTENANCE_FLAG)) {
+    // Get the current script name
+    $current_page = basename($_SERVER['PHP_SELF']);
+    
+    // Allow access to maintenance page and admin panel
+    if ($current_page === 'maintenance.php' || $current_page === 'adminaccess_panel.php') {
+        // Continue with normal execution
+    } else {
+        // Check if admin is logged in
+        if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
+            // Admin can continue - bypass normal user authentication
+            $adminBypass = true;
+        } else {
+            // Redirect to maintenance page
+            header("Location: /maintenance.php");
+            exit();
+        }
+    }
+}
+
+// Enable error reporting for debugging (disable in production)
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+
+// Log session state
+error_log("Checking session in index.php: " . json_encode($_SESSION));
+
+// Check if user is authenticated OR if admin is authenticated during maintenance
+ $isAdminDuringMaintenance = isset($adminBypass) && $adminBypass === true;
+if (!$isAdminDuringMaintenance && (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram')) {
+    error_log("Redirecting to login.php: Session missing or invalid auth_provider");
+    header('Location: login.php');
+    exit;
+}
+
+// Load environment variables manually
+ $envFile = __DIR__ . '/.env';
+ $_ENV = [];
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0 || !strpos($line, '=')) {
+            continue;
+        }
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+    }
+} else {
+    error_log("Environment file (.env) not found in " . __DIR__);
+}
+
+// Get user information for display
+ $userName = $_SESSION['user']['name'] ?? 'User';
+ $userPhotoUrl = $_SESSION['user']['photo_url'] ?? null;
+ $userUsername = $_SESSION['user']['username'] ?? null;
+
+// Generate avatar URL if no photo is available
+if (empty($userPhotoUrl)) {
+    $initials = '';
+    $words = explode(' ', trim($userName));
+    foreach ($words as $word) {
+        if (!empty($word)) {
+            $initials .= strtoupper(substr($word, 0, 1));
+            if (strlen($initials) >= 2) break;
+        }
+    }
+    if (empty($initials)) $initials = 'U';
+    $userPhotoUrl = 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=3b82f6&color=fff&size=64';
+}
+
+// Format username with @ symbol
+ $formattedUsername = $userUsername ? '@' . $userUsername : '';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,6 +115,15 @@
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
+            /* Dark theme colors */
+            --dark-primary-bg: #1a1a1a;
+            --dark-secondary-bg: #2d2d2d;
+            --dark-card-bg: #252525;
+            --dark-text-primary: #f8f9fa;
+            --dark-text-secondary: #adb5bd;
+            --dark-border-color: #404040;
+            --dark-shadow: rgba(0,0,0,0.3);
+            
             /* Enhanced color palette for stats - same in both modes */
             --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
@@ -47,6 +143,250 @@
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
             color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
+        }
+        
+        /* Dark mode styles */
+        body[data-theme="dark"] {
+            background: var(--dark-primary-bg);
+            color: var(--dark-text-primary);
+        }
+        
+        body[data-theme="dark"] .navbar {
+            background: #0f0f0f;
+        }
+        
+        body[data-theme="dark"] .sidebar {
+            background: var(--dark-card-bg);
+            border-right-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .sidebar-link {
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .sidebar-link:hover {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-blue);
+        }
+        
+        body[data-theme="dark"] .main-content {
+            background: var(--dark-primary-bg);
+        }
+        
+        body[data-theme="dark"] .page-section {
+            background: var(--dark-primary-bg);
+        }
+        
+        body[data-theme="dark"] .welcome-banner,
+        body[data-theme="dark"] .stat-card,
+        body[data-theme="dark"] .gs-panel,
+        body[data-theme="dark"] .online-users-section,
+        body[data-theme="dark"] .top-users-section,
+        body[data-theme="dark"] .checker-section,
+        body[data-theme="dark"] .generator-section,
+        body[data-theme="dark"] .results-section,
+        body[data-theme="dark"] .profile-header,
+        body[data-theme="dark"] .profile-stats-container {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+            box-shadow: var(--dark-shadow);
+        }
+        
+        body[data-theme="dark"] .gs-card,
+        body[data-theme="dark"] .online-user-item,
+        body[data-theme="dark"] .top-user-item,
+        body[data-theme="dark"] .user-stat-item {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .card-textarea,
+        body[data-theme="dark"] .form-control,
+        body[data-theme="dark"] .generated-cards-container {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        body[data-theme="dark"] .custom-select select,
+        body[data-theme="dark"] .custom-input-group input {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        body[data-theme="dark"] .custom-input-group .input-group-text {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .settings-content {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+            box-shadow: var(--dark-shadow);
+        }
+        
+        body[data-theme="dark"] .gateway-option {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .settings-header,
+        body[data-theme="dark"] .settings-footer {
+            border-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .page-title {
+            background: linear-gradient(135deg, var(--dark-text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        body[data-theme="dark"] .page-subtitle,
+        body[data-theme="dark"] .stat-label,
+        body[data-theme="dark"] .gs-label,
+        body[data-theme="dark"] .online-user-username,
+        body[data-theme="dark"] .top-user-username,
+        body[data-theme="dark"] .user-stat-label,
+        body[data-theme="dark"] .gateway-option-desc {
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .sidebar-divider {
+            background: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .theme-toggle {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .menu-toggle {
+            background: rgba(0,0,0,0.5);
+            border-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .btn-secondary {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        body[data-theme="dark"] .filter-btn {
+            background: var(--dark-secondary-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-secondary);
+        }
+        
+        body[data-theme="dark"] .filter-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+        
+        body[data-theme="dark"] .copy-all-btn,
+        body[data-theme="dark"] .clear-all-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        
+        body[data-theme="dark"] .clear-all-btn {
+            border-color: var(--error);
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        body[data-theme="dark"] .gs-blue,
+        body[data-theme="dark"] .gs-green,
+        body[data-theme="dark"] .gs-red,
+        body[data-theme="dark"] .gs-purple {
+            border-color: var(--dark-border-color);
+        }
+        
+        body[data-theme="dark"] .online-users-list::-webkit-scrollbar-track,
+        body[data-theme="dark"] .top-users-list::-webkit-scrollbar-track,
+        body[data-theme="dark"] .generated-cards-container::-webkit-scrollbar-track {
+            background: var(--dark-secondary-bg);
+        }
+        
+        body[data-theme="dark"] .online-users-list::-webkit-scrollbar-thumb,
+        body[data-theme="dark"] .top-users-list::-webkit-scrollbar-thumb,
+        body[data-theme="dark"] .generated-cards-container::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+        }
+        
+        /* Keep gateway settings white in both themes */
+        .settings-content {
+            background: #ffffff !important;
+            color: #212529 !important;
+        }
+        
+        .settings-header,
+        .settings-footer {
+            border-color: #dee2e6 !important;
+        }
+        
+        .gateway-option {
+            background: #f8f9fa !important;
+            border-color: #dee2e6 !important;
+        }
+        
+        .gateway-option:hover {
+            border-color: #3b82f6 !important;
+        }
+        
+        .gateway-option-name {
+            color: #212529 !important;
+        }
+        
+        .gateway-option-desc {
+            color: #6c757d !important;
+        }
+        
+        .settings-title {
+            color: #212529 !important;
+        }
+        
+        .settings-close {
+            background: #f8f9fa !important;
+            color: #6c757d !important;
+        }
+        
+        .settings-close:hover {
+            background: #ef4444 !important;
+            color: white !important;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4) !important;
+            color: white !important;
+        }
+        
+        .btn-cancel {
+            background: #f8f9fa !important;
+            border-color: #dee2e6 !important;
+            color: #212529 !important;
+        }
+        
+        .gateway-group-title {
+            color: #212529 !important;
+        }
+        
+        .badge-charge {
+            background: rgba(245,158,11,0.15) !important;
+            color: #f59e0b !important;
+        }
+        
+        .badge-auth {
+            background: rgba(6,182,212,0.15) !important;
+            color: #06b6d4 !important;
+        }
+        
+        .badge-maintenance {
+            background-color: #ef4444 !important;
+            color: white !important;
         }
         
         .navbar {
@@ -81,7 +421,7 @@
             align-items: center; justify-content: center; color: white; font-size: 0.5rem;
         }
         
-        [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
+        [data-theme="dark"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
             display: flex; align-items: center; gap: 0.5rem;
             padding: 0.2rem 0.5rem; background: rgba(0,0,0,0.7); /* Always dark user info */
@@ -1724,7 +2064,7 @@
                                 <div class="gs-card gs-purple">
                                     <div class="gs-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/>
+                                            <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1z"/>
                                         </svg>
                                     </div>
                                     <div id="gTotalHits" class="gs-num">—</div>
@@ -1839,7 +2179,7 @@
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑶</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥𝐬 𝐰𝐢𝐢𝐥𝐥𝐥𝐬 𝐰𝐢𝐡𝐧𝐡</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥 𝐰𝐢𝐢𝐥𝐥𝐬 𝐰𝐢𝐡𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -2115,8 +2455,24 @@
     <script src="indeex.js?v=<?= time(); ?>"></script>
     
     <script>
-        // Disable Razorpay 0.10$ gateway and show maintenance popup
+        // Initialize theme on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Check for saved theme preference or default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            // Update theme icon based on current theme
+            const themeIcon = document.querySelector('.theme-toggle-slider i');
+            if (themeIcon) {
+                themeIcon.className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+            
+            // Set profile information
+            document.getElementById('profileAvatar').src = '<?php echo htmlspecialchars($userPhotoUrl); ?>';
+            document.getElementById('profileName').textContent = '<?php echo htmlspecialchars($userName); ?>';
+            document.getElementById('profileUsername').textContent = '<?php echo htmlspecialchars($formattedUsername); ?>';
+            
+            // Disable Razorpay 0.10$ gateway and show maintenance popup
             const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay0.10$.php"]');
             if (razorpayGateway) {
                 // Disable the radio button
@@ -2149,11 +2505,6 @@
                     });
                 }
             }
-            
-            // Set profile information
-            document.getElementById('profileAvatar').src = '<?php echo htmlspecialchars($userPhotoUrl); ?>';
-            document.getElementById('profileName').textContent = '<?php echo htmlspecialchars($userName); ?>';
-            document.getElementById('profileUsername').textContent = '<?php echo htmlspecialchars($formattedUsername); ?>';
         });
         
         // Theme toggle function
@@ -2163,15 +2514,23 @@
             
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-        }
-        
-        function updateThemeIcon(theme) {
+            
+            // Update theme icon
             const icon = document.querySelector('.theme-toggle-slider i');
-            if (theme === 'dark') {
-                icon.className = 'fas fa-moon';
-            } else {
-                icon.className = 'fas fa-sun';
+            if (icon) {
+                icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+            
+            // Show notification
+            if (window.Swal) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `${newTheme === 'light' ? 'Light' : 'Dark'} Mode`,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
             }
         }
     </script>
