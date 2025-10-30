@@ -3,7 +3,7 @@
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
-header('Content-Type: application/json');
+header('Content-Type: 'application/json');
 
 // Set timeout and memory limits
 set_time_limit(30); // 30 seconds max execution time
@@ -79,8 +79,6 @@ try {
                 id SERIAL PRIMARY KEY,
                 telegram_id BIGINT UNIQUE,
                 name VARCHAR(255),
-                username VARCHAR(255),
-                photo_url VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ");
@@ -109,15 +107,15 @@ try {
     $total3DS = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // Get total declined cards
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'DECLINED'");
-    $totalDeclined = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt = $query("SELECT COUNT(*) as total FROM card_checks WHERE status = 'DECLINED'");
+    $totalDeclined = $totalDeclined;
     
     // Calculate success rate
     $successRate = $totalChecked > 0 ? round((($totalCharged + $totalLive + $total3DS) / $totalChecked) * 100, 2) : 0;
     
     // Get top users (by number of charged cards)
     $stmt = $pdo->query("
-        SELECT u.name, u.username, u.photo_url, COUNT(c.id) as hits
+        SELECT u.name, u.photo_url, COUNT(c.id) as hits
         FROM users u
         JOIN card_checks c ON u.id = c.user_id
         WHERE c.status = 'CHARGED'
@@ -132,7 +130,6 @@ try {
     foreach ($topUsers as $user) {
         $formattedTopUsers[] = [
             'name' => $user['name'],
-            'username' => $user['username'],
             'photo_url' => $user['photo_url'],
             'hits' => $user['hits']
         ];
