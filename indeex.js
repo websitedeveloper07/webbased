@@ -111,6 +111,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayTopUsers(data.data.topUsers);
                 }
                 
+                // Update additional stats if elements exist
+                const total3DSElement = document.getElementById('gTotal3DS');
+                const totalDeclinedElement = document.getElementById('gTotalDeclined');
+                const successRateElement = document.getElementById('gSuccessRate');
+                
+                if (total3DSElement) total3DSElement.textContent = data.data.total3DS || 0;
+                if (totalDeclinedElement) totalDeclinedElement.textContent = data.data.totalDeclined || 0;
+                if (successRateElement) successRateElement.textContent = (data.data.successRate || 0) + '%';
+                
+                // Update today's stats
+                if (data.data.todayStats) {
+                    const todayTotalElement = document.getElementById('todayTotal');
+                    const todayChargedElement = document.getElementById('todayCharged');
+                    const todayApprovedElement = document.getElementById('todayApproved');
+                    
+                    if (todayTotalElement) todayTotalElement.textContent = data.data.todayStats.total || 0;
+                    if (todayChargedElement) todayChargedElement.textContent = data.data.todayStats.charged || 0;
+                    if (todayApprovedElement) todayApprovedElement.textContent = data.data.todayStats.approved || 0;
+                }
+                
+                // Update week's stats
+                if (data.data.weekStats) {
+                    const weekTotalElement = document.getElementById('weekTotal');
+                    const weekChargedElement = document.getElementById('weekCharged');
+                    const weekApprovedElement = document.getElementById('weekApproved');
+                    
+                    if (weekTotalElement) weekTotalElement.textContent = data.data.weekStats.total || 0;
+                    if (weekChargedElement) weekChargedElement.textContent = data.data.weekStats.charged || 0;
+                    if (weekApprovedElement) weekApprovedElement.textContent = data.data.weekStats.approved || 0;
+                }
+                
+                // Update month's stats
+                if (data.data.monthStats) {
+                    const monthTotalElement = document.getElementById('monthTotal');
+                    const monthChargedElement = document.getElementById('monthCharged');
+                    const monthApprovedElement = document.getElementById('monthApproved');
+                    
+                    if (monthTotalElement) monthTotalElement.textContent = data.data.monthStats.total || 0;
+                    if (monthChargedElement) monthChargedElement.textContent = data.data.monthStats.charged || 0;
+                    if (monthApprovedElement) monthApprovedElement.textContent = data.data.monthStats.approved || 0;
+                }
+                
                 console.log("Global statistics updated successfully");
             } else {
                 console.error('Failed to update global statistics:', data.message);
@@ -364,7 +406,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update statistics values
         updateProfileStat('charged', stats.charged || 0);
         updateProfileStat('approved', stats.approved || 0);
+        updateProfileStat('threeds', stats.threeds || 0);
         updateProfileStat('declined', stats.declined || 0);
+        updateProfileStat('checked', stats.total || 0);
         
         // Update progress bars
         updateProgressBars(stats);
@@ -450,6 +494,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('page-profile').classList.contains('active')) {
             loadUserStatistics();
         }
+        
+        // Also update the database
+        updateUserStatisticsInDatabase(result.status);
+    }
+
+    // Function to update user statistics in database
+    function updateUserStatisticsInDatabase(status) {
+        const apiKey = getCurrentApiKey();
+        
+        fetch('/update_user_stats.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': apiKey
+            },
+            body: JSON.stringify({ 
+                status: status,
+                timestamp: Date.now()
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("User stats updated in database:", data);
+        })
+        .catch(error => {
+            console.error('Error updating user stats in database:', error);
+        });
     }
 
     // Initialize the application
@@ -1850,6 +1926,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create user item element
                 const userItem = document.createElement('div');
                 userItem.className = 'online-user-item';
+                
+                // Check if this is the admin user (@K4LNX)
+                if (username === '@K4LNX') {
+                    userItem.classList.add('admin');
+                }
+                
                 userItem.setAttribute('data-user-id', username || `unknown-${index}`);
                 
                 // Create avatar container
