@@ -67,150 +67,88 @@ document.addEventListener('DOMContentLoaded', function() {
     let maxConcurrent = 5; // Default for stripe1$ and stripe5$     
     
     // Function to update global statistics
-    function updateGlobalStats() {
-        console.log("Updating global statistics at", new Date().toISOString());
-        
-        const apiKey = getCurrentApiKey();
-        console.log(`X-API-KEY header for stats update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
-        
-        fetch('/stats.php', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-                'X-API-KEY': apiKey
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                // Check for 401 Unauthorized
-                if (response.status === 401) {
-                    throw new Error('Authentication failed: Invalid or missing API key');
-                }
-                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Global stats response:", data);
-            
-            if (data.success) {
-                // Update global statistics elements
-                const totalUsersElement = document.getElementById('gTotalUsers');
-                const totalHitsElement = document.getElementById('gTotalHits');
-                const chargeCardsElement = document.getElementById('gChargeCards');
-                const liveCardsElement = document.getElementById('gLiveCards');
-                
-                if (totalUsersElement) totalUsersElement.textContent = data.data.totalUsers;
-                if (totalHitsElement) totalHitsElement.textContent = data.data.totalChecked;
-                if (chargeCardsElement) chargeCardsElement.textContent = data.data.totalCharged;
-                if (liveCardsElement) liveCardsElement.textContent = data.data.totalLive;
-                
-                // Update top users list
-                if (data.data.topUsers && data.data.topUsers.length > 0) {
-                    displayTopUsers(data.data.topUsers);
-                }
-                
-                // Update additional stats if elements exist
-                const total3DSElement = document.getElementById('gTotal3DS');
-                const totalDeclinedElement = document.getElementById('gTotalDeclined');
-                const successRateElement = document.getElementById('gSuccessRate');
-                
-                if (total3DSElement) total3DSElement.textContent = data.data.total3DS || 0;
-                if (totalDeclinedElement) totalDeclinedElement.textContent = data.data.totalDeclined || 0;
-                if (successRateElement) successRateElement.textContent = (data.data.successRate || 0) + '%';
-                
-                // Update today's stats
-                if (data.data.todayStats) {
-                    const todayTotalElement = document.getElementById('todayTotal');
-                    const todayChargedElement = document.getElementById('todayCharged');
-                    const todayApprovedElement = document.getElementById('todayApproved');
-                    
-                    if (todayTotalElement) todayTotalElement.textContent = data.data.todayStats.total || 0;
-                    if (todayChargedElement) todayChargedElement.textContent = data.data.todayStats.charged || 0;
-                    if (todayApprovedElement) todayApprovedElement.textContent = data.data.todayStats.approved || 0;
-                }
-                
-                // Update week's stats
-                if (data.data.weekStats) {
-                    const weekTotalElement = document.getElementById('weekTotal');
-                    const weekChargedElement = document.getElementById('weekCharged');
-                    const weekApprovedElement = document.getElementById('weekApproved');
-                    
-                    if (weekTotalElement) weekTotalElement.textContent = data.data.weekStats.total || 0;
-                    if (weekChargedElement) weekChargedElement.textContent = data.data.weekStats.charged || 0;
-                    if (weekApprovedElement) weekApprovedElement.textContent = data.data.weekStats.approved || 0;
-                }
-                
-                // Update month's stats
-                if (data.data.monthStats) {
-                    const monthTotalElement = document.getElementById('monthTotal');
-                    const monthChargedElement = document.getElementById('monthCharged');
-                    const monthApprovedElement = document.getElementById('monthApproved');
-                    
-                    if (monthTotalElement) monthTotalElement.textContent = data.data.monthStats.total || 0;
-                    if (monthChargedElement) monthChargedElement.textContent = data.data.monthStats.charged || 0;
-                    if (monthApprovedElement) monthApprovedElement.textContent = data.data.monthStats.approved || 0;
-                }
-                
-                console.log("Global statistics updated successfully");
-            } else {
-                console.error('Failed to update global statistics:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error updating global statistics:', error);
-            
-            // Check for authentication error
-            if (error.message.includes('Authentication failed') || error.message.includes('401')) {
-                if (window.Swal) {
-                    Swal.fire({
-                        title: 'Authentication Error',
-                        text: error.message,
-                        icon: 'error',
-                        confirmButtonColor: '#ec4899'
-                    });
-                }
-                
-                // Try to refresh the API key
-                refreshApiKey();
-            } else {
-                // Only show error if on home page
-                const homePage = document.getElementById('page-home');
-                if (homePage && homePage.classList.contains('active') && window.Swal) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'error',
-                        title: 'Failed to update global statistics',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                }
-            }
-        });
-    }
-
-    // Function to display top users
-    function displayTopUsers(users) {
-        const topUsersList = document.getElementById('topUsersList');
-        if (!topUsersList) {
-            console.error("Element #topUsersList not found in DOM");
-            return;
+// Function to update global statistics
+function updateGlobalStats() {
+    console.log("Updating global statistics at", new Date().toISOString());
+    
+    const apiKey = getCurrentApiKey();
+    console.log(`X-API-KEY header for stats update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+    
+    fetch('/stats.php', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-API-KEY': apiKey
         }
-        
-        // Clear existing content
-        topUsersList.innerHTML = '';
-        
-        if (!Array.isArray(users) || users.length === 0) {
-            topUsersList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>No Top Users</h3>
-                    <p>No top users data available</p>
-                </div>`;
-            return;
+    })
+    .then(response => {
+        if (!response.ok) {
+            // Check for 401 Unauthorized
+            if (response.status === 401) {
+                throw new Error('Authentication failed: Invalid or missing API key');
+            }
+            throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
         }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Global stats response:", data);
+        
+        if (data.success) {
+            // Update global statistics elements
+            const totalUsersElement = document.getElementById('gTotalUsers');
+            const totalHitsElement = document.getElementById('gTotalHits');
+            const chargeCardsElement = document.getElementById('gChargeCards');
+            const liveCardsElement = document.getElementById('gLiveCards');
+            
+            if (totalUsersElement) totalUsersElement.textContent = data.data.totalUsers;
+            if (totalHitsElement) totalHitsElement.textContent = data.data.totalChecked;
+            if (chargeCardsElement) chargeCardsElement.textContent = data.data.totalCharged;
+            if (liveCardsElement) liveCardsElement.textContent = data.data.totalApproved; // Updated to use totalApproved
+            
+            // Update top users list
+            if (data.data.topUsers && data.data.topUsers.length > 0) {
+                displayTopUsers(data.data.topUsers);
+            }
+            
+            console.log("Global statistics updated successfully");
+        } else {
+            console.error('Failed to update global statistics:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating global statistics:', error);
+        
+        // Check for authentication error
+        if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Authentication Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+            }
+            
+            // Try to refresh the API key
+            refreshApiKey();
+        } else {
+            // Only show error if on home page
+            const homePage = document.getElementById('page-home');
+            if (homePage && homePage.classList.contains('active') && window.Swal) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Failed to update global statistics',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        }
+    });
+}
         
         // Create a document fragment to improve performance
         const fragment = document.createDocumentFragment();
