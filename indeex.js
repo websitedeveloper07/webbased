@@ -106,11 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (chargeCardsElement) chargeCardsElement.textContent = data.data.totalCharged;
                 if (liveCardsElement) liveCardsElement.textContent = data.data.totalApproved; // Updated to use totalApproved
                 
-                // Update top users list
-                if (data.data.topUsers && data.data.topUsers.length > 0) {
-                    displayTopUsers(data.data.topUsers);
-                }
-                
                 console.log("Global statistics updated successfully");
             } else {
                 console.error('Failed to update global statistics:', data.message);
@@ -147,101 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-    }
-
-    // Function to display top users
-    function displayTopUsers(users) {
-        const topUsersList = document.getElementById('topUsersList');
-        if (!topUsersList) {
-            console.error("Element #topUsersList not found in DOM");
-            return;
-        }
-        
-        // Clear existing content
-        topUsersList.innerHTML = '';
-        
-        if (!Array.isArray(users) || users.length === 0) {
-            topUsersList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>No Top Users</h3>
-                    <p>No top users data available</p>
-                </div>`;
-            return;
-        }
-        
-        // Create a document fragment to improve performance
-        const fragment = document.createDocumentFragment();
-        
-        users.forEach((user, index) => {
-            // Safely extract user data with defaults
-            const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
-            const username = (user.username && typeof user.username === 'string') ? user.username : '';
-            const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
-                user.photo_url : 
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
-            const hits = user.hits || 0;
-            
-            // Create user item element
-            const userItem = document.createElement('div');
-            userItem.className = 'top-user-item';
-            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
-            
-            // Create avatar container
-            const avatarContainer = document.createElement('div');
-            avatarContainer.className = 'top-user-avatar-container';
-            
-            // Create avatar image
-            const avatar = document.createElement('img');
-            avatar.src = photoUrl;
-            avatar.alt = name;
-            avatar.className = 'top-user-avatar';
-            avatar.onerror = function() {
-                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
-            };
-            
-            // Assemble avatar container
-            avatarContainer.appendChild(avatar);
-            
-            // Create user info container
-            const userInfo = document.createElement('div');
-            userInfo.className = 'top-user-info';
-            
-            // Create name element
-            const nameElement = document.createElement('div');
-            nameElement.className = 'top-user-name';
-            nameElement.textContent = name;
-            
-            // Create username element only if username exists
-            if (username) {
-                const usernameElement = document.createElement('div');
-                usernameElement.className = 'top-user-username';
-                usernameElement.textContent = username;
-                userInfo.appendChild(nameElement);
-                userInfo.appendChild(usernameElement);
-            } else {
-                userInfo.appendChild(nameElement);
-            }
-            
-            // Create hits element
-            const hitsElement = document.createElement('div');
-            hitsElement.className = 'top-user-hits';
-            hitsElement.textContent = hits + ' hits';
-            
-            // Assemble user item
-            userItem.appendChild(avatarContainer);
-            userItem.appendChild(userInfo);
-            userItem.appendChild(hitsElement);
-            
-            // Add to fragment
-            fragment.appendChild(userItem);
-        });
-        
-        // Clear the list and add all users at once
-        topUsersList.innerHTML = '';
-        topUsersList.appendChild(fragment);
-        
-        console.log("Successfully rendered top users list");
     }
 
     // Load API key from refresh.php using POST
@@ -452,9 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('page-profile').classList.contains('active')) {
             loadUserStatistics();
         }
-        
-        // Note: Removed the database update call to update_user_stats.php
-        // This functionality has been removed as requested
     }
 
     // Initialize the application
@@ -702,6 +599,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update user statistics
             updateUserStatistics({ status });
+            
+            // Update global stats after a short delay to allow the database to update
+            setTimeout(() => updateGlobalStats(), 1000);
         }
 
         // Activity feed function
