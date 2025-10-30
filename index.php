@@ -230,69 +230,6 @@ if (empty($userPhotoUrl)) {
         }
         .page-subtitle { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         
-        /* Custom Banner */
-        .custom-banner {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            border-radius: 16px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .custom-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
-            animation: gradientShift 5s ease infinite;
-        }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .banner-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        
-        .banner-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: textGlow 3s ease-in-out infinite alternate;
-        }
-        
-        .banner-divider {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: rgba(139, 92, 246, 0.7);
-        }
-        
-        @keyframes textGlow {
-            from {
-                filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
-            }
-            to {
-                filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
-            }
-        }
-        
         /* Enhanced Dashboard Stats */
         .dashboard-container {
             display: flex;
@@ -991,7 +928,7 @@ if (empty($userPhotoUrl)) {
         }
         .custom-select {
             position: relative;
-            display: flex;
+            display: flex,
             width: 100%;
         }
         .custom-select select {
@@ -1094,10 +1031,248 @@ if (empty($userPhotoUrl)) {
             flex-wrap: wrap;
         }
         
+        /* Profile Page Styles */
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .profile-header {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .profile-avatar-container {
+            position: relative;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--accent-blue);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .profile-status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background-color: var(--success-green);
+            border: 3px solid var(--card-bg);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .profile-details {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .profile-username {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .profile-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .profile-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .badge-member {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+        
+        .badge-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-green);
+        }
+        
+        .profile-stats-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+        
+        .profile-stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .profile-stats-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .profile-stats-title i {
+            color: var(--accent-purple);
+        }
+        
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .profile-stat-card {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        
+        .profile-stat-card.total::before { background: var(--stat-total); }
+        .profile-stat-card.charged::before { background: var(--stat-charged); }
+        .profile-stat-card.approved::before { background: var(--stat-approved); }
+        .profile-stat-card.threeds::before { background: var(--stat-threeds); }
+        .profile-stat-card.declined::before { background: var(--stat-declined); }
+        
+        .profile-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .profile-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .profile-stat-card.total .profile-stat-icon { background: var(--stat-total); }
+        .profile-stat-card.charged .profile-stat-icon { background: var(--stat-charged); }
+        .profile-stat-card.approved .profile-stat-icon { background: var(--stat-approved); }
+        .profile-stat-card.threeds .profile-stat-icon { background: var(--stat-threeds); }
+        .profile-stat-card.declined .profile-stat-icon { background: var(--stat-declined); }
+        
+        .profile-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .profile-stat-card.total .profile-stat-value { color: var(--accent-purple); }
+        .profile-stat-card.charged .profile-stat-value { color: var(--success-green); }
+        .profile-stat-card.approved .profile-stat-value { color: var(--success-green); }
+        .profile-stat-card.threeds .profile-stat-value { color: var(--success-green); }
+        .profile-stat-card.declined .profile-stat-value { color: var(--declined-red); }
+        
+        .profile-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .profile-stat-progress {
+            margin-top: 1rem;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .profile-stat-progress-bar {
+            height: 100%;
+            border-radius: 3px;
+        }
+        
+        .profile-stat-card.total .profile-stat-progress-bar { background: var(--stat-total); }
+        .profile-stat-card.charged .profile-stat-progress-bar { background: var(--stat-charged); }
+        .profile-stat-card.approved .profile-stat-progress-bar { background: var(--stat-approved); }
+        .profile-stat-card.threeds .profile-stat-progress-bar { background: var(--stat-threeds); }
+        .profile-stat-card.declined .profile-stat-progress-bar { background: var(--stat-declined); }
+        
+        /* Hide any potential role elements */
+        .profile-role,
+        .role-badge,
+        .user-role {
+            display: none !important;
+        }
+        
         /* Hide any undefined or empty elements */
-        .online-user-info:empty,
-        .online-user-username:empty,
-        .online-user-name:empty,
+        .profile-info:empty,
+        .profile-name:empty,
+        .profile-username:empty,
         [data-undefined],
         [undefined] {
             display: none !important;
@@ -1200,29 +1375,46 @@ if (empty($userPhotoUrl)) {
                 font-size: 0.85rem;
             }
             
-            /* Custom banner mobile adjustments */
-            .custom-banner {
-                padding: 0.8rem;
-                margin-bottom: 1rem;
+            /* Profile page mobile adjustments */
+            .profile-header {
+                padding: 1.5rem;
             }
             
-            .banner-content {
+            .profile-info {
                 flex-direction: column;
-                gap: 0.3rem;
+                text-align: center;
             }
             
-            .banner-text {
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .profile-name {
+                font-size: 1.5rem;
+            }
+            
+            .profile-username {
                 font-size: 1rem;
             }
             
-            .banner-divider {
-                transform: rotate(90deg);
+            .profile-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .profile-stat-card {
+                padding: 1rem;
+            }
+            
+            .profile-stat-icon {
+                width: 40px;
+                height: 40px;
                 font-size: 1.2rem;
-                height: 1.2rem;
-                width: 1.2rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+            }
+            
+            .profile-stat-value {
+                font-size: 2rem;
             }
         }
         
@@ -1248,23 +1440,30 @@ if (empty($userPhotoUrl)) {
             .stat-label { font-size: 0.65rem; }
             .btn { padding: 0.35rem 0.7rem; min-width: 70px; font-size: 0.75rem; }
             
-            /* Custom banner for very small screens */
-            .custom-banner {
-                padding: 0.6rem;
+            /* Profile page for very small screens */
+            .profile-header {
+                padding: 1rem;
             }
             
-            .banner-content {
-                gap: 0.2rem;
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
             }
             
-            .banner-text {
+            .profile-name {
+                font-size: 1.3rem;
+            }
+            
+            .profile-username {
                 font-size: 0.9rem;
             }
             
-            .banner-divider {
-                font-size: 1rem;
-                height: 1rem;
-                width: 1rem;
+            .profile-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-stat-value {
+                font-size: 1.8rem;
             }
         }
     </style>
@@ -1311,6 +1510,11 @@ if (empty($userPhotoUrl)) {
                     <i class="fas fa-magic"></i><span>Card Generator</span>
                 </a>
             </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" onclick="showPage('profile'); closeSidebar()">
+                    <i class="fas fa-user"></i><span>My Profile</span>
+                </a>
+            </li>
             <div class="sidebar-divider"></div>
             <li class="sidebar-item">
                 <a class="sidebar-link" onclick="Swal.fire('Coming Soon','More pages soon','info'); closeSidebar()">
@@ -1327,14 +1531,6 @@ if (empty($userPhotoUrl)) {
 
     <main class="main-content">
         <section class="page-section active" id="page-home">
-            <!-- Custom Banner -->
-            <div class="custom-banner">
-                <div class="banner-content">
-                    <span class="banner-text">@SajagOG</span>
-                    <span class="banner-text">MADARCHOD HAI</span>
-                </div>
-            </div>
-            
             <div class="dashboard-container">
                 <div class="welcome-banner">
                     <div class="welcome-content">
@@ -1607,6 +1803,109 @@ if (empty($userPhotoUrl)) {
                     <i class="fas fa-inbox"></i>
                     <h3>No Cards Generated Yet</h3>
                     <p>Generate cards to see them here</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section" id="page-profile">
+            <h1 class="page-title">My Profile</h1>
+            <p class="page-subtitle">View your account information and statistics</p>
+            
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-info">
+                        <div class="profile-avatar-container">
+                            <img id="profileAvatar" src="" alt="Profile" class="profile-avatar">
+                            <div class="profile-status"></div>
+                        </div>
+                        <div class="profile-details">
+                            <h2 class="profile-name" id="profileName"></h2>
+                            <p class="profile-username" id="profileUsername"></p>
+                            <div class="profile-badges">
+                                <span class="profile-badge badge-member">
+                                    <i class="fas fa-user-check"></i> Member
+                                </span>
+                                <span class="profile-badge badge-active">
+                                    <i class="fas fa-circle"></i> Active
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-stats-container">
+                    <div class="profile-stats-header">
+                        <h2 class="profile-stats-title">
+                            <i class="fas fa-chart-bar"></i> My Statistics
+                        </h2>
+                    </div>
+                    
+                    <div class="profile-stats-grid">
+                        <div class="profile-stat-card total">
+                            <div class="profile-stat-header">
+                                <div class="profile-stat-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                            </div>
+                            <div class="profile-stat-value" id="profile-total-value">0</div>
+                            <div class="profile-stat-label">TOTAL CHECKED</div>
+                            <div class="profile-stat-progress">
+                                <div class="profile-stat-progress-bar" id="profile-total-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-stat-card charged">
+                            <div class="profile-stat-header">
+                                <div class="profile-stat-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                            </div>
+                            <div class="profile-stat-value" id="profile-charged-value">0</div>
+                            <div class="profile-stat-label">HIT|CHARGED</div>
+                            <div class="profile-stat-progress">
+                                <div class="profile-stat-progress-bar" id="profile-charged-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-stat-card approved">
+                            <div class="profile-stat-header">
+                                <div class="profile-stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="profile-stat-value" id="profile-approved-value">0</div>
+                            <div class="profile-stat-label">LIVE|APPROVED</div>
+                            <div class="profile-stat-progress">
+                                <div class="profile-stat-progress-bar" id="profile-approved-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-stat-card threeds">
+                            <div class="profile-stat-header">
+                                <div class="profile-stat-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                            <div class="profile-stat-value" id="profile-threeds-value">0</div>
+                            <div class="profile-stat-label">3DS</div>
+                            <div class="profile-stat-progress">
+                                <div class="profile-stat-progress-bar" id="profile-threeds-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-stat-card declined">
+                            <div class="profile-stat-header">
+                                <div class="profile-stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </div>
+                            <div class="profile-stat-value" id="profile-declined-value">0</div>
+                            <div class="profile-stat-label">DEAD|DECLINED</div>
+                            <div class="profile-stat-progress">
+                                <div class="profile-stat-progress-bar" id="profile-declined-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
