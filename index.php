@@ -99,31 +99,23 @@ if (empty($userPhotoUrl)) {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
-            --primary-bg: #0a0e27; --secondary-bg: #131937; --card-bg: #1a1f3a;
-            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4;
-            --accent-green: #10b981; --text-primary: #ffffff; --text-secondary: #94a3b8;
-            --border-color: #1e293b; --error: #ef4444; --warning: #f59e0b; --shadow: rgba(0,0,0,0.3);
-            --success-green: #22c55e; --declined-red: #ef4444;
-            /* Enhanced color palette for stats */
-            --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --stat-threeds: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --stat-declined: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --stat-checked: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
-            --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            /* Light theme colors */
+            --primary-bg: #f8fafc; 
+            --secondary-bg: #ffffff; 
+            --card-bg: #ffffff;
+            --text-primary: #0f172a; 
+            --text-secondary: #475569; 
+            --border-color: #e2e8f0;
+            --accent-blue: #3b82f6; 
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981; 
+            --error: #ef4444; 
+            --warning: #f59e0b; 
+            --shadow: rgba(0,0,0,0.1);
+            --success-green: #22c55e; 
+            --declined-red: #ef4444;
             
-            /* Dark theme colors - updated to avoid purple */
-            --dark-bg: #0f172a;
-            --dark-card: rgba(30, 41, 59, 0.82);
-            --dark-border: rgba(255,255,255,.08);
-            --dark-text: #e5e7eb;
-            --dark-secondary: #9aa4b2;
-        }
-        [data-theme="light"] {
-            --primary-bg: #f8fafc; --secondary-bg: #ffffff; --card-bg: #ffffff;
-            --text-primary: #0f172a; --text-secondary: #475569; --border-color: #e2e8f0;
-            /* Light mode adjustments for stats */
+            /* Enhanced color palette for stats */
             --stat-total: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --stat-charged: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --stat-approved: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
@@ -133,28 +125,48 @@ if (empty($userPhotoUrl)) {
             --stat-online: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         [data-theme="dark"] {
-            --primary-bg: var(--dark-bg);
-            --secondary-bg: var(--dark-card);
-            --card-bg: var(--dark-card);
-            --text-primary: var(--dark-text);
-            --text-secondary: var(--dark-secondary);
-            --border-color: var(--dark-border);
+            /* Dark theme colors - improved for better appearance */
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --accent-blue: #3b82f6; 
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981; 
+            --error: #ef4444; 
+            --warning: #f59e0b; 
+            --shadow: rgba(0,0,0,0.3);
+            --success-green: #22c55e; 
+            --declined-red: #ef4444;
+            
+            /* Dark mode stat colors with better contrast */
+            --stat-total: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            --stat-charged: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --stat-approved: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --stat-threeds: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            --stat-declined: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --stat-checked: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            --stat-online: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
         }
         body {
             font-family: Inter, sans-serif; background: var(--primary-bg);
             color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .navbar {
             position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10,14,39,0.95); backdrop-filter: blur(10px);
+            background: var(--card-bg); backdrop-filter: blur(10px);
             padding: 0.5rem 1rem; display: flex; justify-content: space-between;
-            align-items: center; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);
+            align-items: center; z-index: 1000; border-bottom: 1px solid var(--border-color);
             height: 50px;
+            box-shadow: var(--shadow);
         }
         .navbar-brand {
             display: flex; align-items: center; gap: 0.5rem;
             font-size: 1.2rem; font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .navbar-brand i { font-size: 1.2rem; }
@@ -173,8 +185,8 @@ if (empty($userPhotoUrl)) {
         [data-theme="light"] .theme-toggle-slider { transform: translateX(18px); }
         .user-info {
             display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.1);
-            border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.2rem 0.5rem; background: var(--secondary-bg);
+            border-radius: 8px; border: 1px solid var(--border-color);
         }
         .user-avatar {
             width: 28px; height: 28px; border-radius: 50%;
@@ -188,7 +200,7 @@ if (empty($userPhotoUrl)) {
             align-items: flex-start;
         }
         .user-name {
-            font-weight: 600; color: #ffffff;
+            font-weight: 600; color: var(--text-primary);
             max-width: 80px; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap; font-size: 0.85rem;
         }
@@ -198,12 +210,13 @@ if (empty($userPhotoUrl)) {
             white-space: nowrap;
         }
         .menu-toggle {
-            color: #ffffff !important; font-size: 1.2rem; 
+            color: var(--text-primary) !important; font-size: 1.2rem; 
             transition: all 0.3s; display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.1);
+            width: 36px; height: 36px; border-radius: 8px; background: var(--secondary-bg);
             flex-shrink: 0; cursor: pointer;
+            border: 1px solid var(--border-color);
         }
-        .menu-toggle:hover { transform: scale(1.1); background: rgba(255,255,255,0.2); }
+        .menu-toggle:hover { transform: scale(1.1); background: var(--accent-blue); color: white !important; }
         .sidebar {
             position: fixed; left: 0; top: 50px; bottom: 0; width: 70vw;
             background: var(--card-bg); border-right: 1px solid var(--border-color);
@@ -266,7 +279,7 @@ if (empty($userPhotoUrl)) {
             border-radius: 16px;
             padding: 1.5rem;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
+            box-shadow: var(--shadow);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -324,7 +337,7 @@ if (empty($userPhotoUrl)) {
             padding: 1.5rem; 
             position: relative;
             transition: all 0.3s; 
-            box-shadow: 0 4px 20px var(--shadow); 
+            box-shadow: var(--shadow); 
             min-height: 140px;
             display: flex; 
             flex-direction: column; 
@@ -403,12 +416,6 @@ if (empty($userPhotoUrl)) {
         .stat-card.threeds .stat-value { color: var(--success-green); }
         .stat-card.online .stat-value { color: var(--accent-cyan); }
         
-        [data-theme="light"] .stat-card.declined .stat-value { color: var(--declined-red); }
-        [data-theme="light"] .stat-card.charged .stat-value { color: var(--success-green); }
-        [data-theme="light"] .stat-card.approved .stat-value { color: var(--success-green); }
-        [data-theme="light"] .stat-card.threeds .stat-value { color: var(--success-green); }
-        [data-theme="light"] .stat-card.online .stat-value { color: var(--accent-cyan); }
-        
         .stat-indicator {
             position: absolute;
             bottom: 10px;
@@ -436,67 +443,44 @@ if (empty($userPhotoUrl)) {
         /* Global Statistics Section - Updated for better visibility */
         .gs-panel{
             border-radius:16px; padding:16px 16px 18px;
-            background: radial-gradient(1200px 600px at -20% -40%, rgba(59,130,246,.10), transparent 60%),
-                        radial-gradient(1200px 600px at 120% -40%, rgba(16,185,129,.10), transparent 60%),
-                        rgba(255,255,255,.03);
-            border:1px solid rgba(255,255,255,.10);
-            box-shadow: 0 12px 24px rgba(0,0,0,.25);
-        }
-        
-        /* Ensure visibility in light mode */
-        [data-theme="light"] .gs-panel {
-            background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(16,185,129,0.05));
-            border: 1px solid rgba(59,130,246,0.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            border:1px solid var(--border-color);
+            box-shadow: var(--shadow);
         }
         
         .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
         .gs-chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
             background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
-        .gs-title{font-weight:600;color:#e5e7eb}
-        [data-theme="light"] .gs-title {color: #1e293b;}
-        .gs-sub{font-size:12px;color:#9aa4b2;margin-top:2px}
-        [data-theme="light"] .gs-sub {color: #64748b;}
+        .gs-title{font-weight:600;color:var(--text-primary)}
+        .gs-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
         .gs-grid{display:grid;gap:16px}
         @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
         .gs-card{
             position:relative;border-radius:14px;padding:18px 16px;
-            border:1px solid rgba(255,255,255,.08);
-            box-shadow: 0 10px 20px rgba(0,0,0,.24);
-            color:#e6e9ee;
-        }
-        
-        /* Ensure visibility in light mode */
-        [data-theme="light"] .gs-card {
-            background: rgba(255,255,255,0.7);
-            border: 1px solid rgba(59,130,246,0.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            color: #1e293b;
+            border:1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            color:var(--text-primary);
         }
         
         .gs-card .gs-icon{
             width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-            margin-bottom:10px;border:1px solid rgba(255,255,255,.18)
-        }
-        [data-theme="light"] .gs-card .gs-icon {
-            border: 1px solid rgba(59,130,246,0.2);
+            margin-bottom:10px;border:1px solid var(--border-color)
         }
         .gs-card .gs-icon svg{width:18px;height:18px;display:block;opacity:.95}
         .gs-num{font-weight:800;font-size:28px;line-height:1}
-        .gs-label{font-size:12px;color:#cbd5e1;margin-top:6px}
-        [data-theme="light"] .gs-label {color: #64748b;}
-        .gs-blue   { background:linear-gradient(135deg, rgba(30,58,138,.7), rgba(30,41,59,.65)); }
-        .gs-green  { background:linear-gradient(135deg, rgba(6,95,70,.75), rgba(15,118,110,.65)); }
-        .gs-red    { background:linear-gradient(135deg, rgba(88,28,28,.78), rgba(124,45,18,.65)); }
-        .gs-purple { background:linear-gradient(135deg, rgba(76,29,149,.75), rgba(88,28,135,.65)); }
+        .gs-label{font-size:12px;color:var(--text-secondary);margin-top:6px}
+        .gs-blue   { background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); }
+        .gs-green  { background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1)); }
+        .gs-red    { background:linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1)); }
+        .gs-purple { background:linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.1)); }
         
-        /* Light mode colors for stat cards */
-        [data-theme="light"] .gs-blue   { background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); }
-        [data-theme="light"] .gs-green  { background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1)); }
-        [data-theme="light"] .gs-red    { background:linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1)); }
-        [data-theme="light"] .gs-purple { background:linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.1)); }
+        /* Dark mode colors for stat cards */
+        [data-theme="dark"] .gs-blue   { background:linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)); }
+        [data-theme="dark"] .gs-green  { background:linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.2)); }
+        [data-theme="dark"] .gs-red    { background:linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); }
+        [data-theme="dark"] .gs-purple { background:linear-gradient(135deg, rgba(139,92,246,0.3), rgba(124,58,237,0.2)); }
         
         /* Enhanced Online Users Section */
         .online-users-section {
@@ -504,7 +488,7 @@ if (empty($userPhotoUrl)) {
             border-radius: 16px;
             padding: 1.5rem;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
+            box-shadow: var(--shadow);
             height: fit-content;
             position: relative;
             overflow: hidden;
@@ -665,6 +649,7 @@ if (empty($userPhotoUrl)) {
         .checker-section, .generator-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
+            box-shadow: var(--shadow);
         }
         .checker-header, .generator-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -678,7 +663,7 @@ if (empty($userPhotoUrl)) {
         .settings-btn {
             padding: 0.3rem 0.6rem; border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.05); color: var(--text-primary);
+            background: var(--secondary-bg); color: var(--text-primary);
             cursor: pointer; font-weight: 500; display: flex;
             align-items: center; gap: 0.3rem; font-size: 0.8rem;
         }
@@ -734,12 +719,13 @@ if (empty($userPhotoUrl)) {
         }
         .btn-primary:hover { transform: translateY(-2px); }
         .btn-secondary {
-            background: rgba(255,255,255,0.05);
+            background: var(--secondary-bg);
             border: 1px solid var(--border-color); color: var(--text-primary);
         }
         .results-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
+            box-shadow: var(--shadow);
         }
         .results-header {
             display: flex; justify-content: space-between;
@@ -754,7 +740,7 @@ if (empty($userPhotoUrl)) {
         .filter-btn {
             padding: 0.3rem 0.6rem; border-radius: 6px;
             border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.03); color: var(--text-secondary);
+            background: var(--secondary-bg); color: var(--text-secondary);
             cursor: pointer; font-size: 0.7rem; transition: all 0.3s;
         }
         .filter-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
@@ -794,7 +780,7 @@ if (empty($userPhotoUrl)) {
         }
         .settings-close {
             width: 25px; height: 25px; border-radius: 6px; border: none;
-            background: rgba(255,255,255,0.05); color: var(--text-secondary);
+            background: var(--secondary-bg); color: var(--text-secondary);
             cursor: pointer; display: flex; align-items: center;
             justify-content: center; font-size: 0.9rem; transition: all 0.3s;
         }
@@ -855,7 +841,7 @@ if (empty($userPhotoUrl)) {
         .btn-cancel {
             flex: 1; padding: 0.5rem; border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.05); color: var(--text-primary);
+            background: var(--secondary-bg); color: var(--text-primary);
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
         }
         .loader {
@@ -1022,8 +1008,8 @@ if (empty($userPhotoUrl)) {
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
             position: relative;
             overflow: hidden;
         }
@@ -1137,7 +1123,7 @@ if (empty($userPhotoUrl)) {
             border-radius: 16px;
             padding: 1.5rem;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow);
+            box-shadow: var(--shadow);
         }
         
         .profile-stats-header {
@@ -1160,80 +1146,17 @@ if (empty($userPhotoUrl)) {
             color: var(--accent-cyan);
         }
         
-        .profile-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .profile-stat-card {
-            background: var(--secondary-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
+        /* User Stats Column Layout - Updated to match online users style */
+        .user-stats-column {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        
-        .profile-stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-        }
-        
-        .profile-stat-card.total::before { background: var(--stat-total); }
-        .profile-stat-card.charged::before { background: var(--stat-charged); }
-        .profile-stat-card.approved::before { background: var(--stat-approved); }
-        .profile-stat-card.threeds::before { background: var(--stat-threeds); }
-        .profile-stat-card.declined::before { background: var(--stat-declined); }
-        
-        .profile-stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-        
-        .profile-stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            line-height: 1;
-        }
-        
-        .profile-stat-card.total .profile-stat-value { color: var(--accent-purple); }
-        .profile-stat-card.charged .profile-stat-value { color: var(--success-green); }
-        .profile-stat-card.approved .profile-stat-value { color: var(--success-green); }
-        .profile-stat-card.threeds .profile-stat-value { color: var(--success-green); }
-        .profile-stat-card.declined .profile-stat-value { color: var(--declined-red); }
-        
-        .profile-stat-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        
-        /* User Stats Column Layout - Updated */
-        .user-stats-column {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            gap: 0.8rem;
         }
         
         .user-stat-item {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            text-align: center;
-            padding: 1.5rem;
+            padding: 0.8rem;
             background: var(--secondary-bg);
             border-radius: 12px;
             border: 1px solid var(--border-color);
@@ -1246,8 +1169,9 @@ if (empty($userPhotoUrl)) {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 3px;
+            height: 100%;
+            width: 4px;
+            border-radius: 4px 0 0 4px;
         }
         
         .user-stat-item.total::before { background: var(--stat-total); }
@@ -1257,20 +1181,20 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.declined::before { background: var(--stat-declined); }
         
         .user-stat-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
         .user-stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: white;
-            margin-bottom: 1rem;
+            margin-right: 1rem;
         }
         
         .user-stat-item.total .user-stat-icon { background: var(--stat-total); }
@@ -1279,10 +1203,24 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
         .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
         
+        .user-stat-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
         .user-stat-value {
-            font-size: 2.5rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
             line-height: 1;
         }
         
@@ -1291,14 +1229,6 @@ if (empty($userPhotoUrl)) {
         .user-stat-item.approved .user-stat-value { color: var(--success-green); }
         .user-stat-item.threeds .user-stat-value { color: var(--success-green); }
         .user-stat-item.declined .user-stat-value { color: var(--declined-red); }
-        
-        .user-stat-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
         
         /* Hide any potential role elements */
         .profile-role,
@@ -1436,42 +1366,22 @@ if (empty($userPhotoUrl)) {
                 font-size: 1rem;
             }
             
-            .profile-stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
+            .user-stats-column {
+                gap: 0.6rem;
             }
             
-            .profile-stat-card {
-                padding: 1rem;
+            .user-stat-item {
+                padding: 0.8rem;
             }
             
-            .profile-stat-icon {
+            .user-stat-icon {
                 width: 35px;
                 height: 35px;
                 font-size: 1rem;
             }
             
-            .profile-stat-value {
-                font-size: 1.8rem;
-            }
-            
-            .user-stats-column {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-            
-            .user-stat-item {
-                padding: 1rem;
-            }
-            
-            .user-stat-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
-            }
-            
             .user-stat-value {
-                font-size: 2rem;
+                font-size: 1.3rem;
             }
         }
         
@@ -1515,31 +1425,22 @@ if (empty($userPhotoUrl)) {
                 font-size: 0.9rem;
             }
             
-            .profile-stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .profile-stat-value {
-                font-size: 1.6rem;
-            }
-            
             .user-stats-column {
-                grid-template-columns: 1fr;
-                gap: 1rem;
+                gap: 0.5rem;
             }
             
             .user-stat-item {
-                padding: 1rem;
+                padding: 0.6rem;
             }
             
             .user-stat-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
             }
             
             .user-stat-value {
-                font-size: 1.8rem;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -1713,11 +1614,11 @@ if (empty($userPhotoUrl)) {
                                 <div class="gs-card gs-purple">
                                     <div class="gs-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 7a5 5 0 105 5 5.006 5.006 0 00-5-5zm0-5a10 10 0 11-10 10A10 10 0 0112 2zm1 9h3v2h-5V6h2z"/>
+                                            <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/>
                                         </svg>
                                     </div>
                                     <div id="gTotalHits" class="gs-num">—</div>
-                                    <div class="gs-label">Total Hits</div>
+                                    <div class="gs-label">Total Checked Cards</div>
                                 </div>
 
                                 <div class="gs-card gs-red">
@@ -1963,40 +1864,50 @@ if (empty($userPhotoUrl)) {
                             <div class="user-stat-icon">
                                 <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="user-stat-value" id="profile-total-value">0</div>
-                            <div class="user-stat-label">TOTAL CHECKED</div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">Total Checked</div>
+                                <div class="user-stat-value" id="profile-total-value">0</div>
+                            </div>
                         </div>
                         
                         <div class="user-stat-item charged">
                             <div class="user-stat-icon">
                                 <i class="fas fa-bolt"></i>
                             </div>
-                            <div class="user-stat-value" id="profile-charged-value">0</div>
-                            <div class="user-stat-label">HIT|CHARGED</div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">Charged</div>
+                                <div class="user-stat-value" id="profile-charged-value">0</div>
+                            </div>
                         </div>
                         
                         <div class="user-stat-item approved">
                             <div class="user-stat-icon">
                                 <i class="fas fa-check-circle"></i>
                             </div>
-                            <div class="user-stat-value" id="profile-approved-value">0</div>
-                            <div class="user-stat-label">LIVE|APPROVED</div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">Approved</div>
+                                <div class="user-stat-value" id="profile-approved-value">0</div>
+                            </div>
                         </div>
                         
                         <div class="user-stat-item threeds">
                             <div class="user-stat-icon">
                                 <i class="fas fa-lock"></i>
                             </div>
-                            <div class="user-stat-value" id="profile-threeds-value">0</div>
-                            <div class="user-stat-label">3DS</div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">3DS</div>
+                                <div class="user-stat-value" id="profile-threeds-value">0</div>
+                            </div>
                         </div>
                         
                         <div class="user-stat-item declined">
                             <div class="user-stat-icon">
                                 <i class="fas fa-times-circle"></i>
                             </div>
-                            <div class="user-stat-value" id="profile-declined-value">0</div>
-                            <div class="user-stat-label">DEAD|DECLINED</div>
+                            <div class="user-stat-content">
+                                <div class="user-stat-label">Declined</div>
+                                <div class="user-stat-value" id="profile-declined-value">0</div>
+                            </div>
                         </div>
                     </div>
                 </div>
