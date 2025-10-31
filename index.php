@@ -157,6 +157,12 @@ if (empty($userPhotoUrl)) {
             /* New colors for hits in dark mode */
             --hits-light: #8b5cf6;
             --hits-dark: #fbbf24; /* Yellow color for better visibility in dark mode */
+            
+            /* User item colors */
+            --user-item-bg-light: rgba(59, 130, 246, 0.05);
+            --user-item-border-light: rgba(59, 130, 246, 0.2);
+            --user-item-bg-dark: rgba(59, 130, 246, 0.1);
+            --user-item-border-dark: rgba(59, 130, 246, 0.3);
         }
         
         /* Smooth transitions for all elements */
@@ -904,9 +910,9 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.8rem; /* Reduced gap */
             padding: 0.8rem; /* Reduced padding */
-            background: var(--card-bg); /* Changed to use card-bg variable for light mode */
+            background: var(--user-item-bg-light); /* Light filled color */
+            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
             border-radius: 10px; /* Reduced border radius */
-            border: 1px solid var(--border-color); /* Changed to use border-color variable */
             transition: all 0.3s ease;
             position: relative;
             margin-bottom: 0.8rem; /* Reduced margin */
@@ -914,8 +920,8 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .online-user-item {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
+            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
+            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
         }
         
@@ -945,13 +951,26 @@ if (empty($userPhotoUrl)) {
             right: 2px;
             width: 10px; /* Reduced size */
             height: 10px; /* Reduced size */
-            background-color: var(--success-green);
+            background-color: var(--success-green); /* Always green */
             border: 2px solid var(--card-bg); /* Changed to use card-bg variable for light mode */
             border-radius: 50%;
+            animation: pulse 2s infinite; /* Added animation */
         }
         
         body[data-theme="dark"] .online-indicator {
             border-color: var(--dark-card-bg);
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 5px rgba(34, 197, 94, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
         }
         
         .online-user-info {
@@ -969,7 +988,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .online-user-name {
-            color: var(--dark-text-primary);
+            color: #ffffff; /* White text in dark mode */
         }
         
         .online-user-username {
@@ -979,7 +998,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .online-user-username {
-            color: var(--dark-text-secondary);
+            color: #ffffff; /* White text in dark mode */
         }
         
         /* Top Users Section - Beast Level - Light Mode Fix and Reduced Size */
@@ -1070,9 +1089,9 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.8rem; /* Reduced gap */
             padding: 0.8rem; /* Reduced padding */
-            background: var(--card-bg); /* Changed to use card-bg variable for light mode */
+            background: var(--user-item-bg-light); /* Light filled color */
+            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
             border-radius: 10px; /* Reduced border radius */
-            border: 1px solid var(--border-color); /* Changed to use border-color variable */
             transition: all 0.3s ease;
             position: relative;
             margin-bottom: 0.8rem; /* Reduced margin */
@@ -1080,8 +1099,8 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .top-user-item {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
+            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
+            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
         }
         
@@ -1120,7 +1139,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .top-user-name {
-            color: var(--dark-text-primary);
+            color: #ffffff; /* White text in dark mode */
         }
         
         .top-user-username {
@@ -1130,7 +1149,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .top-user-username {
-            color: var(--dark-text-secondary);
+            color: #ffffff; /* White text in dark mode */
         }
         
         .top-user-hits {
@@ -1527,17 +1546,17 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.5rem; /* Reduced gap */
             padding: 0.5rem; /* Reduced padding */
-            background: var(--secondary-bg);
+            background: var(--user-item-bg-light); /* Light filled color */
+            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
             border-radius: 8px; /* Reduced border radius */
-            border: 1px solid var(--border-color);
             transition: all 0.3s;
             position: relative;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
         }
         
         body[data-theme="dark"] .mobile-online-user-item {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
+            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
+            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
         }
         
@@ -1560,7 +1579,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .mobile-online-user-name {
-            color: var(--dark-text-primary);
+            color: #ffffff; /* White text in dark mode */
         }
         
         /* Other sections styling - Reduced Size */
@@ -3462,7 +3481,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑬</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
@@ -3526,7 +3545,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬𝑬</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬</h1>
             <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐰𝐢𝐧𝐡</p>
 
             <div class="generator-section">
@@ -4038,7 +4057,75 @@ if (empty($userPhotoUrl)) {
             
             // Initialize gateway settings
             initializeGatewaySettings();
+            
+            // Check for admin user and add admin badge
+            checkForAdminUser();
         });
+        
+        // Function to check for admin user and add admin badge
+        function checkForAdminUser() {
+            // This would typically be done server-side, but for demonstration we'll check client-side
+            const onlineUsersList = document.getElementById('onlineUsersList');
+            const topUsersList = document.getElementById('topUsersList');
+            
+            // Function to add admin badge to K4LNX if found
+            function addAdminBadgeToK4LNX(userList) {
+                const userItems = userList.querySelectorAll('.online-user-item, .top-user-item');
+                userItems.forEach(item => {
+                    const userNameElement = item.querySelector('.online-user-name, .top-user-name');
+                    if (userNameElement && userNameElement.textContent.includes('K4LNX')) {
+                        // Add admin class to the item
+                        item.classList.add('admin');
+                        
+                        // Check if admin badge already exists
+                        if (!item.querySelector('.admin-badge')) {
+                            // Create admin badge
+                            const adminBadge = document.createElement('span');
+                            adminBadge.className = 'admin-badge';
+                            adminBadge.textContent = 'ADMIN';
+                            
+                            // Add badge after the username
+                            userNameElement.appendChild(adminBadge);
+                        }
+                    }
+                });
+            }
+            
+            // Check for admin user in online users
+            if (onlineUsersList) {
+                addAdminBadgeToK4LNX(onlineUsersList);
+            }
+            
+            // Check for admin user in top users
+            if (topUsersList) {
+                addAdminBadgeToK4LNX(topUsersList);
+            }
+            
+            // Set up a MutationObserver to detect when new users are added
+            if (onlineUsersList) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                            addAdminBadgeToK4LNX(onlineUsersList);
+                        }
+                    });
+                });
+                
+                observer.observe(onlineUsersList, { childList: true });
+            }
+            
+            if (topUsersList) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                            addAdminBadgeToK4LNX(topUsersList);
+                        }
+                    });
+                });
+                
+                observer.observe(topUsersList, { childList: true });
+            }
+        }
         
         // Gateway settings functions
         function initializeGatewaySettings() {
