@@ -1,7 +1,7 @@
 <?php
 
 // update_activity.php
-// Static API key validation + return users data
+// Session-based authentication + return users data
 
 // Set timeout and memory limits
 set_time_limit(30); // 30 seconds max execution time
@@ -10,7 +10,7 @@ ini_set('memory_limit', '128M'); // 128MB memory limit
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Api-Key');
+header('Access-Control-Allow-Headers: Content-Type');
 
 // Handle preflight OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -18,19 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// === STATIC API KEY ===
- $STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu'; // Replace with your static key
-
-// === VALIDATE API KEY ===
- $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
-
-if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Invalid API key']);
-    exit;
-}
-
-// === KEY IS VALID → CONTINUE ===
+// === SESSION-BASED AUTHENTICATION ===
 if (!session_start()) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Session start failed']);
