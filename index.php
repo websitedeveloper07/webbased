@@ -149,20 +149,21 @@ if (empty($userPhotoUrl)) {
             --shadow-xl: 0 12px 32px rgba(0,0,0,0.2);
             --shadow-beast: 0 20px 40px rgba(0,0,0,0.25);
             
-            /* Admin color */
-            --admin-color: #ef4444;
-            --admin-bg: rgba(239, 68, 68, 0.15);
-            --admin-border: rgba(239, 68, 68, 0.3);
-            
-            /* New colors for hits in dark mode */
-            --hits-light: #8b5cf6;
-            --hits-dark: #fbbf24; /* Yellow color for better visibility in dark mode */
-            
             /* User item colors */
-            --user-item-bg-light: rgba(59, 130, 246, 0.05);
-            --user-item-border-light: rgba(59, 130, 246, 0.2);
-            --user-item-bg-dark: rgba(59, 130, 246, 0.1);
-            --user-item-border-dark: rgba(59, 130, 246, 0.3);
+            --user-item-bg-light: rgba(59, 130, 246, 0.08); /* Light blue filled color */
+            --user-item-border-light: rgba(59, 130, 246, 0.25); /* Darker outline */
+            --user-item-bg-dark: rgba(59, 130, 246, 0.12); /* Darker filled color in dark mode */
+            --user-item-border-dark: rgba(59, 130, 246, 0.35); /* Even darker outline in dark mode */
+            
+            /* Admin user colors */
+            --admin-item-bg-light: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15)); /* Premium gradient */
+            --admin-item-border-light: rgba(168, 85, 247, 0.4); /* Purple border */
+            --admin-item-bg-dark: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2)); /* Darker gradient */
+            --admin-item-border-dark: rgba(168, 85, 247, 0.5); /* Darker purple border */
+            
+            /* Hits colors */
+            --hits-light: #fbbf24; /* Yellow color for light mode */
+            --hits-dark: #fbbf24; /* Yellow color for dark mode */
         }
         
         /* Smooth transitions for all elements */
@@ -910,7 +911,7 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.8rem; /* Reduced gap */
             padding: 0.8rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light filled color */
+            background: var(--user-item-bg-light); /* Light blue filled color */
             border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
             border-radius: 10px; /* Reduced border radius */
             transition: all 0.3s ease;
@@ -1058,6 +1059,28 @@ if (empty($userPhotoUrl)) {
             color: var(--accent-purple);
         }
         
+        .top-users-count {
+            font-size: 0.75rem; /* Reduced font size */
+            color: var(--text-secondary); /* Changed to use text-secondary variable for light mode */
+            background: rgba(139, 92, 246, 0.1);
+            padding: 0.4rem 0.6rem; /* Reduced padding */
+            border-radius: 16px; /* Reduced border radius */
+            display: flex;
+            align-items: center;
+            gap: 0.3rem; /* Reduced gap */
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        body[data-theme="dark"] .top-users-count {
+            color: var(--dark-text-secondary);
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        .top-users-count i {
+            color: var(--accent-purple);
+            font-size: 0.5rem; /* Reduced font size */
+        }
+        
         .top-users-list {
             flex: 1;
             overflow-y: auto;
@@ -1089,7 +1112,7 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.8rem; /* Reduced gap */
             padding: 0.8rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light filled color */
+            background: var(--user-item-bg-light); /* Light blue filled color */
             border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
             border-radius: 10px; /* Reduced border radius */
             transition: all 0.3s ease;
@@ -1155,14 +1178,11 @@ if (empty($userPhotoUrl)) {
         .top-user-hits {
             font-size: 0.75rem; /* Reduced font size */
             font-weight: 700;
-            color: var(--hits-light); /* Using new variable for light mode */
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--hits-light); /* Yellow color for light mode */
+            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in light mode */
+            border: 1px solid rgba(251, 191, 36, 0.3); /* Yellow border in light mode */
             padding: 0.3rem 0.6rem; /* Increased padding for bigger box */
             border-radius: 8px; /* Increased border radius */
-            background-color: rgba(139, 92, 246, 0.15);
-            border: 1px solid rgba(139, 92, 246, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1174,33 +1194,39 @@ if (empty($userPhotoUrl)) {
             color: var(--hits-dark) !important; /* Yellow color for dark mode */
             background-color: rgba(251, 191, 36, 0.15); /* Yellow background in dark mode */
             border-color: rgba(251, 191, 36, 0.3); /* Yellow border in dark mode */
-            -webkit-text-fill-color: var(--hits-dark); /* Ensure text is yellow in dark mode */
         }
         
         /* Admin user styling */
         .online-user-item.admin {
-            background: var(--admin-bg) !important;
-            border: 1px solid var(--admin-border) !important;
+            background: var(--admin-item-bg-light) !important; /* Premium gradient for light mode */
+            border: 1px solid var(--admin-item-border-light) !important; /* Purple border */
         }
         
-        .online-user-item.admin .online-user-name {
-            color: var(--admin-color) !important;
-            font-weight: 800 !important;
+        body[data-theme="dark"] .online-user-item.admin {
+            background: var(--admin-item-bg-dark) !important; /* Darker gradient for dark mode */
+            border-color: var(--admin-item-border-dark) !important; /* Darker purple border */
         }
         
-        .online-user-item.admin .online-indicator {
-            background-color: var(--admin-color) !important;
+        .top-user-item.admin {
+            background: var(--admin-item-bg-light) !important; /* Premium gradient for light mode */
+            border: 1px solid var(--admin-item-border-light) !important; /* Purple border */
+        }
+        
+        body[data-theme="dark"] .top-user-item.admin {
+            background: var(--admin-item-bg-dark) !important; /* Darker gradient for dark mode */
+            border-color: var(--admin-item-border-dark) !important; /* Darker purple border */
         }
         
         .admin-badge {
-            background-color: var(--admin-color) !important;
+            background: linear-gradient(135deg, #a855f7, #ec4899) !important; /* Premium gradient */
             color: white !important;
-            padding: 2px 4px; /* Reduced padding */
-            border-radius: 3px; /* Reduced border radius */
-            font-size: 0.5rem; /* Reduced font size */
+            padding: 2px 5px; /* Slightly larger padding */
+            border-radius: 4px; /* Slightly larger border radius */
+            font-size: 0.55rem; /* Slightly larger font size */
             font-weight: 700;
             text-transform: uppercase;
-            margin-left: 4px; /* Reduced margin */
+            margin-left: 5px; /* Slightly larger margin */
+            box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3); /* Added shadow */
         }
         
         /* Beast Level Profile Page - Reduced Size */
@@ -1546,7 +1572,7 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             gap: 0.5rem; /* Reduced gap */
             padding: 0.5rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light filled color */
+            background: var(--user-item-bg-light); /* Light blue filled color */
             border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
             border-radius: 8px; /* Reduced border radius */
             transition: all 0.3s;
@@ -3428,7 +3454,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-1-.45-1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -3757,6 +3783,10 @@ if (empty($userPhotoUrl)) {
                 <div class="top-users-title">
                     <i class="fas fa-trophy"></i> Top Users
                 </div>
+                <div class="top-users-count" id="topUsersCount">
+                    <i class="fas fa-trophy"></i>
+                    <span id="topCount">0</span> users
+                </div>
             </div>
             <div class="top-users-list" id="topUsersList">
                 <div class="empty-state">
@@ -4060,71 +4090,150 @@ if (empty($userPhotoUrl)) {
             
             // Check for admin user and add admin badge
             checkForAdminUser();
+            
+            // Fetch online users and top users data
+            fetchUsersData();
         });
+        
+        // Function to fetch users data from API
+        function fetchUsersData() {
+            // Fetch online users
+            fetch('api/online-users')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateOnlineUsersList(data.users);
+                        document.getElementById('onlineCount').textContent = data.count;
+                        document.getElementById('mobileOnlineCount').textContent = data.count;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching online users:', error);
+                });
+            
+            // Fetch top users
+            fetch('api/top-users')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateTopUsersList(data.users);
+                        document.getElementById('topCount').textContent = data.count;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching top users:', error);
+                });
+            
+            // Set up periodic refresh
+            setInterval(fetchUsersData, 30000); // Refresh every 30 seconds
+        }
+        
+        // Function to update online users list
+        function updateOnlineUsersList(users) {
+            const onlineUsersList = document.getElementById('onlineUsersList');
+            const mobileOnlineUsersList = document.getElementById('mobileOnlineUsersList');
+            
+            if (users.length === 0) {
+                onlineUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Users Online</h3>
+                        <p>No other users are currently online</p>
+                    </div>
+                `;
+                
+                mobileOnlineUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Users Online</h3>
+                        <p>No other users are currently online</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let onlineUsersHTML = '';
+            let mobileOnlineUsersHTML = '';
+            
+            users.forEach(user => {
+                const isAdmin = user.username === '@K4LNX';
+                const adminClass = isAdmin ? 'admin' : '';
+                const adminBadge = isAdmin ? '<span class="admin-badge">ADMIN</span>' : '';
+                
+                onlineUsersHTML += `
+                    <div class="online-user-item ${adminClass}">
+                        <div class="online-user-avatar-container">
+                            <img src="${user.photo_url}" alt="${user.name}" class="online-user-avatar">
+                            <div class="online-indicator"></div>
+                        </div>
+                        <div class="online-user-info">
+                            <div class="online-user-name">${user.name}${adminBadge}</div>
+                            <div class="online-user-username">${user.username}</div>
+                        </div>
+                    </div>
+                `;
+                
+                mobileOnlineUsersHTML += `
+                    <div class="mobile-online-user-item ${adminClass}">
+                        <img src="${user.photo_url}" alt="${user.name}" class="mobile-online-user-avatar">
+                        <span class="mobile-online-user-name">${user.name}${adminBadge}</span>
+                    </div>
+                `;
+            });
+            
+            onlineUsersList.innerHTML = onlineUsersHTML;
+            mobileOnlineUsersList.innerHTML = mobileOnlineUsersHTML;
+            
+            // Check for admin user after updating the list
+            checkForAdminUser();
+        }
+        
+        // Function to update top users list
+        function updateTopUsersList(users) {
+            const topUsersList = document.getElementById('topUsersList');
+            
+            if (users.length === 0) {
+                topUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>No Top Users</h3>
+                        <p>No top users data available</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let topUsersHTML = '';
+            
+            users.forEach(user => {
+                const isAdmin = user.username === '@K4LNX';
+                const adminClass = isAdmin ? 'admin' : '';
+                const adminBadge = isAdmin ? '<span class="admin-badge">ADMIN</span>' : '';
+                
+                topUsersHTML += `
+                    <div class="top-user-item ${adminClass}">
+                        <div class="top-user-avatar-container">
+                            <img src="${user.photo_url}" alt="${user.name}" class="top-user-avatar">
+                        </div>
+                        <div class="top-user-info">
+                            <div class="top-user-name">${user.name}${adminBadge}</div>
+                            <div class="top-user-username">${user.username}</div>
+                        </div>
+                        <div class="top-user-hits">${user.total_hits}</div>
+                    </div>
+                `;
+            });
+            
+            topUsersList.innerHTML = topUsersHTML;
+            
+            // Check for admin user after updating the list
+            checkForAdminUser();
+        }
         
         // Function to check for admin user and add admin badge
         function checkForAdminUser() {
-            // This would typically be done server-side, but for demonstration we'll check client-side
-            const onlineUsersList = document.getElementById('onlineUsersList');
-            const topUsersList = document.getElementById('topUsersList');
-            
-            // Function to add admin badge to K4LNX if found
-            function addAdminBadgeToK4LNX(userList) {
-                const userItems = userList.querySelectorAll('.online-user-item, .top-user-item');
-                userItems.forEach(item => {
-                    const userNameElement = item.querySelector('.online-user-name, .top-user-name');
-                    if (userNameElement && userNameElement.textContent.includes('K4LNX')) {
-                        // Add admin class to the item
-                        item.classList.add('admin');
-                        
-                        // Check if admin badge already exists
-                        if (!item.querySelector('.admin-badge')) {
-                            // Create admin badge
-                            const adminBadge = document.createElement('span');
-                            adminBadge.className = 'admin-badge';
-                            adminBadge.textContent = 'ADMIN';
-                            
-                            // Add badge after the username
-                            userNameElement.appendChild(adminBadge);
-                        }
-                    }
-                });
-            }
-            
-            // Check for admin user in online users
-            if (onlineUsersList) {
-                addAdminBadgeToK4LNX(onlineUsersList);
-            }
-            
-            // Check for admin user in top users
-            if (topUsersList) {
-                addAdminBadgeToK4LNX(topUsersList);
-            }
-            
-            // Set up a MutationObserver to detect when new users are added
-            if (onlineUsersList) {
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                            addAdminBadgeToK4LNX(onlineUsersList);
-                        }
-                    });
-                });
-                
-                observer.observe(onlineUsersList, { childList: true });
-            }
-            
-            if (topUsersList) {
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                            addAdminBadgeToK4LNX(topUsersList);
-                        }
-                    });
-                });
-                
-                observer.observe(topUsersList, { childList: true });
-            }
+            // This function is now called after updating the user lists
+            // The admin badge is already added in the update functions above
         }
         
         // Gateway settings functions
