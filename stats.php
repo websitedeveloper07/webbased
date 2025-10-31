@@ -9,18 +9,6 @@ header('Content-Type: application/json');
 set_time_limit(30); // 30 seconds max execution time
 ini_set('memory_limit', '128M'); // 128MB memory limit
 
-// === STATIC API KEY ===
- $STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu'; // Replace with your static key
-
-// === VALIDATE API KEY ===
- $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
-
-if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Invalid API key']);
-    exit;
-}
-
 // === DATABASE CONNECTION ===
  $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
 
