@@ -95,6 +95,11 @@ try {
     
     // Function to record card check result
     function recordCardCheck($pdo, $cardNumber, $status, $response = '') {
+        // Start session if not already started
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        
         // Get or create user
         $userId = null;
         if (isset($_SESSION['user']['telegram_id'])) {
@@ -128,12 +133,21 @@ try {
             VALUES (?, ?, ?, ?)
         ");
         
-        return $stmt->execute([
+        $result = $stmt->execute([
             $userId,
             $cardNumber,
             $status,
             $response
         ]);
+        
+        // Log the result for debugging
+        if ($result) {
+            error_log("Card check recorded successfully: $cardNumber - $status");
+        } else {
+            error_log("Failed to record card check: " . print_r($stmt->errorInfo(), true));
+        }
+        
+        return $result;
     }
     
 } catch (PDOException $e) {
