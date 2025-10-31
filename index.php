@@ -1955,15 +1955,15 @@ if (empty($userPhotoUrl)) {
         /* Gateway Provider Selection - Improved Structure */
         .gateway-providers {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1rem; /* Increased gap for better spacing */
+            flex-direction: column; /* Changed to column for vertical layout */
+            gap: 1.5rem; /* Increased gap for better spacing */
             margin-bottom: 1.5rem; /* Increased margin */
         }
         
         .gateway-provider {
             flex: 1;
-            min-width: 120px; /* Increased min-width */
-            padding: 1rem; /* Increased padding */
+            min-width: 200px; /* Increased min-width */
+            padding: 1.2rem; /* Increased padding */
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px; /* Reduced border radius */
@@ -1990,14 +1990,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-provider-icon {
-            font-size: 1.5rem; /* Increased font size */
-            margin-bottom: 0.5rem; /* Increased margin */
+            font-size: 2rem; /* Increased font size */
+            margin-bottom: 0.8rem; /* Increased margin */
             color: var(--accent-blue);
         }
         
         .gateway-provider-name {
             font-weight: 700;
-            font-size: 0.9rem; /* Increased font size */
+            font-size: 1.1rem; /* Increased font size */
             color: var(--text-primary);
         }
         
@@ -2009,7 +2009,7 @@ if (empty($userPhotoUrl)) {
         .gateway-options {
             display: none;
             flex-direction: column;
-            gap: 1rem; /* Increased gap between gateways */
+            gap: 1.5rem; /* Increased gap between gateways */
         }
         
         .gateway-options.active {
@@ -2019,7 +2019,7 @@ if (empty($userPhotoUrl)) {
         .gateway-option {
             display: flex; 
             align-items: center; 
-            padding: 1rem; /* Increased padding for better spacing */
+            padding: 1.2rem; /* Increased padding for better spacing */
             background: var(--secondary-bg); 
             border: 1px solid var(--border-color);
             border-radius: 10px; /* Reduced border radius */
@@ -2130,6 +2130,34 @@ if (empty($userPhotoUrl)) {
         .btn-save:hover { 
             transform: translateY(-2px); 
             box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-back {
+            flex: 1; 
+            padding: 0.6rem; /* Increased padding */
+            border-radius: 8px; /* Reduced border radius */
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg); 
+            color: var(--text-primary);
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 0.9rem; /* Increased font size */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem; /* Increased gap */
+        }
+        
+        body[data-theme="dark"] .btn-back {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .btn-back:hover { 
+            transform: translateY(-2px); 
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
         }
         
         .btn-cancel {
@@ -2932,7 +2960,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -2985,7 +3013,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑹</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑹</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
@@ -3049,8 +3077,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑬𝑹</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐬 𝐰𝐢𝐭𝐡𝐧𝐡</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬𝑬𝑬</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐰𝐢𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -3319,11 +3347,6 @@ if (empty($userPhotoUrl)) {
 
             <!-- Gateway Options - Initially Hidden -->
             <div class="gateway-options" id="gatewayOptions">
-                <!-- Back Button -->
-                <button class="btn-back" id="backToProviders" style="display: none;">
-                    <i class="fas fa-arrow-left"></i> Back to Providers
-                </button>
-                
                 <!-- Stripe Gateways -->
                 <div class="gateway-options-group" data-provider="stripe">
                     <label class="gateway-option">
@@ -3420,6 +3443,9 @@ if (empty($userPhotoUrl)) {
             <div class="settings-footer">
                 <button class="btn-save" onclick="saveGatewaySettings()">
                     <i class="fas fa-check"></i> Save Settings
+                </button>
+                <button class="btn-back" id="backToProviders" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Back
                 </button>
                 <button class="btn-cancel" onclick="closeGatewaySettings()">
                     <i class="fas fa-times"></i> Cancel
