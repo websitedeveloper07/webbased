@@ -149,6 +149,49 @@ session_start([
     'use_strict_mode' => true,
 ]);
 
+// === DATABASE CONNECTION ===
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
+try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+    
+    // Set connection timeout with extended options and SSL mode
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 15,
+            PDO::ATTR_PERSISTENT => false,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // Store the database connection in a global variable for use in recordCardCheck
+    $GLOBALS['pdo'] = $pdo;
+    
+} catch (PDOException $e) {
+    error_log("Database PDO Error in authnet1$.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
+    exit;
+} catch (Exception $e) {
+    error_log("General Error in authnet1$.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Server error']);
+    exit;
+}
+
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
@@ -369,6 +412,10 @@ curl_multi_close($multi_handle);
 // Check if we got any valid responses
 if (empty($responses)) {
     log_message("No valid responses received from API");
+    
+    // Record the failed attempt in the database
+    recordCardCheck($GLOBALS['pdo'], $cc, 'ERROR', 'API requests failed');
+    
     echo json_encode(['status' => 'ERROR', 'message' => 'API requests failed']);
     exit;
 }
@@ -392,6 +439,10 @@ foreach ($responses as $response) {
 
 if (!$valid_response_found) {
     log_message("No valid JSON response found");
+    
+    // Record the failed attempt in the database
+    recordCardCheck($GLOBALS['pdo'], $cc, 'ERROR', 'Invalid API response format');
+    
     echo json_encode(['status' => 'ERROR', 'message' => 'Invalid API response format']);
     exit;
 }
@@ -474,7 +525,7 @@ if ($our_status === 'DECLINED') {
  $our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
 
 // Record the card check result in the database
-recordCardCheck($GLOBALS['pdo'], $card_number, $our_status, $our_message);
+recordCardCheck($GLOBALS['pdo'], $cc, $our_status, $our_message);
 
 // Send Telegram notification for CHARGED status
 if ($our_status === 'CHARGED') {
