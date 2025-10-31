@@ -2342,7 +2342,7 @@ if (empty($userPhotoUrl)) {
         .custom-input-group input:focus {
             outline: none;
             border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
         
         .custom-input-group .input-group-append {
@@ -2819,6 +2819,325 @@ if (empty($userPhotoUrl)) {
                 font-size: 1rem; /* Further reduced font size */
             }
         }
+        
+        /* New Gateway Selection Modal - Inspired by the example */
+        .gateway-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .gateway-modal.active {
+            display: flex;
+        }
+        
+        .gateway-modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-beast);
+            animation: slideUp 0.3s ease;
+        }
+        
+        body[data-theme="dark"] .gateway-modal-content {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        body[data-theme="dark"] .gateway-modal-header {
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-modal-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .gateway-modal-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-modal-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: var(--secondary-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .gateway-modal-close {
+            background: var(--dark-accent-bg);
+            color: var(--dark-text-secondary);
+        }
+        
+        .gateway-modal-close:hover {
+            background: var(--error);
+            color: white;
+            transform: rotate(90deg);
+        }
+        
+        .gateway-stepper {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .gateway-step {
+            flex: 1;
+            text-align: center;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.4rem;
+            border-radius: 0.6rem;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .gateway-step {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-secondary);
+        }
+        
+        .gateway-step.active {
+            background: linear-gradient(90deg, rgba(34,197,94,0.33), rgba(96,165,250,0.33));
+            border-color: rgba(16,185,129,0.35);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .gateway-step-content {
+            display: none;
+        }
+        
+        .gateway-step-content.active {
+            display: block;
+        }
+        
+        .gateway-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+        
+        .gateway-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+            cursor: pointer;
+        }
+        
+        body[data-theme="dark"] .gateway-item {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-item:hover {
+            transform: translateY(-1px);
+            border-color: rgba(34,197,94,0.35);
+            background: var(--dark-accent-bg);
+        }
+        
+        .gateway-item.active {
+            outline: 2px solid rgba(34,197,94,0.35);
+        }
+        
+        .gateway-item-left {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+        }
+        
+        .gateway-item-icon {
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: rgba(148,163,184,0.12);
+            font-size: 16px;
+        }
+        
+        .gateway-item-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .gateway-item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        body[data-theme="dark"] .gateway-item-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-item-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 0.1rem;
+        }
+        
+        body[data-theme="dark"] .gateway-item-subtitle {
+            color: var(--dark-text-secondary);
+        }
+        
+        .gateway-item-right {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .gateway-badge {
+            font-size: 0.7rem;
+            padding: 0.12rem 0.4rem;
+            border-radius: 0.4rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .badge-active {
+            color: var(--success-green);
+            background: rgba(34,197,94,0.12);
+        }
+        
+        .badge-inactive {
+            color: var(--error);
+            background: rgba(239,68,68,0.12);
+        }
+        
+        .gateway-modal-footer {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        body[data-theme="dark"] .gateway-modal-footer {
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-btn-back {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        
+        body[data-theme="dark"] .gateway-btn-back {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-btn-back:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        
+        .gateway-btn-next {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .gateway-btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gateway-btn-save {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .gateway-btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gateway-btn-cancel {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        body[data-theme="dark"] .gateway-btn-cancel {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-btn-cancel:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -3019,7 +3338,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑬𝑬</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑬</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
@@ -3027,7 +3346,7 @@ if (empty($userPhotoUrl)) {
                     <div class="checker-title">
                         <i class="fas fa-shield-alt"></i> Card Checker
                     </div>
-                    <button class="settings-btn" onclick="openGatewaySettings()">
+                    <button class="settings-btn" onclick="openGatewayModal()">
                         <i class="fas fa-cog"></i> Gateway Settings
                     </button>
                 </div>
@@ -3083,7 +3402,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬𝑬𝑬</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬𝑬</h1>
             <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐰𝐢𝐧𝐡</p>
 
             <div class="generator-section">
@@ -3306,154 +3625,72 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <div class="settings-popup" id="gatewaySettings">
-        <div class="settings-content">
-            <div class="settings-header">
-                <div class="settings-title">
+    <!-- New Gateway Selection Modal -->
+    <div class="gateway-modal" id="gatewayModal">
+        <div class="gateway-modal-content">
+            <div class="gateway-modal-header">
+                <div class="gateway-modal-title">
                     <i class="fas fa-cog"></i> Gateway Settings
                 </div>
-                <button class="settings-close" onclick="closeGatewaySettings()">
+                <button class="gateway-modal-close" onclick="closeGatewayModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
-            <!-- Gateway Provider Selection -->
-            <div class="gateway-providers" id="gatewayProviders">
-                <div class="gateway-provider" data-provider="stripe">
-                    <div class="gateway-provider-icon">
-                        <i class="fab fa-stripe"></i>
+            <div class="gateway-stepper">
+                <div class="gateway-step active" id="step1">1. Gateway</div>
+                <div class="gateway-step" id="step2">2. API</div>
+                <div class="gateway-step" id="step3">3. Settings</div>
+            </div>
+
+            <!-- Step 1: Gateway Selection -->
+            <div class="gateway-step-content active" id="gatewayStep1">
+                <div class="text-sm text-slate-300 mb-2">Select a gateway</div>
+                <div class="gateway-list" id="gatewayList"></div>
+            </div>
+
+            <!-- Step 2: API Selection -->
+            <div class="gateway-step-content" id="gatewayStep2">
+                <div class="text-sm text-slate-300 mb-2">Select an API</div>
+                <div class="gateway-list" id="apiList"></div>
+            </div>
+
+            <!-- Step 3: Settings -->
+            <div class="gateway-step-content" id="gatewayStep3">
+                <div class="text-sm text-slate-300 mb-2">Configure settings</div>
+                <div class="gateway-list">
+                    <div class="gateway-item">
+                        <div class="gateway-item-left">
+                            <div class="gateway-item-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="gateway-item-info">
+                                <div class="gateway-item-title">Proxy Settings</div>
+                                <div class="gateway-item-subtitle">Configure proxy for requests</div>
+                            </div>
+                        </div>
+                        <div class="gateway-item-right">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="proxySwitch" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                            </label>
+                        </div>
                     </div>
-                    <div class="gateway-provider-name">Stripe</div>
                 </div>
-                <div class="gateway-provider" data-provider="authnet">
-                    <div class="gateway-provider-icon">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
-                    <div class="gateway-provider-name">Authnet</div>
-                </div>
-                <div class="gateway-provider" data-provider="razorpay">
-                    <div class="gateway-provider-icon">
-                        <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" style="width:24px; height:24px; object-fit:contain;">
-                    </div>
-                    <div class="gateway-provider-name">Razorpay</div>
-                </div>
-                <div class="gateway-provider" data-provider="paypal">
-                    <div class="gateway-provider-icon">
-                        <i class="fab fa-paypal"></i>
-                    </div>
-                    <div class="gateway-provider-name">PayPal</div>
-                </div>
-                <div class="gateway-provider" data-provider="shopify">
-                    <div class="gateway-provider-icon">
-                        <i class="fab fa-shopify"></i>
-                    </div>
-                    <div class="gateway-provider-name">Shopify</div>
                 </div>
             </div>
 
-            <!-- Gateway Options - Initially Hidden -->
-            <div class="gateway-options" id="gatewayOptions">
-                <!-- Stripe Gateways -->
-                <div class="gateway-options-group" data-provider="stripe">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripe1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $1 charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripe5$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">5$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $5 charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripeauth.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-auth">Auth</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorization only, no charge</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Authnet Gateways -->
-                <div class="gateway-options-group" data-provider="authnet">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/authnet1.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Authnet
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorize.net payment gateway</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Razorpay Gateways -->
-                <div class="gateway-options-group" data-provider="razorpay">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/razorpay0.10.php" disabled>
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:15px; height:15px; object-fit:contain;">Razorpay
-                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
-                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
-                            </div>
-                            <div class="gateway-option-desc">Indian payment gateway</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- PayPal Gateways -->
-                <div class="gateway-options-group" data-provider="paypal">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-charge">0.1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Shopify Gateways -->
-                <div class="gateway-options-group" data-provider="shopify">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div class="settings-footer">
-                <button class="btn-save" onclick="saveGatewaySettings()">
-                    <i class="fas fa-check"></i> Save Settings
-                </button>
-                <button class="btn-back" id="backToProviders" style="display: none;">
+            <div class="gateway-modal-footer">
+                <button class="gateway-btn-back" id="gatewayBtnBack" style="display: none;">
                     <i class="fas fa-arrow-left"></i> Back
                 </button>
-                <button class="btn-cancel" onclick="closeGatewaySettings()">
+                <button class="gateway-btn-next" id="gatewayBtnNext">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button class="gateway-btn-save" id="gatewayBtnSave" style="display: none;">
+                    <i class="fas fa-check"></i> Save & Apply
+                </button>
+                <button class="gateway-btn-cancel" id="gatewayBtnCancel">
                     <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
@@ -3510,101 +3747,322 @@ if (empty($userPhotoUrl)) {
         
         // Gateway settings functions
         function initializeGatewaySettings() {
-            const gatewayProviders = document.querySelectorAll('.gateway-provider');
-            const backToProvidersBtn = document.getElementById('backToProviders');
+            const gatewayBtnNext = document.getElementById('gatewayBtnNext');
+            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
+            const gatewayBtnSave = document.getElementById('gatewayBtnSave');
+            const gatewayBtnCancel = document.getElementById('gatewayBtnCancel');
             
-            // Add click event to gateway providers
-            gatewayProviders.forEach(provider => {
-                provider.addEventListener('click', function() {
-                    const providerName = this.getAttribute('data-provider');
-                    showGatewayOptions(providerName);
-                });
+            // Add click events to buttons
+            gatewayBtnNext.addEventListener('click', function() {
+                nextStep();
             });
             
-            // Add click event to back button
-            backToProvidersBtn.addEventListener('click', function() {
-                showGatewayProviders();
+            gatewayBtnBack.addEventListener('click', function() {
+                prevStep();
+            });
+            
+            gatewayBtnSave.addEventListener('click', function() {
+                saveGatewaySettings();
+            });
+            
+            gatewayBtnCancel.addEventListener('click', function() {
+                closeGatewayModal();
+            });
+            
+            // Initialize gateway list
+            buildGatewayList();
+        }
+        
+        let currentStep = 1;
+        let selectedGateway = '';
+        let selectedApi = '';
+        
+        // Gateway data structure
+        const gatewayData = {
+            stripe: {
+                name: 'Stripe',
+                icon: 'fab fa-stripe',
+                apis: [
+                    { value: 'gate/stripe1$.php', name: 'Stripe 1$', type: 'charge', active: true },
+                    { value: 'gate/stripe5$.php', name: 'Stripe 5$', type: 'charge', active: true },
+                    { value: 'gate/stripeauth.php', name: 'Stripe Auth', type: 'auth', active: true }
+                ]
+            },
+            authnet: {
+                name: 'Authnet',
+                icon: 'fas fa-credit-card',
+                apis: [
+                    { value: 'gate/authnet1.php', name: 'Authnet 1$', type: 'charge', active: true }
+                ]
+            },
+            razorpay: {
+                name: 'Razorpay',
+                icon: 'fas fa-credit-card',
+                apis: [
+                    { value: 'gate/razorpay0.10.php', name: 'Razorpay 0.10$', type: 'charge', active: false }
+                ]
+            },
+            paypal: {
+                name: 'PayPal',
+                icon: 'fab fa-paypal',
+                apis: [
+                    { value: 'gate/paypal0.1.php', name: 'PayPal 0.1$', type: 'charge', active: true }
+                ]
+            },
+            shopify: {
+                name: 'Shopify',
+                icon: 'fab fa-shopify',
+                apis: [
+                    { value: 'gate/shopify1.php', name: 'Shopify 1$', type: 'charge', active: true }
+                ]
+            }
+        };
+        
+        function buildGatewayList() {
+            const gatewayList = document.getElementById('gatewayList');
+            gatewayList.innerHTML = '';
+            
+            Object.keys(gatewayData).forEach(key => {
+                const gateway = gatewayData[key];
+                const item = document.createElement('div');
+                item.className = 'gateway-item';
+                item.dataset.gateway = key;
+                
+                item.innerHTML = `
+                    <div class="gateway-item-left">
+                        <div class="gateway-item-icon">
+                            <i class="${gateway.icon}"></i>
+                        </div>
+                        <div class="gateway-item-info">
+                            <div class="gateway-item-title">${gateway.name}</div>
+                            <div class="gateway-item-subtitle">${gateway.apis.length} API available</div>
+                        </div>
+                    </div>
+                    <div class="gateway-item-right">
+                        <span class="gateway-badge badge-active">Select</span>
+                    </div>
+                `;
+                
+                item.addEventListener('click', function() {
+                    selectGateway(key);
+                });
+                
+                gatewayList.appendChild(item);
             });
         }
         
-        function showGatewayOptions(providerName) {
-            const gatewayProviders = document.getElementById('gatewayProviders');
-            const gatewayOptions = document.getElementById('gatewayOptions');
-            const backToProvidersBtn = document.getElementById('backToProviders');
+        function selectGateway(gateway) {
+            selectedGateway = gateway;
             
-            // Hide all provider options
-            const allProviderOptions = document.querySelectorAll('.gateway-options-group');
-            allProviderOptions.forEach(option => {
-                option.style.display = 'none';
+            // Update UI
+            document.querySelectorAll('.gateway-item').forEach(item => {
+                item.classList.remove('active');
             });
+            document.querySelector(`.gateway-item[data-gateway="${gateway}"]`).classList.add('active');
             
-            // Show selected provider options
-            const selectedProviderOptions = document.querySelector(`.gateway-options-group[data-provider="${providerName}"]`);
-            if (selectedProviderOptions) {
-                selectedProviderOptions.style.display = 'block';
+            // Enable next button
+            document.getElementById('gatewayBtnNext').disabled = false;
+        }
+        
+        function buildApiList() {
+            const apiList = document.getElementById('apiList');
+            apiList.innerHTML = '';
+            
+            if (!selectedGateway || !gatewayData[selectedGateway]) {
+                apiList.innerHTML = '<div class="text-sm text-slate-400">No APIs available</div>';
+                return;
             }
             
-            // Show options container and back button
-            gatewayOptions.classList.add('active');
-            backToProvidersBtn.style.display = 'flex';
-            
-            // Hide providers
-            gatewayProviders.style.display = 'none';
+            const apis = gatewayData[selectedGateway].apis;
+            apis.forEach(api => {
+                const item = document.createElement('div');
+                item.className = 'gateway-item';
+                item.dataset.api = api.value;
+                
+                if (!api.active) {
+                    item.style.opacity = '0.5';
+                    item.style.pointerEvents = 'none';
+                }
+                
+                item.innerHTML = `
+                    <div class="gateway-item-left">
+                        <div class="gateway-item-icon">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <div class="gateway-item-info">
+                            <div class="gateway-item-title">${api.name}</div>
+                            <div class="gateway-item-subtitle">${api.type} • ${api.active ? 'Active' : 'Inactive'}</div>
+                        </div>
+                    </div>
+                    <div class="gateway-item-right">
+                        <span class="gateway-badge ${api.active ? 'badge-active' : 'badge-inactive'}">${api.active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                `;
+                
+                if (api.active) {
+                    item.addEventListener('click', function() {
+                        selectApi(api.value);
+                    });
+                }
+                
+                apiList.appendChild(item);
+            });
         }
         
-        function showGatewayProviders() {
-            const gatewayProviders = document.getElementById('gatewayProviders');
-            const gatewayOptions = document.getElementById('gatewayOptions');
-            const backToProvidersBtn = document.getElementById('backToProviders');
+        function selectApi(api) {
+            selectedApi = api;
             
-            // Show providers
-            gatewayProviders.style.display = 'flex';
+            // Update UI
+            document.querySelectorAll('#apiList .gateway-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`#apiList .gateway-item[data-api="${api}"]`).classList.add('active');
             
-            // Hide options container and back button
-            gatewayOptions.classList.remove('active');
-            backToProvidersBtn.style.display = 'none';
+            // Enable next button
+            document.getElementById('gatewayBtnNext').disabled = false;
         }
         
-        function openGatewaySettings() {
-            document.getElementById('gatewaySettings').classList.add('active');
-            showGatewayProviders();
+        function nextStep() {
+            if (currentStep === 1 && !selectedGateway) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Gateway Selected',
+                    text: 'Please select a gateway first',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
+            
+            if (currentStep === 2 && !selectedApi) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No API Selected',
+                    text: 'Please select an API first',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
+            
+            // Hide current step
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`gatewayStep${currentStep}`).classList.remove('active');
+            
+            // Show next step
+            currentStep++;
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.getElementById(`gatewayStep${currentStep}`).classList.add('active');
+            
+            // Update buttons
+            document.getElementById('gatewayBtnBack').style.display = 'flex';
+            
+            if (currentStep === 2) {
+                // Build API list
+                buildApiList();
+                document.getElementById('gatewayBtnNext').disabled = true;
+            } else if (currentStep === 3) {
+                // Show save button, hide next button
+                document.getElementById('gatewayBtnNext').style.display = 'none';
+                document.getElementById('gatewayBtnSave').style.display = 'flex';
+            }
         }
         
-        function closeGatewaySettings() {
-            document.getElementById('gatewaySettings').classList.remove('active');
-            showGatewayProviders();
+        function prevStep() {
+            // Hide current step
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`gatewayStep${currentStep}`).classList.remove('active');
+            
+            // Show previous step
+            currentStep--;
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.getElementById(`gatewayStep${currentStep}`).classList.add('active');
+            
+            // Update buttons
+            if (currentStep === 1) {
+                document.getElementById('gatewayBtnBack').style.display = 'none';
+            }
+            
+            document.getElementById('gatewayBtnNext').style.display = 'flex';
+            document.getElementById('gatewayBtnSave').style.display = 'none';
+        }
+        
+        function openGatewayModal() {
+            document.getElementById('gatewayModal').classList.add('active');
+            currentStep = 1;
+            selectedGateway = '';
+            selectedApi = '';
+            
+            // Reset UI
+            document.querySelectorAll('.gateway-step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById('step1').classList.add('active');
+            
+            document.querySelectorAll('.gateway-step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('gatewayStep1').classList.add('active');
+            
+            // Reset buttons
+            document.getElementById('gatewayBtnBack').style.display = 'none';
+            document.getElementById('gatewayBtnNext').style.display = 'flex';
+            document.getElementById('gatewayBtnSave').style.display = 'none';
+            document.getElementById('gatewayBtnNext').disabled = true;
+            
+            // Build gateway list
+            buildGatewayList();
+        }
+        
+        function closeGatewayModal() {
+            document.getElementById('gatewayModal').classList.remove('active');
         }
         
         function saveGatewaySettings() {
-            const selected = document.querySelector('input[name="gateway"]:checked');
-            if (selected) {
-                selectedGateway = selected.value;
-                
-                // Update maxConcurrent based on selected gateway
-                updateMaxConcurrent();
-                
-                const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
-                const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
-                
-                if (window.Swal) {
-                    Swal.fire({
-                        icon: 'success', 
-                        title: 'Gateway Updated!',
-                        text: `Now using: ${nameText}`,
-                        confirmButtonColor: '#10b981'
-                    });
-                }
-                closeGatewaySettings();
-            } else {
-                if (window.Swal) {
-                    Swal.fire({
-                        icon: 'warning', 
-                        title: 'No Gateway Selected',
-                        text: 'Please select a gateway', 
-                        confirmButtonColor: '#f59e0b'
-                    });
-                }
+            if (!selectedGateway || !selectedApi) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Incomplete Selection',
+                    text: 'Please select both a gateway and an API',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
             }
+            
+            // Save settings
+            localStorage.setItem('selectedGateway', selectedGateway);
+            localStorage.setItem('selectedApi', selectedApi);
+            
+            // Get API name for display
+            const api = gatewayData[selectedGateway].apis.find(a => a.value === selectedApi);
+            const apiName = api ? api.name : 'Unknown API';
+            
+            // Update UI
+            Swal.fire({
+                icon: 'success',
+                title: 'Gateway Updated!',
+                text: `Now using: ${apiName}`,
+                confirmButtonColor: '#10b981'
+            });
+            
+            closeGatewayModal();
+        }
+        
+        // Function to get saved gateway settings
+        function getSavedGatewaySettings() {
+            const gateway = localStorage.getItem('selectedGateway');
+            const api = localStorage.getItem('selectedApi');
+            
+            if (gateway && api) {
+                return { gateway, api };
+            }
+            
+            return null;
+        }
+        
+        // Initialize with saved settings if available
+        const savedSettings = getSavedGatewaySettings();
+        if (savedSettings) {
+            selectedGateway = savedSettings.gateway;
+            selectedApi = savedSettings.api;
         }
     </script>
 </body>
