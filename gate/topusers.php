@@ -71,11 +71,20 @@ try {
         // Get the photo URL or fetch from Telegram if not available
         $photoUrl = getTelegramProfilePicture($u['telegram_id'], $u['photo_url'], $u['name']);
         
+        // Format username with fallback to telegram_id
+        $username = null;
+        if (!empty($u['username'])) {
+            $username = '@' . trim($u['username'], '@');
+        } elseif (!empty($u['telegram_id'])) {
+            // Create a tg://user link using telegram_id if username is not available
+            $username = 'ID:' . $u['telegram_id'];
+        }
+        
         $formatted[] = [
             'id' => $u['id'],
             'telegram_id' => $u['telegram_id'],
             'name' => $u['name'],
-            'username' => $u['username'] ? '@' . trim($u['username'], '@') : null,
+            'username' => $username,
             'photo_url' => $photoUrl,
             'total_hits' => (int)$u['total_hits']
         ];
