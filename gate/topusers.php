@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 // === VALIDATE API KEY ===
  $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-if (empty($apiKeyHeader) || $apiKeyHeader !== $SUCCESS_KEY) {
+if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Invalid API key']);
     exit;
@@ -73,9 +73,9 @@ try {
         
         $formatted[] = [
             'id' => $u['id'],
-            'telegram_id' => $user['telegram_id'],
+            'telegram_id' => $u['telegram_id'],
             'name' => $u['name'],
-            'username' => $u['username'] ? '@' . $path = trim($u['username'], '@') : null,
+            'username' => $u['username'] ? '@' . trim($u['username'], '@') : null,
             'photo_url' => $avatar,
             'total_hits' => (int)$u['total_hits']
         ];
