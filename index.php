@@ -1062,28 +1062,6 @@ if (empty($userPhotoUrl)) {
             color: var(--accent-purple);
         }
         
-        .top-users-count {
-            font-size: 0.75rem; /* Reduced font size */
-            color: var(--text-secondary); /* Changed to use text-secondary variable for light mode */
-            background: rgba(139, 92, 246, 0.1);
-            padding: 0.4rem 0.6rem; /* Reduced padding */
-            border-radius: 16px; /* Reduced border radius */
-            display: flex;
-            align-items: center;
-            gap: 0.3rem; /* Reduced gap */
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-        
-        body[data-theme="dark"] .top-users-count {
-            color: var(--dark-text-secondary);
-            background: rgba(139, 92, 246, 0.2);
-        }
-        
-        .top-users-count i {
-            color: var(--accent-purple);
-            font-size: 0.5rem; /* Reduced font size */
-        }
-        
         .top-users-list {
             flex: 1;
             overflow-y: auto;
@@ -1607,7 +1585,7 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-primary);
-            max-width: 70px; /* Reduced width */
+            max-width: 100px; /* Increased width for mobile */
             display: flex;
             align-items: center;
             gap: 0.2rem;
@@ -2907,7 +2885,7 @@ if (empty($userPhotoUrl)) {
             
             .mobile-online-user-name {
                 font-size: 0.65rem; /* Reduced font size */
-                max-width: 60px; /* Reduced width */
+                max-width: 80px; /* Reduced width */
             }
             
             /* Mobile Top Users Section */
@@ -3067,7 +3045,7 @@ if (empty($userPhotoUrl)) {
             
             .mobile-online-user-name {
                 font-size: 0.6rem; /* Further reduced font size */
-                max-width: 50px; /* Further reduced width */
+                max-width: 60px; /* Further reduced width */
             }
             
             /* Mobile Top Users for very small screens */
@@ -3667,7 +3645,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1 .18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -3736,8 +3714,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬</h1>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢𝐢𝐥</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -3800,8 +3778,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐰𝐢𝐧𝐡</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥𝐢𝐢𝐥</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -4323,31 +4301,55 @@ if (empty($userPhotoUrl)) {
         // Function to fetch users data from API
         function fetchUsersData() {
             // Fetch online users
-            fetch('api/online-users')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateOnlineUsersList(data.users);
-                        document.getElementById('onlineCount').textContent = data.count;
-                        document.getElementById('mobileOnlineCount').textContent = data.count;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching online users:', error);
-                });
+            fetch('/update_activity.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'X-API-KEY': getCurrentApiKey()
+                },
+                body: JSON.stringify({ timestamp: Date.now() })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateOnlineUsersList(data.users || []);
+                    document.getElementById('onlineCount').textContent = data.count || 0;
+                    document.getElementById('mobileOnlineCount').textContent = data.count || 0;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching online users:', error);
+            });
             
             // Fetch top users
-            fetch('api/top-users')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateTopUsersList(data.users);
-                        document.getElementById('topCount').textContent = data.count;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching top users:', error);
-                });
+            fetch('/gate/topusers.php', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'X-API-KEY': getCurrentApiKey()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateTopUsersList(data.users || []);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching top users:', error);
+            });
             
             // Set up periodic refresh
             setInterval(fetchUsersData, 30000); // Refresh every 30 seconds
@@ -4358,22 +4360,23 @@ if (empty($userPhotoUrl)) {
             const onlineUsersList = document.getElementById('onlineUsersList');
             const mobileOnlineUsersList = document.getElementById('mobileOnlineUsersList');
             
-            if (users.length === 0) {
-                onlineUsersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <h3>No Users Online</h3>
-                        <p>No other users are currently online</p>
-                    </div>
-                `;
-                
-                mobileOnlineUsersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <h3>No Users Online</h3>
-                        <p>No other users are currently online</p>
-                    </div>
-                `;
+            if (!Array.isArray(users) || users.length === 0) {
+                if (onlineUsersList) {
+                    onlineUsersList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No Users Online</h3>
+                            <p>No other users are currently online</p>
+                        </div>`;
+                }
+                if (mobileOnlineUsersList) {
+                    mobileOnlineUsersList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No Users Online</h3>
+                            <p>No other users are currently online</p>
+                        </div>`;
+                }
                 return;
             }
             
@@ -4388,29 +4391,30 @@ if (empty($userPhotoUrl)) {
                 onlineUsersHTML += `
                     <div class="online-user-item ${adminClass}">
                         <div class="online-user-avatar-container">
-                            <img src="${user.photo_url}" alt="${user.name}" class="online-user-avatar">
+                            <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`}" alt="${user.name}" class="online-user-avatar">
                             <div class="online-indicator"></div>
                         </div>
                         <div class="online-user-info">
                             <div class="online-user-name">${user.name}${adminBadge}</div>
-                            <div class="online-user-username">${user.username}</div>
+                            <div class="online-user-username">${user.username || ''}</div>
                         </div>
                     </div>
                 `;
                 
                 mobileOnlineUsersHTML += `
                     <div class="mobile-online-user-item ${adminClass}">
-                        <img src="${user.photo_url}" alt="${user.name}" class="mobile-online-user-avatar">
+                        <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`}" alt="${user.name}" class="mobile-online-user-avatar">
                         <span class="mobile-online-user-name">${user.name}${adminBadge}</span>
                     </div>
                 `;
             });
             
-            onlineUsersList.innerHTML = onlineUsersHTML;
-            mobileOnlineUsersList.innerHTML = mobileOnlineUsersHTML;
-            
-            // Check for admin user after updating the list
-            checkForAdminUser();
+            if (onlineUsersList) {
+                onlineUsersList.innerHTML = onlineUsersHTML;
+            }
+            if (mobileOnlineUsersList) {
+                mobileOnlineUsersList.innerHTML = mobileOnlineUsersHTML;
+            }
         }
         
         // Function to update top users list
@@ -4418,22 +4422,23 @@ if (empty($userPhotoUrl)) {
             const topUsersList = document.getElementById('topUsersList');
             const mobileTopUsersList = document.getElementById('mobileTopUsersList');
             
-            if (users.length === 0) {
-                topUsersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-chart-line"></i>
-                        <h3>No Top Users</h3>
-                        <p>No top users data available</p>
-                    </div>
-                `;
-                
-                mobileTopUsersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-chart-line"></i>
-                        <h3>No Top Users</h3>
-                        <p>No top users data available</p>
-                    </div>
-                `;
+            if (!Array.isArray(users) || users.length === 0) {
+                if (topUsersList) {
+                    topUsersList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>No Top Users</h3>
+                            <p>No top users data available</p>
+                        </div>`;
+                }
+                if (mobileTopUsersList) {
+                    mobileTopUsersList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>No Top Users</h3>
+                            <p>No top users data available</p>
+                        </div>`;
+                }
                 return;
             }
             
@@ -4448,33 +4453,34 @@ if (empty($userPhotoUrl)) {
                 topUsersHTML += `
                     <div class="top-user-item ${adminClass}">
                         <div class="top-user-avatar-container">
-                            <img src="${user.photo_url}" alt="${user.name}" class="top-user-avatar">
+                            <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`}" alt="${user.name}" class="top-user-avatar">
                         </div>
                         <div class="top-user-info">
                             <div class="top-user-name">${user.name}${adminBadge}</div>
-                            <div class="top-user-username">${user.username}</div>
+                            <div class="top-user-username">${user.username || ''}</div>
                         </div>
-                        <div class="top-user-hits">${user.total_hits}</div>
+                        <div class="top-user-hits">${user.total_hits || 0}</div>
                     </div>
                 `;
                 
                 mobileTopUsersHTML += `
                     <div class="mobile-top-user-item ${adminClass}">
-                        <img src="${user.photo_url}" alt="${user.name}" class="mobile-top-user-avatar">
+                        <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`}" alt="${user.name}" class="mobile-top-user-avatar">
                         <div class="mobile-top-user-info">
                             <div class="mobile-top-user-name">${user.name}${adminBadge}</div>
-                            <div class="mobile-top-user-username">${user.username}</div>
+                            <div class="mobile-top-user-username">${user.username || ''}</div>
                         </div>
-                        <div class="mobile-top-user-hits">${user.total_hits}</div>
+                        <div class="mobile-top-user-hits">${user.total_hits || 0}</div>
                     </div>
                 `;
             });
             
-            topUsersList.innerHTML = topUsersHTML;
-            mobileTopUsersList.innerHTML = mobileTopUsersHTML;
-            
-            // Check for admin user after updating the list
-            checkForAdminUser();
+            if (topUsersList) {
+                topUsersList.innerHTML = topUsersHTML;
+            }
+            if (mobileTopUsersList) {
+                mobileTopUsersList.innerHTML = mobileTopUsersHTML;
+            }
         }
         
         // Function to check for admin user and add admin badge
@@ -4599,6 +4605,169 @@ if (empty($userPhotoUrl)) {
             
             return null;
         }
+        
+        // Function to get current API key with fallback
+        function getCurrentApiKey() {
+            if (!window.API_KEY) {
+                console.warn('API key is not set!');
+            }
+            return window.API_KEY || '';
+        }
+        
+        // Theme toggle function
+        function toggleTheme() {
+            const body = document.body;
+            const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            const icon = document.querySelector('.theme-toggle-slider i');
+            if (icon) {
+                icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+            
+            Swal.fire({
+                toast: true, 
+                position: 'top-end', 
+                icon: 'success',
+                title: `${theme === 'light' ? 'Light' : 'Dark'} Mode`,
+                showConfirmButton: false, 
+                timer: 1500
+            });
+        }
+        
+        // Page navigation function
+        function showPage(pageName) {
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.remove('active');
+            });
+            const pageElement = document.getElementById('page-' + pageName);
+            if (pageElement) {
+                pageElement.classList.add('active');
+                
+                // Load profile data when profile page is shown
+                if (pageName === 'profile') {
+                    loadUserProfile();
+                }
+            }
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            if (event && event.target) {
+                const eventTarget = event.target.closest('.sidebar-link');
+                if (eventTarget) {
+                    eventTarget.classList.add('active');
+                }
+            }
+        }
+        
+        // Sidebar functions
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            if (sidebar) sidebar.classList.remove('open');
+            if (mainContent) mainContent.classList.remove('sidebar-open');
+        }
+        
+        // Logout function
+        function logout() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You will be logged out and returned to the login page.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#d1d5db',
+                confirmButtonText: 'Yes, logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sessionStorage.clear();
+                    localStorage.clear(); // Clear user stats on logout
+                    window.location.href = 'login.php';
+                }
+            });
+        }
+        
+        // Function to load user profile data
+        function loadUserProfile() {
+            // Get user data from session
+            const userData = {
+                name: document.querySelector('.user-name') ? document.querySelector('.user-name').textContent : 'Unknown User',
+                username: document.querySelector('.user-username') ? document.querySelector('.user-username').textContent : '@unknown',
+                photo_url: document.querySelector('.user-avatar') ? document.querySelector('.user-avatar').src : 'https://ui-avatars.com/api/?name=U&background=3b82f6&color=fff&size=120'
+            };
+            
+            // Update profile information
+            const profileName = document.getElementById('profileName');
+            const profileUsername = document.getElementById('profileUsername');
+            const profileAvatar = document.getElementById('profileAvatar');
+            
+            if (profileName) profileName.textContent = userData.name || 'Unknown User';
+            if (profileUsername) profileUsername.textContent = userData.username || '@unknown';
+            if (profileAvatar) profileAvatar.src = userData.photo_url || 'https://ui-avatars.com/api/?name=U&background=3b82f6&color=fff&size=120';
+            
+            // Load user statistics
+            loadUserStatistics();
+        }
+        
+        // Function to load user statistics
+        function loadUserStatistics() {
+            // Get statistics from localStorage or fetch from server
+            const stats = getUserStatistics();
+            
+            // Update statistics values
+            updateProfileStat('charged', stats.charged || 0);
+            updateProfileStat('approved', stats.approved || 0);
+            updateProfileStat('threeds', stats.threeds || 0);
+            updateProfileStat('declined', stats.declined || 0);
+            updateProfileStat('checked', stats.total || 0);
+        }
+        
+        // Function to get user statistics
+        function getUserStatistics() {
+            // Try to get from localStorage first
+            let stats = localStorage.getItem('userStats');
+            if (stats) {
+                return JSON.parse(stats);
+            }
+            
+            // Default statistics
+            return {
+                total: 0,
+                charged: 0,
+                approved: 0,
+                threeds: 0,
+                declined: 0
+            };
+        }
+        
+        // Function to update a single profile statistic
+        function updateProfileStat(type, value) {
+            const element = document.getElementById(`profile-${type}-value`);
+            if (element) {
+                element.textContent = value;
+                
+                // Add animation effect
+                element.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 300);
+            }
+        }
+        
+        // Make functions globally accessible
+        window.toggleTheme = toggleTheme;
+        window.showPage = showPage;
+        window.closeSidebar = closeSidebar;
+        window.openGatewayModal = openGatewayModal;
+        window.closeGatewayModal = closeGatewayModal;
+        window.showProviderSelection = showProviderSelection;
+        window.showProviderGateways = showProviderGateways;
+        window.loadSavedGatewaySettings = loadSavedGatewaySettings;
+        window.saveGatewaySettings = saveGatewaySettings;
+        window.logout = logout;
+        window.loadUserProfile = loadUserProfile;
     </script>
 </body>
 </html>
