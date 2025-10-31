@@ -68,17 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateGlobalStats() {
         console.log("Updating global statistics at", new Date().toISOString());
         
-        // Check if elements exist before making the request
-        const totalUsersElement = document.getElementById('gTotalUsers');
-        const totalHitsElement = document.getElementById('gTotalHits');
-        const chargeCardsElement = document.getElementById('gChargeCards');
-        const liveCardsElement = document.getElementById('gLiveCards');
-        
-        if (!totalUsersElement || !totalHitsElement || !chargeCardsElement || !liveCardsElement) {
-            console.error("Global statistics elements not found in DOM");
-            return;
-        }
-        
         fetch('/stats.php', {
             method: 'GET',
             headers: {
@@ -95,16 +84,21 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log("Global stats response:", data);
             
-            if (data.success && data.data) {
+            if (data.success) {
                 // Update global statistics elements
-                totalUsersElement.textContent = data.data.totalUsers || 0;
-                totalHitsElement.textContent = data.data.totalChecked || 0;
-                chargeCardsElement.textContent = data.data.totalCharged || 0;
-                liveCardsElement.textContent = data.data.totalApproved || 0;
+                const totalUsersElement = document.getElementById('gTotalUsers');
+                const totalHitsElement = document.getElementById('gTotalHits');
+                const chargeCardsElement = document.getElementById('gChargeCards');
+                const liveCardsElement = document.getElementById('gLiveCards');
+                
+                if (totalUsersElement) totalUsersElement.textContent = data.data.totalUsers;
+                if (totalHitsElement) totalHitsElement.textContent = data.data.totalChecked;
+                if (chargeCardsElement) chargeCardsElement.textContent = data.data.totalCharged;
+                if (liveCardsElement) liveCardsElement.textContent = data.data.totalApproved; // Updated to use totalApproved
                 
                 console.log("Global statistics updated successfully");
             } else {
-                console.error('Failed to update global statistics:', data.message || 'Invalid response structure');
+                console.error('Failed to update global statistics:', data.message);
             }
         })
         .catch(error => {
@@ -416,12 +410,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initial update
         updateTopUsers();
         
-        // Set up interval to update every 35 seconds (changed from 30)
+        // Set up interval to update every 30 seconds
         topUsersInterval = setInterval(() => {
             updateTopUsers();
-        }, 35000); // Changed to 35 seconds
+        }, 30000);
         
-        console.log("Top users updates initialized. Users will update every 35 seconds.");
+        console.log("Top users updates initialized. Users will update every 30 seconds.");
     }
 
     // Function to escape text for HTML
@@ -2028,18 +2022,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initial update
             updateUserActivity();
             
-            // Set up interval to update every 20 seconds (changed from 15)
+            // Set up interval to update every 15 seconds
             activityUpdateInterval = setInterval(() => {
                 if (!window.activityRequest) {
                     updateUserActivity();
                 }
-            }, 20000); // Changed to 20 seconds
+            }, 15000);
             
-            // Update on user interaction, but not more than once every 20 seconds
+            // Update on user interaction, but not more than once every 15 seconds
             if (window.$) {
                 $(document).on('click mousemove keypress scroll', function() {
                     const now = new Date().getTime();
-                    if (now - lastActivityUpdate >= 20000 && !window.activityRequest) {
+                    if (now - lastActivityUpdate >= 15000 && !window.activityRequest) {
                         console.log("User interaction detected, updating activity...");
                         updateUserActivity();
                         lastActivityUpdate = now;
