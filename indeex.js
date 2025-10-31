@@ -325,12 +325,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initial update
         updateTopUsers();
         
-        // Set up interval to update every 60 seconds
+        // Set up interval to update every 30 seconds (as requested)
         topUsersInterval = setInterval(() => {
             updateTopUsers();
-        }, 60000);
+        }, 30000);
         
-        console.log("Top users updates initialized. Users will update every 60 seconds.");
+        console.log("Top users updates initialized. Users will update every 30 seconds.");
     }
 
     // Load API key from refresh.php using POST
@@ -695,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.Swal) {
                     Swal.fire({
                         icon: 'success', 
-                        title: 'Gateway Updated!',
+                        title: 'Gateway Settings Updated!',
                         text: `Now using: ${nameText}`,
                         confirmButtonColor: '#10b981'
                     });
@@ -2114,259 +2114,337 @@ document.addEventListener('DOMContentLoaded', function() {
         window.updateUserStatistics = updateUserStatistics;
         window.updateTopUsers = updateTopUsers;
         window.displayTopUsers = displayTopUsers;
+        
+        // Gateway modal functions
+        window.openGatewayModal = openGatewayModal;
+        window.closeGatewayModal = closeGatewayModal;
+        window.showProviderSelection = showProviderSelection;
+        window.showProviderGateways = showProviderGateways;
 
         // Initialize everything when jQuery is ready
-        if (window.$) {
-            $(document).ready(function() {
-                console.log("jQuery ready, initializing...");
-                
-                // Set up event listeners
-                const startBtn = document.getElementById('startBtn');
-                const generateBtn = document.getElementById('generateBtn');
-                const copyAllBtn = document.getElementById('copyAllBtn');
-                const clearAllBtn = document.getElementById('clearAllBtn');
-                const stopBtn = document.getElementById('stopBtn');
-                const clearBtn = document.getElementById('clearBtn');
-                const clearGenBtn = document.getElementById('clearGenBtn');
-                const exportBtn = document.getElementById('exportBtn');
-                const cardInput = document.getElementById('cardInput');
-                const menuToggle = document.getElementById('menuToggle');
-                
-                if (startBtn) startBtn.addEventListener('click', processCards);
-                if (generateBtn) generateBtn.addEventListener('click', generateCards);
-                if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllGeneratedCards);
-                if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllGeneratedCards);
+    if (window.$) {
+        $(document).ready(function() {
+            console.log("jQuery ready, initializing...");
+            
+            // Set up event listeners
+            const startBtn = document.getElementById('startBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            const copyAllBtn = document.getElementById('copyAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const clearGenBtn = document.getElementById('clearGenBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const cardInput = document.getElementById('cardInput');
+            const menuToggle = document.getElementById('menuToggle');
+            
+            if (startBtn) startBtn.addEventListener('click', processCards);
+            if (generateBtn) generateBtn.addEventListener('click', generateCards);
+            if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllGeneratedCards);
+            if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllGeneratedCards);
 
-                if (stopBtn) stopBtn.addEventListener('click', function() {
-                    if (!isProcessing || isStopping) return;
+            if (stopBtn) stopBtn.addEventListener('click', function() {
+                if (!isProcessing || isStopping) return;
 
-                    isProcessing = false;
-                    isStopping = true;
-                    cardQueue = [];
-                    abortControllers.forEach(controller => controller.abort());
-                    abortControllers = [];
-                    activeRequests = 0;
-                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                    
-                    if (startBtn) startBtn.disabled = false;
-                    if (stopBtn) stopBtn.disabled = true;
-                    const loader = document.getElementById('loader');
-                    const statusLog = document.getElementById('statusLog');
-                    if (loader) loader.style.display = 'none';
-                    if (statusLog) statusLog.textContent = 'Processing stopped.';
-                    
+                isProcessing = false;
+                isStopping = true;
+                cardQueue = [];
+                abortControllers.forEach(controller => controller.abort());
+                abortControllers = [];
+                activeRequests = 0;
+                updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                
+                if (startBtn) startBtn.disabled = false;
+                if (stopBtn) stopBtn.disabled = true;
+                const loader = document.getElementById('loader');
+                const statusLog = document.getElementById('statusLog');
+                if (loader) loader.style.display = 'none';
+                if (statusLog) statusLog.textContent = 'Processing stopped.';
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Stopped!',
+                        text: 'Checking has been stopped',
+                        icon: 'warning',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+            });
+
+            if (clearBtn) clearBtn.addEventListener('click', function() {
+                if (cardInput && cardInput.value.trim()) {
                     if (window.Swal) {
                         Swal.fire({
-                            title: 'Stopped!',
-                            text: 'Checking has been stopped',
+                            title: 'Clear Input?', text: 'Remove all entered cards',
+                            icon: 'warning', showCancelButton: true,
+                            confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                cardInput.value = '';
+                                updateCardCount();
+                                if (window.Swal) {
+                                    Swal.fire({
+                                        toast: true, position: 'top-end', icon: 'success',
+                                        title: 'Cleared!', showConfirmButton: false, timer: 1500
+                                    });
+                                }
+                            }
+                        });
+                    } else {
+                        // Fallback if Swal is not available
+                        if (confirm('Remove all entered cards?')) {
+                            cardInput.value = '';
+                            updateCardCount();
+                        }
+                    }
+                }
+            });
+
+            if (clearGenBtn) clearGenBtn.addEventListener('click', function() {
+                const binInput = document.getElementById('binInput');
+                const monthSelect = document.getElementById('monthSelect');
+                const yearInput = document.getElementById('yearInput');
+                const cvvInput = document.getElementById('cvvInput');
+                const numCardsInput = document.getElementById('numCardsInput');
+                const generatedCardsList = document.getElementById('generatedCardsList');
+                const genStatusLog = document.getElementById('genStatusLog');
+                
+                if (binInput) binInput.value = '';
+                if (monthSelect) monthSelect.value = 'rnd';
+                if (yearInput) yearInput.value = '';
+                if (cvvInput) cvvInput.value = '';
+                if (numCardsInput) numCardsInput.value = '10';
+                if (generatedCardsList) generatedCardsList.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Cards Generated Yet</h3><p>Generate cards to see them here</p></div>';
+                if (genStatusLog) genStatusLog.textContent = '';
+                generatedCardsData = [];
+                
+                if (copyAllBtn) copyAllBtn.style.display = 'none';
+                if (clearAllBtn) clearAllBtn.style.display = 'none';
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'success',
+                        title: 'Cleared!', showConfirmButton: false, timer: 1500
+                    });
+                }
+            });
+
+            if (exportBtn) exportBtn.addEventListener('click', function() {
+                const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
+                if (allCards.length === 0) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'No data to export!',
+                            text: 'Please check some cards first.',
                             icon: 'warning',
                             confirmButtonColor: '#ec4899'
                         });
                     }
+                    return;
+                }
+                let csvContent = "Card,Status,Response\n";
+                allCards.forEach(card => {
+                    const status = card.response.includes('CHARGED') ? 'CHARGED' :
+                                 card.response.includes('APPROVED') ? 'APPROVED' :
+                                 card.response.includes('3DS') ? '3DS' : 'DECLINED';
+                    csvContent += `${card.displayCard},${status},${card.response}\n`;
                 });
-
-                if (clearBtn) clearBtn.addEventListener('click', function() {
-                    if (cardInput && cardInput.value.trim()) {
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'Clear Input?', text: 'Remove all entered cards',
-                                icon: 'warning', showCancelButton: true,
-                                confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    cardInput.value = '';
-                                    updateCardCount();
-                                    if (window.Swal) {
-                                        Swal.fire({
-                                            toast: true, position: 'top-end', icon: 'success',
-                                            title: 'Cleared!', showConfirmButton: false, timer: 1500
-                                        });
-                                    }
-                                }
-                            });
-                        } else {
-                            // Fallback if Swal is not available
-                            if (confirm('Remove all entered cards?')) {
-                                cardInput.value = '';
-                                updateCardCount();
-                            }
-                        }
-                    }
-                });
-
-                if (clearGenBtn) clearGenBtn.addEventListener('click', function() {
-                    const binInput = document.getElementById('binInput');
-                    const monthSelect = document.getElementById('monthSelect');
-                    const yearInput = document.getElementById('yearInput');
-                    const cvvInput = document.getElementById('cvvInput');
-                    const numCardsInput = document.getElementById('numCardsInput');
-                    const generatedCardsList = document.getElementById('generatedCardsList');
-                    const genStatusLog = document.getElementById('genStatusLog');
-                    
-                    if (binInput) binInput.value = '';
-                    if (monthSelect) monthSelect.value = 'rnd';
-                    if (yearInput) yearInput.value = '';
-                    if (cvvInput) cvvInput.value = '';
-                    if (numCardsInput) numCardsInput.value = '10';
-                    if (generatedCardsList) generatedCardsList.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Cards Generated Yet</h3><p>Generate cards to see them here</p></div>';
-                    if (genStatusLog) genStatusLog.textContent = '';
-                    generatedCardsData = [];
-                    
-                    if (copyAllBtn) copyAllBtn.style.display = 'none';
-                    if (clearAllBtn) clearAllBtn.style.display = 'none';
-                    
-                    if (window.Swal) {
-                        Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success',
-                            title: 'Cleared!', showConfirmButton: false, timer: 1500
-                        });
-                    }
-                });
-
-                if (exportBtn) exportBtn.addEventListener('click', function() {
-                    const allCards = [...chargedCards, ...approvedCards, ...threeDSCards, ...declinedCards];
-                    if (allCards.length === 0) {
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'No data to export!',
-                                text: 'Please check some cards first.',
-                                icon: 'warning',
-                                confirmButtonColor: '#ec4899'
-                            });
-                        }
-                        return;
-                    }
-                    let csvContent = "Card,Status,Response\n";
-                    allCards.forEach(card => {
-                        const status = card.response.includes('CHARGED') ? 'CHARGED' :
-                                     card.response.includes('APPROVED') ? 'APPROVED' :
-                                     card.response.includes('3DS') ? '3DS' : 'DECLINED';
-                        csvContent += `${card.displayCard},${status},${card.response}\n`;
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'success',
+                        title: 'Exported!', showConfirmButton: false, timer: 1500
                     });
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `card_results_${new Date().toISOString().split('T')[0]}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    if (window.Swal) {
-                        Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success',
-                            title: 'Exported!', showConfirmButton: false, timer: 1500
-                        });
-                    }
-                });
-
-                if (cardInput) cardInput.addEventListener('input', updateCardCount);
-
-                document.addEventListener('click', function(e) {
-                    if (e.target === document.getElementById('gatewaySettings')) {
-                        closeGatewaySettings();
-                    }
-                });
-
-                if (menuToggle) menuToggle.addEventListener('click', function() {
-                    sidebarOpen = !sidebarOpen;
-                    const sidebar = document.getElementById('sidebar');
-                    const mainContent = document.querySelector('.main-content');
-                    if (sidebar) sidebar.classList.toggle('open', sidebarOpen);
-                    if (mainContent) mainContent.classList.toggle('sidebar-open', sidebarOpen);
-                });
-                
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.body.setAttribute('data-theme', savedTheme);
-                const themeIcon = document.querySelector('.theme-toggle-slider i');
-                if (themeIcon) themeIcon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
-                
-                console.log("Page loaded, initializing user activity update...");
-                
-                // Initialize activity updates
-                initializeActivityUpdates();
-                
-                // Initialize global stats updates
-                initializeGlobalStatsUpdates();
-                
-                // Initialize top users updates
-                initializeTopUsersUpdates();
-                
-                // Initialize maxConcurrent based on selected gateway
-                updateMaxConcurrent();
-                
-                // RAZORPAY GATEWAY MAINTENANCE FEATURE
-                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
-                if (razorpayGateway) {
-                    // Disable the radio button
-                    razorpayGateway.disabled = true;
-                    
-                    // Find the parent label
-                    const parentLabel = razorpayGateway.closest('label');
-                    if (parentLabel) {
-                        // Add visual styling to show it's disabled
-                        parentLabel.style.opacity = '0.6';
-                        parentLabel.style.cursor = 'not-allowed';
-                        parentLabel.style.position = 'relative';
-                        
-                        // Add a maintenance badge
-                        const badge = document.createElement('span');
-                        badge.textContent = 'Maintenance';
-                        badge.style.position = 'absolute';
-                        badge.style.top = '5px';
-                        badge.style.right = '5px';
-                        badge.style.backgroundColor = '#ef4444'; // Red color
-                        badge.style.color = 'white';
-                        badge.style.padding = '2px 6px';
-                        badge.style.borderRadius = '4px';
-                        badge.style.fontSize = '0.7rem';
-                        badge.style.fontWeight = 'bold';
-                        parentLabel.appendChild(badge);
-                        
-                        // Add click event to show popup
-                        parentLabel.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            if (window.Swal) {
-                                Swal.fire({
-                                    title: 'Gateway Under Maintenance',
-                                    text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
-                                    icon: 'error',
-                                    confirmButtonColor: '#ef4444', // Red color
-                                    confirmButtonText: 'OK'
-                                });
-                            } else {
-                                alert('Gateway under maintenance. Please select another gateway.');
-                            }
-                        });
-                    }
                 }
             });
-        } else {
-            console.error("jQuery not loaded, some functionality may not work");
+
+            if (cardInput) cardInput.addEventListener('input', updateCardCount);
+
+            document.addEventListener('click', function(e) {
+                if (e.target === document.getElementById('gatewaySettings')) {
+                    closeGatewaySettings();
+                }
+            });
+
+            if (menuToggle) menuToggle.addEventListener('click', function() {
+                sidebarOpen = !sidebarOpen;
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.querySelector('.main-content');
+                if (sidebar) sidebar.classList.toggle('open', sidebarOpen);
+                if (mainContent) mainContent.classList.toggle('sidebar-open', sidebarOpen);
+            });
+            
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            const themeIcon = document.querySelector('.theme-toggle-slider i');
+            if (themeIcon) themeIcon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+            
+            console.log("Page loaded, initializing user activity update...");
+            
+            // Initialize activity updates
+            initializeActivityUpdates();
+            
+            // Initialize global stats updates
+            initializeGlobalStatsUpdates();
+            
+            // Initialize top users updates
+            initializeTopUsersUpdates();
+            
+            // Initialize maxConcurrent based on selected gateway
+            updateMaxConcurrent();
+            
+            // RAZORPAY GATEWAY MAINTENANCE FEATURE
+            const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
+            if (razorpayGateway) {
+                // Disable the radio button
+                razorpayGateway.disabled = true;
+                
+                // Find the parent label
+                const parentLabel = razorpayGateway.closest('label');
+                if (parentLabel) {
+                    // Add visual styling to show it's disabled
+                    parentLabel.style.opacity = '0.6';
+                    parentLabel.style.cursor = 'not-allowed';
+                    parentLabel.style.position = 'relative';
+                    
+                    // Add a maintenance badge
+                    const badge = document.createElement('span');
+                    badge.textContent = 'Maintenance';
+                    badge.style.position = 'absolute';
+                    badge.style.top = '5px';
+                    badge.style.right = '5px';
+                    badge.style.backgroundColor = '#ef4444'; // Red color
+                    badge.style.color = 'white';
+                    badge.style.padding = '2px 6px';
+                    badge.style.borderRadius = '4px';
+                    badge.style.fontSize = '0.7rem';
+                    badge.style.fontWeight = 'bold';
+                    parentLabel.appendChild(badge);
+                    
+                    // Add click event to show popup
+                    parentLabel.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Gateway Under Maintenance',
+                                text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444', // Red color
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Gateway under maintenance. Please select another gateway.');
+                        }
+                    });
+                }
+            }
+        });
+    } else {
+        console.error("jQuery not loaded, some functionality may not work");
+    }
+});
+
+// Gateway modal functions
+function openGatewayModal() {
+    document.getElementById('gatewayModal').classList.add('active');
+    showProviderSelection();
+    loadSavedGatewaySettings();
+}
+
+function closeGatewayModal() {
+    document.getElementById('gatewayModal').classList.remove('active');
+}
+
+function showProviderSelection() {
+    document.getElementById('providerSelection').classList.remove('hidden');
+    document.getElementById('gatewaySelection').classList.remove('active');
+    document.getElementById('gatewayBtnBack').style.display = 'none';
+}
+
+function showProviderGateways(provider) {
+    // Hide all gateway groups
+    const gatewayGroups = document.querySelectorAll('.gateway-group');
+    gatewayGroups.forEach(group => {
+        group.style.display = 'none';
+    });
+    
+    // Show the selected provider's gateways
+    document.getElementById(`${provider}-gateways`).style.display = 'block';
+    
+    // Switch views
+    document.getElementById('providerSelection').classList.add('hidden');
+    document.getElementById('gatewaySelection').classList.add('active');
+    document.getElementById('gatewayBtnBack').style.display = 'flex';
+}
+
+function loadSavedGatewaySettings() {
+    const savedGateway = localStorage.getItem('selectedGateway');
+    if (savedGateway) {
+        const radioInput = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
+        if (radioInput) {
+            radioInput.checked = true;
         }
     }
+}
 
-    // Load API key and initialize the app
-    loadApiKey().then(success => {
-        if (!success) {
-            console.warn('Proceeding without valid API key');
-            // Show a warning if API key loading fails
-            if (window.Swal) {
-                Swal.fire({
-                    title: 'API Key Issue',
-                    text: 'Could not load API key. Some features may not work properly.',
-                    icon: 'warning',
-                    confirmButtonColor: '#f59e0b'
-                });
-            }
-        }
-        
-        // Start key rotation
-        startKeyRotation();
-        
-        // Initialize the app
-        initializeApp();
+function saveGatewaySettings() {
+    const selectedGateway = document.querySelector('input[name="gateway"]:checked');
+    
+    if (!selectedGateway) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No Gateway Selected',
+            text: 'Please select a gateway first',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
+    }
+    
+    // Save settings
+    localStorage.setItem('selectedGateway', selectedGateway.value);
+    
+    // Get gateway name for display
+    const gatewayName = selectedGateway.parentElement.querySelector('.gateway-option-name').textContent.trim();
+    
+    // Update UI
+    Swal.fire({
+        icon: 'success',
+        title: 'Gateway Settings Updated!',
+        text: `Now using: ${gatewayName}`,
+        confirmButtonColor: '#10b981'
+    }).then(() => {
+        closeGatewayModal();
     });
+}
+
+// Load API key and initialize the app
+loadApiKey().then(success => {
+    if (!success) {
+        console.warn('Proceeding without valid API key');
+        // Show a warning if API key loading fails
+        if (window.Swal) {
+            Swal.fire({
+                title: 'API Key Issue',
+                text: 'Could not load API key. Some features may not work properly.',
+                icon: 'warning',
+                confirmButtonColor: '#f59e0b'
+            });
+        }
+    }
+    
+    // Start key rotation
+    startKeyRotation();
+    
+    // Initialize the app
+    initializeApp();
 });
