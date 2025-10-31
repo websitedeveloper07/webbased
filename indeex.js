@@ -588,12 +588,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.keyCode === 74 || e.keyCode === 83)) {
                 if (e.target.id !== 'cardInput' && e.target.id !== 'binInput' && 
                     e.target.id !== 'cvvInput' && e.target.id !== 'yearInput') {
+                        e.preventDefault();
+                    }
+                } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && 
+                    (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
                     e.preventDefault();
                 }
-            } else if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && 
-                (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
-                e.preventDefault();
-            }
         });
 
         localStorage.setItem('theme', 'light');
@@ -664,20 +664,68 @@ document.addEventListener('DOMContentLoaded', function() {
             if (mainContent) mainContent.classList.remove('sidebar-open');
         }
 
-        // Gateway settings functions
-        function openGatewaySettings() {
-            const gatewaySettings = document.getElementById('gatewaySettings');
-            if (gatewaySettings) {
-                gatewaySettings.classList.add('active');
-                const radio = document.querySelector(`input[value="${selectedGateway}"]`);
-                if (radio) radio.checked = true;
+        // Gateway modal functions
+        function openGatewayModal() {
+            const modal = document.getElementById('gatewayModal');
+            if (modal) {
+                modal.classList.add('active');
+                showProviderSelection();
+                loadSavedGatewaySettings();
             }
         }
 
-        function closeGatewaySettings() {
-            const gatewaySettings = document.getElementById('gatewaySettings');
-            if (gatewaySettings) {
-                gatewaySettings.classList.remove('active');
+        function closeGatewayModal() {
+            const modal = document.getElementById('gatewayModal');
+            if (modal) {
+                modal.classList.remove('active');
+                
+                // Reset to provider selection view for next time
+                setTimeout(() => {
+                    showProviderSelection();
+                }, 300); // Wait for the modal to close completely
+            }
+        }
+
+        function showProviderSelection() {
+            const providerSelection = document.getElementById('providerSelection');
+            const gatewaySelection = document.getElementById('gatewaySelection');
+            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
+            
+            if (providerSelection) providerSelection.classList.remove('hidden');
+            if (gatewaySelection) gatewaySelection.classList.remove('active');
+            if (gatewayBtnBack) gatewayBtnBack.style.display = 'none';
+        }
+
+        function showProviderGateways(provider) {
+            // Hide all gateway groups
+            const gatewayGroups = document.querySelectorAll('.gateway-group');
+            gatewayGroups.forEach(group => {
+                group.style.display = 'none';
+            });
+            
+            // Show the selected provider's gateways
+            const providerGateways = document.getElementById(`${provider}-gateways`);
+            if (providerGateways) {
+                providerGateways.style.display = 'block';
+            }
+            
+            // Switch views
+            const providerSelection = document.getElementById('providerSelection');
+            const gatewaySelection = document.getElementById('gatewaySelection');
+            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
+            
+            if (providerSelection) providerSelection.classList.add('hidden');
+            if (gatewaySelection) gatewaySelection.classList.add('active');
+            if (gatewayBtnBack) gatewayBtnBack.style.display = 'flex';
+        }
+
+        function loadSavedGatewaySettings() {
+            const savedGateway = localStorage.getItem('selectedGateway');
+            if (savedGateway) {
+                const radioInput = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
+                if (radioInput) {
+                    radioInput.checked = true;
+                }
             }
         }
 
@@ -692,15 +740,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
                 const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
                 
-                if (window.Swal) {
-                    Swal.fire({
-                        icon: 'success', 
-                        title: 'Gateway Updated!',
-                        text: `Now using: ${nameText}`,
-                        confirmButtonColor: '#10b981'
-                    });
-                }
-                closeGatewaySettings();
+                // Save to localStorage
+                localStorage.setItem('selectedGateway', selectedGateway);
+                
+                // Close the modal immediately
+                closeGatewayModal();
+                
+                // Show success message after modal is closed
+                setTimeout(() => {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'success', 
+                            title: 'Gateway Updated!',
+                            text: `Now using: ${nameText}`,
+                            confirmButtonColor: '#10b981',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                }, 300); // Small delay to ensure modal is fully closed
             } else {
                 if (window.Swal) {
                     Swal.fire({
@@ -711,6 +769,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
             }
+        }
+
+        // Legacy functions for backward compatibility
+        function openGatewaySettings() {
+            openGatewayModal();
+        }
+
+        function closeGatewaySettings() {
+            closeGatewayModal();
         }
 
         // Card counting function
@@ -2105,6 +2172,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.openGatewaySettings = openGatewaySettings;
         window.closeGatewaySettings = closeGatewaySettings;
         window.saveGatewaySettings = saveGatewaySettings;
+        window.openGatewayModal = openGatewayModal;
+        window.closeGatewayModal = closeGatewayModal;
+        window.showProviderSelection = showProviderSelection;
+        window.showProviderGateways = showProviderGateways;
+        window.loadSavedGatewaySettings = loadSavedGatewaySettings;
         window.updateCardCount = updateCardCount;
         window.filterResults = filterResults;
         window.setYearRnd = setYearRnd;
@@ -2262,9 +2334,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (cardInput) cardInput.addEventListener('input', updateCardCount);
 
+                // Gateway modal event listeners
+                const gatewayBtnBack = document.getElementById('gatewayBtnBack');
+                const gatewayBtnSave = document.getElementById('gatewayBtnSave');
+                const gatewayBtnCancel = document.getElementById('gatewayBtnCancel');
+                const gatewayModalClose = document.getElementById('gatewayModalClose');
+                
+                if (gatewayBtnBack) {
+                    gatewayBtnBack.addEventListener('click', function() {
+                        showProviderSelection();
+                    });
+                }
+                
+                if (gatewayBtnSave) {
+                    gatewayBtnSave.addEventListener('click', function() {
+                        saveGatewaySettings();
+                    });
+                }
+                
+                if (gatewayBtnCancel) {
+                    gatewayBtnCancel.addEventListener('click', function() {
+                        closeGatewayModal();
+                    });
+                }
+                
+                if (gatewayModalClose) {
+                    gatewayModalClose.addEventListener('click', function() {
+                        closeGatewayModal();
+                    });
+                }
+                
+                // Close modal when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (e.target === document.getElementById('gatewaySettings')) {
-                        closeGatewaySettings();
+                    const modal = document.getElementById('gatewayModal');
+                    if (modal && modal.classList.contains('active') && 
+                        e.target === modal) {
+                        closeGatewayModal();
                     }
                 });
 
