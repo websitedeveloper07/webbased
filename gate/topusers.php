@@ -68,15 +68,15 @@ try {
     // === FORMAT RESPONSE ===
     $formatted = [];
     foreach ($users as $u) {
-        // Generate avatar URL if not available
-        $avatar = $u['photo_url'] ?: generateAvatar($u['name']);
+        // Get the photo URL or fetch from Telegram if not available
+        $photoUrl = getTelegramProfilePicture($u['telegram_id'], $u['photo_url'], $u['name']);
         
         $formatted[] = [
             'id' => $u['id'],
             'telegram_id' => $u['telegram_id'],
             'name' => $u['name'],
             'username' => $u['username'] ? '@' . trim($u['username'], '@') : null,
-            'photo_url' => $avatar,
+            'photo_url' => $photoUrl,
             'total_hits' => (int)$u['total_hits']
         ];
     }
@@ -98,15 +98,77 @@ try {
     echo json_encode(['success' => false, 'message' => 'Server error']);
 }
 
-// Helper function to generate avatar URL
-function generateAvatar($name) {
-    $initials = '';
-    foreach (explode(' ', trim($name)) as $word) {
-        if ($word) {
-            $initials .= strtoupper(substr($word, 0, 1));
-            if (strlen($initials) >= 2) break;
+// Function to get Telegram profile picture
+function getTelegramProfilePicture($telegramId, $photoUrl = null, $name = 'User') {
+    // If we already have a photo URL, use it
+    if (!empty($photoUrl)) {
+        return $photoUrl;
+    }
+    
+    // Try to get the profile picture from Telegram API
+    $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Use your bot token
+    
+    $apiUrl = "https://api.telegram.org/bot{$botToken}/getUserProfilePhotos?user_id={$telegramId}&limit=1";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && !empty($response)) {
+        $data = json_decode($response, true);
+        
+        if (isset($data['ok']) && $data['ok'] === true && 
+            isset($data['result']['photos']) && 
+            !empty($data['result']['photos'])) {
+            
+            $photo = $data['result']['photos'][0][0]; // Get the highest resolution photo
+            $fileId = $photo['file_id'];
+            
+            // Get file path
+            $fileUrl = "https://api.telegram.org/bot{$botToken}/getFile?file_id={$fileId}";
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $fileUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $fileResponse = curl_exec($ch);
+            $fileHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($fileHttpCode === 200 && !empty($fileResponse)) {
+                $fileData = json_decode($fileResponse, true);
+                
+                if (isset($fileData['ok']) && $fileData['ok'] === true && 
+                    isset($fileData['result']['file_path'])) {
+                    
+                    $filePath = $fileData['result']['file_path'];
+                    return "https://api.telegram.org/file/bot{$botToken}/{$filePath}";
+                }
+            }
         }
     }
-    return 'https://ui-avatars.com/api/?name=' . urlencode($initials ?: 'U') . '&background=8b5cf6&color=fff&size=64';
+    
+    // If all else fails, generate an avatar
+    return generateAvatar($name);
+}
+
+// Helper function to generate avatar URL
+function generateAvatar($name) {
+    // Handle non-Latin characters by using the first character of the name
+    $firstChar = mb_substr(trim($name), 0, 1);
+    
+    // If the first character is not a letter, use 'U' as default
+    if (!preg_match('/\p{L}/u', $firstChar)) {
+        $firstChar = 'U';
+    }
+    
+    return 'https://ui-avatars.com/api/?name=' . urlencode($firstChar) . '&background=8b5cf6&color=fff&size=64';
 }
 ?>
