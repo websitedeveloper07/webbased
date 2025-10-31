@@ -977,6 +977,9 @@ if (empty($userPhotoUrl)) {
         .online-user-info {
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
         
         .online-user-name {
@@ -998,7 +1001,7 @@ if (empty($userPhotoUrl)) {
         .online-user-username {
             font-size: 0.7rem; /* Reduced font size */
             color: var(--text-secondary); /* Changed to use text-secondary variable for light mode */
-            margin-bottom: 0.1rem; /* Reduced margin */
+            margin-top: 0.2rem; /* Added margin for vertical spacing */
         }
         
         body[data-theme="dark"] .online-user-username {
@@ -1131,6 +1134,9 @@ if (empty($userPhotoUrl)) {
         .top-user-info {
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
         
         .top-user-name {
@@ -1170,7 +1176,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 50px; /* Increased minimum width */
+            min-width: 60px; /* Increased minimum width for "Hits" text */
             text-align: center;
         }
         
@@ -1578,6 +1584,12 @@ if (empty($userPhotoUrl)) {
             border: 2px solid var(--accent-blue);
         }
         
+        .mobile-online-user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
         .mobile-online-user-name {
             font-weight: 700;
             font-size: 0.7rem; /* Reduced font size */
@@ -1593,6 +1605,16 @@ if (empty($userPhotoUrl)) {
         
         body[data-theme="dark"] .mobile-online-user-name {
             color: #ffffff; /* White text in dark mode */
+        }
+        
+        .mobile-online-user-username {
+            font-size: 0.6rem; /* Reduced font size */
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+        
+        body[data-theme="dark"] .mobile-online-user-username {
+            color: var(--dark-text-secondary);
         }
         
         /* Mobile Top Users Section - Added */
@@ -1671,6 +1693,9 @@ if (empty($userPhotoUrl)) {
         .mobile-top-user-info {
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
         
         .mobile-top-user-name {
@@ -1710,7 +1735,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 50px; /* Increased minimum width */
+            min-width: 60px; /* Increased minimum width for "Hits" text */
             text-align: center;
         }
         
@@ -2921,7 +2946,7 @@ if (empty($userPhotoUrl)) {
             .mobile-top-user-hits {
                 font-size: 0.65rem; /* Reduced font size */
                 padding: 0.2rem 0.4rem; /* Reduced padding */
-                min-width: 40px; /* Reduced width */
+                min-width: 50px; /* Reduced width */
             }
         }
         
@@ -3069,7 +3094,7 @@ if (empty($userPhotoUrl)) {
             .mobile-top-user-hits {
                 font-size: 0.6rem; /* Further reduced font size */
                 padding: 0.2rem 0.3rem; /* Further reduced padding */
-                min-width: 35px; /* Further reduced width */
+                min-width: 45px; /* Further reduced width */
             }
         }
         
@@ -3645,7 +3670,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1 .18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -4296,6 +4321,14 @@ if (empty($userPhotoUrl)) {
             
             // Fetch online users and top users data
             fetchUsersData();
+            
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            const icon = document.querySelector('.theme-toggle-slider i');
+            if (icon) {
+                icon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+            }
         });
         
         // Function to fetch users data from API
@@ -4388,6 +4421,7 @@ if (empty($userPhotoUrl)) {
                 const adminClass = isAdmin ? 'admin' : '';
                 const adminBadge = isAdmin ? '<span class="admin-badge">ADMIN</span>' : '';
                 
+                // Desktop version - vertical layout
                 onlineUsersHTML += `
                     <div class="online-user-item ${adminClass}">
                         <div class="online-user-avatar-container">
@@ -4401,10 +4435,14 @@ if (empty($userPhotoUrl)) {
                     </div>
                 `;
                 
+                // Mobile version - vertical layout
                 mobileOnlineUsersHTML += `
                     <div class="mobile-online-user-item ${adminClass}">
                         <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`}" alt="${user.name}" class="mobile-online-user-avatar">
-                        <span class="mobile-online-user-name">${user.name}${adminBadge}</span>
+                        <div class="mobile-online-user-info">
+                            <span class="mobile-online-user-name">${user.name}${adminBadge}</span>
+                            <span class="mobile-online-user-username">${user.username || ''}</span>
+                        </div>
                     </div>
                 `;
             });
@@ -4450,6 +4488,7 @@ if (empty($userPhotoUrl)) {
                 const adminClass = isAdmin ? 'admin' : '';
                 const adminBadge = isAdmin ? '<span class="admin-badge">ADMIN</span>' : '';
                 
+                // Desktop version - vertical layout with "Hits" text
                 topUsersHTML += `
                     <div class="top-user-item ${adminClass}">
                         <div class="top-user-avatar-container">
@@ -4459,10 +4498,11 @@ if (empty($userPhotoUrl)) {
                             <div class="top-user-name">${user.name}${adminBadge}</div>
                             <div class="top-user-username">${user.username || ''}</div>
                         </div>
-                        <div class="top-user-hits">${user.total_hits || 0}</div>
+                        <div class="top-user-hits">${user.total_hits || 0} Hits</div>
                     </div>
                 `;
                 
+                // Mobile version - vertical layout with "Hits" text
                 mobileTopUsersHTML += `
                     <div class="mobile-top-user-item ${adminClass}">
                         <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`}" alt="${user.name}" class="mobile-top-user-avatar">
@@ -4470,7 +4510,7 @@ if (empty($userPhotoUrl)) {
                             <div class="mobile-top-user-name">${user.name}${adminBadge}</div>
                             <div class="mobile-top-user-username">${user.username || ''}</div>
                         </div>
-                        <div class="mobile-top-user-hits">${user.total_hits || 0}</div>
+                        <div class="mobile-top-user-hits">${user.total_hits || 0} Hits</div>
                     </div>
                 `;
             });
