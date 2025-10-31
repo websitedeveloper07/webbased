@@ -9,183 +9,9 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 
-// === DATABASE CONNECTION ===
- $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
-
-try {
-    $dbUrl = parse_url($databaseUrl);
-    $host = $dbUrl['host'] ?? null;
-    $port = $dbUrl['port'] ?? 5432;
-    $user = $dbUrl['user'] ?? null;
-    $pass = $dbUrl['pass'] ?? null;
-    $path = $dbUrl['path'] ?? null;
-
-    if (!$host || !$user || !$pass || !$path) {
-        throw new Exception("Missing DB connection parameters");
-    }
-
-    $dbName = ltrim($path, '/');
-    
-    // Set connection timeout with extended options and SSL mode
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
-        $user,
-        $pass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 15,
-            PDO::ATTR_PERSISTENT => false,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
-    
-    // === TABLE SETUP ===
-    // Check if card_checks table exists
-    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
-    
-    if (!$tableExists) {
-        // Create card_checks table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE card_checks (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                card_number VARCHAR(255),
-                status VARCHAR(50),
-                response TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-        error_log("Created card_checks table");
-    }
-    
-    // Check if users table exists
-    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
-    
-    if (!$usersTableExists) {
-        // Create users table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE users (
-                id SERIAL PRIMARY KEY,
-                telegram_id BIGINT UNIQUE,
-                name VARCHAR(255),
-                username VARCHAR(255),
-                photo_url VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-        error_log("Created users table");
-    } else {
-        // Check if username column exists in users table
-        $columnExists = $pdo->query("
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'username'
-        ")->fetchColumn();
-        
-        // Add username column if it doesn't exist
-        if (!$columnExists) {
-            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
-            error_log("Added username column to users table");
-        }
-        
-        // Check if photo_url column exists in users table
-        $photoColumnExists = $pdo->query("
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'photo_url'
-        ")->fetchColumn();
-        
-        // Add photo_url column if it doesn't exist
-        if (!$photoColumnExists) {
-            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
-            error_log("Added photo_url column to users table");
-        }
-    }
-    
-    // Function to record card check result
-    function recordCardCheck($pdo, $cardNumber, $status, $response = '') {
-        // Start session if not already started
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        // Debug logging
-        error_log("=== recordCardCheck DEBUG ===");
-        error_log("Session data: " . json_encode($_SESSION));
-        
-        // Get or create user
-        $userId = null;
-        if (isset($_SESSION['user']['telegram_id'])) {
-            error_log("User found in session with telegram_id: " . $_SESSION['user']['telegram_id']);
-            
-            // Check if user exists
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE telegram_id = ?");
-            $stmt->execute([$_SESSION['user']['telegram_id']]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($user) {
-                $userId = $user['id'];
-                error_log("Found existing user with ID: $userId");
-            } else {
-                // Create new user
-                error_log("Creating new user for telegram_id: " . $_SESSION['user']['telegram_id']);
-                $stmt = $pdo->prepare("
-                    INSERT INTO users (telegram_id, name, username, photo_url) 
-                    VALUES (?, ?, ?, ?)
-                    RETURNING id
-                ");
-                $stmt->execute([
-                    $_SESSION['user']['telegram_id'],
-                    $_SESSION['user']['name'] ?? 'Unknown User',
-                    $_SESSION['user']['username'] ?? '',
-                    $_SESSION['user']['photo_url'] ?? ''
-                ]);
-                $userId = $pdo->lastInsertId();
-                error_log("Created new user with ID: $userId");
-            }
-        } else {
-            error_log("No user in session");
-        }
-        
-        // Debug logging
-        error_log("Recording card check: $cardNumber, status=$status, response=$response");
-        
-        // Insert card check result
-        $stmt = $pdo->prepare("
-            INSERT INTO card_checks (user_id, card_number, status, response) 
-            VALUES (?, ?, ?, ?)
-        ");
-        
-        $result = $stmt->execute([
-            $userId,
-            $cardNumber,
-            $status,
-            $response
-        ]);
-        
-        // Debug logging
-        if ($result) {
-            error_log("Card check recorded successfully: $cardNumber - $status");
-        } else {
-            error_log("Failed to record card check: " . print_r($stmt->errorInfo(), true));
-        }
-        
-        // Debug: Verify the record was actually inserted
-        $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM card_checks WHERE user_id = ? AND status = ?");
-        $checkStmt->execute([$userId, $status]);
-        $count = $checkStmt->fetch(PDO::FETCH_ASSOC);
-        error_log("Card checks for user $userId with status $status: " . $count['count']);
-        
-        return $result;
-    }
-    
-} catch (PDOException $e) {
-    error_log("Database PDO Error: " . $e->getMessage());
-    // Don't output errors in API responses
-} catch (Exception $e) {
-    error_log("General Error: " . $e->getMessage());
-    // Don't output errors in API responses
-}
+// Include required files
+require_once __DIR__ . '/globalstats.php';
+require_once __DIR__ . '/topusers.php';
 
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -415,7 +241,7 @@ if (empty($responses)) {
     log_message("No valid responses received from API");
     
     // Record the failed attempt in the database
-    recordCardCheck($pdo, $cc, 'ERROR', 'API requests failed');
+    recordCardCheck($GLOBALS['pdo'], $cc, 'ERROR', 'API requests failed');
     
     echo json_encode(['status' => 'ERROR', 'message' => 'API requests failed']);
     exit;
@@ -442,7 +268,7 @@ if (!$valid_response_found) {
     log_message("No valid JSON response found");
     
     // Record the failed attempt in the database
-    recordCardCheck($pdo, $cc, 'ERROR', 'Invalid API response format');
+    recordCardCheck($GLOBALS['pdo'], $cc, 'ERROR', 'Invalid API response format');
     
     echo json_encode(['status' => 'ERROR', 'message' => 'Invalid API response format']);
     exit;
@@ -516,7 +342,7 @@ if ($our_status === 'DECLINED') {
  $our_message = $message . ($api_status ? (' . $api_status . ')' : '');
 
 // Record the card check result in the database
-recordCardCheck($pdo, $cc, $our_status, $our_message);
+recordCardCheck($GLOBALS['pdo'], $cc, $our_status, $our_message);
 
 // Send Telegram notification for CHARGED status
 if ($our_status === 'CHARGED') {
