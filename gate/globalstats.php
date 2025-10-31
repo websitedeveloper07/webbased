@@ -10,7 +10,7 @@ header('Pragma: no-cache');
 try {
     $dbUrl = parse_url($databaseUrl);
     $host = $dbUrl['host'] ?? null;
-    $port = $dbUrl['port'] ?? 5432;
+    $dbUrl['port'] ?? 5432;
     $user = $dbUrl['user'] ?? null;
     $pass = $dbUrl['pass'] ?? null;
     $path = $dbUrl['path'] ?? null;
@@ -50,10 +50,11 @@ try {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ");
+        error_log("Created card_checks table");
     }
     
     // Check if users table exists
-    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
+    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn());
     
     if (!$usersTableExists) {
         // Create users table if it doesn't exist
@@ -65,8 +66,8 @@ try {
                 username VARCHAR(255),
                 photo_url VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
+            ");
+        error_log("Created users table");
     } else {
         // Check if username column exists in users table
         $columnExists = $pdo->query("
@@ -78,6 +79,7 @@ try {
         // Add username column if it doesn't exist
         if (!$columnExists) {
             $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
+            error_log("Added username column to users table");
         }
         
         // Check if photo_url column exists in users table
@@ -90,6 +92,7 @@ try {
         // Add photo_url column if it doesn't exist
         if (!$photoColumnExists) {
             $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
+            error_log("Added photo_url column to users table");
         }
     }
     
@@ -100,9 +103,15 @@ try {
             session_start();
         }
         
+        // Debug logging
+        error_log("=== recordCardCheck DEBUG ===");
+        error_log("Session data: " . json_encode($_SESSION));
+        
         // Get or create user
         $userId = null;
         if (isset($_SESSION['user']['telegram_id'])) {
+            error_log("User found in session with telegram_id: " . $_SESSION['user']['telegram_id']);
+            
             // Check if user exists
             $stmt = $pdo->prepare("SELECT id FROM users WHERE telegram_id = ?");
             $stmt->execute([$_SESSION['user']['telegram_id']]);
@@ -110,8 +119,10 @@ try {
             
             if ($user) {
                 $userId = $user['id'];
+                error_log("Found existing user with ID: $userId");
             } else {
                 // Create new user
+                error_log("Creating new user for telegram_id: " . $_SESSION['user']['telegram_id']);
                 $stmt = $pdo->prepare("
                     INSERT INTO users (telegram_id, name, username, photo_url) 
                     VALUES (?, ?, ?, ?)
@@ -124,8 +135,14 @@ try {
                     $_SESSION['user']['photo_url'] ?? ''
                 ]);
                 $userId = $pdo->lastInsertId();
+                error_log("Created new user with ID: $userId");
             }
+        } else {
+            error_log("No user in session");
         }
+        
+        // Debug logging
+        error_log("Recording card check: $cardNumber, status=$status, response=$response");
         
         // Insert card check result
         $stmt = $pdo->prepare("
@@ -140,12 +157,18 @@ try {
             $response
         ]);
         
-        // Log the result for debugging
+        // Debug logging
         if ($result) {
             error_log("Card check recorded successfully: $cardNumber - $status");
         } else {
             error_log("Failed to record card check: " . print_r($stmt->errorInfo(), true));
         }
+        
+        // Debug: Verify the record was actually inserted
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM card_checks WHERE user_id = ? AND status = ?");
+        $checkStmt->execute([$userId, $status]);
+        $count = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        error_log("Card checks for user $userId with status $status: " . $count['count']);
         
         return $result;
     }
