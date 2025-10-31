@@ -2820,7 +2820,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* New Gateway Selection Modal - Inspired by the example */
+        /* New Gateway Selection Modal - Simplified */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -2843,8 +2843,8 @@ if (empty($userPhotoUrl)) {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 1.5rem;
-            max-width: 600px;
+            padding: 2rem;
+            max-width: 650px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
@@ -2861,8 +2861,8 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.6rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -2871,7 +2871,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-modal-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -2883,9 +2883,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-modal-close {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             border: none;
             background: var(--secondary-bg);
             color: var(--text-secondary);
@@ -2893,7 +2893,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 1rem;
             transition: all 0.3s;
         }
         
@@ -2908,54 +2908,17 @@ if (empty($userPhotoUrl)) {
             transform: rotate(90deg);
         }
         
-        .gateway-stepper {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .gateway-step {
-            flex: 1;
-            text-align: center;
-            font-size: 0.85rem;
-            padding: 0.55rem 0.4rem;
-            border-radius: 0.6rem;
-            border: 1px solid var(--border-color);
-            background: var(--secondary-bg);
-            color: var(--text-secondary);
-        }
-        
-        body[data-theme="dark"] .gateway-step {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-            color: var(--dark-text-secondary);
-        }
-        
-        .gateway-step.active {
-            background: linear-gradient(90deg, rgba(34,197,94,0.33), rgba(96,165,250,0.33));
-            border-color: rgba(16,185,129,0.35);
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-        
-        .gateway-step-content {
-            display: none;
-        }
-        
-        .gateway-step-content.active {
-            display: block;
-        }
-        
         .gateway-list {
             display: grid;
-            gap: 0.5rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .gateway-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.85rem 1rem;
+            padding: 1.2rem;
             border-radius: 12px;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
@@ -2969,7 +2932,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-item:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             border-color: rgba(34,197,94,0.35);
             background: var(--dark-accent-bg);
         }
@@ -2980,18 +2943,18 @@ if (empty($userPhotoUrl)) {
         
         .gateway-item-left {
             display: flex;
-            gap: 0.8rem;
+            gap: 1rem;
             align-items: center;
         }
         
         .gateway-item-icon {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             display: grid;
             place-items: center;
             border-radius: 8px;
             background: rgba(148,163,184,0.12);
-            font-size: 16px;
+            font-size: 18px;
         }
         
         .gateway-item-info {
@@ -3001,7 +2964,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-item-title {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         
         body[data-theme="dark"] .gateway-item-title {
@@ -3009,9 +2972,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-item-subtitle {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            margin-top: 0.1rem;
+            margin-top: 0.2rem;
         }
         
         body[data-theme="dark"] .gateway-item-subtitle {
@@ -3025,27 +2988,32 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            font-size: 0.7rem;
-            padding: 0.12rem 0.4rem;
-            border-radius: 0.4rem;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
         }
         
-        .badge-active {
-            color: var(--success-green);
-            background: rgba(34,197,94,0.12);
+        .badge-charge {
+            color: var(--warning);
+            background: rgba(245,158,11,0.12);
         }
         
-        .badge-inactive {
+        .badge-auth {
+            color: var(--accent-cyan);
+            background: rgba(6,182,212,0.12);
+        }
+        
+        .badge-maintenance {
             color: var(--error);
             background: rgba(239,68,68,0.12);
         }
         
         .gateway-modal-footer {
             display: flex;
-            gap: 0.8rem;
-            margin-top: 1.2rem;
-            padding-top: 0.8rem;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
             border-top: 1px solid var(--border-color);
         }
         
@@ -3055,7 +3023,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-back {
             flex: 1;
-            padding: 0.6rem;
+            padding: 0.8rem;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg);
@@ -3066,7 +3034,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
         }
         
         body[data-theme="dark"] .gateway-btn-back {
@@ -3081,27 +3049,9 @@ if (empty($userPhotoUrl)) {
             color: var(--accent-blue);
         }
         
-        .gateway-btn-next {
-            flex: 1;
-            padding: 0.6rem;
-            border-radius: 8px;
-            border: none;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        
-        .gateway-btn-next:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-        }
-        
         .gateway-btn-save {
             flex: 1;
-            padding: 0.6rem;
+            padding: 0.8rem;
             border-radius: 8px;
             border: none;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
@@ -3119,7 +3069,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-cancel {
             flex: 1;
-            padding: 0.6rem;
+            padding: 0.8rem;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg);
@@ -3137,6 +3087,15 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-cancel:hover {
             transform: translateY(-2px);
+        }
+        
+        /* Fix for Global Statistics text in dark mode */
+        body[data-theme="dark"] .gs-title {
+            color: var(--dark-text-primary) !important;
+        }
+        
+        body[data-theme="dark"] .gs-sub {
+            color: var(--dark-text-secondary) !important;
         }
     </style>
 </head>
@@ -3625,7 +3584,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <!-- New Gateway Selection Modal -->
+    <!-- Simplified Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -3637,57 +3596,13 @@ if (empty($userPhotoUrl)) {
                 </button>
             </div>
 
-            <div class="gateway-stepper">
-                <div class="gateway-step active" id="step1">1. Gateway</div>
-                <div class="gateway-step" id="step2">2. API</div>
-                <div class="gateway-step" id="step3">3. Settings</div>
-            </div>
-
-            <!-- Step 1: Gateway Selection -->
-            <div class="gateway-step-content active" id="gatewayStep1">
-                <div class="text-sm text-slate-300 mb-2">Select a gateway</div>
-                <div class="gateway-list" id="gatewayList"></div>
-            </div>
-
-            <!-- Step 2: API Selection -->
-            <div class="gateway-step-content" id="gatewayStep2">
-                <div class="text-sm text-slate-300 mb-2">Select an API</div>
-                <div class="gateway-list" id="apiList"></div>
-            </div>
-
-            <!-- Step 3: Settings -->
-            <div class="gateway-step-content" id="gatewayStep3">
-                <div class="text-sm text-slate-300 mb-2">Configure settings</div>
-                <div class="gateway-list">
-                    <div class="gateway-item">
-                        <div class="gateway-item-left">
-                            <div class="gateway-item-icon">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <div class="gateway-item-info">
-                                <div class="gateway-item-title">Proxy Settings</div>
-                                <div class="gateway-item-subtitle">Configure proxy for requests</div>
-                            </div>
-                        </div>
-                        <div class="gateway-item-right">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="proxySwitch" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                </div>
-            </div>
+            <div class="gateway-list" id="gatewayList"></div>
 
             <div class="gateway-modal-footer">
                 <button class="gateway-btn-back" id="gatewayBtnBack" style="display: none;">
                     <i class="fas fa-arrow-left"></i> Back
                 </button>
-                <button class="gateway-btn-next" id="gatewayBtnNext">
-                    Next <i class="fas fa-arrow-right"></i>
-                </button>
-                <button class="gateway-btn-save" id="gatewayBtnSave" style="display: none;">
+                <button class="gateway-btn-save" id="gatewayBtnSave">
                     <i class="fas fa-check"></i> Save & Apply
                 </button>
                 <button class="gateway-btn-cancel" id="gatewayBtnCancel">
@@ -3747,18 +3662,13 @@ if (empty($userPhotoUrl)) {
         
         // Gateway settings functions
         function initializeGatewaySettings() {
-            const gatewayBtnNext = document.getElementById('gatewayBtnNext');
             const gatewayBtnBack = document.getElementById('gatewayBtnBack');
             const gatewayBtnSave = document.getElementById('gatewayBtnSave');
             const gatewayBtnCancel = document.getElementById('gatewayBtnCancel');
             
             // Add click events to buttons
-            gatewayBtnNext.addEventListener('click', function() {
-                nextStep();
-            });
-            
             gatewayBtnBack.addEventListener('click', function() {
-                prevStep();
+                showGatewayProviders();
             });
             
             gatewayBtnSave.addEventListener('click', function() {
@@ -3770,12 +3680,12 @@ if (empty($userPhotoUrl)) {
             });
             
             // Initialize gateway list
-            buildGatewayList();
+            showGatewayProviders();
         }
         
-        let currentStep = 1;
         let selectedGateway = '';
         let selectedApi = '';
+        let showingProviders = true;
         
         // Gateway data structure
         const gatewayData = {
@@ -3818,7 +3728,8 @@ if (empty($userPhotoUrl)) {
             }
         };
         
-        function buildGatewayList() {
+        function showGatewayProviders() {
+            showingProviders = true;
             const gatewayList = document.getElementById('gatewayList');
             gatewayList.innerHTML = '';
             
@@ -3839,7 +3750,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
                     <div class="gateway-item-right">
-                        <span class="gateway-badge badge-active">Select</span>
+                        <span class="gateway-badge badge-charge">Select</span>
                     </div>
                 `;
                 
@@ -3849,31 +3760,21 @@ if (empty($userPhotoUrl)) {
                 
                 gatewayList.appendChild(item);
             });
+            
+            // Update buttons
+            document.getElementById('gatewayBtnBack').style.display = 'none';
+            document.getElementById('gatewayBtnSave').style.display = 'none';
         }
         
         function selectGateway(gateway) {
             selectedGateway = gateway;
+            showingProviders = false;
             
-            // Update UI
-            document.querySelectorAll('.gateway-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.querySelector(`.gateway-item[data-gateway="${gateway}"]`).classList.add('active');
+            // Show APIs for this gateway
+            const gatewayList = document.getElementById('gatewayList');
+            gatewayList.innerHTML = '';
             
-            // Enable next button
-            document.getElementById('gatewayBtnNext').disabled = false;
-        }
-        
-        function buildApiList() {
-            const apiList = document.getElementById('apiList');
-            apiList.innerHTML = '';
-            
-            if (!selectedGateway || !gatewayData[selectedGateway]) {
-                apiList.innerHTML = '<div class="text-sm text-slate-400">No APIs available</div>';
-                return;
-            }
-            
-            const apis = gatewayData[selectedGateway].apis;
+            const apis = gatewayData[gateway].apis;
             apis.forEach(api => {
                 const item = document.createElement('div');
                 item.className = 'gateway-item';
@@ -3895,7 +3796,8 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
                     <div class="gateway-item-right">
-                        <span class="gateway-badge ${api.active ? 'badge-active' : 'badge-inactive'}">${api.active ? 'Active' : 'Inactive'}</span>
+                        <span class="gateway-badge badge-${api.type}">${api.name.includes('$') ? api.name.split(' ')[1] : api.type}</span>
+                        ${!api.active ? '<span class="gateway-badge badge-maintenance">Under Maintenance</span>' : ''}
                     </div>
                 `;
                 
@@ -3905,111 +3807,35 @@ if (empty($userPhotoUrl)) {
                     });
                 }
                 
-                apiList.appendChild(item);
+                gatewayList.appendChild(item);
             });
+            
+            // Update buttons
+            document.getElementById('gatewayBtnBack').style.display = 'flex';
+            document.getElementById('gatewayBtnSave').style.display = 'none';
         }
         
         function selectApi(api) {
             selectedApi = api;
             
             // Update UI
-            document.querySelectorAll('#apiList .gateway-item').forEach(item => {
+            document.querySelectorAll('.gateway-item').forEach(item => {
                 item.classList.remove('active');
             });
-            document.querySelector(`#apiList .gateway-item[data-api="${api}"]`).classList.add('active');
+            document.querySelector(`.gateway-item[data-api="${api}"]`).classList.add('active');
             
-            // Enable next button
-            document.getElementById('gatewayBtnNext').disabled = false;
-        }
-        
-        function nextStep() {
-            if (currentStep === 1 && !selectedGateway) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'No Gateway Selected',
-                    text: 'Please select a gateway first',
-                    confirmButtonColor: '#f59e0b'
-                });
-                return;
-            }
-            
-            if (currentStep === 2 && !selectedApi) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'No API Selected',
-                    text: 'Please select an API first',
-                    confirmButtonColor: '#f59e0b'
-                });
-                return;
-            }
-            
-            // Hide current step
-            document.getElementById(`step${currentStep}`).classList.remove('active');
-            document.getElementById(`gatewayStep${currentStep}`).classList.remove('active');
-            
-            // Show next step
-            currentStep++;
-            document.getElementById(`step${currentStep}`).classList.add('active');
-            document.getElementById(`gatewayStep${currentStep}`).classList.add('active');
-            
-            // Update buttons
-            document.getElementById('gatewayBtnBack').style.display = 'flex';
-            
-            if (currentStep === 2) {
-                // Build API list
-                buildApiList();
-                document.getElementById('gatewayBtnNext').disabled = true;
-            } else if (currentStep === 3) {
-                // Show save button, hide next button
-                document.getElementById('gatewayBtnNext').style.display = 'none';
-                document.getElementById('gatewayBtnSave').style.display = 'flex';
-            }
-        }
-        
-        function prevStep() {
-            // Hide current step
-            document.getElementById(`step${currentStep}`).classList.remove('active');
-            document.getElementById(`gatewayStep${currentStep}`).classList.remove('active');
-            
-            // Show previous step
-            currentStep--;
-            document.getElementById(`step${currentStep}`).classList.add('active');
-            document.getElementById(`gatewayStep${currentStep}`).classList.add('active');
-            
-            // Update buttons
-            if (currentStep === 1) {
-                document.getElementById('gatewayBtnBack').style.display = 'none';
-            }
-            
-            document.getElementById('gatewayBtnNext').style.display = 'flex';
-            document.getElementById('gatewayBtnSave').style.display = 'none';
+            // Show save button
+            document.getElementById('gatewayBtnSave').style.display = 'flex';
         }
         
         function openGatewayModal() {
             document.getElementById('gatewayModal').classList.add('active');
-            currentStep = 1;
             selectedGateway = '';
             selectedApi = '';
+            showingProviders = true;
             
             // Reset UI
-            document.querySelectorAll('.gateway-step').forEach(step => {
-                step.classList.remove('active');
-            });
-            document.getElementById('step1').classList.add('active');
-            
-            document.querySelectorAll('.gateway-step-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById('gatewayStep1').classList.add('active');
-            
-            // Reset buttons
-            document.getElementById('gatewayBtnBack').style.display = 'none';
-            document.getElementById('gatewayBtnNext').style.display = 'flex';
-            document.getElementById('gatewayBtnSave').style.display = 'none';
-            document.getElementById('gatewayBtnNext').disabled = true;
-            
-            // Build gateway list
-            buildGatewayList();
+            showGatewayProviders();
         }
         
         function closeGatewayModal() {
