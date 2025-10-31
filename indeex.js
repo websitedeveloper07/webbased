@@ -152,6 +152,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiKey = getCurrentApiKey();
         console.log(`X-API-KEY header for top users: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
         
+        // Make sure we have a valid API key before making the request
+        if (!apiKey) {
+            console.error('No API key available for top users request');
+            // Try to refresh the API key
+            refreshApiKey().then(success => {
+                if (success) {
+                    // Retry the request after getting a new API key
+                    setTimeout(updateTopUsers, 1000);
+                }
+            });
+            return;
+        }
+        
         fetch('/gate/topusers.php', {
             method: 'GET',
             headers: {
@@ -190,7 +203,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check for authentication error
             if (error.message.includes('Authentication failed') || error.message.includes('401')) {
                 // Try to refresh the API key
-                refreshApiKey();
+                refreshApiKey().then(success => {
+                    if (success) {
+                        // Retry the request after getting a new API key
+                        setTimeout(updateTopUsers, 1000);
+                    }
+                });
             } else {
                 // Only show error if on home page
                 const homePage = document.getElementById('page-home');
@@ -306,10 +324,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 userInfo.appendChild(nameElement);
             }
             
-            // Create hits element
+            // Create hits element - Updated to show "X Hits" format
             const hitsElement = document.createElement('div');
             hitsElement.className = 'top-user-hits';
-            hitsElement.textContent = hits;
+            hitsElement.textContent = `${hits} ${hits === 1 ? 'Hit' : 'Hits'}`;
             
             // Assemble user item
             userItem.appendChild(avatarContainer);
@@ -419,10 +437,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 userInfo.appendChild(nameElement);
             }
             
-            // Create hits element
+            // Create hits element - Updated to show "X Hits" format
             const hitsElement = document.createElement('div');
             hitsElement.className = 'mobile-top-user-hits';
-            hitsElement.textContent = hits;
+            hitsElement.textContent = `${hits} ${hits === 1 ? 'Hit' : 'Hits'}`;
             
             // Assemble user item
             userItem.appendChild(avatar);
@@ -1799,25 +1817,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
+                if (!response.ok) {
+                    // Check for 401 Unauthorized
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed: Invalid or missing API key');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
                 if (genLoader) genLoader.style.display = 'none';
                 
-                if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
-                    if (genStatusLog) genStatusLog.textContent = `Generated ${response.cards.length} cards successfully!`;
-                    displayGeneratedCards(response.cards);
+                if (data.cards && Array.isArray(data.cards) && data.cards.length > 0) {
+                    if (genStatusLog) genStatusLog.textContent = `Generated ${data.cards.length} cards successfully!`;
+                    displayGeneratedCards(data.cards);
                     if (window.Swal) {
                         Swal.fire({
                             title: 'Success!',
-                            text: `Generated ${response.cards.length} cards`,
+                            text: `Generated ${data.cards.length} cards`,
                             icon: 'success',
                             confirmButtonColor: '#10b981'
                         });
                     }
-                } else if (response.error) {
-                    if (genStatusLog) genStatusLog.textContent = 'Error: ' + response.error;
+                } else if (data.error) {
+                    if (genStatusLog) genStatusLog.textContent = 'Error: ' + data.error;
                     if (window.Swal) {
                         Swal.fire({
                             title: 'Error!',
-                            text: response.error,
+                            text: data.error,
                             icon: 'error',
                             confirmButtonColor: '#ec4899'
                         });
@@ -1877,41 +1905,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     cancelButtonColor: '#d1d5db',
                     confirmButtonText: 'Yes, logout'
                 }).then((result) => {
-                    // Clear key rotation interval
-                    if (keyRotationInterval) {
-                        clearInterval(keyRotationInterval);
+                    if (result.isConfirmed) {
+                        // Clear key rotation interval
+                        if (keyRotationInterval) {
+                            clearInterval(keyRotationInterval);
+                        }
+                        
+                        // Clear activity update interval
+                        if (activityUpdateInterval) {
+                            clearInterval(activityUpdateInterval);
+                        }
+                        
+                        // Clear global stats interval
+                        if (globalStatsInterval) {
+                            clearInterval(globalStatsInterval);
+                        }
+                        
+                        // Clear top users interval
+                        if (topUsersInterval) {
+                            clearInterval(topUsersInterval);
+                        }
+                        
+                        // Clear any pending activity request
+                        if (window.activityRequest) {
+                            window.activityRequest.abort();
+                            window.activityRequest = null;
+                        }
+                        
+                        // Clear activity request timeout
+                        if (activityRequestTimeout) {
+                            clearTimeout(activityRequestTimeout);
+                            activityRequestTimeout = null;
+                        }
+                        
+                        sessionStorage.clear();
+                        localStorage.clear(); // Clear user stats on logout
+                        window.location.href = 'login.php';
                     }
-                    
-                    // Clear activity update interval
-                    if (activityUpdateInterval) {
-                        clearInterval(activityUpdateInterval);
-                    }
-                    
-                    // Clear global stats interval
-                    if (globalStatsInterval) {
-                        clearInterval(globalStatsInterval);
-                    }
-                    
-                    // Clear top users interval
-                    if (topUsersInterval) {
-                        clearInterval(topUsersInterval);
-                    }
-                    
-                    // Clear any pending activity request
-                    if (window.activityRequest) {
-                        window.activityRequest.abort();
-                        window.activityRequest = null;
-                    }
-                    
-                    // Clear activity request timeout
-                    if (activityRequestTimeout) {
-                        clearTimeout(activityRequestTimeout);
-                        activityRequestTimeout = null;
-                    }
-                    
-                    sessionStorage.clear();
-                    localStorage.clear(); // Clear user stats on logout
-                    window.location.href = 'login.php';
                 });
             } else {
                 // Fallback if Swal is not available
@@ -1978,6 +2008,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const apiKey = getCurrentApiKey();
             console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+            
+            // Make sure we have a valid API key before making the request
+            if (!apiKey) {
+                console.error('No API key available for activity update');
+                // Try to refresh the API key
+                refreshApiKey().then(success => {
+                    if (success) {
+                        // Retry the request after getting a new API key
+                        setTimeout(updateUserActivity, 1000);
+                    }
+                });
+                return;
+            }
             
             fetch('/update_activity.php', {
                 method: 'POST', // Changed to POST for more reliable delivery
@@ -2086,7 +2129,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (error.message.includes('Authentication failed') || error.message.includes('401')) {
                         errorMessage = 'Authentication error - please refresh the page';
                         // Try to refresh the API key
-                        refreshApiKey();
+                        refreshApiKey().then(success => {
+                            if (success) {
+                                // Retry the request after getting a new API key
+                                setTimeout(updateUserActivity, 1000);
+                            }
+                        });
                     }
                     
                     const homePage = document.getElementById('page-home');
@@ -2143,7 +2191,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const username = (user.username && typeof user.username === 'string') ? user.username : '';
                 const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
                     user.photo_url : 
-                    `https://ui-users.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
                 
                 // Create user item element
                 const userItem = document.createElement('div');
@@ -2490,7 +2538,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 updateCardCount();
                             }
                         }
-                    });
+                    }
                 });
 
                 if (exportBtn) exportBtn.addEventListener('click', function() {
@@ -2650,76 +2698,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-                
-                // RAZORPAY GATEWAY MAINTENANCE FEATURE
-                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]);
-                if (razorpayGateway) {
-                    // Disable the radio button
-                    razorpayGateway.disabled = true;
-                    
-                    // Find the parent label
-                    const parentLabel = razorpayGateway.closest('label');
-                    if (parentLabel) {
-                        // Add visual styling to show it's disabled
-                        parentLabel.style.opacity = '0.6';
-                        parentLabel.style.cursor = 'not-allowed';
-                        parentLabel.style.position = 'relative';
-                        
-                        // Add a maintenance badge
-                        const badge = document.createElement('span');
-                        badge.textContent = 'Maintenance';
-                        badge.style.position = 'absolute';
-                        badge.style.top = '5px';
-                        badge.style.right = '5px';
-                        badge.style.backgroundColor = '#ef4444'; // Red color
-                        badge.color = 'white';
-                        badge.style.padding = '2px 6px';
-                        badge.style.borderRadius = '6px';
-                        badge.style.fontSize = '0.7rem';
-                        badge.style.fontWeight = 'bold';
-                        badge.textTransform = 'uppercase';
-                        parentLabel.appendChild(badge);
-                        
-                        // Add click event to show popup
-                        parentLabel.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            if (window.Swal) {
-                                Swal.fire({
-                                    title: 'Gateway Under Maintenance',
-                                    text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
-                                    icon: 'error',
-                                    confirmButtonColor: '#ef4444', // Red color
-                                    confirmButtonText: 'OK'
-                                });
-                            } else {
-                                alert('Gateway under maintenance. Please select another gateway.');
-                            }
-                        });
-                    }
+            });
+        }
+        
+        // Load API key and initialize the app
+        loadApiKey().then(success => {
+            if (!success) {
+                console.warn('Proceeding without valid API key');
+                // Show a warning if API key loading fails
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'API Key Issue',
+                        text: 'Could not load API key. Some features may not work properly.',
+                        icon: 'warning',
+                        confirmButtonColor: '#f59e0b'
+                    });
                 }
             }
             
-            // Load API key and initialize the app
-            loadApiKey().then(success => {
-                if (!success) {
-                    console.warn('Proceeding without valid API key');
-                    // Show a warning if API key loading fails
-                    if (window.Swal) {
-                        Swal.fire({
-                            title: 'API Key Issue',
-                            text: 'Could not load API key. Some features may not work properly.',
-                            icon: 'warning',
-                            confirmButtonColor: '#f59e0b'
-                        });
-                    }
-                }
-                
-                // Start key rotation
-                startKeyRotation();
-                
-                // Initialize the app
-                initializeApp();
-            });
+            // Start key rotation
+            startKeyRotation();
+            
+            // Initialize the app
+            initializeApp();
+        });
     });
+});
