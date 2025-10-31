@@ -367,11 +367,11 @@ if (empty($userPhotoUrl)) {
             z-index: 999; 
             overflow-y: auto;
             transform: translateX(-100%); 
-            transition: transform 0.2s ease-out;
+            transition: transform 0.3s ease-out; /* Increased duration for smoother animation */
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(20px);
-            will-change: transform;
+            will-change: transform; /* Hardware acceleration hint */
         }
         
         .sidebar.open {
@@ -437,7 +437,7 @@ if (empty($userPhotoUrl)) {
             min-height: calc(100vh - 50px); /* Adjusted for reduced navbar height */
             position: relative; 
             z-index: 1;
-            transition: margin-left 0.2s ease-out;
+            transition: margin-left 0.3s ease-out; /* Increased duration for smoother animation */
             margin-right: 380px; /* Reduced space for right sidebar */
         }
         
@@ -752,15 +752,15 @@ if (empty($userPhotoUrl)) {
         .gs-num{font-weight:800;font-size:1.8rem;line-height:1} /* Reduced font size */
         .gs-label{font-size:0.8rem;color:var(--text-secondary);margin-top:0.6rem} /* Reduced font size and margin */
         
-        .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05)); }
-        .gs-green  { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05)); }
-        .gs-red    { background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05)); }
-        .gs-purple { background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05)); }
+        .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1)); }
+        .gs-green  { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.1)); }
+        .gs-red    { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1)); }
+        .gs-purple { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1)); }
         
-        body[data-theme="dark"] .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1)); }
-        body[data-theme="dark"] .gs-green  { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.1)); }
-        body[data-theme="dark"] .gs-red    { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1)); }
-        body[data-theme="dark"] .gs-purple { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1)); }
+        body[data-theme="dark"] .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(59,130,246,0.2)); }
+        body[data-theme="dark"] .gs-green  { background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.2)); }
+        body[data-theme="dark"] .gs-red    { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(239,68,68,0.2)); }
+        body[data-theme="dark"] .gs-purple { background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(139,92,246,0.2)); }
         
         /* Beast Level Right Sidebar - Light Mode Fix and Reduced Size */
         .right-sidebar {
@@ -1952,73 +1952,42 @@ if (empty($userPhotoUrl)) {
             transform: rotate(90deg);
         }
         
-        /* Gateway Provider Selection - Reduced Size and More Space */
-        .gateway-providers {
+        /* Gateway Group Structure - Improved spacing */
+        .gateway-group {
+            margin-bottom: 1.5rem; /* Increased margin for better separation */
+        }
+        
+        .gateway-group-title {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1.2rem; /* Increased gap for more space */
-            margin-bottom: 1.2rem; /* Reduced margin */
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .gateway-provider {
-            flex: 1;
-            min-width: 100px; /* Reduced min-width */
-            padding: 0.8rem; /* Reduced padding */
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px; /* Reduced border radius */
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-        
-        body[data-theme="dark"] .gateway-provider {
-            background: var(--dark-accent-bg);
+        body[data-theme="dark"] .gateway-group-title {
+            color: var(--dark-text-primary);
             border-color: var(--dark-border-color);
         }
         
-        .gateway-provider:hover {
-            border-color: var(--accent-blue);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-        }
-        
-        .gateway-provider.active {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: var(--accent-blue);
-        }
-        
-        .gateway-provider-icon {
-            font-size: 1.2rem; /* Reduced font size */
-            margin-bottom: 0.4rem; /* Reduced margin */
+        .gateway-group-title i {
             color: var(--accent-blue);
         }
         
-        .gateway-provider-name {
-            font-weight: 700;
-            font-size: 0.8rem; /* Reduced font size */
-            color: var(--text-primary);
-        }
-        
-        body[data-theme="dark"] .gateway-provider-name {
-            color: var(--dark-text-primary);
-        }
-        
-        /* Gateway Options - Reduced Size */
         .gateway-options {
-            display: none;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Reduced min-width */
-            gap: 0.8rem; /* Reduced gap */
-        }
-        
-        .gateway-options.active {
-            display: grid;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem; /* Increased gap between gateways */
         }
         
         .gateway-option {
             display: flex; 
             align-items: center; 
-            padding: 0.8rem; /* Reduced padding */
+            padding: 1rem; /* Increased padding for better spacing */
             background: var(--secondary-bg); 
             border: 1px solid var(--border-color);
             border-radius: 10px; /* Reduced border radius */
@@ -2039,9 +2008,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-option input[type="radio"] {
-            width: 14px; /* Reduced size */
-            height: 14px; /* Reduced size */
-            margin-right: 0.6rem; /* Reduced margin */
+            width: 16px; /* Reduced size */
+            height: 16px; /* Reduced size */
+            margin-right: 0.8rem; /* Reduced margin */
             cursor: pointer; 
             accent-color: var(--accent-blue);
         }
@@ -2054,9 +2023,9 @@ if (empty($userPhotoUrl)) {
             font-weight: 700; 
             display: flex; 
             align-items: center;
-            gap: 0.3rem; /* Reduced gap */
-            margin-bottom: 0.2rem; /* Reduced margin */
-            font-size: 0.8rem; /* Reduced font size */
+            gap: 0.4rem; /* Reduced gap */
+            margin-bottom: 0.3rem; /* Reduced margin */
+            font-size: 0.9rem; /* Increased font size */
         }
         
         body[data-theme="dark"] .gateway-option-name {
@@ -2064,7 +2033,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-option-desc { 
-            font-size: 0.65rem; /* Reduced font size */
+            font-size: 0.75rem; /* Increased font size */
             color: var(--text-secondary); 
         }
         
@@ -2073,9 +2042,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            padding: 0.1rem 0.3rem; /* Reduced padding */
-            border-radius: 3px; /* Reduced border radius */
-            font-size: 0.5rem; /* Reduced font size */
+            padding: 0.2rem 0.4rem; /* Increased padding */
+            border-radius: 4px; /* Increased border radius */
+            font-size: 0.6rem; /* Increased font size */
             font-weight: 700; 
             text-transform: uppercase;
         }
@@ -2093,19 +2062,19 @@ if (empty($userPhotoUrl)) {
         .badge-maintenance {
             background-color: #ef4444;
             color: white;
-            padding: 1px 3px; /* Reduced padding */
-            border-radius: 3px; /* Reduced border radius */
-            font-size: 0.5rem; /* Reduced font size */
+            padding: 0.2rem 0.4rem; /* Increased padding */
+            border-radius: 4px; /* Increased border radius */
+            font-size: 0.6rem; /* Increased font size */
             font-weight: 700;
             text-transform: uppercase;
-            margin-left: 4px; /* Reduced margin */
+            margin-left: 0.5rem; /* Increased margin */
         }
         
         .settings-footer {
             display: flex; 
-            gap: 0.6rem; /* Reduced gap */
-            margin-top: 1rem; /* Reduced margin */
-            padding-top: 0.6rem; /* Reduced padding */
+            gap: 0.8rem; /* Increased gap */
+            margin-top: 1.2rem; /* Increased margin */
+            padding-top: 0.8rem; /* Increased padding */
             border-top: 1px solid var(--border-color);
         }
         
@@ -2115,14 +2084,14 @@ if (empty($userPhotoUrl)) {
         
         .btn-save {
             flex: 1; 
-            padding: 0.5rem; /* Reduced padding */
+            padding: 0.6rem; /* Increased padding */
             border-radius: 8px; /* Reduced border radius */
             border: none;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white; 
             font-weight: 700; 
             cursor: pointer; 
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.9rem; /* Increased font size */
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
         
@@ -2133,14 +2102,14 @@ if (empty($userPhotoUrl)) {
         
         .btn-cancel {
             flex: 1; 
-            padding: 0.5rem; /* Reduced padding */
+            padding: 0.6rem; /* Increased padding */
             border-radius: 8px; /* Reduced border radius */
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); 
             color: var(--text-primary);
             font-weight: 700; 
             cursor: pointer; 
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.9rem; /* Increased font size */
         }
         
         body[data-theme="dark"] .btn-cancel {
@@ -2151,34 +2120,6 @@ if (empty($userPhotoUrl)) {
         
         .btn-cancel:hover { 
             transform: translateY(-2px); 
-        }
-        
-        .btn-back {
-            flex: 1; 
-            padding: 0.5rem; /* Reduced padding */
-            border-radius: 8px; /* Reduced border radius */
-            border: 1px solid var(--border-color);
-            background: var(--secondary-bg); 
-            color: var(--text-primary);
-            font-weight: 700; 
-            cursor: pointer; 
-            font-size: 0.85rem; /* Reduced font size */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem; /* Reduced gap */
-        }
-        
-        body[data-theme="dark"] .btn-back {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-            color: var(--dark-text-primary);
-        }
-        
-        .btn-back:hover { 
-            transform: translateY(-2px); 
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
         }
         
         .loader {
@@ -2371,15 +2312,15 @@ if (empty($userPhotoUrl)) {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid var(--accent-blue);
             color: var(--accent-blue);
-            padding: 0.3rem 0.6rem; /* Reduced padding */
-            border-radius: 6px; /* Reduced border radius */
-            font-size: 0.7rem; /* Reduced font size */
+            padding: 0.4rem 0.8rem; /* Increased padding */
+            border-radius: 8px; /* Increased border radius */
+            font-size: 0.75rem; /* Increased font size */
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 0.3rem; /* Reduced gap */
+            gap: 0.4rem; /* Increased gap */
         }
         
         .copy-all-btn:hover, .clear-all-btn:hover {
@@ -2396,7 +2337,7 @@ if (empty($userPhotoUrl)) {
         
         .results-actions {
             display: flex;
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.8rem; /* Increased gap */
             flex-wrap: wrap;
         }
         
@@ -2559,8 +2500,8 @@ if (empty($userPhotoUrl)) {
             }
             
             .copy-all-btn, .clear-all-btn { 
-                padding: 0.2rem 0.5rem; /* Reduced padding */
-                font-size: 0.65rem; /* Reduced font size */
+                padding: 0.3rem 0.6rem; /* Reduced padding */
+                font-size: 0.7rem; /* Reduced font size */
             }
             
             .form-row { 
@@ -2578,15 +2519,15 @@ if (empty($userPhotoUrl)) {
             }
             
             .gateway-option { 
-                padding: 0.5rem; /* Reduced padding */
+                padding: 0.8rem; /* Increased padding for mobile */
             }
             
             .gateway-option-name { 
-                font-size: 0.75rem; /* Reduced font size */
+                font-size: 0.85rem; /* Slightly reduced font size */
             }
             
             .gateway-option-desc { 
-                font-size: 0.6rem; /* Reduced font size */
+                font-size: 0.7rem; /* Slightly reduced font size */
             }
             
             .menu-toggle {
@@ -3310,44 +3251,11 @@ if (empty($userPhotoUrl)) {
                 </button>
             </div>
 
-            <!-- Gateway Provider Selection -->
-            <div class="gateway-providers" id="gatewayProviders">
-                <div class="gateway-provider" data-provider="stripe">
-                    <div class="gateway-provider-icon">
-                        <i class="fab fa-stripe"></i>
-                    </div>
-                    <div class="gateway-provider-name">Stripe</div>
+            <div class="gateway-group">
+                <div class="gateway-group-title">
+                    <i class="fas fa-bolt"></i> Charge Gateways
                 </div>
-                <div class="gateway-provider" data-provider="authnet">
-                    <div class="gateway-provider-icon">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
-                    <div class="gateway-provider-name">Authnet</div>
-                </div>
-                <div class="gateway-provider" data-provider="razorpay">
-                    <div class="gateway-provider-icon">
-                        <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" style="width:20px; height:20px; object-fit:contain;">
-                    </div>
-                    <div class="gateway-provider-name">Razorpay</div>
-                </div>
-                <div class="gateway-provider" data-provider="paypal">
-                    <div class="gateway-provider-icon">
-                        <i class="fab fa-paypal"></i>
-                    </div>
-                    <div class="gateway-provider-name">PayPal</div>
-                </div>
-                <div class="gateway-provider" data-provider="shopify">
-                    <div class="gateway-provider-icon">
-                        <i class="fab fa-shopify"></i>
-                    </div>
-                    <div class="gateway-provider-name">Shopify</div>
-                </div>
-            </div>
-
-            <!-- Gateway Options - Initially Hidden -->
-            <div class="gateway-options" id="gatewayOptions">
-                <!-- Stripe Gateways -->
-                <div class="gateway-options-group" data-provider="stripe">
+                <div class="gateway-options">
                     <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/stripe1$.php">
                         <div class="gateway-option-content">
@@ -3369,6 +3277,56 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/shopify1$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-shopify"></i> Shopify
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">E-commerce payment processing</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fab fa-paypal"></i> PayPal
+                                <span class="gateway-badge badge-charge">0.1$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option" id="razorpay-gateway">
+                        <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                    style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
+                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
+                            </div>
+                            <div class="gateway-option-desc">Indian payment gateway</div>
+                        </div>
+                    </label>
+                    <label class="gateway-option">
+                        <input type="radio" name="gateway" value="gate/authnet1$.php">
+                        <div class="gateway-option-content">
+                            <div class="gateway-option-name">
+                                <i class="fas fa-credit-card"></i> Authnet
+                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                            </div>
+                            <div class="gateway-option-desc">Authorize.net payment gateway</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="gateway-group">
+                <div class="gateway-group-title">
+                    <i class="fas fa-shield-alt"></i> Auth Gateways
+                </div>
+                <div class="gateway-options">
+                    <label class="gateway-option">
                         <input type="radio" name="gateway" value="gate/stripeauth.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
@@ -3379,72 +3337,11 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                 </div>
-
-                <!-- Authnet Gateways -->
-                <div class="gateway-options-group" data-provider="authnet">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/authnet1.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Authnet
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Authorize.net payment gateway</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Razorpay Gateways -->
-                <div class="gateway-options-group" data-provider="razorpay">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/razorpay0.10.php" disabled>
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:12px; height:12px; object-fit:contain;">Razorpay
-                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
-                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
-                            </div>
-                            <div class="gateway-option-desc">Indian payment gateway</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- PayPal Gateways -->
-                <div class="gateway-options-group" data-provider="paypal">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-charge">0.1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Shopify Gateways -->
-                <div class="gateway-options-group" data-provider="shopify">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
-                        </div>
-                    </label>
-                </div>
             </div>
 
             <div class="settings-footer">
-                <button class="btn-back" id="backToProviders" style="display: none;">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
                 <button class="btn-save" onclick="saveGatewaySettings()">
-                    <i class="fas fa-check"></i> Save
+                    <i class="fas fa-check"></i> Save Settings
                 </button>
                 <button class="btn-cancel" onclick="closeGatewaySettings()">
                     <i class="fas fa-times"></i> Cancel
@@ -3455,71 +3352,63 @@ if (empty($userPhotoUrl)) {
 
     <script src="indeex.js?v=<?= time(); ?>"></script>
     <script>
-        // Gateway settings functions
-        function initializeGatewaySettings() {
-            const gatewayProviders = document.querySelectorAll('.gateway-provider');
-            const backToProvidersBtn = document.getElementById('backToProviders');
+        // Performance optimization for smooth sidebar animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Use requestAnimationFrame for smoother animations
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const menuToggle = document.getElementById('menuToggle');
+            let isAnimating = false;
             
-            // Add click event to gateway providers
-            gatewayProviders.forEach(provider => {
-                provider.addEventListener('click', function() {
-                    const providerName = this.getAttribute('data-provider');
-                    showGatewayOptions(providerName);
-                });
+            menuToggle.addEventListener('click', function() {
+                if (isAnimating) return;
+                isAnimating = true;
+                
+                if (sidebar.classList.contains('open')) {
+                    // Close sidebar
+                    sidebar.classList.remove('open');
+                    mainContent.classList.remove('sidebar-open');
+                } else {
+                    // Open sidebar
+                    sidebar.classList.add('open');
+                    mainContent.classList.add('sidebar-open');
+                }
+                
+                // Reset animation flag after animation completes
+                setTimeout(() => {
+                    isAnimating = false;
+                }, 300);
             });
             
-            // Add click event to back button
-            backToProvidersBtn.addEventListener('click', function() {
-                showGatewayProviders();
-            });
-        }
-        
-        function showGatewayOptions(providerName) {
-            const gatewayProviders = document.getElementById('gatewayProviders');
-            const gatewayOptions = document.getElementById('gatewayOptions');
-            const backToProvidersBtn = document.getElementById('backToProviders');
-            
-            // Hide all provider options
-            const allProviderOptions = document.querySelectorAll('.gateway-options-group');
-            allProviderOptions.forEach(option => {
-                option.style.display = 'none';
-            });
-            
-            // Show selected provider options
-            const selectedProviderOptions = document.querySelector(`.gateway-options-group[data-provider="${providerName}"]`);
-            if (selectedProviderOptions) {
-                selectedProviderOptions.style.display = 'block';
+            // Optimize scrolling performance
+            let ticking = false;
+            function updateScrollPosition() {
+                // Add any scroll-based updates here
+                ticking = false;
             }
             
-            // Show options container and back button
-            gatewayOptions.classList.add('active');
-            backToProvidersBtn.style.display = 'flex';
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateScrollPosition);
+                    ticking = true;
+                }
+            });
             
-            // Hide providers
-            gatewayProviders.style.display = 'none';
-        }
+            // Initialize gateway settings
+            initializeGatewaySettings();
+        });
         
-        function showGatewayProviders() {
-            const gatewayProviders = document.getElementById('gatewayProviders');
-            const gatewayOptions = document.getElementById('gatewayOptions');
-            const backToProvidersBtn = document.getElementById('backToProviders');
-            
-            // Show providers
-            gatewayProviders.style.display = 'flex';
-            
-            // Hide options container and back button
-            gatewayOptions.classList.remove('active');
-            backToProvidersBtn.style.display = 'none';
+        // Gateway settings functions
+        function initializeGatewaySettings() {
+            // No need to add event listeners here as they're already in the HTML
         }
         
         function openGatewaySettings() {
             document.getElementById('gatewaySettings').classList.add('active');
-            showGatewayProviders();
         }
         
         function closeGatewaySettings() {
             document.getElementById('gatewaySettings').classList.remove('active');
-            showGatewayProviders();
         }
         
         function saveGatewaySettings() {
@@ -3553,11 +3442,6 @@ if (empty($userPhotoUrl)) {
                 }
             }
         }
-        
-        // Initialize gateway settings when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeGatewaySettings();
-        });
     </script>
 </body>
 </html>
