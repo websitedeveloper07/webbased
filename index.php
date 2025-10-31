@@ -3670,7 +3670,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -3740,7 +3740,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-checking">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢𝐢𝐥</p>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢𝐢</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -3804,7 +3804,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥𝐢𝐢𝐥</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥𝐢𝐥</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -4319,9 +4319,6 @@ if (empty($userPhotoUrl)) {
             // Check for admin user and add admin badge
             checkForAdminUser();
             
-            // Fetch online users and top users data
-            fetchUsersData();
-            
             // Load saved theme
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
@@ -4330,204 +4327,6 @@ if (empty($userPhotoUrl)) {
                 icon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             }
         });
-        
-        // Function to fetch users data from API
-        function fetchUsersData() {
-            // Fetch online users
-            fetch('/update_activity.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'X-API-KEY': getCurrentApiKey()
-                },
-                body: JSON.stringify({ timestamp: Date.now() })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    updateOnlineUsersList(data.users || []);
-                    document.getElementById('onlineCount').textContent = data.count || 0;
-                    document.getElementById('mobileOnlineCount').textContent = data.count || 0;
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching online users:', error);
-            });
-            
-            // Fetch top users
-            fetch('/gate/topusers.php', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'X-API-KEY': getCurrentApiKey()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    updateTopUsersList(data.users || []);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching top users:', error);
-            });
-            
-            // Set up periodic refresh
-            setInterval(fetchUsersData, 30000); // Refresh every 30 seconds
-        }
-        
-        // Function to update online users list
-        function updateOnlineUsersList(users) {
-            const onlineUsersList = document.getElementById('onlineUsersList');
-            const mobileOnlineUsersList = document.getElementById('mobileOnlineUsersList');
-            
-            if (!Array.isArray(users) || users.length === 0) {
-                if (onlineUsersList) {
-                    onlineUsersList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-user-slash"></i>
-                            <h3>No Users Online</h3>
-                            <p>No other users are currently online</p>
-                        </div>`;
-                }
-                if (mobileOnlineUsersList) {
-                    mobileOnlineUsersList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-user-slash"></i>
-                            <h3>No Users Online</h3>
-                            <p>No other users are currently online</p>
-                        </div>`;
-                }
-                return;
-            }
-            
-            let onlineUsersHTML = '';
-            let mobileOnlineUsersHTML = '';
-            
-            users.forEach(user => {
-                const isAdmin = user.username === '@K4LNX';
-                const adminClass = isAdmin ? 'admin' : '';
-                const adminBadge = isAdmin ? '<span class="admin-badge">ADMIN</span>' : '';
-                
-                // Desktop version - vertical layout
-                onlineUsersHTML += `
-                    <div class="online-user-item ${adminClass}">
-                        <div class="online-user-avatar-container">
-                            <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`}" alt="${user.name}" class="online-user-avatar">
-                            <div class="online-indicator"></div>
-                        </div>
-                        <div class="online-user-info">
-                            <div class="online-user-name">${user.name}${adminBadge}</div>
-                            <div class="online-user-username">${user.username || ''}</div>
-                        </div>
-                    </div>
-                `;
-                
-                // Mobile version - vertical layout
-                mobileOnlineUsersHTML += `
-                    <div class="mobile-online-user-item ${adminClass}">
-                        <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`}" alt="${user.name}" class="mobile-online-user-avatar">
-                        <div class="mobile-online-user-info">
-                            <span class="mobile-online-user-name">${user.name}${adminBadge}</span>
-                            <span class="mobile-online-user-username">${user.username || ''}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            if (onlineUsersList) {
-                onlineUsersList.innerHTML = onlineUsersHTML;
-            }
-            if (mobileOnlineUsersList) {
-                mobileOnlineUsersList.innerHTML = mobileOnlineUsersHTML;
-            }
-        }
-        
-        // Function to update top users list
-        function updateTopUsersList(users) {
-            const topUsersList = document.getElementById('topUsersList');
-            const mobileTopUsersList = document.getElementById('mobileTopUsersList');
-            
-            if (!Array.isArray(users) || users.length === 0) {
-                if (topUsersList) {
-                    topUsersList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>No Top Users</h3>
-                            <p>No top users data available</p>
-                        </div>`;
-                }
-                if (mobileTopUsersList) {
-                    mobileTopUsersList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>No Top Users</h3>
-                            <p>No top users data available</p>
-                        </div>`;
-                }
-                return;
-            }
-            
-            let topUsersHTML = '';
-            let mobileTopUsersHTML = '';
-            
-            users.forEach(user => {
-                const isAdmin = user.username === '@K4LNX';
-                const adminClass = isAdmin ? 'admin' : '';
-                const adminBadge = isAdmin ? '<span class="admin-badge">ADMIN</span>' : '';
-                
-                // Desktop version - vertical layout with "Hits" text
-                topUsersHTML += `
-                    <div class="top-user-item ${adminClass}">
-                        <div class="top-user-avatar-container">
-                            <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`}" alt="${user.name}" class="top-user-avatar">
-                        </div>
-                        <div class="top-user-info">
-                            <div class="top-user-name">${user.name}${adminBadge}</div>
-                            <div class="top-user-username">${user.username || ''}</div>
-                        </div>
-                        <div class="top-user-hits">${user.total_hits || 0} Hits</div>
-                    </div>
-                `;
-                
-                // Mobile version - vertical layout with "Hits" text
-                mobileTopUsersHTML += `
-                    <div class="mobile-top-user-item ${adminClass}">
-                        <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name?.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`}" alt="${user.name}" class="mobile-top-user-avatar">
-                        <div class="mobile-top-user-info">
-                            <div class="mobile-top-user-name">${user.name}${adminBadge}</div>
-                            <div class="mobile-top-user-username">${user.username || ''}</div>
-                        </div>
-                        <div class="mobile-top-user-hits">${user.total_hits || 0} Hits</div>
-                    </div>
-                `;
-            });
-            
-            if (topUsersList) {
-                topUsersList.innerHTML = topUsersHTML;
-            }
-            if (mobileTopUsersList) {
-                mobileTopUsersList.innerHTML = mobileTopUsersHTML;
-            }
-        }
-        
-        // Function to check for admin user and add admin badge
-        function checkForAdminUser() {
-            // This function is now called after updating the user lists
-            // The admin badge is already added in the update functions above
-        }
         
         // Gateway settings functions
         function initializeGatewaySettings() {
@@ -4794,6 +4593,12 @@ if (empty($userPhotoUrl)) {
                     element.style.transform = 'scale(1)';
                 }, 300);
             }
+        }
+        
+        // Function to check for admin user and add admin badge
+        function checkForAdminUser() {
+            // This function is now called after updating the user lists
+            // The admin badge is already added in the update functions above
         }
         
         // Make functions globally accessible
