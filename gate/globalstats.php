@@ -54,7 +54,7 @@ try {
     }
     
     // Check if users table exists
-    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn());
+    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
     
     if (!$usersTableExists) {
         // Create users table if it doesn't exist
