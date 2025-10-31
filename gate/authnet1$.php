@@ -9,7 +9,7 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 require_once __DIR__ . '/globalstats.php';
-require_once __DIR__ . '/topusers.php');
+require_once __DIR__ . '/topusers.php';
 
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -37,24 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// Validate API key
- $validation = validateApiKey();
-if (!$validation['valid']) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    echo json_encode($errorMsg);
-    exit;
-}
-
- $expectedApiKey = $validation['response']['apiKey'];
- $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-if ($providedApiKey !== $expectedApiKey) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
     echo json_encode($errorMsg);
     exit;
 }
