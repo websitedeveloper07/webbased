@@ -1552,8 +1552,8 @@ if (empty($userPhotoUrl)) {
         }
         
         .mobile-online-users-list {
-            display: flex; /* Changed from flex-wrap to flex */
-            flex-direction: column; /* Added to make items stack vertically */
+            display: flex; /* Changed from flex-wrap to column */
+            flex-direction: column; /* Added to ensure vertical layout */
             gap: 0.6rem; /* Reduced gap */
         }
         
@@ -1568,7 +1568,7 @@ if (empty($userPhotoUrl)) {
             transition: all 0.3s;
             position: relative;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
-            width: 100%; /* Added to make items take full width */
+            width: 100%; /* Added to ensure full width */
         }
         
         body[data-theme="dark"] .mobile-online-user-item {
@@ -1589,7 +1589,6 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            flex: 1; /* Added to make info take remaining space */
         }
         
         .mobile-online-user-name {
@@ -1599,7 +1598,7 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-primary);
-            max-width: 100%; /* Changed from 100px to 100% */
+            max-width: 100px; /* Increased width for mobile */
             display: flex;
             align-items: center;
             gap: 0.2rem;
@@ -3672,7 +3671,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -3806,7 +3805,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥𝐢𝐥</p>
 
             <div class="generator-section">
                 <div class="generator-header">
