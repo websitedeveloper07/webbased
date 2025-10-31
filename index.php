@@ -2820,7 +2820,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* New Gateway Selection Modal - Simplified */
+        /* New Gateway Selection Modal - Inspired by the example */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -2843,8 +2843,8 @@ if (empty($userPhotoUrl)) {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 2rem;
-            max-width: 650px;
+            padding: 1.5rem;
+            max-width: 600px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
@@ -2861,8 +2861,8 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.8rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -2871,7 +2871,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-modal-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -2883,9 +2883,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-modal-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             border: none;
             background: var(--secondary-bg);
             color: var(--text-secondary);
@@ -2893,7 +2893,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: all 0.3s;
         }
         
@@ -2910,15 +2910,14 @@ if (empty($userPhotoUrl)) {
         
         .gateway-list {
             display: grid;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 0.5rem;
         }
         
         .gateway-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 1.2rem;
+            padding: 0.85rem 1rem;
             border-radius: 12px;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
@@ -2932,7 +2931,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-item:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             border-color: rgba(34,197,94,0.35);
             background: var(--dark-accent-bg);
         }
@@ -2943,18 +2942,18 @@ if (empty($userPhotoUrl)) {
         
         .gateway-item-left {
             display: flex;
-            gap: 1rem;
+            gap: 0.8rem;
             align-items: center;
         }
         
         .gateway-item-icon {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             display: grid;
             place-items: center;
             border-radius: 8px;
             background: rgba(148,163,184,0.12);
-            font-size: 18px;
+            font-size: 16px;
         }
         
         .gateway-item-info {
@@ -2964,7 +2963,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-item-title {
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
         
         body[data-theme="dark"] .gateway-item-title {
@@ -2972,9 +2971,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-item-subtitle {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             color: var(--text-secondary);
-            margin-top: 0.2rem;
+            margin-top: 0.1rem;
         }
         
         body[data-theme="dark"] .gateway-item-subtitle {
@@ -2988,32 +2987,27 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            font-size: 0.75rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 6px;
+            font-size: 0.7rem;
+            padding: 0.12rem 0.4rem;
+            border-radius: 0.4rem;
             border: 1px solid var(--border-color);
         }
         
-        .badge-charge {
-            color: var(--warning);
-            background: rgba(245,158,11,0.12);
+        .badge-active {
+            color: var(--success-green);
+            background: rgba(34,197,94,0.12);
         }
         
-        .badge-auth {
-            color: var(--accent-cyan);
-            background: rgba(6,182,212,0.12);
-        }
-        
-        .badge-maintenance {
+        .badge-inactive {
             color: var(--error);
             background: rgba(239,68,68,0.12);
         }
         
         .gateway-modal-footer {
             display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-            padding-top: 1rem;
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+            padding-top: 0.8rem;
             border-top: 1px solid var(--border-color);
         }
         
@@ -3023,7 +3017,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-back {
             flex: 1;
-            padding: 0.8rem;
+            padding: 0.6rem;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg);
@@ -3034,7 +3028,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
         
         body[data-theme="dark"] .gateway-btn-back {
@@ -3051,7 +3045,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-save {
             flex: 1;
-            padding: 0.8rem;
+            padding: 0.6rem;
             border-radius: 8px;
             border: none;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
@@ -3069,7 +3063,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-cancel {
             flex: 1;
-            padding: 0.8rem;
+            padding: 0.6rem;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg);
@@ -3087,15 +3081,6 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-cancel:hover {
             transform: translateY(-2px);
-        }
-        
-        /* Fix for Global Statistics text in dark mode */
-        body[data-theme="dark"] .gs-title {
-            color: var(--dark-text-primary) !important;
-        }
-        
-        body[data-theme="dark"] .gs-sub {
-            color: var(--dark-text-secondary) !important;
         }
     </style>
 </head>
@@ -3221,7 +3206,7 @@ if (empty($userPhotoUrl)) {
                         <div class="gs-head">
                             <div class="gs-chip">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
+                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v12h-2V9z"/>
                                 </svg>
                             </div>
                             <div>
@@ -3234,7 +3219,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-blue">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4s-3 1.57-3 3.5S6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 3.45V19h6v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 3.45V19h6v-2.5C15 14.17 10.33 13 8 13z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalUsers" class="gs-num">—</div>
@@ -3244,7 +3229,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-1-.45-1-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68-.5-.68C10.96 2.54 10.05 2 9 2 9 2s.04.54-.04.54-1.65-.5.67-.68C10.96 2.54 10.05 2 9 2 9 2s.04.54-.04.54-1.65-.5.67-.68C10.96 2.54 10.05 2 9 2 9 2s.04.54-.04.54-1.65-.5.67-.68z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -3264,7 +3249,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-green">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M3 13h3l2-6 4 4 12 2 6h5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </div>
                                 <div id="gLiveCards" class="gs-num">—</div>
@@ -3297,8 +3282,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬</h1>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮 𝐜𝐚𝐫𝐫 𝐦𝐦 𝐦𝐥 𝐦𝐥</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -3361,8 +3346,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐰𝐢𝐧𝐡</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑬𝑬𝑬</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫 𝐯𝐚𝐫 𝐯𝐚𝐫 𝐯𝐚𝐫𝐧𝐧</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -3545,46 +3530,7 @@ if (empty($userPhotoUrl)) {
         </section>
     </main>
 
-    <!-- Right Sidebar with Online Users and Top Users -->
-    <aside class="right-sidebar" id="rightSidebar">
-        <!-- Online Users Section -->
-        <div class="online-users-section">
-            <div class="online-users-header">
-                <div class="online-users-title">
-                    <i class="fas fa-users"></i> Online Users
-                </div>
-                <div class="online-users-count" id="onlineUsersCount">
-                    <i class="fas fa-circle"></i>
-                    <span id="onlineCount">0</span> online
-                </div>
-            </div>
-            <div class="online-users-list" id="onlineUsersList">
-                <div class="empty-state">
-                    <i class="fas fa-user-slash"></i>
-                    <h3>No Users Online</h3>
-                    <p>No other users are currently online</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Users Section -->
-        <div class="top-users-section">
-            <div class="top-users-header">
-                <div class="top-users-title">
-                    <i class="fas fa-trophy"></i> Top Users
-                </div>
-            </div>
-            <div class="top-users-list" id="topUsersList">
-                <div class="empty-state">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>No Top Users</h3>
-                    <p>No top users data available</p>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Simplified Gateway Selection Modal -->
+    <!-- New Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -3596,7 +3542,12 @@ if (empty($userPhotoUrl)) {
                 </button>
             </div>
 
+            <!-- Gateway Selection -->
             <div class="gateway-list" id="gatewayList"></div>
+
+            <div class="gateway-options" id="gatewayOptions" style="display: none;">
+                <!-- Gateway options will be dynamically loaded here -->
+            </div>
 
             <div class="gateway-modal-footer">
                 <button class="gateway-btn-back" id="gatewayBtnBack" style="display: none;">
@@ -3680,12 +3631,8 @@ if (empty($userPhotoUrl)) {
             });
             
             // Initialize gateway list
-            showGatewayProviders();
+            buildGatewayList();
         }
-        
-        let selectedGateway = '';
-        let selectedApi = '';
-        let showingProviders = true;
         
         // Gateway data structure
         const gatewayData = {
@@ -3728,8 +3675,10 @@ if (empty($userPhotoUrl)) {
             }
         };
         
-        function showGatewayProviders() {
-            showingProviders = true;
+        let selectedGateway = '';
+        let selectedApi = '';
+        
+        function buildGatewayList() {
             const gatewayList = document.getElementById('gatewayList');
             gatewayList.innerHTML = '';
             
@@ -3750,7 +3699,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
                     <div class="gateway-item-right">
-                        <span class="gateway-badge badge-charge">Select</span>
+                        <span class="gateway-badge badge-active">Select</span>
                     </div>
                 `;
                 
@@ -3760,21 +3709,43 @@ if (empty($userPhotoUrl)) {
                 
                 gatewayList.appendChild(item);
             });
-            
-            // Update buttons
-            document.getElementById('gatewayBtnBack').style.display = 'none';
-            document.getElementById('gatewayBtnSave').style.display = 'none';
         }
         
         function selectGateway(gateway) {
             selectedGateway = gateway;
-            showingProviders = false;
             
-            // Show APIs for this gateway
-            const gatewayList = document.getElementById('gatewayList');
-            gatewayList.innerHTML = '';
+            // Update UI
+            document.querySelectorAll('.gateway-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.gateway-item[data-gateway="${gateway}"]`).classList.add('active');
             
-            const apis = gatewayData[gateway].apis;
+            // Show gateway options
+            showGatewayOptions(gateway);
+        }
+        
+        function showGatewayOptions(gateway) {
+            const gatewayOptions = document.getElementById('gatewayOptions');
+            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
+            const gatewayBtnSave = document.getElementById('gatewayBtnSave');
+            
+            // Hide gateway list and show options
+            document.getElementById('gatewayList').style.display = 'none';
+            gatewayOptions.style.display = 'flex';
+            gatewayBtnBack.style.display = 'flex';
+            gatewayBtnSave.style.display = 'flex';
+            
+            // Build API list
+            const apiList = document.createElement('div');
+            apiList.className = 'gateway-list';
+            
+            if (!selectedGateway || !gatewayData[selectedGateway]) {
+                apiList.innerHTML = '<div class="text-sm text-slate-400">No APIs available</div>';
+                gatewayOptions.appendChild(apiList);
+                return;
+            }
+            
+            const apis = gatewayData[selectedGateway].apis;
             apis.forEach(api => {
                 const item = document.createElement('div');
                 item.className = 'gateway-item';
@@ -3792,14 +3763,12 @@ if (empty($userPhotoUrl)) {
                         </div>
                         <div class="gateway-item-info">
                             <div class="gateway-item-title">${api.name}</div>
-                            <div class="gateway-item-subtitle">${api.type} • ${api.active ? 'Active' : 'Inactive'}</div>
+                            <div class="gateway-item-subtitle">${api.type}</div>
                         </div>
                     </div>
                     <div class="gateway-item-right">
-                        <span class="gateway-badge badge-${api.type}">${api.name.includes('$') ? api.name.split(' ')[1] : api.type}</span>
-                        ${!api.active ? '<span class="gateway-badge badge-maintenance">Under Maintenance</span>' : ''}
+                        <span class="gateway-badge ${api.active ? 'badge-active' : 'badge-inactive'}">${api.active ? 'Active' : 'Inactive'}</span>
                     </div>
-                `;
                 
                 if (api.active) {
                     item.addEventListener('click', function() {
@@ -3807,34 +3776,41 @@ if (empty($userPhotoUrl)) {
                     });
                 }
                 
-                gatewayList.appendChild(item);
+                apiList.appendChild(item);
             });
-            
-            // Update buttons
-            document.getElementById('gatewayBtnBack').style.display = 'flex';
-            document.getElementById('gatewayBtnSave').style.display = 'none';
         }
         
         function selectApi(api) {
             selectedApi = api;
             
             // Update UI
-            document.querySelectorAll('.gateway-item').forEach(item => {
+            document.querySelectorAll('#gatewayOptions .gateway-item').forEach(item => {
                 item.classList.remove('active');
             });
-            document.querySelector(`.gateway-item[data-api="${api}"]`).classList.add('active');
+            document.querySelector(`#gatewayOptions .gateway-item[data-api="${api}"]`).classList.add('active');
             
-            // Show save button
-            document.getElementById('gatewayBtnSave').style.display = 'flex';
+            // Enable save button
+            document.getElementById('gatewayBtnSave').disabled = false;
+        }
+        
+        function showGatewayProviders() {
+            const gatewayOptions = document.getElementById('gatewayOptions');
+            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
+            const gatewayBtnSave = document.getElementById('gatewayBtnSave');
+            
+            // Hide options and show gateway list
+            gatewayOptions.style.display = 'none';
+            document.getElementById('gatewayList').style.display = 'flex';
+            gatewayBtnBack.style.display = 'none';
+            gatewayBtnSave.style.display = 'flex';
+            
+            // Reset selection
+            selectedGateway = '';
+            selectedApi = '';
         }
         
         function openGatewayModal() {
             document.getElementById('gatewayModal').classList.add('active');
-            selectedGateway = '';
-            selectedApi = '';
-            showingProviders = true;
-            
-            // Reset UI
             showGatewayProviders();
         }
         
@@ -3890,6 +3866,268 @@ if (empty($userPhotoUrl)) {
             selectedGateway = savedSettings.gateway;
             selectedApi = savedSettings.api;
         }
+        
+        // Function to get saved gateway settings
+        function getSavedGatewaySettings() {
+            const gateway = localStorage.getItem('selectedGateway');
+            const api = localStorage.getItem('selectedApi');
+            
+            if (gateway && api) {
+                return { gateway, api };
+            }
+            
+            return null;
+        }
+        
+        // Function to toggle theme
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+        
+        // Function to show a page
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected page
+            const page = document.getElementById(`page-${pageId}`);
+            if (page) {
+                page.classList.add('active');
+            }
+            
+            // Update sidebar active link
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Set active link
+            const activeLink = document.querySelector(`.sidebar-link[onclick*="showPage('${pageId}')`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        }
+        
+        // Function to close sidebar
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const menuToggle = document.getElementById('menuToggle');
+            
+            sidebar.classList.remove('open');
+            mainContent.classList.remove('sidebar-open');
+        }
+        
+        // Function to logout
+        function logout() {
+            fetch('/logout.php', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = 'login.php';
+                }
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+            });
+        }
+        
+        // Function to copy text to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        toast: true,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        icon: 'success',
+                        title: 'Copied to clipboard!'
+                    });
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+        }
+        
+        // Function to copy all results
+        function copyAllResults() {
+            const allResults = document.getElementById('checkingResultsList').innerText;
+            if (allResults.trim()) {
+                copyToClipboard(allResults);
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Nothing to copy',
+                    text: 'No results to copy',
+                    timer: 2000
+                });
+            }
+        }
+        
+        // Function to clear all results
+        function clearAllResults() {
+            document.getElementById('checkingResultsList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Results Yet</h3>
+                    <p>Start checking cards to see results here</p>
+                </div>
+            `;
+            
+            // Reset stats
+            document.getElementById('charged-value').textContent = '0';
+            document.getElementById('approved-value').textContent = '0';
+            document.getElementById('declined-value').textContent = '0';
+            document.getElementById('checked-value').textContent = '0 / 0';
+        }
+        
+        // Function to filter results
+        function filterResults(type) {
+            const allResults = document.querySelectorAll('#checkingResultsList .result-item');
+            
+            allResults.forEach(result => {
+                if (type === 'all') {
+                    result.style.display = 'block';
+                } else {
+                    if (result.classList.contains(`result-${type}`)) {
+                        result.style.display = 'block';
+                    } else {
+                        result.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.filter-btn[onclick="filterResults('${type}')`).classList.add('active');
+        }
+        
+        // Function to update max concurrent based on selected gateway
+        function updateMaxConcurrent() {
+            // This function would adjust max concurrent based on the selected gateway
+            // Implementation depends on your specific requirements
+            // For now, we'll keep it simple
+            maxConcurrent = 5; // Default value
+        }
+        
+        // Function to format time
+        function formatTime(seconds) {
+            if (seconds < 60) {
+                return `${seconds}s`;
+            } else if (seconds < 3600) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${minutes}m ${remainingSeconds}s`;
+            } else {
+                const hours = Math.floor(seconds / 3600);
+                const remainingSeconds = seconds % 3600;
+                const minutes = Math.floor((seconds - hours * 3600) / 60);
+                const remainingSeconds = seconds % 60;
+                return `${hours}h ${minutes}m ${remainingSeconds}s`;
+            }
+        }
+        
+        // Function to show a notification
+        function showNotification(message, type = 'info', duration = 3000) {
+            Swal.fire({
+                icon: type,
+                title: message,
+                toast: true,
+                timer: duration,
+                position: 'top-end',
+                showConfirmButton: false,
+                timerProgressBar: true,
+                didOpen: (toast) => toast.isShown(),
+                willClose: (toast) => !toast.isConfirmed(),
+                didClose: (toast) => toast.isDismissed(),
+                willClose: (toast) => !toast.isConfirmed(),
+                willDismiss: (toast) => toast.isDismissed(),
+                willOpen: (toast) => true,
+                timerProgressBar: true,
+                didOpen: (toast) => toast.isShown(),
+                willClose: (toast) => !toast.isConfirmed(),
+                willDismiss: (toast) => toast.isDismissed()
+            });
+        }
+        
+        // Function to format number with commas
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{1,3})/g, 1/g);
+        }
+        
+        // Function to initialize the application
+        function initApp() {
+            // Initialize theme
+            const savedTheme = localStorage.getItem('theme');
+            if (showNotification) {
+                showNotification('Welcome back!', 'success', 3000);
+            }
+            
+            // Initialize gateway settings
+            const savedSettings = getSavedGatewaySettings();
+            if (savedSettings) {
+                selectedGateway = savedSettings.gateway;
+                selectedApi = savedSettings.api;
+            }
+            
+            // Initialize stats
+            updateStats();
+            
+            // Initialize theme
+            if (savedTheme) {
+                document.body.setAttribute('data-theme', savedTheme);
+            }
+            
+            // Start polling for stats
+            setInterval(updateStats, 10000);
+        }
+        
+        // Function to update statistics
+        function updateStats() {
+            // This function would typically fetch stats from the server
+            // For now, we'll use dummy data
+            const stats = {
+                charged: Math.floor(Math.random() * 100),
+                approved: Math.floor(Math.random() * 100),
+                declined: Math.floor(Math.random() * 100),
+                checked: Math.floor(Math.random() * 100)
+            };
+            
+            document.getElementById('charged-value').textContent = formatNumber(stats.charged);
+            document.getElementById('approved-value').textContent = formatNumber(stats.approved);
+            document.getElementById('declined-value').textContent = formatNumber(stats.declined);
+            document.getElementById('checked-value').textContent = `${formatNumber(stats.checked)} / 100}`;
+        }
+        
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
