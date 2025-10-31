@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 // === VALIDATE API KEY ===
  $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
 
-if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
+if (empty($apiKeyHeader) || $apiKeyHeader !== $SUCCESS_KEY) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Invalid API key']);
     exit;
@@ -48,12 +48,12 @@ try {
     );
     
     // === GET TOP USERS ===
-    // Query to get top users with most charged cards
+    // Query to get top users with most successful cards (CHARGED, APPROVED, LIVE)
     $stmt = $pdo->query("
         SELECT u.id, u.telegram_id, u.name, u.username, u.photo_url, COUNT(c.id) as total_hits
         FROM users u
         JOIN card_checks c ON u.id = c.user_id
-        WHERE c.status = 'CHARGED'
+        WHERE c.status IN ('CHARGED', 'APPROVED', 'LIVE')
         GROUP BY u.id, u.telegram_id, u.name, u.username, u.photo_url
         ORDER BY total_hits DESC
         LIMIT 10
@@ -73,9 +73,9 @@ try {
         
         $formatted[] = [
             'id' => $u['id'],
-            'telegram_id' => $u['telegram_id'],
+            'telegram_id' => $user['telegram_id'],
             'name' => $u['name'],
-            'username' => $u['username'] ? '@' . $u['username'] : null,
+            'username' => $u['username'] ? '@' . $path = trim($u['username'], '@') : null,
             'photo_url' => $avatar,
             'total_hits' => (int)$u['total_hits']
         ];
