@@ -2,8 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing JavaScript...');
     
     // Global variables
-    let selectedGateway = 'gate/stripe1.php'; // Updated default gateway
-    let selectedProvider = 'stripe'; // Track selected provider
+    let selectedGateway = 'gate/stripe1$.php';
     let isProcessing = false;
     let isStopping = false;
     let activeRequests = 0;
@@ -52,10 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
-        if (selectedGateway.includes('stripe1') || selectedGateway.includes('stripe5')) {
+        if (selectedGateway === 'gate/stripe1$.php' || selectedGateway === 'gate/stripe5$.php') {
             maxConcurrent = 5; // 5 concurrent requests for Stripe gateways
             console.log(`Set maxConcurrent to 5 for ${selectedGateway}`);
-        } else if (selectedGateway.includes('paypal')) {
+        } else if (selectedGateway === 'gate/paypal0.1$.php') {
             maxConcurrent = 3; // 3 concurrent requests for PayPal
             console.log(`Set maxConcurrent to 3 for ${selectedGateway}`);
         } else {
@@ -65,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Dynamic MAX_CONCURRENT based on selected gateway
-    let maxConcurrent = 5; // Default for stripe1 and stripe5     
+    let maxConcurrent = 5; // Default for stripe1$ and stripe5$     
     
     // Function to update global statistics
     function updateGlobalStats() {
@@ -480,11 +479,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const gatewaySettings = document.getElementById('gatewaySettings');
             if (gatewaySettings) {
                 gatewaySettings.classList.add('active');
-                
-                // Show the options for the currently selected provider
-                showGatewayOptions(selectedProvider);
-                
-                // Select the currently selected gateway
                 const radio = document.querySelector(`input[value="${selectedGateway}"]`);
                 if (radio) radio.checked = true;
             }
@@ -494,33 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const gatewaySettings = document.getElementById('gatewaySettings');
             if (gatewaySettings) {
                 gatewaySettings.classList.remove('active');
-            }
-        }
-
-        // Function to show gateway options for a specific provider
-        function showGatewayOptions(provider) {
-            // Hide all gateway options
-            document.querySelectorAll('.gateway-options-group').forEach(group => {
-                group.style.display = 'none';
-            });
-            
-            // Show options for the selected provider
-            const providerOptions = document.querySelector(`.gateway-options-group[data-provider="${provider}"]`);
-            if (providerOptions) {
-                providerOptions.style.display = 'block';
-            }
-            
-            // Update selected provider
-            selectedProvider = provider;
-            
-            // Update active state on provider buttons
-            document.querySelectorAll('.gateway-provider').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            const activeProvider = document.querySelector(`.gateway-provider[data-provider="${provider}"]`);
-            if (activeProvider) {
-                activeProvider.classList.add('active');
             }
         }
 
@@ -1938,7 +1905,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.logout = logout;
         window.loadUserProfile = loadUserProfile;
         window.updateUserStatistics = updateUserStatistics;
-        window.showGatewayOptions = showGatewayOptions;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
@@ -2117,16 +2083,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Initialize maxConcurrent based on selected gateway
                 updateMaxConcurrent();
                 
-                // Set up gateway provider selection
-                document.querySelectorAll('.gateway-provider').forEach(provider => {
-                    provider.addEventListener('click', function() {
-                        const providerName = this.getAttribute('data-provider');
-                        showGatewayOptions(providerName);
-                    });
-                });
-                
-                // Initialize with the default provider
-                showGatewayOptions(selectedProvider);
+                // RAZORPAY GATEWAY MAINTENANCE FEATURE
+                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]');
+                if (razorpayGateway) {
+                    // Disable the radio button
+                    razorpayGateway.disabled = true;
+                    
+                    // Find the parent label
+                    const parentLabel = razorpayGateway.closest('label');
+                    if (parentLabel) {
+                        // Add visual styling to show it's disabled
+                        parentLabel.style.opacity = '0.6';
+                        parentLabel.style.cursor = 'not-allowed';
+                        parentLabel.style.position = 'relative';
+                        
+                        // Add a maintenance badge
+                        const badge = document.createElement('span');
+                        badge.textContent = 'Maintenance';
+                        badge.style.position = 'absolute';
+                        badge.style.top = '5px';
+                        badge.style.right = '5px';
+                        badge.style.backgroundColor = '#ef4444'; // Red color
+                        badge.style.color = 'white';
+                        badge.style.padding = '2px 6px';
+                        badge.style.borderRadius = '4px';
+                        badge.style.fontSize = '0.7rem';
+                        badge.style.fontWeight = 'bold';
+                        parentLabel.appendChild(badge);
+                        
+                        // Add click event to show popup
+                        parentLabel.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (window.Swal) {
+                                Swal.fire({
+                                    title: 'Gateway Under Maintenance',
+                                    text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444', // Red color
+                                    confirmButtonText: 'OK'
+                                });
+                            } else {
+                                alert('Gateway under maintenance. Please select another gateway.');
+                            }
+                        });
+                    }
+                }
             });
         } else {
             console.error("jQuery not loaded, some functionality may not work");
