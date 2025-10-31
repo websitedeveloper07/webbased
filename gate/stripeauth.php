@@ -331,6 +331,44 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     }
 }
 
+// Function to record card check in database and update user stats
+function recordCardCheck($pdo, $card_number, $status, $response) {
+    try {
+        // Get user ID from session
+        $user_id = $_SESSION['user']['id'] ?? null;
+        if (!$user_id) {
+            log_message("No user ID in session, cannot record card check");
+            return;
+        }
+
+        // Record the card check in the database
+        $stmt = $pdo->prepare("INSERT INTO card_checks (user_id, card_number, status, response, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->execute([$user_id, $card_number, $status, $response]);
+        
+        // If this is a hit (APPROVED or CHARGED), update user stats
+        if ($status === 'APPROVED' || $status === 'CHARGED') {
+            // Check if user stats record exists
+            $stmt = $pdo->prepare("SELECT id FROM user_stats WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $statsRecord = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($statsRecord) {
+                // Update existing record
+                $stmt = $pdo->prepare("UPDATE user_stats SET hits = hits + 1, last_hit = NOW() WHERE user_id = ?");
+                $stmt->execute([$user_id]);
+            } else {
+                // Create new record
+                $stmt = $pdo->prepare("INSERT INTO user_stats (user_id, hits, last_hit) VALUES (?, 1, NOW())");
+                $stmt->execute([$user_id]);
+            }
+            
+            log_message("Updated user stats for user ID $user_id: incrementing hits count for $status card");
+        }
+    } catch (PDOException $e) {
+        log_message("Database error in recordCardCheck: " . $e->getMessage());
+    }
+}
+
 // Check if card details are provided
 if (!isset($_POST['card']) || !is_array($_POST['card'])) {
     echo json_encode(['status' => 'ERROR', 'message' => 'Card details not provided']);
