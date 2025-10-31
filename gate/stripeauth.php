@@ -296,7 +296,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
     $formatted_response = formatResponse($response);
 
     // Construct Telegram message
-    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
+    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
                "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
                "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
                "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
@@ -367,6 +367,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
         // Record the failed attempt in the database
         recordCardCheck($GLOBALS['pdo'], $card_number, 'ERROR', "API request failed: $curl_error (HTTP $http_code)");
         
+        // Return only status and message
         return ['status' => 'DECLINED', 'message' => "API request failed: $curl_error (HTTP $http_code)"];
     }
 
@@ -378,6 +379,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
         // Record the failed attempt in the database
         recordCardCheck($GLOBALS['pdo'], $card_number, 'ERROR', "Invalid API response: " . substr($response, 0, 100));
         
+        // Return only status and message
         return ['status' => 'DECLINED', 'message' => "Invalid API response: " . substr($response, 0, 100)];
     }
 
@@ -416,6 +418,7 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
         sendTelegramNotification($card_details, $our_status, $our_message, $response);
     }
     
+    // Return only status and message
     return ['status' => $our_status, 'message' => $our_message];
 }
 
