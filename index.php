@@ -119,7 +119,7 @@ if (empty($userPhotoUrl)) {
             --success-green: #22c55e; 
             --declined-red: #ef4444;
             
-            /* Dark theme colors - Enhanced visibility */
+            /* Dark theme colors - Enhanced visibility with improved color scheme */
             --dark-primary-bg: #0f172a;
             --dark-secondary-bg: #1e293b;
             --dark-card-bg: #1e293b;
@@ -156,14 +156,18 @@ if (empty($userPhotoUrl)) {
             --user-item-border-dark: rgba(59, 130, 246, 0.35); /* Even darker outline in dark mode */
             
             /* Admin user colors */
-            --admin-item-bg-light: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15)); /* Premium gradient */
-            --admin-item-border-light: rgba(168, 85, 247, 0.4); /* Purple border */
-            --admin-item-bg-dark: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2)); /* Darker gradient */
-            --admin-item-border-dark: rgba(168, 85, 247, 0.5); /* Darker purple border */
+            --admin-item-bg-light: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15)); /* Blue-cyan gradient */
+            --admin-item-border-light: rgba(59, 130, 246, 0.4); /* Blue border */
+            --admin-item-bg-dark: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2)); /* Darker gradient */
+            --admin-item-border-dark: rgba(59, 130, 246, 0.5); /* Darker blue border */
             
             /* Hits colors */
             --hits-light: #fbbf24; /* Yellow color for light mode */
             --hits-dark: #fbbf24; /* Yellow color for dark mode */
+            
+            /* Provider badge colors */
+            --provider-badge-light: #000000; /* Black in light mode */
+            --provider-badge-dark: #ffffff; /* White in dark mode */
         }
         
         /* Smooth transitions for all elements */
@@ -205,8 +209,8 @@ if (empty($userPhotoUrl)) {
         
         body[data-theme="dark"]::before {
             background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+                        radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
         }
         
         /* Beast Level Navbar - Reduced size */
@@ -233,7 +237,7 @@ if (empty($userPhotoUrl)) {
             gap: 0.6rem; /* Reduced gap */
             font-size: 1.2rem; /* Reduced font size */
             font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent;
             animation: gradientShift 3s ease infinite;
@@ -286,7 +290,7 @@ if (empty($userPhotoUrl)) {
         
         [data-theme="dark"] .theme-toggle-slider { 
             transform: translateX(18px); /* Adjusted for smaller toggle */
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
         }
         
         .user-info {
@@ -480,7 +484,7 @@ if (empty($userPhotoUrl)) {
             font-size: 1.6rem; /* Reduced font size */
             font-weight: 900; 
             margin-bottom: 0.6rem; /* Reduced margin */
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent;
             animation: gradientShift 3s ease infinite;
@@ -533,7 +537,7 @@ if (empty($userPhotoUrl)) {
             left: 0;
             right: 0;
             height: 3px; /* Reduced height */
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 3s ease infinite;
         }
         
@@ -703,7 +707,7 @@ if (empty($userPhotoUrl)) {
         .gs-panel{
             border-radius:14px; /* Reduced border radius */
             padding:1.5rem; /* Reduced padding */
-            background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.05));
+            background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(6,182,212,0.05));
             border:1px solid var(--border-color);
             box-shadow: var(--shadow-md);
             position: relative;
@@ -711,7 +715,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .gs-panel {
-            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15));
+            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.15));
             border-color: var(--dark-border-color);
             box-shadow: var(--shadow-lg);
         }
@@ -723,7 +727,7 @@ if (empty($userPhotoUrl)) {
             left: 0;
             right: 0;
             height: 3px; /* Reduced height */
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 3s ease infinite;
         }
         
@@ -775,7 +779,7 @@ if (empty($userPhotoUrl)) {
         body[data-theme="dark"] .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(59,130,246,0.3)); }
         body[data-theme="dark"] .gs-green  { background: linear-gradient(135deg, rgba(16,185,129,0.4), rgba(16,185,129,0.3)); }
         body[data-theme="dark"] .gs-red    { background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(239,68,68,0.3)); }
-        body[data-theme="dark"] .gs-purple { background: linear-gradient(135deg, rgba(139,92,246,0.4), rgba(139,92,246,0.3)); }
+        body[data-theme="dark"] .gs-purple { background: linear-gradient(135deg, rgba(6,182,212,0.4), rgba(6,182,212,0.3)); }
         
         /* Beast Level Right Sidebar - Light Mode Fix and Increased Width */
         .right-sidebar {
@@ -1035,7 +1039,7 @@ if (empty($userPhotoUrl)) {
             left: 0;
             right: 0;
             height: 3px; /* Reduced height */
-            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 3s ease infinite;
         }
         
@@ -1062,7 +1066,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .top-users-title i {
-            color: var(--accent-purple);
+            color: var(--accent-blue);
         }
         
         .top-users-list {
@@ -1087,7 +1091,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .top-users-list::-webkit-scrollbar-thumb {
-            background: var(--accent-purple);
+            background: var(--accent-blue);
             border-radius: 2px;
         }
         
@@ -1113,8 +1117,8 @@ if (empty($userPhotoUrl)) {
         
         .top-user-item:hover {
             transform: translateX(3px); /* Reduced transform */
-            border-color: var(--accent-purple);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
         
         .top-user-avatar-container {
@@ -1126,9 +1130,9 @@ if (empty($userPhotoUrl)) {
             height: 36px; /* Reduced size */
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--accent-purple);
+            border: 2px solid var(--accent-blue);
             flex-shrink: 0;
-            box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
         }
         
         .top-user-info {
@@ -1188,27 +1192,27 @@ if (empty($userPhotoUrl)) {
         
         /* Admin user styling */
         .online-user-item.admin {
-            background: var(--admin-item-bg-light) !important; /* Premium gradient for light mode */
-            border: 1px solid var(--admin-item-border-light) !important; /* Purple border */
+            background: var(--admin-item-bg-light) !important; /* Blue-cyan gradient for light mode */
+            border: 1px solid var(--admin-item-border-light) !important; /* Blue border */
         }
         
         body[data-theme="dark"] .online-user-item.admin {
             background: var(--admin-item-bg-dark) !important; /* Darker gradient for dark mode */
-            border-color: var(--admin-item-border-dark) !important; /* Darker purple border */
+            border-color: var(--admin-item-border-dark) !important; /* Darker blue border */
         }
         
         .top-user-item.admin {
-            background: var(--admin-item-bg-light) !important; /* Premium gradient for light mode */
-            border: 1px solid var(--admin-item-border-light) !important; /* Purple border */
+            background: var(--admin-item-bg-light) !important; /* Blue-cyan gradient for light mode */
+            border: 1px solid var(--admin-item-border-light) !important; /* Blue border */
         }
         
         body[data-theme="dark"] .top-user-item.admin {
             background: var(--admin-item-bg-dark) !important; /* Darker gradient for dark mode */
-            border-color: var(--admin-item-border-dark) !important; /* Darker purple border */
+            border-color: var(--admin-item-border-dark) !important; /* Darker blue border */
         }
         
         .admin-badge {
-            background: linear-gradient(135deg, #a855f7, #ec4899) !important; /* Premium gradient */
+            background: linear-gradient(135deg, #3b82f6, #06b6d4) !important; /* Blue-cyan gradient */
             color: white !important;
             padding: 2px 5px; /* Slightly larger padding */
             border-radius: 4px; /* Slightly larger border radius */
@@ -1216,7 +1220,7 @@ if (empty($userPhotoUrl)) {
             font-weight: 700;
             text-transform: uppercase;
             margin-left: 5px; /* Slightly larger margin */
-            box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3); /* Added shadow */
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); /* Added shadow */
         }
         
         /* Beast Level Profile Page - Reduced Size */
@@ -1227,7 +1231,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
             backdrop-filter: blur(20px);
             border-radius: 16px; /* Reduced border radius */
             padding: 1.5rem; /* Reduced padding */
@@ -1238,7 +1242,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .profile-header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
             border-color: var(--dark-border-color);
             box-shadow: var(--shadow-lg);
         }
@@ -1250,7 +1254,7 @@ if (empty($userPhotoUrl)) {
             left: 0;
             right: 0;
             height: 3px; /* Reduced height */
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 3s ease infinite;
         }
         
@@ -1304,7 +1308,7 @@ if (empty($userPhotoUrl)) {
             font-size: 2rem; /* Reduced font size */
             font-weight: 900;
             margin-bottom: 0.4rem; /* Reduced margin */
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: gradientShift 3s ease infinite;
@@ -1656,7 +1660,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .mobile-top-users-title i {
-            color: var(--accent-purple);
+            color: var(--accent-blue);
         }
         
         .mobile-top-users-list {
@@ -1689,7 +1693,7 @@ if (empty($userPhotoUrl)) {
             height: 36px; /* Reduced size */
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--accent-purple);
+            border: 2px solid var(--accent-blue);
         }
         
         .mobile-top-user-info {
@@ -3100,7 +3104,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* Enhanced Gateway Selection Modal */
+        /* Enhanced Gateway Selection Modal - Medium Size */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -3125,11 +3129,11 @@ if (empty($userPhotoUrl)) {
         .gateway-modal-content {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 1.5rem;
-            max-width: 600px;
+            max-width: 600px; /* Reduced from 650px */
             width: 90%;
-            max-height: 80vh;
+            max-height: 75vh; /* Reduced from 85vh */
             overflow-y: auto;
             box-shadow: var(--shadow-beast);
             transform: translateY(20px);
@@ -3215,23 +3219,6 @@ if (empty($userPhotoUrl)) {
             gap: 1rem;
         }
         
-        .provider-group-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        body[data-theme="dark"] .provider-group-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .provider-group-title i {
-            color: var(--accent-blue);
-        }
-        
         .provider-options {
             display: flex;
             flex-direction: column;
@@ -3242,22 +3229,22 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(6, 182, 212, 0.05)); /* Subtle gradient */
+            border: 1px solid rgba(59, 130, 246, 0.2); /* Light border */
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         body[data-theme="dark"] .provider-option {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1)); /* Darker gradient in dark mode */
+            border-color: rgba(59, 130, 246, 0.3); /* Darker border in dark mode */
         }
         
         .provider-option:hover {
-            border-color: var(--accent-blue);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
         }
         
         .provider-option-icon {
@@ -3268,12 +3255,12 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             justify-content: center;
             margin-right: 1rem;
-            color: var(--text-primary); /* Black color in light theme */
+            color: var(--provider-badge-light); /* Black in light mode */
             font-size: 1.2rem;
         }
         
         body[data-theme="dark"] .provider-option-icon {
-            color: var(--dark-text-primary); /* White color in dark theme */
+            color: var(--provider-badge-dark); /* White in dark mode */
         }
         
         .provider-option-content {
@@ -3346,22 +3333,22 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(6, 182, 212, 0.05)); /* Subtle gradient */
+            border: 1px solid rgba(59, 130, 246, 0.2); /* Light border */
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         body[data-theme="dark"] .gateway-option {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1)); /* Darker gradient in dark mode */
+            border-color: rgba(59, 130, 246, 0.3); /* Darker border in dark mode */
         }
         
         .gateway-option:hover {
-            border-color: var(--accent-blue);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
         }
         
         .gateway-option input[type="radio"] {
@@ -3505,6 +3492,35 @@ if (empty($userPhotoUrl)) {
             transform: translateY(-2px);
         }
         
+        /* Mobile responsiveness for gateway modal */
+        @media (max-width: 768px) {
+            .gateway-modal-content {
+                padding: 1rem;
+                max-width: 95vw;
+            }
+            
+            .provider-option, .gateway-option {
+                padding: 0.8rem;
+            }
+            
+            .provider-option-name, .gateway-option-name {
+                font-size: 0.9rem;
+            }
+            
+            .provider-option-desc, .gateway-option-desc {
+                font-size: 0.7rem;
+            }
+            
+            .gateway-modal-title {
+                font-size: 1.1rem;
+            }
+            
+            .gateway-btn-back, .gateway-btn-save, .gateway-btn-cancel {
+                padding: 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
+        
         /* Fix for Global Statistics text in dark mode */
         body[data-theme="dark"] .gs-title {
             color: var(--dark-text-primary) !important;
@@ -3607,135 +3623,137 @@ if (empty($userPhotoUrl)) {
                     </div>
                 </div>
 
-                <!-- Progress Counters - Beast Level with Better Spacing -->
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat-card charged">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-bolt"></i>
+                <div class="dashboard-content">
+                    <!-- Progress Counters - Beast Level with Better Spacing -->
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card charged">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
                             </div>
+                            <div id="charged-value" class="stat-value">0</div>
+                            <div class="stat-label">HIT|CHARGED</div>
                         </div>
-                        <div id="charged-value" class="stat-value">0</div>
-                        <div class="stat-label">HIT|CHARGED</div>
-                    </div>
-                    <div class="stat-card approved">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-circle"></i>
+                        <div class="stat-card approved">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
                             </div>
+                            <div id="approved-value" class="stat-value">0</div>
+                            <div class="stat-label">LIVE|APPROVED</div>
                         </div>
-                        <div id="approved-value" class="stat-value">0</div>
-                        <div class="stat-label">LIVE|APPROVED</div>
-                    </div>
-                    <div class="stat-card declined">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-times-circle"></i>
+                        <div class="stat-card declined">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
                             </div>
+                            <div id="declined-value" class="stat-value">0</div>
+                            <div class="stat-label">DEAD|DECLINED</div>
                         </div>
-                        <div id="declined-value" class="stat-value">0</div>
-                        <div class="stat-label">DEAD|DECLINED</div>
-                    </div>
-                    <div class="stat-card checked">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-double"></i>
+                        <div class="stat-card checked">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
                             </div>
-                        </div>
-                        <div id="checked-value" class="stat-value">0 / 0</div>
-                        <div class="stat-label">CHECKED</div>
-                    </div>
-                </div>
-
-                <!-- Global Statistics Section - Better Spacing -->
-                <div class="gs-panel mt-6">
-                    <div class="gs-head">
-                        <div class="gs-chip">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <div class="gs-title">Global Statistics</div>
-                            <div class="gs-sub">Platform-wide performance metrics</div>
+                            <div id="checked-value" class="stat-value">0 / 0</div>
+                            <div class="stat-label">CHECKED</div>
                         </div>
                     </div>
 
-                    <div class="gs-grid">
-                        <div class="gs-card gs-blue">
-                            <div class="gs-icon">
+                    <!-- Global Statistics Section - Better Spacing -->
+                    <div class="gs-panel mt-6">
+                        <div class="gs-head">
+                            <div class="gs-chip">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
                                 </svg>
                             </div>
-                            <div id="gTotalUsers" class="gs-num">—</div>
-                            <div class="gs-label">Total Users</div>
+                            <div>
+                                <div class="gs-title">Global Statistics</div>
+                                <div class="gs-sub">Platform-wide performance metrics</div>
+                            </div>
                         </div>
 
-                        <div class="gs-card gs-purple">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
-                                </svg>
+                        <div class="gs-grid">
+                            <div class="gs-card gs-blue">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                    </svg>
+                                </div>
+                                <div id="gTotalUsers" class="gs-num">—</div>
+                                <div class="gs-label">Total Users</div>
                             </div>
-                            <div id="gTotalHits" class="gs-num">—</div>
-                            <div class="gs-label">Total Checked Cards</div>
-                        </div>
 
-                        <div class="gs-card gs-red">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
-                                </svg>
+                            <div class="gs-card gs-purple">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
+                                    </svg>
+                                </div>
+                                <div id="gTotalHits" class="gs-num">—</div>
+                                <div class="gs-label">Total Checked Cards</div>
                             </div>
-                            <div id="gChargeCards" class="gs-num">—</div>
-                            <div class="gs-label">Charge Cards</div>
-                        </div>
 
-                        <div class="gs-card gs-green">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+                            <div class="gs-card gs-red">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+                                    </svg>
+                                </div>
+                                <div id="gChargeCards" class="gs-num">—</div>
+                                <div class="gs-label">Charge Cards</div>
                             </div>
-                            <div id="gLiveCards" class="gs-num">—</div>
-                            <div class="gs-label">Live Cards</div>
+
+                            <div class="gs-card gs-green">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                <div id="gLiveCards" class="gs-num">—</div>
+                                <div class="gs-label">Live Cards</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Mobile Online Users Section -->
-                <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
-                    <div class="mobile-online-users-header">
-                        <div class="mobile-online-users-title">
-                            <i class="fas fa-users"></i> Online Users
+                    
+                    <!-- Mobile Online Users Section -->
+                    <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
+                        <div class="mobile-online-users-header">
+                            <div class="mobile-online-users-title">
+                                <i class="fas fa-users"></i> Online Users
+                            </div>
+                            <div class="mobile-online-users-count" id="mobileOnlineUsersCount">
+                                <i class="fas fa-circle"></i>
+                                <span id="mobileOnlineCount">0</span> online
+                            </div>
                         </div>
-                        <div class="mobile-online-users-count" id="mobileOnlineUsersCount">
-                            <i class="fas fa-circle"></i>
-                            <span id="mobileOnlineCount">0</span> online
-                        </div>
-                    </div>
-                    <div class="mobile-online-users-list" id="mobileOnlineUsersList">
-                        <div class="empty-state">
-                            <i class="fas fa-user-slash"></i>
-                            <h3>No Users Online</h3>
-                            <p>No other users are currently online</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mobile Top Users Section -->
-                <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
-                    <div class="mobile-top-users-header">
-                        <div class="mobile-top-users-title">
-                            <i class="fas fa-trophy"></i> Top Users
+                        <div class="mobile-online-users-list" id="mobileOnlineUsersList">
+                            <div class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                <h3>No Users Online</h3>
+                                <p>No other users are currently online</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="mobile-top-users-list" id="mobileTopUsersList">
-                        <div class="empty-state">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>No Top Users</h3>
-                            <p>No top users data available</p>
+                    
+                    <!-- Mobile Top Users Section -->
+                    <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
+                        <div class="mobile-top-users-header">
+                            <div class="mobile-top-users-title">
+                                <i class="fas fa-trophy"></i> Top Users
+                            </div>
+                        </div>
+                        <div class="mobile-top-users-list" id="mobileTopUsersList">
+                            <div class="empty-state">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>No Top Users</h3>
+                                <p>No top users data available</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3807,8 +3825,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫 𝐯𝐚𝐥𝐰𝐥</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫 𝐯𝐚𝐥𝐥</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -3991,7 +4009,7 @@ if (empty($userPhotoUrl)) {
         </section>
     </main>
 
-    <!-- Right Sidebar with Online Users and Top Users -->
+    <!-- Right Sidebar with Online Users and Top Users - Increased Width -->
     <aside class="right-sidebar" id="rightSidebar">
         <!-- Online Users Section -->
         <div class="online-users-section">
@@ -4030,7 +4048,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <!-- Enhanced Gateway Selection Modal -->
+    <!-- Medium Size Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -4045,9 +4063,6 @@ if (empty($userPhotoUrl)) {
             <!-- Provider Selection View -->
             <div class="provider-selection" id="providerSelection">
                 <div class="provider-group">
-                    <div class="provider-group-title">
-                        <i class="fas fa-bolt"></i> Payment Providers
-                    </div>
                     <div class="provider-options">
                         <div class="provider-option" onclick="showProviderGateways('stripe')">
                             <div class="provider-option-icon">
@@ -4113,15 +4128,12 @@ if (empty($userPhotoUrl)) {
             <div class="gateway-selection" id="gatewaySelection">
                 <!-- Stripe Gateways -->
                 <div class="gateway-group" id="stripe-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-stripe"></i> Stripe Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/stripe1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    Stripe
+                                    <i class="fab fa-stripe"></i> Stripe
                                     <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Payment processing with $1 charge</div>
@@ -4131,7 +4143,7 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/stripe5$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    Stripe
+                                    <i class="fab fa-stripe"></i> Stripe
                                     <span class="gateway-badge badge-charge">5$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Payment processing with $5 charge</div>
@@ -4141,7 +4153,7 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/stripeauth.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    Stripe
+                                    <i class="fab fa-stripe"></i> Stripe
                                     <span class="gateway-badge badge-auth">Auth</span>
                                 </div>
                                 <div class="gateway-option-desc">Authorization only, no charge</div>
@@ -4152,15 +4164,12 @@ if (empty($userPhotoUrl)) {
 
                 <!-- Shopify Gateways -->
                 <div class="gateway-group" id="shopify-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-shopify"></i> Shopify Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/shopify1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    Shopify
+                                    <i class="fab fa-shopify"></i> Shopify
                                     <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">E-commerce payment processing</div>
@@ -4171,15 +4180,12 @@ if (empty($userPhotoUrl)) {
 
                 <!-- PayPal Gateways -->
                 <div class="gateway-group" id="paypal-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-paypal"></i> PayPal Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/paypal0.1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    PayPal
+                                    <i class="fab fa-paypal"></i> PayPal
                                     <span class="gateway-badge badge-charge">0.1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
@@ -4190,16 +4196,13 @@ if (empty($userPhotoUrl)) {
 
                 <!-- Razorpay Gateways -->
                 <div class="gateway-group" id="razorpay-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                            style="width:20px; height:20px; object-fit:contain;"> Razorpay Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    Razorpay
+                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                        style="width:15px; height:15px; object-fit:contain;">Razorpay
                                     <span class="gateway-badge badge-charge">0.10$ Charge</span>
                                     <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                                 </div>
@@ -4211,15 +4214,12 @@ if (empty($userPhotoUrl)) {
 
                 <!-- Authnet Gateways -->
                 <div class="gateway-group" id="authnet-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fas fa-credit-card"></i> Authnet Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/authnet1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    Authnet
+                                    <i class="fas fa-credit-card"></i> Authnet
                                     <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Authorize.net payment gateway</div>
