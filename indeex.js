@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initial update
         updateTopUsers();
         
-        // Set up interval to update every 30 seconds (as requested)
+        // Set up interval to update every 30 seconds
         topUsersInterval = setInterval(() => {
             updateTopUsers();
         }, 30000);
@@ -662,6 +662,55 @@ document.addEventListener('DOMContentLoaded', function() {
             const mainContent = document.querySelector('.main-content');
             if (sidebar) sidebar.classList.remove('open');
             if (mainContent) mainContent.classList.remove('sidebar-open');
+        }
+
+        // Gateway settings functions
+        function openGatewaySettings() {
+            const gatewaySettings = document.getElementById('gatewaySettings');
+            if (gatewaySettings) {
+                gatewaySettings.classList.add('active');
+                const radio = document.querySelector(`input[value="${selectedGateway}"]`);
+                if (radio) radio.checked = true;
+            }
+        }
+
+        function closeGatewaySettings() {
+            const gatewaySettings = document.getElementById('gatewaySettings');
+            if (gatewaySettings) {
+                gatewaySettings.classList.remove('active');
+            }
+        }
+
+        function saveGatewaySettings() {
+            const selected = document.querySelector('input[name="gateway"]:checked');
+            if (selected) {
+                selectedGateway = selected.value;
+                
+                // Update maxConcurrent based on selected gateway
+                updateMaxConcurrent();
+                
+                const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
+                const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'success', 
+                        title: 'Gateway Updated!',
+                        text: `Now using: ${nameText}`,
+                        confirmButtonColor: '#10b981'
+                    });
+                }
+                closeGatewaySettings();
+            } else {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning', 
+                        title: 'No Gateway Selected',
+                        text: 'Please select a gateway', 
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+            }
         }
 
         // Card counting function
@@ -2053,6 +2102,9 @@ document.addEventListener('DOMContentLoaded', function() {
         window.toggleTheme = toggleTheme;
         window.showPage = showPage;
         window.closeSidebar = closeSidebar;
+        window.openGatewaySettings = openGatewaySettings;
+        window.closeGatewaySettings = closeGatewaySettings;
+        window.saveGatewaySettings = saveGatewaySettings;
         window.updateCardCount = updateCardCount;
         window.filterResults = filterResults;
         window.setYearRnd = setYearRnd;
@@ -2062,12 +2114,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.updateUserStatistics = updateUserStatistics;
         window.updateTopUsers = updateTopUsers;
         window.displayTopUsers = displayTopUsers;
-        
-        // Gateway modal functions
-        window.openGatewayModal = openGatewayModal;
-        window.closeGatewayModal = closeGatewayModal;
-        window.showProviderSelection = showProviderSelection;
-        window.showProviderGateways = showProviderGateways;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
@@ -2301,99 +2347,26 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("jQuery not loaded, some functionality may not work");
         }
     }
-});
 
-// Gateway modal functions
-function openGatewayModal() {
-    document.getElementById('gatewayModal').classList.add('active');
-    showProviderSelection();
-    loadSavedGatewaySettings();
-}
-
-function closeGatewayModal() {
-    document.getElementById('gatewayModal').classList.remove('active');
-}
-
-function showProviderSelection() {
-    document.getElementById('providerSelection').classList.remove('hidden');
-    document.getElementById('gatewaySelection').classList.remove('active');
-    document.getElementById('gatewayBtnBack').style.display = 'none';
-}
-
-function showProviderGateways(provider) {
-    // Hide all gateway groups
-    const gatewayGroups = document.querySelectorAll('.gateway-group');
-    gatewayGroups.forEach(group => {
-        group.style.display = 'none';
-    });
-    
-    // Show the selected provider's gateways
-    document.getElementById(`${provider}-gateways`).style.display = 'block';
-    
-    // Switch views
-    document.getElementById('providerSelection').classList.add('hidden');
-    document.getElementById('gatewaySelection').classList.add('active');
-    document.getElementById('gatewayBtnBack').style.display = 'flex';
-}
-
-function loadSavedGatewaySettings() {
-    const savedGateway = localStorage.getItem('selectedGateway');
-    if (savedGateway) {
-        const radioInput = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
-        if (radioInput) {
-            radioInput.checked = true;
+    // Load API key and initialize the app
+    loadApiKey().then(success => {
+        if (!success) {
+            console.warn('Proceeding without valid API key');
+            // Show a warning if API key loading fails
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'API Key Issue',
+                    text: 'Could not load API key. Some features may not work properly.',
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b'
+                });
+            }
         }
-    }
-}
-
-function saveGatewaySettings() {
-    const selectedGateway = document.querySelector('input[name="gateway"]:checked');
-    
-    if (!selectedGateway) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'No Gateway Selected',
-            text: 'Please select a gateway first',
-            confirmButtonColor: '#f59e0b'
-        });
-        return;
-    }
-    
-    // Save settings
-    localStorage.setItem('selectedGateway', selectedGateway.value);
-    
-    // Get gateway name for display
-    const gatewayName = selectedGateway.parentElement.querySelector('.gateway-option-name').textContent.trim();
-    
-    // Update UI
-    Swal.fire({
-        icon: 'success',
-        title: 'Gateway Settings Updated!',
-        text: `Now using: ${gatewayName}`,
-        confirmButtonColor: '#10b981'
-    }).then(() => {
-        closeGatewayModal();
+        
+        // Start key rotation
+        startKeyRotation();
+        
+        // Initialize the app
+        initializeApp();
     });
-}
-
-// Load API key and initialize the app
-loadApiKey().then(success => {
-    if (!success) {
-        console.warn('Proceeding without valid API key');
-        // Show a warning if API key loading fails
-        if (window.Swal) {
-            Swal.fire({
-                title: 'API Key Issue',
-                text: 'Could not load API key. Some features may not work properly.',
-                icon: 'warning',
-                confirmButtonColor: '#f59e0b'
-            });
-        }
-    }
-    
-    // Start key rotation
-    startKeyRotation();
-    
-    // Initialize the app
-    initializeApp();
 });
