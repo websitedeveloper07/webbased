@@ -700,7 +700,7 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .gs-panel {
-            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15));
             border-color: var(--dark-border-color);
             box-shadow: var(--shadow-lg);
         }
@@ -736,7 +736,7 @@ if (empty($userPhotoUrl)) {
         body[data-theme="dark"] .gs-card {
             background: rgba(30, 41, 59, 0.7); /* Added background color in dark mode */
             border-color: var(--dark-border-color);
-            color: var(--dark-text-primary);
+            color: var(--dark-text-primary); /* Fixed text color in dark mode */
         }
         
         .gs-card:hover {
@@ -751,6 +751,10 @@ if (empty($userPhotoUrl)) {
         .gs-card .gs-icon svg{width:16px;height:16px;display:block;opacity:.95} /* Reduced size */
         .gs-num{font-weight:800;font-size:1.8rem;line-height:1} /* Reduced font size */
         .gs-label{font-size:0.8rem;color:var(--text-secondary);margin-top:0.6rem} /* Reduced font size and margin */
+        
+        body[data-theme="dark"] .gs-label {
+            color: var(--dark-text-secondary); /* Fixed label color in dark mode */
+        }
         
         .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(59,130,246,0.2)); }
         .gs-green  { background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.2)); }
@@ -1963,14 +1967,15 @@ if (empty($userPhotoUrl)) {
         .gateway-provider {
             flex: 1;
             min-width: 200px; /* Increased min-width */
-            padding: 1.2rem; /* Increased padding */
+            padding: 1.5rem; /* Increased padding for bigger appearance */
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 12px; /* Increased border radius */
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
             position: relative;
+            box-shadow: var(--shadow-md); /* Added shadow for depth */
         }
         
         body[data-theme="dark"] .gateway-provider {
@@ -1980,8 +1985,8 @@ if (empty($userPhotoUrl)) {
         
         .gateway-provider:hover {
             border-color: var(--accent-blue);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-3px); /* Increased transform for better hover effect */
+            box-shadow: var(--shadow-lg);
         }
         
         .gateway-provider.active {
@@ -1990,14 +1995,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-provider-icon {
-            font-size: 2rem; /* Increased font size */
-            margin-bottom: 0.8rem; /* Increased margin */
+            font-size: 2.5rem; /* Increased font size for bigger appearance */
+            margin-bottom: 1rem; /* Increased margin */
             color: var(--accent-blue);
         }
         
         .gateway-provider-name {
             font-weight: 700;
-            font-size: 1.1rem; /* Increased font size */
+            font-size: 1.3rem; /* Increased font size for bigger appearance */
             color: var(--text-primary);
         }
         
@@ -2009,7 +2014,7 @@ if (empty($userPhotoUrl)) {
         .gateway-options {
             display: none;
             flex-direction: column;
-            gap: 1.5rem; /* Increased gap between gateways */
+            gap: 1.5rem; /* Increased gap between gateways for proper spacing */
         }
         
         .gateway-options.active {
@@ -2019,13 +2024,14 @@ if (empty($userPhotoUrl)) {
         .gateway-option {
             display: flex; 
             align-items: center; 
-            padding: 1.2rem; /* Increased padding for better spacing */
+            padding: 1.5rem; /* Increased padding for better spacing */
             background: var(--secondary-bg); 
             border: 1px solid var(--border-color);
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 12px; /* Increased border radius */
             cursor: pointer; 
             transition: all 0.3s;
             position: relative;
+            margin-bottom: 0; /* Removed margin since we're using gap */
         }
         
         body[data-theme="dark"] .gateway-option {
@@ -2035,14 +2041,14 @@ if (empty($userPhotoUrl)) {
         
         .gateway-option:hover {
             border-color: var(--accent-blue); 
-            transform: translateX(3px); /* Reduced transform */
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateX(5px); /* Increased transform */
+            box-shadow: var(--shadow-md);
         }
         
         .gateway-option input[type="radio"] {
-            width: 16px; /* Reduced size */
-            height: 16px; /* Reduced size */
-            margin-right: 0.8rem; /* Reduced margin */
+            width: 18px; /* Increased size */
+            height: 18px; /* Increased size */
+            margin-right: 1rem; /* Increased margin */
             cursor: pointer; 
             accent-color: var(--accent-blue);
         }
@@ -2055,9 +2061,9 @@ if (empty($userPhotoUrl)) {
             font-weight: 700; 
             display: flex; 
             align-items: center;
-            gap: 0.4rem; /* Reduced gap */
-            margin-bottom: 0.3rem; /* Reduced margin */
-            font-size: 0.9rem; /* Increased font size */
+            gap: 0.5rem; /* Increased gap */
+            margin-bottom: 0.5rem; /* Increased margin */
+            font-size: 1rem; /* Increased font size */
         }
         
         body[data-theme="dark"] .gateway-option-name {
@@ -2065,7 +2071,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-option-desc { 
-            font-size: 0.75rem; /* Increased font size */
+            font-size: 0.8rem; /* Increased font size */
             color: var(--text-secondary); 
         }
         
@@ -2074,9 +2080,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            padding: 0.2rem 0.4rem; /* Increased padding */
-            border-radius: 4px; /* Increased border radius */
-            font-size: 0.6rem; /* Increased font size */
+            padding: 0.3rem 0.5rem; /* Increased padding */
+            border-radius: 6px; /* Increased border radius */
+            font-size: 0.7rem; /* Increased font size */
             font-weight: 700; 
             text-transform: uppercase;
         }
@@ -2094,9 +2100,9 @@ if (empty($userPhotoUrl)) {
         .badge-maintenance {
             background-color: #ef4444;
             color: white;
-            padding: 0.2rem 0.4rem; /* Increased padding */
-            border-radius: 4px; /* Increased border radius */
-            font-size: 0.6rem; /* Increased font size */
+            padding: 0.3rem 0.5rem; /* Increased padding */
+            border-radius: 6px; /* Increased border radius */
+            font-size: 0.7rem; /* Increased font size */
             font-weight: 700;
             text-transform: uppercase;
             margin-left: 0.5rem; /* Increased margin */
@@ -3013,7 +3019,7 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-checking">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑹</h1>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬𝑬𝑬</h1>
             <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
