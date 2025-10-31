@@ -3100,7 +3100,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* New Gateway Selection Modal - Simplified Structure */
+        /* Enhanced Gateway Selection Modal */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -3125,11 +3125,11 @@ if (empty($userPhotoUrl)) {
         .gateway-modal-content {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 1.5rem;
-            max-width: 500px;
+            max-width: 90vw;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             box-shadow: var(--shadow-beast);
             transform: translateY(20px);
@@ -3151,7 +3151,7 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
             padding-bottom: 0.8rem;
             border-bottom: 1px solid var(--border-color);
         }
@@ -3161,7 +3161,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-modal-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -3198,49 +3198,68 @@ if (empty($userPhotoUrl)) {
             transform: rotate(90deg);
         }
         
-        /* Simplified Gateway Selection */
-        .gateway-list {
+        /* Provider Selection View */
+        .provider-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .provider-selection.hidden {
+            display: none;
+        }
+        
+        .provider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .provider-group-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .provider-group-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .provider-group-title i {
+            color: var(--accent-blue);
+        }
+        
+        .provider-options {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
         }
         
-        .gateway-item {
+        .provider-option {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: rgba(59, 130, 246, 0.08); /* Light filled color */
+            border: 1px solid rgba(59, 130, 246, 0.25); /* Dark boundary line */
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
-        body[data-theme="dark"] .gateway-item {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+        body[data-theme="dark"] .provider-option {
+            background: rgba(59, 130, 246, 0.12); /* Darker filled color in dark mode */
+            border-color: rgba(59, 130, 246, 0.35); /* Darker boundary in dark mode */
         }
         
-        .gateway-item:hover {
-            border-color: var(--accent-blue);
+        .provider-option:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
         
-        .gateway-item.selected {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: var(--accent-blue);
-        }
-        
-        .gateway-item input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 1rem;
-            cursor: pointer;
-            accent-color: var(--accent-blue);
-        }
-        
-        .gateway-icon {
+        .provider-option-icon {
             width: 32px;
             height: 32px;
             border-radius: 8px;
@@ -3252,30 +3271,128 @@ if (empty($userPhotoUrl)) {
             font-size: 1.2rem;
         }
         
-        .gateway-content {
+        .provider-option-content {
             flex: 1;
         }
         
-        .gateway-name {
+        .provider-option-name {
             font-weight: 700;
             font-size: 1rem;
             color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.3rem;
         }
         
-        body[data-theme="dark"] .gateway-name {
+        body[data-theme="dark"] .provider-option-name {
             color: var(--dark-text-primary);
         }
         
-        .gateway-desc {
+        .provider-option-desc {
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
         
-        body[data-theme="dark"] .gateway-desc {
+        body[data-theme="dark"] .provider-option-desc {
+            color: var(--dark-text-secondary);
+        }
+        
+        /* Gateway Selection View */
+        .gateway-selection {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .gateway-selection.active {
+            display: flex;
+        }
+        
+        .gateway-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .gateway-group-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .gateway-group-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-group-title i {
+            color: var(--accent-blue);
+        }
+        
+        .gateway-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .gateway-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.08); /* Light filled color */
+            border: 1px solid rgba(59, 130, 246, 0.25); /* Dark boundary line */
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .gateway-option {
+            background: rgba(59, 130, 246, 0.12); /* Darker filled color in dark mode */
+            border-color: rgba(59, 130, 246, 0.35); /* Darker boundary in dark mode */
+        }
+        
+        .gateway-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        
+        .gateway-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 1rem;
+            cursor: pointer;
+            accent-color: var(--accent-blue);
+        }
+        
+        .gateway-option-content {
+            flex: 1;
+        }
+        
+        .gateway-option-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        body[data-theme="dark"] .gateway-option-name {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-option-name i {
+            font-size: 1.1rem;
+        }
+        
+        .gateway-option-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .gateway-option-desc {
             color: var(--dark-text-secondary);
         }
         
@@ -3312,6 +3429,34 @@ if (empty($userPhotoUrl)) {
         
         body[data-theme="dark"] .gateway-modal-footer {
             border-color: var(--dark-border-color);
+        }
+        
+        .gateway-btn-back {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .gateway-btn-back {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-btn-back:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
         }
         
         .gateway-btn-save {
@@ -3352,6 +3497,334 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-cancel:hover {
             transform: translateY(-2px);
+        }
+        
+        /* Mobile responsiveness for gateway modal */
+        @media (max-width: 768px) {
+            .gateway-modal-content {
+                padding: 1rem;
+                max-width: 95vw;
+            }
+            
+            .provider-option, .gateway-option {
+                padding: 0.8rem;
+            }
+            
+            .provider-option-name, .gateway-option-name {
+                font-size: 0.9rem;
+            }
+            
+            .provider-option-desc, .gateway-option-desc {
+                font-size: 0.7rem;
+            }
+            
+            .gateway-modal-title {
+                font-size: 1.1rem;
+            }
+            
+            .gateway-btn-back, .gateway-btn-save, .gateway-btn-cancel {
+                padding: 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* Enhanced Card Checking Page */
+        .checking-enhancements {
+            margin-top: 1.5rem;
+        }
+        
+        .checking-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--secondary-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        body[data-theme="dark"] .checking-stats {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .checking-stat-item {
+            text-align: center;
+        }
+        
+        .checking-stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        body[data-theme="dark"] .checking-stat-value {
+            color: var(--dark-text-primary);
+        }
+        
+        .checking-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        body[data-theme="dark"] .checking-stat-label {
+            color: var(--dark-text-secondary);
+        }
+        
+        .checking-progress {
+            height: 6px;
+            background: var(--secondary-bg);
+            border-radius: 3px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        
+        body[data-theme="dark"] .checking-progress {
+            background: var(--dark-accent-bg);
+        }
+        
+        .checking-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .checking-log {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+        
+        body[data-theme="dark"] .checking-log {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .checking-log-item {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+        
+        .checking-log-item.success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 3px solid var(--success-green);
+        }
+        
+        .checking-log-item.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--error);
+        }
+        
+        .checking-log-item.info {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid var(--accent-blue);
+        }
+        
+        /* Enhanced Home Page */
+        .home-enhancements {
+            margin-top: 1.5rem;
+        }
+        
+        .activity-feed {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        body[data-theme="dark"] .activity-feed {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .activity-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .activity-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .activity-title i {
+            color: var(--accent-cyan);
+        }
+        
+        .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .activity-item {
+            border-color: var(--dark-border-color);
+        }
+        
+        .activity-item:hover {
+            background: var(--secondary-bg);
+        }
+        
+        body[data-theme="dark"] .activity-item:hover {
+            background: var(--dark-accent-bg);
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .activity-icon.check {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success-green);
+        }
+        
+        .activity-icon.generate {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--accent-purple);
+        }
+        
+        .activity-icon.login {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-text {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+        
+        body[data-theme="dark"] .activity-text {
+            color: var(--dark-text-primary);
+        }
+        
+        .activity-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .activity-time {
+            color: var(--dark-text-secondary);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .quick-action-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        body[data-theme="dark"] .quick-action-card {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .quick-action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .quick-action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.8rem;
+            font-size: 1.5rem;
+        }
+        
+        .quick-action-card.check .quick-action-icon {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+        }
+        
+        .quick-action-card.generate .quick-action-icon {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            color: white;
+        }
+        
+        .quick-action-card.stats .quick-action-icon {
+            background: linear-gradient(135deg, var(--success-green), var(--accent-green));
+            color: white;
+        }
+        
+        .quick-action-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        body[data-theme="dark"] .quick-action-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .quick-action-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .quick-action-desc {
+            color: var(--dark-text-secondary);
         }
         
         /* Fix for Global Statistics text in dark mode */
@@ -3554,6 +4027,54 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
                     
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <div class="quick-action-card check" onclick="showPage('checking')">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="quick-action-title">Check Cards</div>
+                            <div class="quick-action-desc">Validate card details</div>
+                        </div>
+                        <div class="quick-action-card generate" onclick="showPage('generator')">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-magic"></i>
+                            </div>
+                            <div class="quick-action-title">Generate Cards</div>
+                            <div class="quick-action-desc">Create test cards</div>
+                        </div>
+                        <div class="quick-action-card stats" onclick="showPage('profile')">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="quick-action-title">View Stats</div>
+                            <div class="quick-action-desc">Your performance</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Activity Feed -->
+                    <div class="activity-feed">
+                        <div class="activity-header">
+                            <div class="activity-title">
+                                <i class="fas fa-stream"></i> Recent Activity
+                            </div>
+                            <button class="settings-btn" onclick="refreshActivity()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="activity-list" id="activityList">
+                            <div class="activity-item">
+                                <div class="activity-icon check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-text">Welcome to CARD ✘ CHK</div>
+                                    <div class="activity-time">Just now</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Mobile Online Users Section -->
                     <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
                         <div class="mobile-online-users-header">
@@ -3634,6 +4155,38 @@ if (empty($userPhotoUrl)) {
                 </div>
                 <div class="loader" id="loader"></div>
                 <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
+                
+                <!-- Enhanced Checking Features -->
+                <div class="checking-enhancements">
+                    <div class="checking-stats">
+                        <div class="checking-stat-item">
+                            <div class="checking-stat-value" id="checkingTotal">0</div>
+                            <div class="checking-stat-label">Total</div>
+                        </div>
+                        <div class="checking-stat-item">
+                            <div class="checking-stat-value" id="checkingSuccess">0</div>
+                            <div class="checking-stat-label">Success</div>
+                        </div>
+                        <div class="checking-stat-item">
+                            <div class="checking-stat-value" id="checkingFailed">0</div>
+                            <div class="checking-stat-label">Failed</div>
+                        </div>
+                        <div class="checking-stat-item">
+                            <div class="checking-stat-value" id="checkingRemaining">0</div>
+                            <div class="checking-stat-label">Remaining</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checking-progress">
+                        <div class="checking-progress-bar" id="checkingProgressBar"></div>
+                    </div>
+                    
+                    <div class="checking-log" id="checkingLog">
+                        <div class="checking-log-item info">
+                            Ready to check cards. Select a gateway and click "Start Check".
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="results-section" id="checkingResults">
@@ -3881,7 +4434,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <!-- Simplified Gateway Selection Modal -->
+    <!-- Enhanced Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -3893,115 +4446,218 @@ if (empty($userPhotoUrl)) {
                 </button>
             </div>
 
-            <div class="gateway-list">
+            <!-- Provider Selection View -->
+            <div class="provider-selection" id="providerSelection">
+                <div class="provider-group">
+                    <div class="provider-group-title">
+                        <i class="fas fa-bolt"></i> Charge Gateways
+                    </div>
+                    <div class="provider-options">
+                        <div class="provider-option" onclick="showProviderGateways('stripe')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-stripe"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                </div>
+                                <div class="provider-option-desc">Payment processing with multiple charge options</div>
+                            </div>
+                        </div>
+                        <div class="provider-option" onclick="showProviderGateways('shopify')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-shopify"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    <i class="fab fa-shopify"></i> Shopify
+                                </div>
+                                <div class="provider-option-desc">E-commerce payment processing</div>
+                            </div>
+                        </div>
+                        <div class="provider-option" onclick="showProviderGateways('paypal')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-paypal"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    <i class="fab fa-paypal"></i> PayPal
+                                </div>
+                                <div class="provider-option-desc">Online payment gateway</div>
+                            </div>
+                        </div>
+                        <div class="provider-option" onclick="showProviderGateways('razorpay')">
+                            <div class="provider-option-icon">
+                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                    style="width:20px; height:20px; object-fit:contain;">
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                        style="width:15px; height:15px; object-fit:contain;"> Razorpay
+                                </div>
+                                <div class="provider-option-desc">Indian payment gateway</div>
+                            </div>
+                        </div>
+                        <div class="provider-option" onclick="showProviderGateways('authnet')">
+                            <div class="provider-option-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    <i class="fas fa-credit-card"></i> Authnet
+                                </div>
+                                <div class="provider-option-desc">Authorize.net payment gateway</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="provider-group">
+                    <div class="provider-group-title">
+                        <i class="fas fa-shield-alt"></i> Auth Gateways
+                    </div>
+                    <div class="provider-options">
+                        <div class="provider-option" onclick="showProviderGateways('stripe-auth')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-stripe"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe Auth
+                                </div>
+                                <div class="provider-option-desc">Authorization only, no charge</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gateway Selection View -->
+            <div class="gateway-selection" id="gatewaySelection">
                 <!-- Stripe Gateways -->
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/stripe1$.php">
-                    <div class="gateway-icon">
-                        <i class="fab fa-stripe"></i>
+                <div class="gateway-group" id="stripe-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-stripe"></i> Stripe Gateways
                     </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <i class="fab fa-stripe"></i> Stripe
-                            <span class="gateway-badge badge-charge">1$ Charge</span>
-                        </div>
-                        <div class="gateway-desc">Payment processing with $1 charge</div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripe1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Payment processing with $1 charge</div>
+                            </div>
+                        </label>
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripe5$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-charge">5$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Payment processing with $5 charge</div>
+                            </div>
+                        </label>
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripeauth.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-auth">Auth</span>
+                                </div>
+                                <div class="gateway-option-desc">Authorization only, no charge</div>
+                            </div>
+                        </label>
                     </div>
-                </label>
-                
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/stripe5$.php">
-                    <div class="gateway-icon">
-                        <i class="fab fa-stripe"></i>
-                    </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <i class="fab fa-stripe"></i> Stripe
-                            <span class="gateway-badge badge-charge">5$ Charge</span>
-                        </div>
-                        <div class="gateway-desc">Payment processing with $5 charge</div>
-                    </div>
-                </label>
-                
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/stripeauth.php">
-                    <div class="gateway-icon">
-                        <i class="fab fa-stripe"></i>
-                    </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <i class="fab fa-stripe"></i> Stripe
-                            <span class="gateway-badge badge-auth">Auth</span>
-                        </div>
-                        <div class="gateway-desc">Authorization only, no charge</div>
-                    </div>
-                </label>
+                </div>
 
                 <!-- Shopify Gateways -->
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/shopify1$.php">
-                    <div class="gateway-icon">
-                        <i class="fab fa-shopify"></i>
+                <div class="gateway-group" id="shopify-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-shopify"></i> Shopify Gateways
                     </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <i class="fab fa-shopify"></i> Shopify
-                            <span class="gateway-badge badge-charge">1$ Charge</span>
-                        </div>
-                        <div class="gateway-desc">E-commerce payment processing</div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/shopify1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-shopify"></i> Shopify
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">E-commerce payment processing</div>
+                            </div>
+                        </label>
                     </div>
-                </label>
+                </div>
 
                 <!-- PayPal Gateways -->
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/paypal0.1$.php">
-                    <div class="gateway-icon">
-                        <i class="fab fa-paypal"></i>
+                <div class="gateway-group" id="paypal-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-paypal"></i> PayPal Gateways
                     </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <i class="fab fa-paypal"></i> PayPal
-                            <span class="gateway-badge badge-charge">0.1$ Charge</span>
-                        </div>
-                        <div class="gateway-desc">Payment processing with $0.1 charge</div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/paypal0.1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-paypal"></i> PayPal
+                                    <span class="gateway-badge badge-charge">0.1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
+                            </div>
+                        </label>
                     </div>
-                </label>
+                </div>
 
                 <!-- Razorpay Gateways -->
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
-                    <div class="gateway-icon">
+                <div class="gateway-group" id="razorpay-gateways" style="display: none;">
+                    <div class="gateway-group-title">
                         <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                            style="width:20px; height:20px; object-fit:contain;">
+                            style="width:20px; height:20px; object-fit:contain;"> Razorpay Gateways
                     </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                style="width:15px; height:15px; object-fit:contain;"> Razorpay
-                            <span class="gateway-badge badge-charge">0.10$ Charge</span>
-                            <span class="gateway-badge badge-maintenance">Under Maintenance</span>
-                        </div>
-                        <div class="gateway-desc">Indian payment gateway</div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                        style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                    <span class="gateway-badge badge-charge">0.10$ Charge</span>
+                                    <span class="gateway-badge badge-maintenance">Under Maintenance</span>
+                                </div>
+                                <div class="gateway-option-desc">Indian payment gateway</div>
+                            </div>
+                        </label>
                     </div>
-                </label>
+                </div>
 
                 <!-- Authnet Gateways -->
-                <label class="gateway-item">
-                    <input type="radio" name="gateway" value="gate/authnet1$.php">
-                    <div class="gateway-icon">
-                        <i class="fas fa-credit-card"></i>
+                <div class="gateway-group" id="authnet-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fas fa-credit-card"></i> Authnet Gateways
                     </div>
-                    <div class="gateway-content">
-                        <div class="gateway-name">
-                            <i class="fas fa-credit-card"></i> Authnet
-                            <span class="gateway-badge badge-charge">1$ Charge</span>
-                        </div>
-                        <div class="gateway-desc">Authorize.net payment gateway</div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/authnet1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fas fa-credit-card"></i> Authnet
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Authorize.net payment gateway</div>
+                            </div>
+                        </label>
                     </div>
-                </label>
+                </div>
             </div>
 
             <div class="gateway-modal-footer">
+                <button class="gateway-btn-back" id="gatewayBtnBack" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
                 <button class="gateway-btn-save" id="gatewayBtnSave">
                     <i class="fas fa-check"></i> Save & Apply
                 </button>
@@ -4069,14 +4725,22 @@ if (empty($userPhotoUrl)) {
             if (icon) {
                 icon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             }
+            
+            // Initialize activity feed
+            loadActivityFeed();
         });
         
         // Gateway settings functions
         function initializeGatewaySettings() {
+            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
             const gatewayBtnSave = document.getElementById('gatewayBtnSave');
             const gatewayBtnCancel = document.getElementById('gatewayBtnCancel');
             
             // Add click events to buttons
+            gatewayBtnBack.addEventListener('click', function() {
+                showProviderSelection();
+            });
+            
             gatewayBtnSave.addEventListener('click', function() {
                 saveGatewaySettings();
             });
@@ -4095,24 +4759,8 @@ if (empty($userPhotoUrl)) {
                 const radioInput = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
                 if (radioInput) {
                     radioInput.checked = true;
-                    // Add selected class to parent
-                    radioInput.parentElement.classList.add('selected');
                 }
             }
-            
-            // Add event listeners to all gateway items
-            const gatewayItems = document.querySelectorAll('.gateway-item');
-            gatewayItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    // Remove selected class from all items
-                    gatewayItems.forEach(i => i.classList.remove('selected'));
-                    // Add selected class to clicked item
-                    this.classList.add('selected');
-                    // Check the radio button
-                    const radio = this.querySelector('input[type="radio"]');
-                    if (radio) radio.checked = true;
-                });
-            });
         }
         
         function saveGatewaySettings() {
@@ -4132,7 +4780,7 @@ if (empty($userPhotoUrl)) {
             localStorage.setItem('selectedGateway', selectedGateway.value);
             
             // Get gateway name for display
-            const gatewayName = selectedGateway.parentElement.querySelector('.gateway-name').textContent.trim();
+            const gatewayName = selectedGateway.parentElement.querySelector('.gateway-option-name').textContent.trim();
             
             // Close modal immediately
             closeGatewayModal();
@@ -4152,12 +4800,40 @@ if (empty($userPhotoUrl)) {
         
         function openGatewayModal() {
             document.getElementById('gatewayModal').classList.add('active');
+            showProviderSelection();
             loadSavedGatewaySettings();
         }
         
         function closeGatewayModal() {
             const modal = document.getElementById('gatewayModal');
             modal.classList.remove('active');
+            
+            // Reset to provider selection view for next time
+            setTimeout(() => {
+                showProviderSelection();
+            }, 300); // Wait for the modal to close completely
+        }
+        
+        function showProviderSelection() {
+            document.getElementById('providerSelection').classList.remove('hidden');
+            document.getElementById('gatewaySelection').classList.remove('active');
+            document.getElementById('gatewayBtnBack').style.display = 'none';
+        }
+        
+        function showProviderGateways(provider) {
+            // Hide all gateway groups
+            const gatewayGroups = document.querySelectorAll('.gateway-group');
+            gatewayGroups.forEach(group => {
+                group.style.display = 'none';
+            });
+            
+            // Show the selected provider's gateways
+            document.getElementById(`${provider}-gateways`).style.display = 'block';
+            
+            // Switch views
+            document.getElementById('providerSelection').classList.add('hidden');
+            document.getElementById('gatewaySelection').classList.add('active');
+            document.getElementById('gatewayBtnBack').style.display = 'flex';
         }
         
         // Function to get saved gateway settings
@@ -4327,16 +5003,119 @@ if (empty($userPhotoUrl)) {
             // The admin badge is already added in the update functions above
         }
         
+        // Activity feed functions
+        function loadActivityFeed() {
+            // In a real implementation, this would fetch from the server
+            // For now, we'll add some sample activities
+            const activities = [
+                {
+                    type: 'login',
+                    text: 'Welcome to CARD ✘ CHK',
+                    time: 'Just now'
+                }
+            ];
+            
+            updateActivityFeed(activities);
+        }
+        
+        function updateActivityFeed(activities) {
+            const activityList = document.getElementById('activityList');
+            if (!activityList) return;
+            
+            activityList.innerHTML = '';
+            
+            activities.forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                
+                let iconClass = '';
+                if (activity.type === 'login') iconClass = 'login';
+                else if (activity.type === 'check') iconClass = 'check';
+                else if (activity.type === 'generate') iconClass = 'generate';
+                
+                activityItem.innerHTML = `
+                    <div class="activity-icon ${iconClass}">
+                        <i class="fas fa-${iconClass === 'login' ? 'sign-in-alt' : iconClass === 'check' ? 'check' : 'magic'}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">${activity.text}</div>
+                        <div class="activity-time">${activity.time}</div>
+                    </div>
+                `;
+                
+                activityList.appendChild(activityItem);
+            });
+        }
+        
+        function refreshActivity() {
+            // Show loading state
+            const activityList = document.getElementById('activityList');
+            if (activityList) {
+                activityList.innerHTML = `
+                    <div class="activity-item">
+                        <div class="activity-content" style="text-align: center; width: 100%;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading activity...
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Simulate loading delay
+            setTimeout(() => {
+                loadActivityFeed();
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Activity refreshed',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }, 1000);
+        }
+        
+        // Enhanced checking functions
+        function updateCheckingStats(total, success, failed, remaining) {
+            document.getElementById('checkingTotal').textContent = total;
+            document.getElementById('checkingSuccess').textContent = success;
+            document.getElementById('checkingFailed').textContent = failed;
+            document.getElementById('checkingRemaining').textContent = remaining;
+            
+            // Update progress bar
+            const progressBar = document.getElementById('checkingProgressBar');
+            if (progressBar && total > 0) {
+                const percentage = ((success + failed) / total) * 100;
+                progressBar.style.width = `${percentage}%`;
+            }
+        }
+        
+        function addCheckingLog(message, type = 'info') {
+            const checkingLog = document.getElementById('checkingLog');
+            if (!checkingLog) return;
+            
+            const logItem = document.createElement('div');
+            logItem.className = `checking-log-item ${type}`;
+            logItem.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            checkingLog.appendChild(logItem);
+            checkingLog.scrollTop = checkingLog.scrollHeight;
+        }
+        
         // Make functions globally accessible
         window.toggleTheme = toggleTheme;
         window.showPage = showPage;
         window.closeSidebar = closeSidebar;
         window.openGatewayModal = openGatewayModal;
         window.closeGatewayModal = closeGatewayModal;
+        window.showProviderSelection = showProviderSelection;
+        window.showProviderGateways = showProviderGateways;
         window.loadSavedGatewaySettings = loadSavedGatewaySettings;
         window.saveGatewaySettings = saveGatewaySettings;
         window.logout = logout;
         window.loadUserProfile = loadUserProfile;
+        window.refreshActivity = refreshActivity;
+        window.updateCheckingStats = updateCheckingStats;
+        window.addCheckingLog = addCheckingLog;
     </script>
 </body>
 </html>
