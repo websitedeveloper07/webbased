@@ -9,6 +9,13 @@ header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/paypal0.1$_debug.log');
 
+// Start session for user authentication
+session_start([
+    'cookie_secure' => isset($_SERVER['HTTPS']),
+    'cookie_httponly' => true,
+    'use_strict_mode' => true,
+]);
+
 // --- MOVED log_message function to the top to prevent 500 errors ---
 // Optional file-based logging for debugging
  $log_file = __DIR__ . '/paypal0.1$_debug.log';
@@ -140,13 +147,6 @@ try {
     echo json_encode(['status' => 'ERROR', 'message' => 'Server error']);
     exit;
 }
-
-// Start session for user authentication
-session_start([
-    'cookie_secure' => isset($_SERVER['HTTPS']),
-    'cookie_httponly' => true,
-    'use_strict_mode' => true,
-]);
 
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -355,6 +355,8 @@ function recordCardCheck($pdo, $card_number, $status, $response) {
         }
     } catch (PDOException $e) {
         log_message("Database error in recordCardCheck: " . $e->getMessage());
+    } catch (Exception $e) {
+        log_message("General error in recordCardCheck: " . $e->getMessage());
     }
 }
 
