@@ -2833,10 +2833,13 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             justify-content: center;
             z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .gateway-modal.active {
             display: flex;
+            opacity: 1;
         }
         
         .gateway-modal-content {
@@ -2849,7 +2852,14 @@ if (empty($userPhotoUrl)) {
             max-height: 80vh;
             overflow-y: auto;
             box-shadow: var(--shadow-beast);
-            animation: slideUp 0.3s ease;
+            transform: translateY(20px);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+        
+        .gateway-modal.active .gateway-modal-content {
+            transform: translateY(0);
+            opacity: 1;
         }
         
         body[data-theme="dark"] .gateway-modal-content {
@@ -4065,15 +4075,20 @@ if (empty($userPhotoUrl)) {
             // Get gateway name for display
             const gatewayName = selectedGateway.parentElement.querySelector('.gateway-option-name').textContent.trim();
             
-            // Update UI
-            Swal.fire({
-                icon: 'success',
-                title: 'Gateway Settings Updated!',
-                text: `Now using: ${gatewayName}`,
-                confirmButtonColor: '#10b981'
-            });
-            
+            // Close modal immediately
             closeGatewayModal();
+            
+            // Show success message after modal is closed
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Gateway Settings Updated!',
+                    text: `Now using: ${gatewayName}`,
+                    confirmButtonColor: '#10b981',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }, 300); // Small delay to ensure modal is fully closed
         }
         
         function openGatewayModal() {
@@ -4083,7 +4098,13 @@ if (empty($userPhotoUrl)) {
         }
         
         function closeGatewayModal() {
-            document.getElementById('gatewayModal').classList.remove('active');
+            const modal = document.getElementById('gatewayModal');
+            modal.classList.remove('active');
+            
+            // Reset to provider selection view for next time
+            setTimeout(() => {
+                showProviderSelection();
+            }, 300); // Wait for the modal to close completely
         }
         
         function showProviderSelection() {
