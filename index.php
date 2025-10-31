@@ -440,36 +440,56 @@ if (empty($userPhotoUrl)) {
         .stat-card.checked .stat-icon { background: var(--stat-checked) !important; }
         .stat-card.online .stat-icon { background: var(--stat-online) !important; }
         
-        /* Global stats with consistent colors in both themes */
-        .gs-card {
-            background: var(--card-bg) !important;
-            border: 1px solid var(--border-color) !important;
+        /* Global stats with enhanced colors - Updated from example */
+        .gs-panel{
+            border-radius:16px; padding:16px 16px 18px;
+            background: radial-gradient(1200px 600px at -20% -40%, rgba(59,130,246,.10), transparent 60%),
+                        radial-gradient(1200px 600px at 120% -40%, rgba(16,185,129,.10), transparent 60%),
+                        rgba(255,255,255,.03);
+            border:1px solid rgba(255,255,255,.10);
+            box-shadow: 0 12px 24px rgba(0,0,0,.25);
+        }
+        
+        body[data-theme="dark"] .gs-panel {
+            background: radial-gradient(1200px 600px at -20% -40%, rgba(59,130,246,.15), transparent 60%),
+                        radial-gradient(1200px 600px at 120% -40%, rgba(16,185,129,.15), transparent 60%),
+                        rgba(30,41,59,.8);
+            border:1px solid rgba(255,255,255,.15);
+            box-shadow: 0 12px 24px rgba(0,0,0,.4);
+        }
+        
+        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+        .gs-chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+          background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
+        .gs-title{font-weight:600;color:#e5e7eb}
+        .gs-sub{font-size:12px;color:#9aa4b2;margin-top:2px}
+        .gs-grid{display:grid;gap:16px}
+        @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+        .gs-card{
+          position:relative;border-radius:14px;padding:18px 16px;
+          border:1px solid rgba(255,255,255,.08);
+          box-shadow: 0 10px 20px rgba(0,0,0,.24);
+          color:#e6e9ee;
         }
         
         body[data-theme="dark"] .gs-card {
-            background: var(--dark-card-bg) !important;
-            border: 1px solid var(--dark-border-color) !important;
+            color: #e5e7eb;
         }
         
-        .gs-blue { 
-            background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)) !important;
-            border: 1px solid rgba(59,130,246,0.3) !important;
+        .gs-card .gs-icon{
+          width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+          margin-bottom:10px;border:1px solid rgba(255,255,255,.18)
         }
+        .gs-card .gs-icon svg{width:18px;height:18px;display:block;opacity:.95}
+        .gs-num{font-weight:800;font-size:28px;line-height:1}
+        .gs-label{font-size:12px;color:#cbd5e1;margin-top:6px}
         
-        .gs-green  { 
-            background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.2)) !important;
-            border: 1px solid rgba(16,185,129,0.3) !important;
-        }
-        
-        .gs-red    { 
-            background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)) !important;
-            border: 1px solid rgba(239,68,68,0.3) !important;
-        }
-        
-        .gs-purple { 
-            background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(124,58,237,0.2)) !important;
-            border: 1px solid rgba(139,92,246,0.3) !important;
-        }
+        .gs-blue   { background:linear-gradient(135deg, rgba(30,58,138,.7), rgba(30,41,59,.65)); }
+        .gs-green  { background:linear-gradient(135deg, rgba(6,95,70,.75), rgba(15,118,110,.65)); }
+        .gs-red    { background:linear-gradient(135deg, rgba(88,28,28,.78), rgba(124,45,18,.65)); }
+        .gs-purple { background:linear-gradient(135deg, rgba(76,29,149,.75), rgba(88,28,135,.65)); }
         
         /* Online users with no grey color */
         .online-user-item {
@@ -800,45 +820,6 @@ if (empty($userPhotoUrl)) {
             grid-template-columns: 2fr 1fr;
             gap: 0.8rem;
         }
-        
-        /* Global Statistics Section - Line Layout */
-        .gs-panel{
-            border-radius:10px; padding:10px;
-            background: var(--card-bg);
-            border:1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .gs-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-        .gs-chip{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-            background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
-        .gs-title{font-weight:600;color:var(--text-primary);font-size:0.85rem}
-        .gs-sub{font-size:10px;color:var(--text-secondary);margin-top:2px}
-        .gs-grid{display:flex;gap:8px; justify-content: space-between;}
-
-        .gs-card{
-            position:relative;border-radius:8px;padding:14px 8px; /* Increased padding from 10px to 14px */
-            border:1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            color:var(--text-primary);
-            overflow: hidden;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 110px; /* Added min-height to increase overall height */
-        }
-        
-        .gs-card .gs-icon{
-            width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-            margin-bottom:8px;border:1px solid var(--border-color) /* Increased margin from 6px to 8px */
-        }
-        .gs-card .gs-icon svg{width:14px;height:14px;display:block;opacity:.95}
-        .gs-num{font-weight:800;font-size:16px;line-height:1}
-        .gs-label{font-size:9px;color:var(--text-secondary);margin-top:3px}
         
         /* Enhanced Online Users Section */
         .online-users-section {
@@ -2128,9 +2109,9 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </div>
 
-                    <!-- Global Statistics with Top Users -->
+                    <!-- Global Statistics with Top Users - Two Column Layout -->
                     <div class="dashboard-bottom">
-                        <!-- Global Statistics Section - Line Layout -->
+                        <!-- Global Statistics Section - Enhanced with gradient colors -->
                         <div class="gs-panel mt-6">
                             <div class="gs-head">
                                 <div class="gs-chip">
@@ -2273,7 +2254,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑨𝑻𝑬𝑹</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐥 𝐰𝐢𝐢𝐥𝐥𝐬 𝐰𝐢𝐭𝐡𝐧𝐡</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐢𝐥𝐥𝐬 𝐰𝐢𝐭𝐡𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
