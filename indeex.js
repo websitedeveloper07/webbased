@@ -2022,18 +2022,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initial update
             updateUserActivity();
             
-            // Set up interval to update every 25 seconds
+            // Set up interval to update every 15 seconds
             activityUpdateInterval = setInterval(() => {
                 if (!window.activityRequest) {
                     updateUserActivity();
                 }
-            }, 25000);
+            }, 15000);
             
-            // Update on user interaction, but not more than once every 25 seconds
+            // Update on user interaction, but not more than once every 15 seconds
             if (window.$) {
                 $(document).on('click mousemove keypress scroll', function() {
                     const now = new Date().getTime();
-                    if (now - lastActivityUpdate >= 25000 && !window.activityRequest) {
+                    if (now - lastActivityUpdate >= 15000 && !window.activityRequest) {
                         console.log("User interaction detected, updating activity...");
                         updateUserActivity();
                         lastActivityUpdate = now;
