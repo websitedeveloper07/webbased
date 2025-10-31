@@ -74,20 +74,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiKey = getCurrentApiKey();
         console.log(`X-API-KEY header for stats update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
         
-        // Create headers object with API key
-        const headers = {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
-        };
-        
-        // Only add X-API-KEY header if we have a valid key
-        if (apiKey) {
-            headers['X-API-KEY'] = apiKey;
+        // Check if API key is available
+        if (!apiKey) {
+            console.error("API key is not available, attempting to refresh...");
+            refreshApiKey().then(success => {
+                if (success) {
+                    updateGlobalStats();
+                }
+            });
+            return;
         }
         
         fetch('/stats.php', {
             method: 'GET',
-            headers: headers
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': apiKey
+            }
         })
         .then(response => {
             if (!response.ok) {
@@ -159,20 +163,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiKey = getCurrentApiKey();
         console.log(`X-API-KEY header for top users: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
         
-        // Create headers object with API key
-        const headers = {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
-        };
-        
-        // Only add X-API-KEY header if we have a valid key
-        if (apiKey) {
-            headers['X-API-KEY'] = apiKey;
+        // Check if API key is available
+        if (!apiKey) {
+            console.error("API key is not available, attempting to refresh...");
+            refreshApiKey().then(success => {
+                if (success) {
+                    updateTopUsers();
+                }
+            });
+            return;
         }
         
         fetch('/gate/topusers.php', {
             method: 'GET',
-            headers: headers
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': apiKey
+            }
         })
         .then(response => {
             if (!response.ok) {
@@ -204,7 +212,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check for authentication error
             if (error.message.includes('Authentication failed') || error.message.includes('401')) {
                 // Try to refresh the API key
-                refreshApiKey();
+                refreshApiKey().then(success => {
+                    if (success) {
+                        updateTopUsers();
+                    }
+                });
             } else {
                 // Only show error if on home page
                 const homePage = document.getElementById('page-home');
@@ -320,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 userInfo.appendChild(nameElement);
             }
             
-            // Create hits element with "X Hits" format
+            // Create hits element with formatted text (e.g., "1 Hits")
             const hitsElement = document.createElement('div');
             hitsElement.className = 'top-user-hits';
             hitsElement.textContent = `${hits} Hits`;
@@ -433,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 userInfo.appendChild(nameElement);
             }
             
-            // Create hits element with "X Hits" format
+            // Create hits element with formatted text (e.g., "1 Hits")
             const hitsElement = document.createElement('div');
             hitsElement.className = 'mobile-top-user-hits';
             hitsElement.textContent = `${hits} Hits`;
@@ -1300,21 +1312,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (statusLog) statusLog.textContent = `Processing card: ${card.displayCard}`;
                 console.log(`Starting request for card: ${card.displayCard}`);
 
-                // Create headers object with API key
-                const headers = {
-                    'Accept': 'application/json'
-                };
-                
-                // Only add X-API-KEY header if we have a valid key
-                if (apiKey) {
-                    headers['X-API-KEY'] = apiKey;
-                }
-
                 fetch(selectedGateway, {
                     method: 'POST',
                     body: formData,
                     signal: controller.signal,
-                    headers: headers
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-API-KEY': apiKey
+                    }
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -1812,19 +1817,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const apiKey = getCurrentApiKey();
             console.log(`X-API-KEY header for ccgen: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
             
-            // Create headers object with API key
-            const headers = {
-                'Accept': 'application/json'
-            };
-            
-            // Only add X-API-KEY header if we have a valid key
-            if (apiKey) {
-                headers['X-API-KEY'] = apiKey;
-            }
-            
             fetch(url, {
                 method: 'GET',
-                headers: headers
+                headers: {
+                    'Accept': 'application/json',
+                    'X-API-KEY': apiKey
+                }
             })
             .then(response => {
                 if (!response.ok) {
@@ -1915,41 +1913,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     cancelButtonColor: '#d1d5db',
                     confirmButtonText: 'Yes, logout'
                 }).then((result) => {
-                    // Clear key rotation interval
-                    if (keyRotationInterval) {
-                        clearInterval(keyRotationInterval);
+                    if (result.isConfirmed) {
+                        // Clear key rotation interval
+                        if (keyRotationInterval) {
+                            clearInterval(keyRotationInterval);
+                        }
+                        
+                        // Clear activity update interval
+                        if (activityUpdateInterval) {
+                            clearInterval(activityUpdateInterval);
+                        }
+                        
+                        // Clear global stats interval
+                        if (globalStatsInterval) {
+                            clearInterval(globalStatsInterval);
+                        }
+                        
+                        // Clear top users interval
+                        if (topUsersInterval) {
+                            clearInterval(topUsersInterval);
+                        }
+                        
+                        // Clear any pending activity request
+                        if (window.activityRequest) {
+                            window.activityRequest.abort();
+                            window.activityRequest = null;
+                        }
+                        
+                        // Clear activity request timeout
+                        if (activityRequestTimeout) {
+                            clearTimeout(activityRequestTimeout);
+                            activityRequestTimeout = null;
+                        }
+                        
+                        sessionStorage.clear();
+                        localStorage.clear(); // Clear user stats on logout
+                        window.location.href = 'login.php';
                     }
-                    
-                    // Clear activity update interval
-                    if (activityUpdateInterval) {
-                        clearInterval(activityUpdateInterval);
-                    }
-                    
-                    // Clear global stats interval
-                    if (globalStatsInterval) {
-                        clearInterval(globalStatsInterval);
-                    }
-                    
-                    // Clear top users interval
-                    if (topUsersInterval) {
-                        clearInterval(topUsersInterval);
-                    }
-                    
-                    // Clear any pending activity request
-                    if (window.activityRequest) {
-                        window.activityRequest.abort();
-                        window.activityRequest = null;
-                    }
-                    
-                    // Clear activity request timeout
-                    if (activityRequestTimeout) {
-                        clearTimeout(activityRequestTimeout);
-                        activityRequestTimeout = null;
-                    }
-                    
-                    sessionStorage.clear();
-                    localStorage.clear(); // Clear user stats on logout
-                    window.location.href = 'login.php';
                 });
             } else {
                 // Fallback if Swal is not available
@@ -2017,22 +2017,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const apiKey = getCurrentApiKey();
             console.log(`X-API-KEY header for activity update: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
             
-            // Create headers object with API key
-            const headers = {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-                'credentials': 'include'
-            };
-            
-            // Only add X-API-KEY header if we have a valid key
-            if (apiKey) {
-                headers['X-API-KEY'] = apiKey;
+            // Check if API key is available
+            if (!apiKey) {
+                console.error("API key is not available, attempting to refresh...");
+                refreshApiKey().then(success => {
+                    if (success) {
+                        updateUserActivity();
+                    }
+                });
+                return;
             }
             
             fetch('/update_activity.php', {
                 method: 'POST', // Changed to POST for more reliable delivery
                 signal: controller.signal,
-                headers: headers,
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'X-API-KEY': apiKey
+                },
                 body: JSON.stringify({ timestamp: Date.now() }) // Add a body to make it a proper POST request
             })
             .then(response => {
@@ -2131,7 +2135,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (error.message.includes('Authentication failed') || error.message.includes('401')) {
                         errorMessage = 'Authentication error - please refresh the page';
                         // Try to refresh the API key
-                        refreshApiKey();
+                        refreshApiKey().then(success => {
+                            if (success) {
+                                updateUserActivity();
+                            }
+                        });
                     }
                     
                     const homePage = document.getElementById('page-home');
