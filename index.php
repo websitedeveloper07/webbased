@@ -351,7 +351,7 @@ if (empty($userPhotoUrl)) {
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
         
-        /* Beast Level Sidebar */
+        /* Beast Level Sidebar - Optimized for performance */
         .sidebar {
             position: fixed; 
             left: 0; 
@@ -364,10 +364,11 @@ if (empty($userPhotoUrl)) {
             z-index: 999; 
             overflow-y: auto;
             transform: translateX(-100%); 
-            transition: transform 0.3s ease;
+            transition: transform 0.2s ease-out; /* Reduced duration and optimized timing function */
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(20px);
+            will-change: transform; /* Hardware acceleration hint */
         }
         
         .sidebar.open {
@@ -433,7 +434,7 @@ if (empty($userPhotoUrl)) {
             min-height: calc(100vh - 60px); 
             position: relative; 
             z-index: 1;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.2s ease-out; /* Reduced duration and optimized timing function */
             margin-right: 420px; /* Space for right sidebar */
         }
         
@@ -2149,6 +2150,34 @@ if (empty($userPhotoUrl)) {
             transform: translateY(-2px); 
         }
         
+        .btn-back {
+            flex: 1; 
+            padding: 0.6rem; 
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg); 
+            color: var(--text-primary);
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .btn-back {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .btn-back:hover { 
+            transform: translateY(-2px); 
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #ec4899;
@@ -3277,7 +3306,7 @@ if (empty($userPhotoUrl)) {
             </div>
 
             <!-- Gateway Provider Selection -->
-            <div class="gateway-providers">
+            <div class="gateway-providers" id="gatewayProviders">
                 <div class="gateway-provider" data-provider="stripe">
                     <div class="gateway-provider-icon">
                         <i class="fab fa-stripe"></i>
@@ -3312,10 +3341,15 @@ if (empty($userPhotoUrl)) {
 
             <!-- Gateway Options - Initially Hidden -->
             <div class="gateway-options" id="gatewayOptions">
+                <!-- Back Button -->
+                <button class="btn-back" id="backToProviders" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Back to Providers
+                </button>
+                
                 <!-- Stripe Gateways -->
                 <div class="gateway-options-group" data-provider="stripe">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="stripe1.php">
+                        <input type="radio" name="gateway" value="gate/stripe1$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
@@ -3325,7 +3359,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="stripe5.php">
+                        <input type="radio" name="gateway" value="gate/stripe5$.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
@@ -3335,7 +3369,7 @@ if (empty($userPhotoUrl)) {
                         </div>
                     </label>
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="stripeauth.php">
+                        <input type="radio" name="gateway" value="gate/stripeauth.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-stripe"></i> Stripe
@@ -3349,7 +3383,7 @@ if (empty($userPhotoUrl)) {
                 <!-- Authnet Gateways -->
                 <div class="gateway-options-group" data-provider="authnet">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="authnet1.php">
+                        <input type="radio" name="gateway" value="gate/authnet1.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fas fa-credit-card"></i> Authnet
@@ -3363,7 +3397,7 @@ if (empty($userPhotoUrl)) {
                 <!-- Razorpay Gateways -->
                 <div class="gateway-options-group" data-provider="razorpay">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="razorpay0.10.php" disabled>
+                        <input type="radio" name="gateway" value="gate/razorpay0.10.php" disabled>
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
@@ -3379,7 +3413,7 @@ if (empty($userPhotoUrl)) {
                 <!-- PayPal Gateways -->
                 <div class="gateway-options-group" data-provider="paypal">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="paypal0.1.php">
+                        <input type="radio" name="gateway" value="gate/paypal0.1.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-paypal"></i> PayPal
@@ -3393,7 +3427,7 @@ if (empty($userPhotoUrl)) {
                 <!-- Shopify Gateways -->
                 <div class="gateway-options-group" data-provider="shopify">
                     <label class="gateway-option">
-                        <input type="radio" name="gateway" value="shopify1.php">
+                        <input type="radio" name="gateway" value="gate/shopify1.php">
                         <div class="gateway-option-content">
                             <div class="gateway-option-name">
                                 <i class="fab fa-shopify"></i> Shopify
@@ -3417,5 +3451,110 @@ if (empty($userPhotoUrl)) {
     </div>
 
     <script src="indeex.js?v=<?= time(); ?>"></script>
+    <script>
+        // Gateway settings functions
+        function initializeGatewaySettings() {
+            const gatewayProviders = document.querySelectorAll('.gateway-provider');
+            const backToProvidersBtn = document.getElementById('backToProviders');
+            
+            // Add click event to gateway providers
+            gatewayProviders.forEach(provider => {
+                provider.addEventListener('click', function() {
+                    const providerName = this.getAttribute('data-provider');
+                    showGatewayOptions(providerName);
+                });
+            });
+            
+            // Add click event to back button
+            backToProvidersBtn.addEventListener('click', function() {
+                showGatewayProviders();
+            });
+        }
+        
+        function showGatewayOptions(providerName) {
+            const gatewayProviders = document.getElementById('gatewayProviders');
+            const gatewayOptions = document.getElementById('gatewayOptions');
+            const backToProvidersBtn = document.getElementById('backToProviders');
+            
+            // Hide all provider options
+            const allProviderOptions = document.querySelectorAll('.gateway-options-group');
+            allProviderOptions.forEach(option => {
+                option.style.display = 'none';
+            });
+            
+            // Show selected provider options
+            const selectedProviderOptions = document.querySelector(`.gateway-options-group[data-provider="${providerName}"]`);
+            if (selectedProviderOptions) {
+                selectedProviderOptions.style.display = 'block';
+            }
+            
+            // Show options container and back button
+            gatewayOptions.classList.add('active');
+            backToProvidersBtn.style.display = 'flex';
+            
+            // Hide providers
+            gatewayProviders.style.display = 'none';
+        }
+        
+        function showGatewayProviders() {
+            const gatewayProviders = document.getElementById('gatewayProviders');
+            const gatewayOptions = document.getElementById('gatewayOptions');
+            const backToProvidersBtn = document.getElementById('backToProviders');
+            
+            // Show providers
+            gatewayProviders.style.display = 'flex';
+            
+            // Hide options container and back button
+            gatewayOptions.classList.remove('active');
+            backToProvidersBtn.style.display = 'none';
+        }
+        
+        function openGatewaySettings() {
+            document.getElementById('gatewaySettings').classList.add('active');
+            showGatewayProviders();
+        }
+        
+        function closeGatewaySettings() {
+            document.getElementById('gatewaySettings').classList.remove('active');
+            showGatewayProviders();
+        }
+        
+        function saveGatewaySettings() {
+            const selected = document.querySelector('input[name="gateway"]:checked');
+            if (selected) {
+                selectedGateway = selected.value;
+                
+                // Update maxConcurrent based on selected gateway
+                updateMaxConcurrent();
+                
+                const gatewayName = selected.parentElement.querySelector('.gateway-option-name');
+                const nameText = gatewayName ? gatewayName.textContent.trim() : 'Unknown Gateway';
+                
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'success', 
+                        title: 'Gateway Updated!',
+                        text: `Now using: ${nameText}`,
+                        confirmButtonColor: '#10b981'
+                    });
+                }
+                closeGatewaySettings();
+            } else {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning', 
+                        title: 'No Gateway Selected',
+                        text: 'Please select a gateway', 
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+            }
+        }
+        
+        // Initialize gateway settings when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGatewaySettings();
+        });
+    </script>
 </body>
 </html>
