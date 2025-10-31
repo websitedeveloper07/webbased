@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isApiKeyValid = false;
     let activityRequestTimeout = null; // Track activity request timeout
     let globalStatsInterval = null; // Interval for updating global stats
+    let topUsersInterval = null; // Interval for updating top users
 
     // Function to format the response by removing status prefix and brackets
     function formatResponse(response) {
@@ -142,6 +143,194 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+
+    // Function to fetch and display top users
+    function updateTopUsers() {
+        console.log("Updating top users at", new Date().toISOString());
+        
+        const apiKey = getCurrentApiKey();
+        console.log(`X-API-KEY header for top users: ${apiKey ? '[REDACTED]' : 'NOT SET'}`);
+        
+        fetch('/gate/topusers.php', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-API-KEY': apiKey
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Check for 401 Unauthorized
+                if (response.status === 401) {
+                    throw new Error('Authentication failed: Invalid or missing API key');
+                }
+                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Top users response:", data);
+            
+            if (data.success) {
+                // Display top users
+                if (data.users) {
+                    displayTopUsers(data.users);
+                }
+            } else {
+                console.error('Failed to update top users:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating top users:', error);
+            
+            // Check for authentication error
+            if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+                // Try to refresh the API key
+                refreshApiKey();
+            } else {
+                // Only show error if on home page
+                const homePage = document.getElementById('page-home');
+                if (homePage && homePage.classList.contains('active') && window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Failed to update top users',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                }
+            }
+        });
+    }
+
+    // Function to display top users in the UI
+    function displayTopUsers(users) {
+        console.log("displayTopUsers called with users:", users);
+        
+        const topUsersList = document.getElementById('topUsersList');
+        if (!topUsersList) {
+            console.error("Element #topUsersList not found in DOM");
+            return;
+        }
+        
+        console.log("topUsersList element found:", topUsersList);
+        
+        // Clear existing content
+        topUsersList.innerHTML = '';
+        
+        if (!Array.isArray(users) || users.length === 0) {
+            console.log("No users to display or invalid users array");
+            topUsersList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>No Top Users</h3>
+                    <p>No top users data available</p>
+                </div>`;
+            return;
+        }
+        
+        console.log("Rendering", users.length, "top users");
+        
+        // Create a document fragment to improve performance
+        const fragment = document.createDocumentFragment();
+        
+        users.forEach((user, index) => {
+            console.log(`Processing top user ${index + 1}:`, user);
+            
+            // Safely extract user data with defaults
+            const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+            const username = (user.username && typeof user.username === 'string') ? user.username : '';
+            const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+                user.photo_url : 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`;
+            const hits = (user.total_hits && typeof user.total_hits === 'number') ? user.total_hits : 0;
+            
+            // Create user item element
+            const userItem = document.createElement('div');
+            userItem.className = 'top-user-item';
+            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+            
+            // Check if this is the admin user (@K4LNX)
+            if (username === '@K4LNX') {
+                userItem.classList.add('admin');
+            }
+            
+            // Create avatar container
+            const avatarContainer = document.createElement('div');
+            avatarContainer.className = 'top-user-avatar-container';
+            
+            // Create avatar image
+            const avatar = document.createElement('img');
+            avatar.src = photoUrl;
+            avatar.alt = name;
+            avatar.className = 'top-user-avatar';
+            avatar.onerror = function() {
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`;
+            };
+            
+            // Assemble avatar container
+            avatarContainer.appendChild(avatar);
+            
+            // Create user info container
+            const userInfo = document.createElement('div');
+            userInfo.className = 'top-user-info';
+            
+            // Create name element
+            const nameElement = document.createElement('div');
+            nameElement.className = 'top-user-name';
+            nameElement.textContent = name;
+            
+            // Create username element only if username exists
+            if (username) {
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'top-user-username';
+                usernameElement.textContent = username;
+                userInfo.appendChild(nameElement);
+                userInfo.appendChild(usernameElement);
+            } else {
+                userInfo.appendChild(nameElement);
+            }
+            
+            // Create hits element
+            const hitsElement = document.createElement('div');
+            hitsElement.className = 'top-user-hits';
+            hitsElement.textContent = `${hits} hits`;
+            
+            // Assemble user item
+            userItem.appendChild(avatarContainer);
+            userItem.appendChild(userInfo);
+            userItem.appendChild(hitsElement);
+            
+            // Add to fragment
+            fragment.appendChild(userItem);
+        });
+        
+        // Clear the list and add all users at once
+        topUsersList.innerHTML = '';
+        topUsersList.appendChild(fragment);
+        
+        console.log("Successfully rendered top users list");
+    }
+
+    // Initialize top users updates
+    function initializeTopUsersUpdates() {
+        // Clear any existing interval
+        if (topUsersInterval) {
+            clearInterval(topUsersInterval);
+        }
+        
+        // Initial update
+        updateTopUsers();
+        
+        // Set up interval to update every 60 seconds
+        topUsersInterval = setInterval(() => {
+            updateTopUsers();
+        }, 60000);
+        
+        console.log("Top users updates initialized. Users will update every 60 seconds.");
     }
 
     // Load API key from refresh.php using POST
@@ -450,6 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update global stats when home page is shown
                 if (pageName === 'home') {
                     updateGlobalStats();
+                    updateTopUsers();
                 }
             }
             
@@ -602,6 +792,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update global stats after a short delay to allow the database to update
             setTimeout(() => updateGlobalStats(), 1000);
+            
+            // Update top users after a short delay if this was a charged card
+            if (status === 'CHARGED') {
+                setTimeout(() => updateTopUsers(), 1000);
+            }
         }
 
         // Activity feed function
@@ -1518,6 +1713,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             clearInterval(globalStatsInterval);
                         }
                         
+                        // Clear top users interval
+                        if (topUsersInterval) {
+                            clearInterval(topUsersInterval);
+                        }
+                        
                         // Clear any pending activity request
                         if (window.activityRequest) {
                             window.activityRequest.abort();
@@ -1548,6 +1748,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (globalStatsInterval) {
                         clearInterval(globalStatsInterval);
+                    }
+                    
+                    if (topUsersInterval) {
+                        clearInterval(topUsersInterval);
                     }
                     
                     if (window.activityRequest) {
@@ -1868,6 +2072,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (globalStatsInterval) {
                         clearInterval(globalStatsInterval);
                     }
+                    if (topUsersInterval) {
+                        clearInterval(topUsersInterval);
+                    }
                     console.log("Cleared intervals on page unload");
                 });
             }
@@ -1905,6 +2112,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.logout = logout;
         window.loadUserProfile = loadUserProfile;
         window.updateUserStatistics = updateUserStatistics;
+        window.updateTopUsers = updateTopUsers;
+        window.displayTopUsers = displayTopUsers;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
@@ -2079,6 +2288,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Initialize global stats updates
                 initializeGlobalStatsUpdates();
+                
+                // Initialize top users updates
+                initializeTopUsersUpdates();
                 
                 // Initialize maxConcurrent based on selected gateway
                 updateMaxConcurrent();
