@@ -164,10 +164,6 @@ if (empty($userPhotoUrl)) {
             /* Hits colors */
             --hits-light: #fbbf24; /* Yellow color for light mode */
             --hits-dark: #fbbf24; /* Yellow color for dark mode */
-            
-            /* Admin badge colors */
-            --admin-badge-bg: linear-gradient(135deg, #a855f7, #ec4899);
-            --admin-badge-text: #ffffff;
         }
         
         /* Smooth transitions for all elements */
@@ -1228,8 +1224,8 @@ if (empty($userPhotoUrl)) {
         }
         
         .admin-badge {
-            background: var(--admin-badge-bg) !important; /* Using CSS variable */
-            color: var(--admin-badge-text) !important;
+            background: linear-gradient(135deg, #a855f7, #ec4899) !important; /* Premium gradient */
+            color: white !important;
             padding: 2px 5px; /* Slightly larger padding */
             border-radius: 4px; /* Slightly larger border radius */
             font-size: 0.55rem; /* Slightly larger font size */
@@ -1237,9 +1233,6 @@ if (empty($userPhotoUrl)) {
             text-transform: uppercase;
             margin-left: 5px; /* Slightly larger margin */
             box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3); /* Added shadow */
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
         
         /* Beast Level Profile Page - Reduced Size */
@@ -1622,6 +1615,131 @@ if (empty($userPhotoUrl)) {
         
         body[data-theme="dark"] .mobile-online-user-name {
             color: #ffffff; /* White text in dark mode */
+        }
+        
+        /* Mobile Top Users Section - Added */
+        .mobile-top-users {
+            margin-top: 1.5rem; /* Reduced margin */
+            background: var(--card-bg);
+            border-radius: 14px; /* Reduced border radius */
+            padding: 1.2rem; /* Reduced padding */
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+        }
+        
+        body[data-theme="dark"] .mobile-top-users {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .mobile-top-users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem; /* Reduced margin */
+        }
+        
+        .mobile-top-users-title {
+            font-size: 1.1rem; /* Reduced font size */
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem; /* Reduced gap */
+        }
+        
+        body[data-theme="dark"] .mobile-top-users-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .mobile-top-users-title i {
+            color: var(--accent-purple);
+        }
+        
+        .mobile-top-users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem; /* Reduced gap */
+        }
+        
+        .mobile-top-user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem; /* Reduced gap */
+            padding: 0.8rem; /* Reduced padding */
+            background: var(--user-item-bg-light); /* Light blue filled color */
+            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
+            border-radius: 10px; /* Reduced border radius */
+            transition: all 0.3s;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
+        }
+        
+        body[data-theme="dark"] .mobile-top-user-item {
+            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
+            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
+        }
+        
+        .mobile-top-user-avatar {
+            width: 36px; /* Reduced size */
+            height: 36px; /* Reduced size */
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-purple);
+        }
+        
+        .mobile-top-user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .mobile-top-user-name {
+            font-weight: 700;
+            font-size: 0.85rem; /* Reduced font size */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        body[data-theme="dark"] .mobile-top-user-name {
+            color: #ffffff; /* White text in dark mode */
+        }
+        
+        .mobile-top-user-username {
+            font-size: 0.7rem; /* Reduced font size */
+            color: var(--text-secondary);
+            margin-bottom: 0.1rem; /* Reduced margin */
+        }
+        
+        body[data-theme="dark"] .mobile-top-user-username {
+            color: #ffffff; /* White text in dark mode */
+        }
+        
+        .mobile-top-user-hits {
+            font-size: 0.75rem; /* Reduced font size */
+            font-weight: 700;
+            color: var(--hits-light); /* Yellow color for light mode */
+            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in light mode */
+            border: 1px solid rgba(251, 191, 36, 0.3); /* Yellow border in light mode */
+            padding: 0.3rem 0.6rem; /* Increased padding for bigger box */
+            border-radius: 8px; /* Increased border radius */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px; /* Increased minimum width */
+            text-align: center;
+        }
+        
+        body[data-theme="dark"] .mobile-top-user-hits {
+            color: var(--hits-dark) !important; /* Yellow color for dark mode */
+            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in dark mode */
+            border-color: rgba(251, 191, 36, 0.3); /* Yellow border in dark mode */
         }
         
         /* Other sections styling - Reduced Size */
@@ -2707,9 +2825,17 @@ if (empty($userPhotoUrl)) {
                 gap: 0.3rem; /* Reduced gap */
             }
             
-            /* Show right sidebar on mobile */
+            /* Show mobile sections instead of right sidebar */
             .right-sidebar {
                 display: none;
+            }
+            
+            .mobile-online-users {
+                display: block !important;
+            }
+            
+            .mobile-top-users {
+                display: block !important;
             }
             
             /* Profile page mobile adjustments */
@@ -2754,10 +2880,6 @@ if (empty($userPhotoUrl)) {
             }
             
             /* Mobile Online Users Section */
-            .mobile-online-users {
-                display: block !important;
-            }
-            
             .mobile-online-users-header {
                 margin-bottom: 0.8rem; /* Reduced margin */
             }
@@ -2787,49 +2909,42 @@ if (empty($userPhotoUrl)) {
                 font-size: 0.65rem; /* Reduced font size */
                 max-width: 60px; /* Reduced width */
             }
-        }
             
-            /* Top Users Section for mobile */
-            .top-users-section {
-                display: block !important;
-                margin-top: 1.5rem;
+            /* Mobile Top Users Section */
+            .mobile-top-users-header {
+                margin-bottom: 0.8rem; /* Reduced margin */
             }
             
-            .top-users-header {
-                margin-bottom: 0.8rem;
+            .mobile-top-users-title {
+                font-size: 1rem; /* Reduced font size */
             }
             
-            .top-users-title {
-                font-size: 1rem;
+            .mobile-top-users-list {
+                gap: 0.5rem; /* Reduced gap */
             }
             
-            .top-users-count {
-                font-size: 0.7rem;
+            .mobile-top-user-item {
+                padding: 0.6rem; /* Reduced padding */
             }
             
-            .top-users-list {
-                gap: 0.5rem;
+            .mobile-top-user-avatar {
+                width: 30px; /* Reduced size */
+                height: 30px; /* Reduced size */
             }
             
-            .top-user-item {
-                padding: 0.6rem;
+            .mobile-top-user-name {
+                font-size: 0.75rem; /* Reduced font size */
             }
             
-            .top-user-avatar {
-                width: 30px;
-                height: 30px;
+            .mobile-top-user-username {
+                font-size: 0.6rem; /* Reduced font size */
             }
             
-            .top-user-name {
-                font-size: 0.75rem;
-                max-width: 60px;
+            .mobile-top-user-hits {
+                font-size: 0.65rem; /* Reduced font size */
+                padding: 0.2rem 0.4rem; /* Reduced padding */
+                min-width: 40px; /* Reduced width */
             }
-            
-            .top-user-hits {
-                font-size: 0.65rem;
-                min-width: 40px;
-            }
-        }
         }
         
         /* For very small screens */
@@ -2940,98 +3055,470 @@ if (empty($userPhotoUrl)) {
                 font-size: 1rem; /* Further reduced font size */
             }
             
-            /* Mobile Online Users Section for very small screens */
-            .mobile-online-users {
-                margin-top: 1rem;
-            }
-            
-            .mobile-online-users-header {
-                margin-bottom: 0.6rem;
-            }
-            
-            .mobile-online-users-title {
-                font-size: 0.9rem;
-            }
-            
-            .mobile-online-users-count {
-                font-size: 0.65rem;
-            }
-            
-            .mobile-online-users-list {
-                gap: 0.4rem;
-            }
-            
+            /* Mobile Online Users for very small screens */
             .mobile-online-user-item {
-                padding: 0.3rem;
+                padding: 0.3rem; /* Further reduced padding */
             }
             
             .mobile-online-user-avatar {
-                width: 18px;
-                height: 18px;
+                width: 18px; /* Further reduced size */
+                height: 18px; /* Further reduced size */
             }
             
             .mobile-online-user-name {
-                font-size: 0.6rem;
-                max-width: 50px;
+                font-size: 0.6rem; /* Further reduced font size */
+                max-width: 50px; /* Further reduced width */
             }
             
-            /* Top Users Section for very small screens */
-            .top-users-section {
-                margin-top: 1rem;
+            /* Mobile Top Users for very small screens */
+            .mobile-top-user-item {
+                padding: 0.5rem; /* Further reduced padding */
             }
             
-            .top-users-header {
-                margin-bottom: 0.6rem;
+            .mobile-top-user-avatar {
+                width: 26px; /* Further reduced size */
+                height: 26px; /* Further reduced size */
             }
             
-            .top-users-title {
-                font-size: 0.9rem;
+            .mobile-top-user-name {
+                font-size: 0.7rem; /* Further reduced font size */
             }
             
-            .top-users-count {
-                font-size: 0.65rem;
+            .mobile-top-user-username {
+                font-size: 0.55rem; /* Further reduced font size */
             }
             
-            .top-users-list {
-                gap: 0.4rem;
-            }
-            
-            .top-user-item {
-                padding: 0.6rem;
-            }
-            
-            .top-user-avatar {
-                width: 28px;
-                height: 28px;
-            }
-            
-            .top-user-name {
-                font-size: 0.7rem;
-                max-width: 50px;
-            }
-            
-            .top-user-hits {
-                font-size: 0.6rem;
-                min-width: 35px;
+            .mobile-top-user-hits {
+                font-size: 0.6rem; /* Further reduced font size */
+                padding: 0.2rem 0.3rem; /* Further reduced padding */
+                min-width: 35px; /* Further reduced width */
             }
         }
         
-        /* Show right sidebar on desktop only */
-        @media (min-width: 769px) {
-            .right-sidebar {
-                display: flex;
-            }
+        /* New Gateway Selection Modal - Two-Level Structure */
+        .gateway-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
-        /* Show mobile online users on mobile only */
-        @media (max-width: 768px) {
-            .mobile-online-users {
-                display: block !important;
-            }
-            
-            .right-sidebar {
-                display: none;
-            }
+        .gateway-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .gateway-modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 2rem;
+            max-width: 650px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-beast);
+            transform: translateY(20px);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+        
+        .gateway-modal.active .gateway-modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        body[data-theme="dark"] .gateway-modal-content {
+            background: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        body[data-theme="dark"] .gateway-modal-header {
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-modal-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .gateway-modal-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--secondary-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .gateway-modal-close {
+            background: var(--dark-accent-bg);
+            color: var(--dark-text-secondary);
+        }
+        
+        .gateway-modal-close:hover {
+            background: var(--error);
+            color: white;
+            transform: rotate(90deg);
+        }
+        
+        /* Provider Selection View - Updated to match gateway format */
+        .provider-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .provider-selection.hidden {
+            display: none;
+        }
+        
+        .provider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .provider-group-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .provider-group-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .provider-group-title i {
+            color: var(--accent-blue);
+        }
+        
+        .provider-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .provider-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .provider-option {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .provider-option:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .provider-option-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+        }
+        
+        .provider-option-content {
+            flex: 1;
+        }
+        
+        .provider-option-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .provider-option-name {
+            color: var(--dark-text-primary);
+        }
+        
+        .provider-option-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .provider-option-desc {
+            color: var(--dark-text-secondary);
+        }
+        
+        /* Gateway Selection View */
+        .gateway-selection {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .gateway-selection.active {
+            display: flex;
+        }
+        
+        .gateway-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .gateway-group-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .gateway-group-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-group-title i {
+            color: var(--accent-blue);
+        }
+        
+        .gateway-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .gateway-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .gateway-option {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-option:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .gateway-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 1rem;
+            cursor: pointer;
+            accent-color: var(--accent-blue);
+        }
+        
+        .gateway-option-content {
+            flex: 1;
+        }
+        
+        .gateway-option-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        body[data-theme="dark"] .gateway-option-name {
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-option-name i {
+            font-size: 1.1rem;
+        }
+        
+        .gateway-option-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .gateway-option-desc {
+            color: var(--dark-text-secondary);
+        }
+        
+        .gateway-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .badge-charge {
+            background: rgba(245,158,11,0.15);
+            color: var(--warning);
+        }
+        
+        .badge-auth {
+            background: rgba(6,182,212,0.15);
+            color: var(--accent-cyan);
+        }
+        
+        .badge-maintenance {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .gateway-modal-footer {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        body[data-theme="dark"] .gateway-modal-footer {
+            border-color: var(--dark-border-color);
+        }
+        
+        .gateway-btn-back {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .gateway-btn-back {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-btn-back:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        
+        .gateway-btn-save {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .gateway-btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gateway-btn-cancel {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        body[data-theme="dark"] .gateway-btn-cancel {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-primary);
+        }
+        
+        .gateway-btn-cancel:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Fix for Global Statistics text in dark mode */
+        body[data-theme="dark"] .gs-title {
+            color: var(--dark-text-primary) !important;
+        }
+        
+        body[data-theme="dark"] .gs-sub {
+            color: var(--dark-text-secondary) !important;
+        }
+        
+        /* Status indicator for active gateways */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+        }
+        
+        .status-active {
+            background-color: var(--success-green);
+        }
+        
+        .status-inactive {
+            background-color: var(--error);
         }
     </style>
 </head>
@@ -3088,7 +3575,7 @@ if (empty($userPhotoUrl)) {
                     <i class="fas fa-plus"></i><span>More Coming Soon</span>
                 </a>
             </li>
-            <li>
+            <li class="sidebar-item">
                 <a class="sidebar-link logout" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i><span>Logout</span>
                 </a>
@@ -3170,7 +3657,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-blue">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4s-3 1.57-3 3.5S6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5s3.67-1.17-7-3.5z"/>
+                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalUsers" class="gs-num">—</div>
@@ -3180,7 +3667,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-purple">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 5c0 .35.07.69.18 1 .18H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2 2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45.45 1 1s-.45 1-1-.45-1zM9 4c.55 0 1 .45.45 1 1s-.45 1-1-.45-1zM9 4c.55 0 1 .45.45 1 1s-.45 1-1-.45-1z"/>
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1-.45-1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1-.45-1-1z"/>
                                     </svg>
                                 </div>
                                 <div id="gTotalHits" class="gs-num">—</div>
@@ -3200,7 +3687,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gs-card gs-green">
                                 <div class="gs-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M3 13h3l2-6 4 4 12 2 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </div>
                                 <div id="gLiveCards" class="gs-num">—</div>
@@ -3228,13 +3715,29 @@ if (empty($userPhotoUrl)) {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Mobile Top Users Section -->
+                    <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
+                        <div class="mobile-top-users-header">
+                            <div class="mobile-top-users-title">
+                                <i class="fas fa-trophy"></i> Top Users
+                            </div>
+                        </div>
+                        <div class="mobile-top-users-list" id="mobileTopUsersList">
+                            <div class="empty-state">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>No Top Users</h3>
+                                <p>No top users data available</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section class="page-section" id="page-checking">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮 𝐜𝐚𝐤 𝐲𝐨𝐮 𝐦𝐮 𝐦𝐮 𝐦𝐮</p>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐭𝐢𝐥𝐥</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -3297,8 +3800,8 @@ if (empty($userPhotoUrl)) {
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑬𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫 𝐯𝐧𝐫 𝐯𝐧𝐫 𝐯𝐧𝐫𝐧𝐧</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬𝑬</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐥𝐰𝐢𝐥𝐥𝐰𝐢𝐧𝐡</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -3356,7 +3859,6 @@ if (empty($userPhotoUrl)) {
                 <div class="form-group">
                     <label class="input-label">Number of Cards</label>
                     <input type="number" id="numCardsInput" class="form-control" value="10" min="1" max="5000">
-                </div>
                 </div>
 
                 <div class="action-buttons">
@@ -3510,10 +4012,6 @@ if (empty($userPhotoUrl)) {
                 <div class="top-users-title">
                     <i class="fas fa-trophy"></i> Top Users
                 </div>
-                <div class="top-users-count" id="topUsersCount">
-                    <i class="fas fa-trophy"></i>
-                    <span id="topCount">0</span> users
-                </div>
             </div>
             <div class="top-users-list" id="topUsersList">
                 <div class="empty-state">
@@ -3584,7 +4082,7 @@ if (empty($userPhotoUrl)) {
                             </div>
                             <div class="provider-option-content">
                                 <div class="provider-option-name">
-                                    <img src="https://cdn.reactjs.org/wp-content/uploads/2023/04/razorpay-logo.svg" alt="Razorpay" 
+                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
                                         style="width:15px; height:15px; object-fit:contain;"> Razorpay
                                 </div>
                                 <div class="provider-option-desc">Indian payment gateway</div>
@@ -3602,6 +4100,7 @@ if (empty($userPhotoUrl)) {
                             </div>
                         </div>
                     </div>
+                </div>
 
                 <div class="provider-group">
                     <div class="provider-group-title">
@@ -3633,24 +4132,24 @@ if (empty($userPhotoUrl)) {
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/stripe1$.php">
-                                <div class="gateway-option-content">
-                                    <div class="gateway-option-name">
-                                        <i class="fab fa-stripe"></i> Stripe
-                                        <span class="gateway-badge badge-charge">1$ Charge</span>
-                                    </div>
-                                    <div class="gateway-option-desc">Payment processing with $1 charge</div>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
-                            </label>
-                            <label class="gateway-option">
-                                <input type="radio" name="gateway" value="gate/stripe5$.php">
-                                    <div class="gateway-option-content">
-                                        <div class="gateway-option-name">
-                                            <i class="fab fa-stripe"></i> Stripe
-                                            <span class="gateway-badge badge-charge">5$ Charge</span>
-                                        </div>
-                                    <div class="gateway-option-desc">Payment processing with $5 charge</div>
+                                <div class="gateway-option-desc">Payment processing with $1 charge</div>
+                            </div>
+                        </label>
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripe5$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-charge">5$ Charge</span>
                                 </div>
-                            </label>
+                                <div class="gateway-option-desc">Payment processing with $5 charge</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -3662,14 +4161,14 @@ if (empty($userPhotoUrl)) {
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/shopify1$.php">
-                                <div class="gateway-option-content">
-                                    <div class="gateway-option-name">
-                                        <i class="fab fa-shopify"></i> Shopify
-                                        <span class="gateway-badge badge-charge">1$ Charge</span>
-                                    </div>
-                                    <div class="gateway-option-desc">E-commerce payment processing</div>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-shopify"></i> Shopify
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
-                            </label>
+                                <div class="gateway-option-desc">E-commerce payment processing</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -3681,14 +4180,14 @@ if (empty($userPhotoUrl)) {
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/paypal0.1$.php">
-                                <div class="gateway-option-content">
-                                    <div class="gateway-option-name">
-                                        <i class="fab fa-paypal"></i> PayPal
-                                        <span class="gateway-badge badge-charge">0.1$ Charge</span>
-                                    </div>
-                                    <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-paypal"></i> PayPal
+                                    <span class="gateway-badge badge-charge">0.1$ Charge</span>
                                 </div>
-                            </label>
+                                <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -3701,16 +4200,16 @@ if (empty($userPhotoUrl)) {
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
-                                <div class="gateway-option-content">
-                                    <div class="gateway-option-name">
-                                        <img src="https://cdn.reactjs.org/wp-content/uploads/2023/04/razorpay-logo.svg" alt="Razorpay" 
-                                            style="width:15px; height:15px; object-fit:contain;">Razorpay
-                                        <span class="gateway-badge badge-charge">0.10$ Charge</span>
-                                        <span class="gateway-badge badge-maintenance">Under Maintenance</span>
-                                    </div>
-                                    <div class="gateway-option-desc">Indian payment gateway</div>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                        style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                    <span class="gateway-badge badge-charge">0.10$ Charge</span>
+                                    <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                                 </div>
-                            </label>
+                                <div class="gateway-option-desc">Indian payment gateway</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -3722,15 +4221,15 @@ if (empty($userPhotoUrl)) {
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/authnet1$.php">
-                                <div class="gateway-option-content">
-                                    <div class="gateway-option-name">
-                                        <i class="fas fa-credit-card"></i> Authnet
-                                        <span class="gateway-badge badge-charge">1$ Charge</span>
-                                    </div>
-                                    <div class="gateway-option-desc">Authorize.net payment gateway</div>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fas fa-credit-card"></i> Authnet
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
-                            </label>
-                        </div>
+                                <div class="gateway-option-desc">Authorize.net payment gateway</div>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Stripe Auth Gateways -->
@@ -3741,16 +4240,16 @@ if (empty($userPhotoUrl)) {
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/stripeauth.php">
-                                <div class="gateway-option-content">
-                                    <div class="gateway-option-name">
-                                        <i class="fab fa-stripe"></i> Stripe
-                                        <span class="gateway-badge badge-auth">Auth</span>
-                                    </div>
-                                    <div class="gateway-option-desc">Authorization only, no charge</div>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-auth">Auth</span>
                                 </div>
-                            </label>
-                        </div>
+                                <div class="gateway-option-desc">Authorization only, no charge</div>
+                            </div>
+                        </label>
                     </div>
+                </div>
             </div>
 
             <div class="gateway-modal-footer">
@@ -3819,16 +4318,13 @@ if (empty($userPhotoUrl)) {
             
             // Fetch online users and top users data
             fetchUsersData();
-            
-            // Set up periodic refresh
-            setInterval(fetchUsersData, 30000); // Refresh every 30 seconds
         });
         
         // Function to fetch users data from API
         function fetchUsersData() {
             // Fetch online users
             fetch('api/online-users')
-                .then(response => response => response.json())
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         updateOnlineUsersList(data.users);
@@ -3852,6 +4348,9 @@ if (empty($userPhotoUrl)) {
                 .catch(error => {
                     console.error('Error fetching top users:', error);
                 });
+            
+            // Set up periodic refresh
+            setInterval(fetchUsersData, 30000); // Refresh every 30 seconds
         }
         
         // Function to update online users list
@@ -3890,7 +4389,7 @@ if (empty($userPhotoUrl)) {
                     <div class="online-user-item ${adminClass}">
                         <div class="online-user-avatar-container">
                             <img src="${user.photo_url}" alt="${user.name}" class="online-user-avatar">
-                                <div class="online-indicator"></div>
+                            <div class="online-indicator"></div>
                         </div>
                         <div class="online-user-info">
                             <div class="online-user-name">${user.name}${adminBadge}</div>
@@ -3902,11 +4401,10 @@ if (empty($userPhotoUrl)) {
                 mobileOnlineUsersHTML += `
                     <div class="mobile-online-user-item ${adminClass}">
                         <img src="${user.photo_url}" alt="${user.name}" class="mobile-online-user-avatar">
-                        <div class="online-indicator"></div>
                         <span class="mobile-online-user-name">${user.name}${adminBadge}</span>
                     </div>
                 `;
-            }
+            });
             
             onlineUsersList.innerHTML = onlineUsersHTML;
             mobileOnlineUsersList.innerHTML = mobileOnlineUsersHTML;
@@ -3918,9 +4416,18 @@ if (empty($userPhotoUrl)) {
         // Function to update top users list
         function updateTopUsersList(users) {
             const topUsersList = document.getElementById('topUsersList');
+            const mobileTopUsersList = document.getElementById('mobileTopUsersList');
             
             if (users.length === 0) {
                 topUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>No Top Users</h3>
+                        <p>No top users data available</p>
+                    </div>
+                `;
+                
+                mobileTopUsersList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-chart-line"></i>
                         <h3>No Top Users</h3>
@@ -3931,6 +4438,7 @@ if (empty($userPhotoUrl)) {
             }
             
             let topUsersHTML = '';
+            let mobileTopUsersHTML = '';
             
             users.forEach(user => {
                 const isAdmin = user.username === '@K4LNX';
@@ -3941,7 +4449,6 @@ if (empty($userPhotoUrl)) {
                     <div class="top-user-item ${adminClass}">
                         <div class="top-user-avatar-container">
                             <img src="${user.photo_url}" alt="${user.name}" class="top-user-avatar">
-                            </div>
                         </div>
                         <div class="top-user-info">
                             <div class="top-user-name">${user.name}${adminBadge}</div>
@@ -3950,9 +4457,21 @@ if (empty($userPhotoUrl)) {
                         <div class="top-user-hits">${user.total_hits}</div>
                     </div>
                 `;
-            }
+                
+                mobileTopUsersHTML += `
+                    <div class="mobile-top-user-item ${adminClass}">
+                        <img src="${user.photo_url}" alt="${user.name}" class="mobile-top-user-avatar">
+                        <div class="mobile-top-user-info">
+                            <div class="mobile-top-user-name">${user.name}${adminBadge}</div>
+                            <div class="mobile-top-user-username">${user.username}</div>
+                        </div>
+                        <div class="mobile-top-user-hits">${user.total_hits}</div>
+                    </div>
+                `;
+            });
             
             topUsersList.innerHTML = topUsersHTML;
+            mobileTopUsersList.innerHTML = mobileTopUsersHTML;
             
             // Check for admin user after updating the list
             checkForAdminUser();
@@ -3960,7 +4479,7 @@ if (empty($userPhotoUrl)) {
         
         // Function to check for admin user and add admin badge
         function checkForAdminUser() {
-            // This function is now called after updating the lists
+            // This function is now called after updating the user lists
             // The admin badge is already added in the update functions above
         }
         
@@ -4079,129 +4598,6 @@ if (empty($userPhotoUrl)) {
             }
             
             return null;
-        }
-        
-        // Function to toggle theme
-        function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        }
-        
-        // Initialize theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-            } else {
-                document.body.setAttribute('data-theme', 'light');
-            }
-        });
-        
-        // Show page function
-        function showPage(pageId) {
-            // Hide all pages
-            const pages = document.querySelectorAll('.page-section');
-            pages.forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // Show selected page
-            const selectedPage = document.getElementById(`page-${pageId}`);
-            if (selectedPage) {
-                selectedPage.classList.add('active');
-            }
-            
-            // Close sidebar on mobile
-            if (window.innerWidth <= 768px) {
-                closeSidebar();
-            }
-        }
-        
-        // Close sidebar function
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.querySelector('.main-content');
-            const menuToggle = document.getElementById('menuToggle');
-            
-            // Close sidebar
-            sidebar.classList.remove('open');
-            mainContent.classList.remove('sidebar-open');
-            
-            // Reset menu toggle state
-            menuToggle.classList.remove('active');
-        }
-        
-        // Initialize theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize theme
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-            } else {
-                document.body.setAttribute('data-theme', 'light');
-            }
-            
-            // Initialize mobile detection
-            checkMobileView();
-            
-            // Set up resize event listener
-            window.addEventListener('resize', checkMobileView);
-        });
-        
-        // Check if mobile view
-        function checkMobileView() {
-            const isMobile = window.innerWidth <= 768px;
-            const rightSidebar = document.getElementById('rightSidebar');
-            const mobileOnlineUsers = document.getElementById('mobileOnlineUsers');
-            const mobileTopUsers = document.getElementById('mobileOnlineUsers');
-            
-            if (isMobile) {
-                // Show mobile online users section
-                mobileOnlineUsers.style.display = 'block';
-                mobileTopUsers.style.display = 'block';
-                rightSidebar.style.display = 'none';
-            } else {
-                // Show desktop layout
-                mobileOnlineUsers.style.display = 'none';
-                mobileTopUsers.style.display = 'none';
-                rightSidebar.style.display = 'flex';
-            }
-        }
-        
-        // Function to fetch users data from API
-        function fetchUsersData() {
-            // Fetch online users
-            fetch('api/online-users')
-                .then(response => response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateOnlineUsersList(data.users);
-                        document.getElementById('onlineCount').textContent = data.count;
-                        document.getElementById('mobileOnlineCount').textContent = data.count;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching online users:', error);
-                });
-            
-            // Fetch top users
-            fetch('api/top-users')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateTopUsersList(data.users);
-                        document.getElementById('topCount').textContent = data.count;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching top users:', error);
-                });
-            
-            // Set up periodic refresh
-            setInterval(fetchUsersData, 30000); // Refresh every 30 seconds
         }
     </script>
 </body>
