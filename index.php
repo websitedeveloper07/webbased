@@ -153,6 +153,10 @@ if (empty($userPhotoUrl)) {
             --admin-color: #ef4444;
             --admin-bg: rgba(239, 68, 68, 0.15);
             --admin-border: rgba(239, 68, 68, 0.3);
+            
+            /* New colors for hits in dark mode */
+            --hits-light: #8b5cf6;
+            --hits-dark: #fbbf24; /* Yellow color for better visibility in dark mode */
         }
         
         /* Smooth transitions for all elements */
@@ -906,11 +910,13 @@ if (empty($userPhotoUrl)) {
             transition: all 0.3s ease;
             position: relative;
             margin-bottom: 0.8rem; /* Reduced margin */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
         }
         
         body[data-theme="dark"] .online-user-item {
             background: var(--dark-card-bg);
             border-color: var(--dark-border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
         }
         
         .online-user-item:hover {
@@ -1070,11 +1076,13 @@ if (empty($userPhotoUrl)) {
             transition: all 0.3s ease;
             position: relative;
             margin-bottom: 0.8rem; /* Reduced margin */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
         }
         
         body[data-theme="dark"] .top-user-item {
             background: var(--dark-card-bg);
             border-color: var(--dark-border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
         }
         
         .top-user-item:hover {
@@ -1128,19 +1136,26 @@ if (empty($userPhotoUrl)) {
         .top-user-hits {
             font-size: 0.75rem; /* Reduced font size */
             font-weight: 700;
-            color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            color: var(--hits-light); /* Using new variable for light mode */
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            padding: 0.2rem 0.4rem; /* Reduced padding */
-            border-radius: 6px; /* Reduced border radius */
+            padding: 0.3rem 0.6rem; /* Increased padding for bigger box */
+            border-radius: 8px; /* Increased border radius */
             background-color: rgba(139, 92, 246, 0.15);
             border: 1px solid rgba(139, 92, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px; /* Increased minimum width */
+            text-align: center;
         }
         
         body[data-theme="dark"] .top-user-hits {
-            color: var(--dark-text-primary);
-            background-color: rgba(139, 92, 246, 0.2);
+            color: var(--hits-dark) !important; /* Yellow color for dark mode */
+            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in dark mode */
+            border-color: rgba(251, 191, 36, 0.3); /* Yellow border in dark mode */
+            -webkit-text-fill-color: var(--hits-dark); /* Ensure text is yellow in dark mode */
         }
         
         /* Admin user styling */
@@ -1517,11 +1532,13 @@ if (empty($userPhotoUrl)) {
             border: 1px solid var(--border-color);
             transition: all 0.3s;
             position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
         }
         
         body[data-theme="dark"] .mobile-online-user-item {
             background: var(--dark-accent-bg);
             border-color: var(--dark-border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
         }
         
         .mobile-online-user-avatar {
