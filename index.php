@@ -3100,7 +3100,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* Enhanced Gateway Selection Modal */
+        /* Enhanced Gateway Selection Modal - Medium Size */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -3125,11 +3125,11 @@ if (empty($userPhotoUrl)) {
         .gateway-modal-content {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 1.5rem;
-            max-width: 600px;
+            max-width: 600px; /* Reduced from 650px */
             width: 90%;
-            max-height: 80vh;
+            max-height: 75vh; /* Reduced from 85vh */
             overflow-y: auto;
             box-shadow: var(--shadow-beast);
             transform: translateY(20px);
@@ -3215,23 +3215,6 @@ if (empty($userPhotoUrl)) {
             gap: 1rem;
         }
         
-        .provider-group-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        body[data-theme="dark"] .provider-group-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .provider-group-title i {
-            color: var(--accent-blue);
-        }
-        
         .provider-options {
             display: flex;
             flex-direction: column;
@@ -3242,22 +3225,22 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05)); /* Subtle gradient */
+            border: 1px solid rgba(59, 130, 246, 0.2); /* Light border */
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         body[data-theme="dark"] .provider-option {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); /* Darker gradient in dark mode */
+            border-color: rgba(59, 130, 246, 0.3); /* Darker border in dark mode */
         }
         
         .provider-option:hover {
-            border-color: var(--accent-blue);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
         }
         
         .provider-option-icon {
@@ -3342,22 +3325,22 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05)); /* Subtle gradient */
+            border: 1px solid rgba(59, 130, 246, 0.2); /* Light border */
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         body[data-theme="dark"] .gateway-option {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); /* Darker gradient in dark mode */
+            border-color: rgba(59, 130, 246, 0.3); /* Darker border in dark mode */
         }
         
         .gateway-option:hover {
-            border-color: var(--accent-blue);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
         }
         
         .gateway-option input[type="radio"] {
@@ -3501,403 +3484,33 @@ if (empty($userPhotoUrl)) {
             transform: translateY(-2px);
         }
         
-        /* Enhanced Home Page */
-        .enhanced-dashboard {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .quick-action-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        body[data-theme="dark"] .quick-action-card {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .quick-action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--accent-blue);
-        }
-        
-        .quick-action-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-        }
-        
-        .quick-action-icon.check {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-        }
-        
-        .quick-action-icon.generate {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
-        }
-        
-        .quick-action-icon.stats {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-teal));
-        }
-        
-        .quick-action-title {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--text-primary);
-        }
-        
-        body[data-theme="dark"] .quick-action-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .quick-action-desc {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-        
-        body[data-theme="dark"] .quick-action-desc {
-            color: var(--dark-text-secondary);
-        }
-        
-        /* Enhanced Checking Page */
-        .enhanced-checker {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .checker-info {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            border-radius: 12px;
-            padding: 1.2rem;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        body[data-theme="dark"] .checker-info {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-            border-color: var(--dark-border-color);
-        }
-        
-        .checker-info-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.8rem;
-        }
-        
-        body[data-theme="dark"] .checker-info-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .checker-info-title i {
-            color: var(--accent-blue);
-        }
-        
-        .checker-info-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-        
-        .info-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.8rem;
-        }
-        
-        .info-item i {
-            color: var(--accent-cyan);
-            margin-top: 0.2rem;
-        }
-        
-        .info-text {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-        
-        body[data-theme="dark"] .info-text {
-            color: var(--dark-text-secondary);
-        }
-        
-        .current-gateway {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0.8rem;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 8px;
-            margin-top: 0.5rem;
-        }
-        
-        .current-gateway-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        .current-gateway-value {
-            font-weight: 700;
-            color: var(--accent-blue);
-        }
-        
-        body[data-theme="dark"] .current-gateway-label {
-            color: var(--dark-text-secondary);
-        }
-        
-        /* Enhanced Card Input */
-        .enhanced-input {
-            position: relative;
-        }
-        
-        .input-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        
-        .input-tools {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .input-tool {
-            padding: 0.3rem 0.6rem;
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        body[data-theme="dark"] .input-tool {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-            color: var(--dark-text-secondary);
-        }
-        
-        .input-tool:hover {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
-        }
-        
-        .enhanced-textarea {
-            width: 100%;
-            min-height: 150px;
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 0.8rem;
-            color: var(--text-primary);
-            font-family: 'Courier New', monospace;
-            resize: vertical;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-        }
-        
-        body[data-theme="dark"] .enhanced-textarea {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-            color: var(--dark-text-primary);
-        }
-        
-        .enhanced-textarea:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        
-        /* Enhanced Results Display */
-        .enhanced-results {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .result-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        body[data-theme="dark"] .result-tabs {
-            border-color: var(--dark-border-color);
-        }
-        
-        .result-tab {
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.3s;
-        }
-        
-        body[data-theme="dark"] .result-tab {
-            color: var(--dark-text-secondary);
-        }
-        
-        .result-tab:hover {
-            color: var(--accent-blue);
-        }
-        
-        .result-tab.active {
-            color: var(--accent-blue);
-        }
-        
-        .result-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--accent-blue);
-        }
-        
-        .result-content {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .result-content.active {
-            display: block;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .result-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            margin-bottom: 0.8rem;
-            transition: all 0.3s;
-        }
-        
-        body[data-theme="dark"] .result-item {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .result-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .result-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 1rem;
-        }
-        
-        .result-status.charged {
-            background-color: var(--success-green);
-        }
-        
-        .result-status.approved {
-            background-color: var(--success-green);
-        }
-        
-        .result-status.declined {
-            background-color: var(--declined-red);
-        }
-        
-        .result-status.threeds {
-            background-color: var(--accent-cyan);
-        }
-        
-        .result-details {
-            flex: 1;
-        }
-        
-        .result-card {
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: var(--text-primary);
-            margin-bottom: 0.3rem;
-        }
-        
-        body[data-theme="dark"] .result-card {
-            color: var(--dark-text-primary);
-        }
-        
-        .result-info {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        body[data-theme="dark"] .result-info {
-            color: var(--dark-text-secondary);
-        }
-        
-        .result-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .result-action {
-            padding: 0.3rem 0.6rem;
-            background: transparent;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        body[data-theme="dark"] .result-action {
-            border-color: var(--dark-border-color);
-            color: var(--dark-text-secondary);
-        }
-        
-        .result-action:hover {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
+        /* Mobile responsiveness for gateway modal */
+        @media (max-width: 768px) {
+            .gateway-modal-content {
+                padding: 1rem;
+                max-width: 95vw;
+            }
+            
+            .provider-option, .gateway-option {
+                padding: 0.8rem;
+            }
+            
+            .provider-option-name, .gateway-option-name {
+                font-size: 0.9rem;
+            }
+            
+            .provider-option-desc, .gateway-option-desc {
+                font-size: 0.7rem;
+            }
+            
+            .gateway-modal-title {
+                font-size: 1.1rem;
+            }
+            
+            .gateway-btn-back, .gateway-btn-save, .gateway-btn-cancel {
+                padding: 0.6rem;
+                font-size: 0.8rem;
+            }
         }
         
         /* Fix for Global Statistics text in dark mode */
@@ -3989,7 +3602,7 @@ if (empty($userPhotoUrl)) {
 
     <main class="main-content">
         <section class="page-section active" id="page-home">
-            <div class="enhanced-dashboard">
+            <div class="dashboard-container">
                 <div class="welcome-banner">
                     <div class="welcome-content">
                         <div class="welcome-icon">
@@ -4002,162 +3615,137 @@ if (empty($userPhotoUrl)) {
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <div class="quick-action-card" onclick="showPage('checking')">
-                        <div class="quick-action-icon check">
-                            <i class="fas fa-credit-card"></i>
+                <div class="dashboard-content">
+                    <!-- Progress Counters - Beast Level with Better Spacing -->
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card charged">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                            </div>
+                            <div id="charged-value" class="stat-value">0</div>
+                            <div class="stat-label">HIT|CHARGED</div>
                         </div>
-                        <div class="quick-action-title">Check Cards</div>
-                        <div class="quick-action-desc">Verify card validity</div>
+                        <div class="stat-card approved">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div id="approved-value" class="stat-value">0</div>
+                            <div class="stat-label">LIVE|APPROVED</div>
+                        </div>
+                        <div class="stat-card declined">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </div>
+                            <div id="declined-value" class="stat-value">0</div>
+                            <div class="stat-label">DEAD|DECLINED</div>
+                        </div>
+                        <div class="stat-card checked">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
+                            </div>
+                            <div id="checked-value" class="stat-value">0 / 0</div>
+                            <div class="stat-label">CHECKED</div>
+                        </div>
+                    </div>
+
+                    <!-- Global Statistics Section - Better Spacing -->
+                    <div class="gs-panel mt-6">
+                        <div class="gs-head">
+                            <div class="gs-chip">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="gs-title">Global Statistics</div>
+                                <div class="gs-sub">Platform-wide performance metrics</div>
+                            </div>
+                        </div>
+
+                        <div class="gs-grid">
+                            <div class="gs-card gs-blue">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                    </svg>
+                                </div>
+                                <div id="gTotalUsers" class="gs-num">—</div>
+                                <div class="gs-label">Total Users</div>
+                            </div>
+
+                            <div class="gs-card gs-purple">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
+                                    </svg>
+                                </div>
+                                <div id="gTotalHits" class="gs-num">—</div>
+                                <div class="gs-label">Total Checked Cards</div>
+                            </div>
+
+                            <div class="gs-card gs-red">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+                                    </svg>
+                                </div>
+                                <div id="gChargeCards" class="gs-num">—</div>
+                                <div class="gs-label">Charge Cards</div>
+                            </div>
+
+                            <div class="gs-card gs-green">
+                                <div class="gs-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                <div id="gLiveCards" class="gs-num">—</div>
+                                <div class="gs-label">Live Cards</div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="quick-action-card" onclick="showPage('generator')">
-                        <div class="quick-action-icon generate">
-                            <i class="fas fa-magic"></i>
+                    <!-- Mobile Online Users Section -->
+                    <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
+                        <div class="mobile-online-users-header">
+                            <div class="mobile-online-users-title">
+                                <i class="fas fa-users"></i> Online Users
+                            </div>
+                            <div class="mobile-online-users-count" id="mobileOnlineUsersCount">
+                                <i class="fas fa-circle"></i>
+                                <span id="mobileOnlineCount">0</span> online
+                            </div>
                         </div>
-                        <div class="quick-action-title">Generate Cards</div>
-                        <div class="quick-action-desc">Create test cards</div>
+                        <div class="mobile-online-users-list" id="mobileOnlineUsersList">
+                            <div class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                <h3>No Users Online</h3>
+                                <p>No other users are currently online</p>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="quick-action-card" onclick="showPage('profile')">
-                        <div class="quick-action-icon stats">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <div class="quick-action-title">View Stats</div>
-                        <div class="quick-action-desc">Your performance</div>
-                    </div>
-                </div>
-
-                <!-- Progress Counters - Beast Level with Better Spacing -->
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat-card charged">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-bolt"></i>
+                    <!-- Mobile Top Users Section -->
+                    <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
+                        <div class="mobile-top-users-header">
+                            <div class="mobile-top-users-title">
+                                <i class="fas fa-trophy"></i> Top Users
                             </div>
                         </div>
-                        <div id="charged-value" class="stat-value">0</div>
-                        <div class="stat-label">HIT|CHARGED</div>
-                    </div>
-                    <div class="stat-card approved">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-circle"></i>
+                        <div class="mobile-top-users-list" id="mobileTopUsersList">
+                            <div class="empty-state">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>No Top Users</h3>
+                                <p>No top users data available</p>
                             </div>
-                        </div>
-                        <div id="approved-value" class="stat-value">0</div>
-                        <div class="stat-label">LIVE|APPROVED</div>
-                    </div>
-                    <div class="stat-card declined">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-times-circle"></i>
-                            </div>
-                        </div>
-                        <div id="declined-value" class="stat-value">0</div>
-                        <div class="stat-label">DEAD|DECLINED</div>
-                    </div>
-                    <div class="stat-card checked">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-double"></i>
-                            </div>
-                        </div>
-                        <div id="checked-value" class="stat-value">0 / 0</div>
-                        <div class="stat-label">CHECKED</div>
-                    </div>
-                </div>
-
-                <!-- Global Statistics Section - Better Spacing -->
-                <div class="gs-panel mt-6">
-                    <div class="gs-head">
-                        <div class="gs-chip">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <div class="gs-title">Global Statistics</div>
-                            <div class="gs-sub">Platform-wide performance metrics</div>
-                        </div>
-                    </div>
-
-                    <div class="gs-grid">
-                        <div class="gs-card gs-blue">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                                </svg>
-                            </div>
-                            <div id="gTotalUsers" class="gs-num">—</div>
-                            <div class="gs-label">Total Users</div>
-                        </div>
-
-                        <div class="gs-card gs-purple">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
-                                </svg>
-                            </div>
-                            <div id="gTotalHits" class="gs-num">—</div>
-                            <div class="gs-label">Total Checked Cards</div>
-                        </div>
-
-                        <div class="gs-card gs-red">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
-                                </svg>
-                            </div>
-                            <div id="gChargeCards" class="gs-num">—</div>
-                            <div class="gs-label">Charge Cards</div>
-                        </div>
-
-                        <div class="gs-card gs-green">
-                            <div class="gs-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div id="gLiveCards" class="gs-num">—</div>
-                            <div class="gs-label">Live Cards</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mobile Online Users Section -->
-                <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
-                    <div class="mobile-online-users-header">
-                        <div class="mobile-online-users-title">
-                            <i class="fas fa-users"></i> Online Users
-                        </div>
-                        <div class="mobile-online-users-count" id="mobileOnlineUsersCount">
-                            <i class="fas fa-circle"></i>
-                            <span id="mobileOnlineCount">0</span> online
-                        </div>
-                    </div>
-                    <div class="mobile-online-users-list" id="mobileOnlineUsersList">
-                        <div class="empty-state">
-                            <i class="fas fa-user-slash"></i>
-                            <h3>No Users Online</h3>
-                            <p>No other users are currently online</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mobile Top Users Section -->
-                <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
-                    <div class="mobile-top-users-header">
-                        <div class="mobile-top-users-title">
-                            <i class="fas fa-trophy"></i> Top Users
-                        </div>
-                    </div>
-                    <div class="mobile-top-users-list" id="mobileTopUsersList">
-                        <div class="empty-state">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>No Top Users</h3>
-                            <p>No top users data available</p>
                         </div>
                     </div>
                 </div>
@@ -4166,155 +3754,71 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-checking">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢𝐢</p>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢</p>
 
-            <div class="enhanced-checker">
-                <div class="checker-info">
-                    <div class="checker-info-title">
-                        <i class="fas fa-info-circle"></i> Checker Information
+            <div class="checker-section">
+                <div class="checker-header">
+                    <div class="checker-title">
+                        <i class="fas fa-shield-alt"></i> Card Checker
                     </div>
-                    <div class="checker-info-content">
-                        <div class="info-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div class="info-text">Our advanced checker verifies card validity across multiple payment gateways with high accuracy.</div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-shield-alt"></i>
-                            <div class="info-text">All card data is encrypted and processed securely. No card information is stored after verification.</div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-clock"></i>
-                            <div class="info-text">Most cards are verified within seconds. Complex cases may take up to 30 seconds.</div>
-                        </div>
-                        <div class="current-gateway">
-                            <span class="current-gateway-label">Current Gateway:</span>
-                            <span class="current-gateway-value" id="currentGateway">Not Set</span>
-                        </div>
-                    </div>
+                    <button class="settings-btn" onclick="openGatewayModal()">
+                        <i class="fas fa-cog"></i> Gateway Settings
+                    </button>
                 </div>
 
-                <div class="checker-section">
-                    <div class="checker-header">
-                        <div class="checker-title">
-                            <i class="fas fa-shield-alt"></i> Card Checker
-                        </div>
-                        <button class="settings-btn" onclick="openGatewayModal()">
-                            <i class="fas fa-cog"></i> Gateway Settings
-                        </button>
-                    </div>
-
-                    <div class="input-section">
-                        <div class="input-toolbar">
-                            <div class="input-label">Enter Card Details</div>
-                            <div class="input-tools">
-                                <div class="input-tool" onclick="formatCards()">
-                                    <i class="fas fa-magic"></i> Format
-                                </div>
-                                <div class="input-tool" onclick="clearCards()">
-                                    <i class="fas fa-eraser"></i> Clear
-                                </div>
-                                <div class="input-tool" onclick="sampleCards()">
-                                    <i class="fas fa-flask"></i> Sample
-                                </div>
-                            </div>
-                        </div>
-                        <div class="enhanced-input">
-                            <textarea id="cardInput" class="enhanced-textarea" 
-                                placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
-                        </div>
-                        <div class="card-count" id="cardCount">
+                <div class="input-section">
+                    <div class="input-header">
+                        <label class="input-label">Enter Card Details</label>
+                        <span class="card-count" id="cardCount">
                             <i class="fas fa-list"></i> 0 valid cards detected
-                        </div>
+                        </span>
                     </div>
-
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" id="startBtn">
-                            <i class="fas fa-play"></i> Start Check
-                        </button>
-                        <button class="btn btn-secondary" id="stopBtn" disabled>
-                            <i class="fas fa-stop"></i> Stop
-                        </button>
-                        <button class="btn btn-secondary" id="clearBtn">
-                            <i class="fas fa-trash"></i> Clear
-                        </button>
-                        <button class="btn btn-secondary" id="exportBtn">
-                            <i class="fas fa-download"></i> Export
-                        </button>
-                    </div>
-                    <div class="loader" id="loader"></div>
-                    <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
+                    <textarea id="cardInput" class="card-textarea" 
+                        placeholder="Enter card details: card|month|year|cvv&#10;Example:&#10;4532123456789012|12|2025|123"></textarea>
                 </div>
 
-                <div class="results-section" id="checkingResults">
-                    <div class="results-header">
-                        <div class="results-title">
-                            <i class="fas fa-list-check"></i> Recent Results
-                        </div>
-                        <div class="results-filters">
-                            <button class="filter-btn active" onclick="filterResults('all')">All</button>
-                            <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
-                            <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
-                            <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
-                            <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
-                        </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="startBtn">
+                        <i class="fas fa-play"></i> Start Check
+                    </button>
+                    <button class="btn btn-secondary" id="stopBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                <div class="loader" id="loader"></div>
+                <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
+            </div>
+
+            <div class="results-section" id="checkingResults">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-list-check"></i> Recent Results
                     </div>
-                    
-                    <div class="enhanced-results">
-                        <div class="result-tabs">
-                            <button class="result-tab active" onclick="showResultTab('all')">All Results</button>
-                            <button class="result-tab" onclick="showResultTab('charged')">Charged</button>
-                            <button class="result-tab" onclick="showResultTab('approved')">Approved</button>
-                            <button class="result-tab" onclick="showResultTab('3ds')">3D Secure</button>
-                            <button class="result-tab" onclick="showResultTab('declined')">Declined</button>
-                        </div>
-                        
-                        <div class="result-content active" id="all-results">
-                            <div id="checkingResultsList" class="empty-state">
-                                <i class="fas fa-inbox"></i>
-                                <h3>No Results Yet</h3>
-                                <p>Start checking cards to see results here</p>
-                            </div>
-                        </div>
-                        
-                        <div class="result-content" id="charged-results">
-                            <div class="empty-state">
-                                <i class="fas fa-bolt"></i>
-                                <h3>No Charged Cards</h3>
-                                <p>No charged cards found yet</p>
-                            </div>
-                        </div>
-                        
-                        <div class="result-content" id="approved-results">
-                            <div class="empty-state">
-                                <i class="fas fa-check-circle"></i>
-                                <h3>No Approved Cards</h3>
-                                <p>No approved cards found yet</p>
-                            </div>
-                        </div>
-                        
-                        <div class="result-content" id="3ds-results">
-                            <div class="empty-state">
-                                <i class="fas fa-lock"></i>
-                                <h3>No 3D Secure Cards</h3>
-                                <p>No 3D secure cards found yet</p>
-                            </div>
-                        </div>
-                        
-                        <div class="result-content" id="declined-results">
-                            <div class="empty-state">
-                                <i class="fas fa-times-circle"></i>
-                                <h3>No Declined Cards</h3>
-                                <p>No declined cards found yet</p>
-                            </div>
-                        </div>
+                    <div class="results-filters">
+                        <button class="filter-btn active" onclick="filterResults('all')">All</button>
+                        <button class="filter-btn" onclick="filterResults('charged')">Charged</button>
+                        <button class="filter-btn" onclick="filterResults('approved')">Approved</button>
+                        <button class="filter-btn" onclick="filterResults('3ds')">3D Cards</button>
+                        <button class="filter-btn" onclick="filterResults('declined')">Declined</button>
                     </div>
+                </div>
+                <div id="checkingResultsList" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Results Yet</h3>
+                    <p>Start checking cards to see results here</p>
                 </div>
             </div>
         </section>
 
         <section class="page-section" id="page-generator">
-            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥</p>
+            <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬</h1>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫 𝐯𝐚𝐥𝐥</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -4536,7 +4040,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <!-- Enhanced Gateway Selection Modal -->
+    <!-- Medium Size Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -4551,9 +4055,6 @@ if (empty($userPhotoUrl)) {
             <!-- Provider Selection View -->
             <div class="provider-selection" id="providerSelection">
                 <div class="provider-group">
-                    <div class="provider-group-title">
-                        <i class="fas fa-bolt"></i> Payment Providers
-                    </div>
                     <div class="provider-options">
                         <div class="provider-option" onclick="showProviderGateways('stripe')">
                             <div class="provider-option-icon">
@@ -4620,9 +4121,6 @@ if (empty($userPhotoUrl)) {
             <div class="gateway-selection" id="gatewaySelection">
                 <!-- Stripe Gateways -->
                 <div class="gateway-group" id="stripe-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-stripe"></i> Stripe Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/stripe1$.php">
@@ -4659,9 +4157,6 @@ if (empty($userPhotoUrl)) {
 
                 <!-- Shopify Gateways -->
                 <div class="gateway-group" id="shopify-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-shopify"></i> Shopify Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/shopify1$.php">
@@ -4678,9 +4173,6 @@ if (empty($userPhotoUrl)) {
 
                 <!-- PayPal Gateways -->
                 <div class="gateway-group" id="paypal-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-paypal"></i> PayPal Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/paypal0.1$.php">
@@ -4697,10 +4189,6 @@ if (empty($userPhotoUrl)) {
 
                 <!-- Razorpay Gateways -->
                 <div class="gateway-group" id="razorpay-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                            style="width:20px; height:20px; object-fit:contain;"> Razorpay Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
@@ -4719,9 +4207,6 @@ if (empty($userPhotoUrl)) {
 
                 <!-- Authnet Gateways -->
                 <div class="gateway-group" id="authnet-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fas fa-credit-card"></i> Authnet Gateways
-                    </div>
                     <div class="gateway-options">
                         <label class="gateway-option">
                             <input type="radio" name="gateway" value="gate/authnet1$.php">
@@ -4808,9 +4293,6 @@ if (empty($userPhotoUrl)) {
             if (icon) {
                 icon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             }
-            
-            // Update current gateway display
-            updateCurrentGatewayDisplay();
         });
         
         // Gateway settings functions
@@ -4868,9 +4350,6 @@ if (empty($userPhotoUrl)) {
             // Close modal immediately
             closeGatewayModal();
             
-            // Update current gateway display
-            updateCurrentGatewayDisplay();
-            
             // Show success message after modal is closed
             setTimeout(() => {
                 Swal.fire({
@@ -4882,19 +4361,6 @@ if (empty($userPhotoUrl)) {
                     showConfirmButton: false
                 });
             }, 300); // Small delay to ensure modal is fully closed
-        }
-        
-        function updateCurrentGatewayDisplay() {
-            const savedGateway = localStorage.getItem('selectedGateway');
-            const currentGatewayElement = document.getElementById('currentGateway');
-            
-            if (savedGateway && currentGatewayElement) {
-                // Extract gateway name from path
-                const gatewayName = savedGateway.replace('gate/', '').replace('.php', '');
-                currentGatewayElement.textContent = gatewayName;
-            } else if (currentGatewayElement) {
-                currentGatewayElement.textContent = 'Not Set';
-            }
         }
         
         function openGatewayModal() {
@@ -5102,108 +4568,6 @@ if (empty($userPhotoUrl)) {
             // The admin badge is already added in the update functions above
         }
         
-        // Enhanced checking page functions
-        function formatCards() {
-            const cardInput = document.getElementById('cardInput');
-            if (!cardInput.value.trim()) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'No Cards to Format',
-                    text: 'Please enter some card details first',
-                    confirmButtonColor: '#3b82f6'
-                });
-                return;
-            }
-            
-            // Format the cards (this is a placeholder for actual formatting logic)
-            const lines = cardInput.value.split('\n');
-            const formattedLines = lines.map(line => {
-                const parts = line.split('|');
-                if (parts.length >= 4) {
-                    const card = parts[0].replace(/\D/g, ''); // Remove non-digits
-                    const month = parts[1].padStart(2, '0');
-                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
-                    const cvv = parts[3];
-                    return `${card}|${month}|${year}|${cvv}`;
-                }
-                return line;
-            });
-            
-            cardInput.value = formattedLines.join('\n');
-            updateCardCount();
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Cards Formatted',
-                text: 'Card details have been formatted',
-                confirmButtonColor: '#10b981',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        }
-        
-        function clearCards() {
-            document.getElementById('cardInput').value = '';
-            updateCardCount();
-        }
-        
-        function sampleCards() {
-            const sampleCards = `4532015112830366|12|2025|123
-4532015112830366|12|2025|123
-5424180279791767|09|2024|456
-5424180279791767|09|2024|456
-371449635398431|03|2026|1234
-371449635398431|03|2026|1234`;
-            
-            document.getElementById('cardInput').value = sampleCards;
-            updateCardCount();
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Sample Cards Added',
-                text: 'Sample card details have been added for testing',
-                confirmButtonColor: '#10b981',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        }
-        
-        function updateCardCount() {
-            const cardInput = document.getElementById('cardInput');
-            const cardCount = document.getElementById('cardCount');
-            
-            if (!cardInput.value.trim()) {
-                cardCount.innerHTML = '<i class="fas fa-list"></i> 0 valid cards detected';
-                return;
-            }
-            
-            const lines = cardInput.value.split('\n').filter(line => line.trim());
-            const validCards = lines.filter(line => {
-                const parts = line.split('|');
-                return parts.length >= 4 && parts[0].replace(/\D/g, '').length >= 13;
-            });
-            
-            cardCount.innerHTML = `<i class="fas fa-list"></i> ${validCards.length} valid cards detected`;
-        }
-        
-        function showResultTab(tabName) {
-            // Hide all result content
-            document.querySelectorAll('.result-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.result-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected result content
-            document.getElementById(`${tabName}-results`).classList.add('active');
-            
-            // Add active class to clicked tab
-            event.target.classList.add('active');
-        }
-        
         // Make functions globally accessible
         window.toggleTheme = toggleTheme;
         window.showPage = showPage;
@@ -5216,11 +4580,6 @@ if (empty($userPhotoUrl)) {
         window.saveGatewaySettings = saveGatewaySettings;
         window.logout = logout;
         window.loadUserProfile = loadUserProfile;
-        window.formatCards = formatCards;
-        window.clearCards = clearCards;
-        window.sampleCards = sampleCards;
-        window.updateCardCount = updateCardCount;
-        window.showResultTab = showResultTab;
     </script>
 </body>
 </html>
