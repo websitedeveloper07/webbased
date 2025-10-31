@@ -449,7 +449,7 @@ if (empty($userPhotoUrl)) {
             position: relative; 
             z-index: 1;
             transition: margin-left 0.3s ease-out; /* Increased duration for smoother animation */
-            margin-right: 380px; /* Reduced space for right sidebar */
+            margin-right: 420px; /* Increased space for right sidebar */
         }
         
         .main-content.sidebar-open { 
@@ -777,13 +777,13 @@ if (empty($userPhotoUrl)) {
         body[data-theme="dark"] .gs-red    { background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(239,68,68,0.3)); }
         body[data-theme="dark"] .gs-purple { background: linear-gradient(135deg, rgba(139,92,246,0.4), rgba(139,92,246,0.3)); }
         
-        /* Beast Level Right Sidebar - Light Mode Fix and Reduced Size */
+        /* Beast Level Right Sidebar - Light Mode Fix and Increased Width */
         .right-sidebar {
             position: fixed;
             right: 0;
             top: 50px; /* Adjusted for reduced navbar height */
             bottom: 0;
-            width: 380px; /* Reduced width */
+            width: 420px; /* Increased width */
             background: var(--card-bg); /* Changed to use card-bg variable for light mode */
             border-left: 1px solid var(--border-color); /* Changed to use border-color variable */
             padding: 1.2rem; /* Reduced padding */
@@ -1208,7 +1208,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .admin-badge {
-            background: #000000 !important; /* Black badge in light mode */
+            background: linear-gradient(135deg, #a855f7, #ec4899) !important; /* Premium gradient */
             color: white !important;
             padding: 2px 5px; /* Slightly larger padding */
             border-radius: 4px; /* Slightly larger border radius */
@@ -1216,12 +1216,7 @@ if (empty($userPhotoUrl)) {
             font-weight: 700;
             text-transform: uppercase;
             margin-left: 5px; /* Slightly larger margin */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Added shadow */
-        }
-        
-        body[data-theme="dark"] .admin-badge {
-            background: #ffffff !important; /* White badge in dark mode */
-            color: #000000 !important;
+            box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3); /* Added shadow */
         }
         
         /* Beast Level Profile Page - Reduced Size */
@@ -1332,8 +1327,6 @@ if (empty($userPhotoUrl)) {
         }
         
         .profile-badge {
-            background: #000000 !important; /* Black badge in light mode */
-            color: white !important;
             padding: 0.3rem 0.6rem; /* Reduced padding */
             border-radius: 16px; /* Reduced border radius */
             font-size: 0.7rem; /* Reduced font size */
@@ -1345,14 +1338,21 @@ if (empty($userPhotoUrl)) {
             transition: all 0.3s;
         }
         
-        body[data-theme="dark"] .profile-badge {
-            background: #ffffff !important; /* White badge in dark mode */
-            color: #000000 !important;
-        }
-        
         .profile-badge:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .badge-member {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .badge-active {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success-green);
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
         
         .profile-stats-container {
@@ -2281,8 +2281,6 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            background: #000000 !important; /* Black badge in light mode */
-            color: white !important;
             padding: 0.3rem 0.5rem; /* Increased padding */
             border-radius: 6px; /* Increased border radius */
             font-size: 0.7rem; /* Increased font size */
@@ -2290,14 +2288,25 @@ if (empty($userPhotoUrl)) {
             text-transform: uppercase;
         }
         
-        body[data-theme="dark"] .gateway-badge {
-            background: #ffffff !important; /* White badge in dark mode */
-            color: #000000 !important;
+        .badge-charge { 
+            background: rgba(245,158,11,0.15); 
+            color: var(--warning); 
+        }
+        
+        .badge-auth { 
+            background: rgba(6,182,212,0.15); 
+            color: var(--accent-cyan); 
         }
         
         .badge-maintenance {
             background-color: #ef4444;
             color: white;
+            padding: 0.3rem 0.5rem; /* Increased padding */
+            border-radius: 6px; /* Increased border radius */
+            font-size: 0.7rem; /* Increased font size */
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem; /* Increased margin */
         }
         
         .settings-footer {
@@ -3091,7 +3100,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* Beast Level Gateway Modal - Provider First Structure */
+        /* Enhanced Gateway Selection Modal */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -3116,11 +3125,11 @@ if (empty($userPhotoUrl)) {
         .gateway-modal-content {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 1.5rem;
-            max-width: 95vw;
-            width: 95%;
-            max-height: 85vh;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
             overflow-y: auto;
             box-shadow: var(--shadow-beast);
             transform: translateY(20px);
@@ -3152,7 +3161,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-modal-title {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -3189,7 +3198,7 @@ if (empty($userPhotoUrl)) {
             transform: rotate(90deg);
         }
         
-        /* Beast Level Provider Selection */
+        /* Provider Selection View */
         .provider-selection {
             display: flex;
             flex-direction: column;
@@ -3200,106 +3209,100 @@ if (empty($userPhotoUrl)) {
             display: none;
         }
         
-        .provider-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1.2rem;
-        }
-        
-        .provider-card {
-            position: relative;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-        }
-        
-        body[data-theme="dark"] .provider-card {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .provider-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-        
-        .provider-card:hover::before {
-            transform: scaleX(1);
-        }
-        
-        .provider-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
-            border-color: var(--accent-blue);
-        }
-        
-        .provider-card.active {
-            border-color: var(--accent-blue);
-            background: rgba(59, 130, 246, 0.05);
-        }
-        
-        .provider-card.active::before {
-            transform: scaleX(1);
-        }
-        
-        .provider-icon-container {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 1rem;
+        .provider-group {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            border-radius: 12px;
-            transition: all 0.3s ease;
+            flex-direction: column;
+            gap: 1rem;
         }
         
-        .provider-card:hover .provider-icon-container {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-            transform: scale(1.05);
-        }
-        
-        .provider-icon {
-            font-size: 2rem;
-            color: var(--accent-blue);
-        }
-        
-        .provider-name {
-            font-size: 1rem;
+        .provider-group-title {
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--text-primary);
-            text-align: center;
-            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        body[data-theme="dark"] .provider-name {
+        body[data-theme="dark"] .provider-group-title {
             color: var(--dark-text-primary);
         }
         
-        .provider-desc {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-align: center;
+        .provider-group-title i {
+            color: var(--accent-blue);
         }
         
-        body[data-theme="dark"] .provider-desc {
+        .provider-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .provider-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--user-item-bg-light); /* Light filled color */
+            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        body[data-theme="dark"] .provider-option {
+            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
+            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+        }
+        
+        .provider-option:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .provider-option-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: var(--text-primary); /* Black color in light theme */
+            font-size: 1.2rem;
+        }
+        
+        body[data-theme="dark"] .provider-option-icon {
+            color: var(--dark-text-primary); /* White color in dark theme */
+        }
+        
+        .provider-option-content {
+            flex: 1;
+        }
+        
+        .provider-option-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        body[data-theme="dark"] .provider-option-name {
+            color: var(--dark-text-primary);
+        }
+        
+        .provider-option-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        body[data-theme="dark"] .provider-option-desc {
             color: var(--dark-text-secondary);
         }
         
-        /* Beast Level Gateway Selection */
+        /* Gateway Selection View */
         .gateway-selection {
             display: none;
             flex-direction: column;
@@ -3323,7 +3326,6 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.5rem;
         }
         
         body[data-theme="dark"] .gateway-group-title {
@@ -3337,63 +3339,41 @@ if (empty($userPhotoUrl)) {
         .gateway-options {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.8rem;
         }
         
         .gateway-option {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
+            background: var(--user-item-bg-light); /* Light filled color */
+            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
         }
         
         body[data-theme="dark"] .gateway-option {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .gateway-option::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-        }
-        
-        .gateway-option:hover::before {
-            transform: scaleY(1);
+            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
+            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
         }
         
         .gateway-option:hover {
-            transform: translateX(5px);
-            box-shadow: var(--shadow-md);
             border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
         
         .gateway-option input[type="radio"] {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             margin-right: 1rem;
             cursor: pointer;
             accent-color: var(--accent-blue);
-            position: relative;
-            z-index: 1;
         }
         
         .gateway-option-content {
             flex: 1;
-            position: relative;
-            z-index: 1;
         }
         
         .gateway-option-name {
@@ -3423,8 +3403,6 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            background: #000000 !important; /* Black badge in light mode */
-            color: white !important;
             padding: 0.2rem 0.5rem;
             border-radius: 6px;
             font-size: 0.7rem;
@@ -3432,9 +3410,14 @@ if (empty($userPhotoUrl)) {
             text-transform: uppercase;
         }
         
-        body[data-theme="dark"] .gateway-badge {
-            background: #ffffff !important; /* White badge in dark mode */
-            color: #000000 !important;
+        .badge-charge {
+            background: rgba(245,158,11,0.15);
+            color: var(--warning);
+        }
+        
+        .badge-auth {
+            background: rgba(6,182,212,0.15);
+            color: var(--accent-cyan);
         }
         
         .badge-maintenance {
@@ -3520,331 +3503,6 @@ if (empty($userPhotoUrl)) {
         
         .gateway-btn-cancel:hover {
             transform: translateY(-2px);
-        }
-        
-        /* Enhanced Home Page */
-        .activity-feed {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 1.2rem;
-            margin-top: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
-        }
-        
-        body[data-theme="dark"] .activity-feed {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .activity-feed-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .activity-feed-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        body[data-theme="dark"] .activity-feed-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .activity-feed-title i {
-            color: var(--accent-cyan);
-        }
-        
-        .activity-feed-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-        
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-        }
-        
-        body[data-theme="dark"] .activity-item {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .activity-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            color: white;
-        }
-        
-        .activity-icon.charged {
-            background: var(--stat-charged);
-        }
-        
-        .activity-icon.approved {
-            background: var(--stat-approved);
-        }
-        
-        .activity-icon.declined {
-            background: var(--stat-declined);
-        }
-        
-        .activity-icon.checked {
-            background: var(--stat-checked);
-        }
-        
-        .activity-content {
-            flex: 1;
-        }
-        
-        .activity-text {
-            font-size: 0.85rem;
-            color: var(--text-primary);
-            margin-bottom: 0.2rem;
-        }
-        
-        body[data-theme="dark"] .activity-text {
-            color: var(--dark-text-primary);
-        }
-        
-        .activity-time {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-        
-        body[data-theme="dark"] .activity-time {
-            color: var(--dark-text-secondary);
-        }
-        
-        /* Enhanced Checking Page */
-        .checking-progress {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 1.2rem;
-            margin-bottom: 1.2rem;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
-        }
-        
-        body[data-theme="dark"] .checking-progress {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .progress-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        
-        body[data-theme="dark"] .progress-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .progress-stats {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .progress-stat {
-            flex: 1;
-            text-align: center;
-            padding: 0.8rem;
-            background: var(--secondary-bg);
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-        }
-        
-        body[data-theme="dark"] .progress-stat {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .progress-stat-value {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-        
-        body[data-theme="dark"] .progress-stat-value {
-            color: var(--dark-text-primary);
-        }
-        
-        .progress-stat-label {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-        
-        body[data-theme="dark"] .progress-stat-label {
-            color: var(--dark-text-secondary);
-        }
-        
-        .progress-bar-container {
-            height: 8px;
-            background: var(--secondary-bg);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 0.5rem;
-        }
-        
-        body[data-theme="dark"] .progress-bar-container {
-            background: var(--dark-accent-bg);
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
-            border-radius: 4px;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .progress-text {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-        
-        body[data-theme="dark"] .progress-text {
-            color: var(--dark-text-secondary);
-        }
-        
-        /* Enhanced Results Display */
-        .result-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background: var(--secondary-bg);
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 0.8rem;
-            transition: all 0.3s;
-        }
-        
-        body[data-theme="dark"] .result-item {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .result-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .result-status {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-            margin-right: 1rem;
-        }
-        
-        .result-status.charged {
-            background: var(--stat-charged);
-        }
-        
-        .result-status.approved {
-            background: var(--stat-approved);
-        }
-        
-        .result-status.declined {
-            background: var(--stat-declined);
-        }
-        
-        .result-status.threeds {
-            background: var(--stat-threeds);
-        }
-        
-        .result-details {
-            flex: 1;
-        }
-        
-        .result-card {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.3rem;
-            font-family: 'Courier New', monospace;
-        }
-        
-        body[data-theme="dark"] .result-card {
-            color: var(--dark-text-primary);
-        }
-        
-        .result-info {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        body[data-theme="dark"] .result-info {
-            color: var(--dark-text-secondary);
-        }
-        
-        .result-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .result-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            border: none;
-            background: var(--secondary-bg);
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            transition: all 0.3s;
-        }
-        
-        body[data-theme="dark"] .result-action-btn {
-            background: var(--dark-accent-bg);
-            color: var(--dark-text-secondary);
-        }
-        
-        .result-action-btn:hover {
-            background: var(--accent-blue);
-            color: white;
         }
         
         /* Fix for Global Statistics text in dark mode */
@@ -3949,153 +3607,135 @@ if (empty($userPhotoUrl)) {
                     </div>
                 </div>
 
-                <div class="dashboard-content">
-                    <!-- Progress Counters - Beast Level with Better Spacing -->
-                    <div class="stats-grid" id="statsGrid">
-                        <div class="stat-card charged">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
+                <!-- Progress Counters - Beast Level with Better Spacing -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card charged">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-bolt"></i>
                             </div>
-                            <div id="charged-value" class="stat-value">0</div>
-                            <div class="stat-label">HIT|CHARGED</div>
                         </div>
-                        <div class="stat-card approved">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
+                        <div id="charged-value" class="stat-value">0</div>
+                        <div class="stat-label">HIT|CHARGED</div>
+                    </div>
+                    <div class="stat-card approved">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
                             </div>
-                            <div id="approved-value" class="stat-value">0</div>
-                            <div class="stat-label">LIVE|APPROVED</div>
                         </div>
-                        <div class="stat-card declined">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-times-circle"></i>
-                                </div>
+                        <div id="approved-value" class="stat-value">0</div>
+                        <div class="stat-label">LIVE|APPROVED</div>
+                    </div>
+                    <div class="stat-card declined">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-times-circle"></i>
                             </div>
-                            <div id="declined-value" class="stat-value">0</div>
-                            <div class="stat-label">DEAD|DECLINED</div>
                         </div>
-                        <div class="stat-card checked">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <i class="fas fa-check-double"></i>
-                                </div>
+                        <div id="declined-value" class="stat-value">0</div>
+                        <div class="stat-label">DEAD|DECLINED</div>
+                    </div>
+                    <div class="stat-card checked">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-double"></i>
                             </div>
-                            <div id="checked-value" class="stat-value">0 / 0</div>
-                            <div class="stat-label">CHECKED</div>
+                        </div>
+                        <div id="checked-value" class="stat-value">0 / 0</div>
+                        <div class="stat-label">CHECKED</div>
+                    </div>
+                </div>
+
+                <!-- Global Statistics Section - Better Spacing -->
+                <div class="gs-panel mt-6">
+                    <div class="gs-head">
+                        <div class="gs-chip">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="gs-title">Global Statistics</div>
+                            <div class="gs-sub">Platform-wide performance metrics</div>
                         </div>
                     </div>
 
-                    <!-- Global Statistics Section - Better Spacing -->
-                    <div class="gs-panel mt-6">
-                        <div class="gs-head">
-                            <div class="gs-chip">
+                    <div class="gs-grid">
+                        <div class="gs-card gs-blue">
+                            <div class="gs-icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M5 3h2v18H5V3zm6 6h2v12h-2V9zm6-4h2v16h-2V5z"/>
+                                    <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                                 </svg>
                             </div>
-                            <div>
-                                <div class="gs-title">Global Statistics</div>
-                                <div class="gs-sub">Platform-wide performance metrics</div>
-                            </div>
+                            <div id="gTotalUsers" class="gs-num">—</div>
+                            <div class="gs-label">Total Users</div>
                         </div>
 
-                        <div class="gs-grid">
-                            <div class="gs-card gs-blue">
-                                <div class="gs-icon">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11zM8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.89 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                                    </svg>
-                                </div>
-                                <div id="gTotalUsers" class="gs-num">—</div>
-                                <div class="gs-label">Total Users</div>
+                        <div class="gs-card gs-purple">
+                            <div class="gs-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
+                                </svg>
                             </div>
+                            <div id="gTotalHits" class="gs-num">—</div>
+                            <div class="gs-label">Total Checked Cards</div>
+                        </div>
 
-                            <div class="gs-card gs-purple">
-                                <div class="gs-icon">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1-.18 1-.18 1-.18 1-.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1z"/>
-                                    </svg>
-                                </div>
-                                <div id="gTotalHits" class="gs-num">—</div>
-                                <div class="gs-label">Total Checked Cards</div>
+                        <div class="gs-card gs-red">
+                            <div class="gs-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+                                </svg>
                             </div>
+                            <div id="gChargeCards" class="gs-num">—</div>
+                            <div class="gs-label">Charge Cards</div>
+                        </div>
 
-                            <div class="gs-card gs-red">
-                                <div class="gs-icon">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
-                                    </svg>
-                                </div>
-                                <div id="gChargeCards" class="gs-num">—</div>
-                                <div class="gs-label">Charge Cards</div>
+                        <div class="gs-card gs-green">
+                            <div class="gs-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
                             </div>
-
-                            <div class="gs-card gs-green">
-                                <div class="gs-icon">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M3 13h3l2-6 4 12 2-6h5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </div>
-                                <div id="gLiveCards" class="gs-num">—</div>
-                                <div class="gs-label">Live Cards</div>
-                            </div>
+                            <div id="gLiveCards" class="gs-num">—</div>
+                            <div class="gs-label">Live Cards</div>
                         </div>
                     </div>
-                    
-                    <!-- Activity Feed -->
-                    <div class="activity-feed">
-                        <div class="activity-feed-header">
-                            <div class="activity-feed-title">
-                                <i class="fas fa-stream"></i> Recent Activity
-                            </div>
+                </div>
+                
+                <!-- Mobile Online Users Section -->
+                <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
+                    <div class="mobile-online-users-header">
+                        <div class="mobile-online-users-title">
+                            <i class="fas fa-users"></i> Online Users
                         </div>
-                        <div class="activity-feed-list" id="activityFeedList">
-                            <div class="empty-state">
-                                <i class="fas fa-history"></i>
-                                <h3>No Recent Activity</h3>
-                                <p>Your recent card checking activity will appear here</p>
-                            </div>
+                        <div class="mobile-online-users-count" id="mobileOnlineUsersCount">
+                            <i class="fas fa-circle"></i>
+                            <span id="mobileOnlineCount">0</span> online
                         </div>
                     </div>
-                    
-                    <!-- Mobile Online Users Section -->
-                    <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
-                        <div class="mobile-online-users-header">
-                            <div class="mobile-online-users-title">
-                                <i class="fas fa-users"></i> Online Users
-                            </div>
-                            <div class="mobile-online-users-count" id="mobileOnlineUsersCount">
-                                <i class="fas fa-circle"></i>
-                                <span id="mobileOnlineCount">0</span> online
-                            </div>
-                        </div>
-                        <div class="mobile-online-users-list" id="mobileOnlineUsersList">
-                            <div class="empty-state">
-                                <i class="fas fa-user-slash"></i>
-                                <h3>No Users Online</h3>
-                                <p>No other users are currently online</p>
-                            </div>
+                    <div class="mobile-online-users-list" id="mobileOnlineUsersList">
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No Users Online</h3>
+                            <p>No other users are currently online</p>
                         </div>
                     </div>
-                    
-                    <!-- Mobile Top Users Section -->
-                    <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
-                        <div class="mobile-top-users-header">
-                            <div class="mobile-top-users-title">
-                                <i class="fas fa-trophy"></i> Top Users
-                            </div>
+                </div>
+                
+                <!-- Mobile Top Users Section -->
+                <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
+                    <div class="mobile-top-users-header">
+                        <div class="mobile-top-users-title">
+                            <i class="fas fa-trophy"></i> Top Users
                         </div>
-                        <div class="mobile-top-users-list" id="mobileTopUsersList">
-                            <div class="empty-state">
-                                <i class="fas fa-chart-line"></i>
-                                <h3>No Top Users</h3>
-                                <p>No top users data available</p>
-                            </div>
+                    </div>
+                    <div class="mobile-top-users-list" id="mobileTopUsersList">
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>No Top Users</h3>
+                            <p>No top users data available</p>
                         </div>
                     </div>
                 </div>
@@ -4104,7 +3744,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-checking">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢𝐢</p>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -4145,35 +3785,6 @@ if (empty($userPhotoUrl)) {
                 <div id="statusLog" class="text-sm text-gray-500 mt-2"></div>
             </div>
 
-            <!-- Checking Progress Section -->
-            <div class="checking-progress" id="checkingProgress" style="display: none;">
-                <div class="progress-header">
-                    <div class="progress-title">Checking Progress</div>
-                </div>
-                <div class="progress-stats">
-                    <div class="progress-stat">
-                        <div class="progress-stat-value" id="progressChecked">0</div>
-                        <div class="progress-stat-label">Checked</div>
-                    </div>
-                    <div class="progress-stat">
-                        <div class="progress-stat-value" id="progressCharged">0</div>
-                        <div class="progress-stat-label">Charged</div>
-                    </div>
-                    <div class="progress-stat">
-                        <div class="progress-stat-value" id="progressApproved">0</div>
-                        <div class="progress-stat-label">Approved</div>
-                    </div>
-                    <div class="progress-stat">
-                        <div class="progress-stat-value" id="progressDeclined">0</div>
-                        <div class="progress-stat-label">Declined</div>
-                    </div>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-                <div class="progress-text" id="progressText">0% Complete</div>
-            </div>
-
             <div class="results-section" id="checkingResults">
                 <div class="results-header">
                     <div class="results-title">
@@ -4197,7 +3808,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-generator">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑮𝑬𝑵𝑬𝑬</h1>
-            <p class="page-subtitle">𝐆𝐞𝐧𝐫𝐚 𝐯𝐚𝐥𝐰𝐥</p>
+            <p class="page-subtitle">𝐆𝐞𝐧𝐫 𝐯𝐚𝐥𝐰𝐥</p>
 
             <div class="generator-section">
                 <div class="generator-header">
@@ -4419,7 +4030,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <!-- Beast Level Gateway Selection Modal - Provider First Structure -->
+    <!-- Enhanced Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -4433,46 +4044,67 @@ if (empty($userPhotoUrl)) {
 
             <!-- Provider Selection View -->
             <div class="provider-selection" id="providerSelection">
-                <div class="provider-grid">
-                    <div class="provider-card" onclick="showProviderGateways('stripe')">
-                        <div class="provider-icon-container">
-                            <i class="fab fa-stripe provider-icon"></i>
-                        </div>
-                        <div class="provider-name">Stripe</div>
-                        <div class="provider-desc">Payment processing platform</div>
+                <div class="provider-group">
+                    <div class="provider-group-title">
+                        <i class="fas fa-bolt"></i> Payment Providers
                     </div>
-                    
-                    <div class="provider-card" onclick="showProviderGateways('shopify')">
-                        <div class="provider-icon-container">
-                            <i class="fab fa-shopify provider-icon"></i>
+                    <div class="provider-options">
+                        <div class="provider-option" onclick="showProviderGateways('stripe')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-stripe"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    Stripe
+                                </div>
+                                <div class="provider-option-desc">Payment processing with multiple options</div>
+                            </div>
                         </div>
-                        <div class="provider-name">Shopify</div>
-                        <div class="provider-desc">E-commerce platform</div>
-                    </div>
-                    
-                    <div class="provider-card" onclick="showProviderGateways('paypal')">
-                        <div class="provider-icon-container">
-                            <i class="fab fa-paypal provider-icon"></i>
+                        <div class="provider-option" onclick="showProviderGateways('shopify')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-shopify"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    Shopify
+                                </div>
+                                <div class="provider-option-desc">E-commerce payment processing</div>
+                            </div>
                         </div>
-                        <div class="provider-name">PayPal</div>
-                        <div class="provider-desc">Online payment system</div>
-                    </div>
-                    
-                    <div class="provider-card" onclick="showProviderGateways('razorpay')">
-                        <div class="provider-icon-container">
-                            <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                style="width:32px; height:32px; object-fit:contain;">
+                        <div class="provider-option" onclick="showProviderGateways('paypal')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-paypal"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    PayPal
+                                </div>
+                                <div class="provider-option-desc">Online payment gateway</div>
+                            </div>
                         </div>
-                        <div class="provider-name">Razorpay</div>
-                        <div class="provider-desc">Indian payment gateway</div>
-                    </div>
-                    
-                    <div class="provider-card" onclick="showProviderGateways('authnet')">
-                        <div class="provider-icon-container">
-                            <i class="fas fa-credit-card provider-icon"></i>
+                        <div class="provider-option" onclick="showProviderGateways('razorpay')">
+                            <div class="provider-option-icon">
+                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                    style="width:20px; height:20px; object-fit:contain;">
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    Razorpay
+                                </div>
+                                <div class="provider-option-desc">Indian payment gateway</div>
+                            </div>
                         </div>
-                        <div class="provider-name">Authnet</div>
-                        <div class="provider-desc">Authorize.net gateway</div>
+                        <div class="provider-option" onclick="showProviderGateways('authnet')">
+                            <div class="provider-option-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="provider-option-content">
+                                <div class="provider-option-name">
+                                    Authnet
+                                </div>
+                                <div class="provider-option-desc">Authorize.net payment gateway</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4489,8 +4121,8 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/stripe1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <i class="fab fa-stripe"></i> Stripe
-                                    <span class="gateway-badge">1$ Charge</span>
+                                    Stripe
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Payment processing with $1 charge</div>
                             </div>
@@ -4499,8 +4131,8 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/stripe5$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <i class="fab fa-stripe"></i> Stripe
-                                    <span class="gateway-badge">5$ Charge</span>
+                                    Stripe
+                                    <span class="gateway-badge badge-charge">5$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Payment processing with $5 charge</div>
                             </div>
@@ -4509,8 +4141,8 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/stripeauth.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <i class="fab fa-stripe"></i> Stripe Auth
-                                    <span class="gateway-badge">Auth</span>
+                                    Stripe
+                                    <span class="gateway-badge badge-auth">Auth</span>
                                 </div>
                                 <div class="gateway-option-desc">Authorization only, no charge</div>
                             </div>
@@ -4528,8 +4160,8 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/shopify1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <i class="fab fa-shopify"></i> Shopify
-                                    <span class="gateway-badge">1$ Charge</span>
+                                    Shopify
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">E-commerce payment processing</div>
                             </div>
@@ -4547,10 +4179,10 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/paypal0.1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <i class="fab fa-paypal"></i> PayPal
-                                    <span class="gateway-badge">0.1$ Charge</span>
+                                    PayPal
+                                    <span class="gateway-badge badge-charge">0.1$ Charge</span>
                                 </div>
-                                <div class="gateway-option-desc">Online payment gateway</div>
+                                <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
                             </div>
                         </label>
                     </div>
@@ -4567,9 +4199,8 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                        style="width:15px; height:15px; object-fit:contain;">Razorpay
-                                    <span class="gateway-badge">0.10$ Charge</span>
+                                    Razorpay
+                                    <span class="gateway-badge badge-charge">0.10$ Charge</span>
                                     <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                                 </div>
                                 <div class="gateway-option-desc">Indian payment gateway</div>
@@ -4588,8 +4219,8 @@ if (empty($userPhotoUrl)) {
                             <input type="radio" name="gateway" value="gate/authnet1$.php">
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
-                                    <i class="fas fa-credit-card"></i> Authnet
-                                    <span class="gateway-badge">1$ Charge</span>
+                                    Authnet
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
                                 </div>
                                 <div class="gateway-option-desc">Authorize.net payment gateway</div>
                             </div>
@@ -4669,9 +4300,6 @@ if (empty($userPhotoUrl)) {
             if (icon) {
                 icon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
             }
-            
-            // Initialize activity feed
-            initializeActivityFeed();
         });
         
         // Gateway settings functions
@@ -4947,157 +4575,6 @@ if (empty($userPhotoUrl)) {
             // The admin badge is already added in the update functions above
         }
         
-        // Function to initialize activity feed
-        function initializeActivityFeed() {
-            // This would typically fetch activity data from the server
-            // For now, we'll just show a placeholder
-            const activityFeedList = document.getElementById('activityFeedList');
-            if (activityFeedList) {
-                // In a real implementation, this would be populated with actual activity data
-                // For now, we'll keep the empty state
-            }
-        }
-        
-        // Function to update checking progress
-        function updateCheckingProgress(checked, charged, approved, declined, total) {
-            const progressSection = document.getElementById('checkingProgress');
-            if (progressSection) {
-                progressSection.style.display = 'block';
-                
-                // Update progress stats
-                document.getElementById('progressChecked').textContent = checked;
-                document.getElementById('progressCharged').textContent = charged;
-                document.getElementById('progressApproved').textContent = approved;
-                document.getElementById('progressDeclined').textContent = declined;
-                
-                // Update progress bar
-                const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
-                document.getElementById('progressBar').style.width = percentage + '%';
-                document.getElementById('progressText').textContent = percentage + '% Complete';
-            }
-        }
-        
-        // Function to add result to checking results
-        function addResultToResults(card, status, response) {
-            const resultsList = document.getElementById('checkingResultsList');
-            if (!resultsList) return;
-            
-            // Remove empty state if it exists
-            const emptyState = resultsList.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.remove();
-            }
-            
-            // Create result item
-            const resultItem = document.createElement('div');
-            resultItem.className = 'result-item';
-            
-            // Determine status class and icon
-            let statusClass, statusIcon;
-            switch (status) {
-                case 'charged':
-                    statusClass = 'charged';
-                    statusIcon = 'fa-bolt';
-                    break;
-                case 'approved':
-                    statusClass = 'approved';
-                    statusIcon = 'fa-check-circle';
-                    break;
-                case 'declined':
-                    statusClass = 'declined';
-                    statusIcon = 'fa-times-circle';
-                    break;
-                case '3ds':
-                    statusClass = 'threeds';
-                    statusIcon = 'fa-lock';
-                    break;
-                default:
-                    statusClass = 'checked';
-                    statusIcon = 'fa-check-double';
-            }
-            
-            // Format card number for display (show only first 4 and last 4 digits)
-            const formattedCard = card.substring(0, 4) + '****' + card.substring(card.length - 4);
-            
-            resultItem.innerHTML = `
-                <div class="result-status ${statusClass}">
-                    <i class="fas ${statusIcon}"></i>
-                </div>
-                <div class="result-details">
-                    <div class="result-card">${formattedCard}</div>
-                    <div class="result-info">${response}</div>
-                </div>
-                <div class="result-actions">
-                    <button class="result-action-btn" onclick="copyCard('${card}')" title="Copy Card">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    <button class="result-action-btn" onclick="viewDetails('${card}', '${status}', '${response}')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            `;
-            
-            // Add to results list
-            resultsList.insertBefore(resultItem, resultsList.firstChild);
-            
-            // Limit results to 20 items
-            while (resultsList.children.length > 20) {
-                resultsList.removeChild(resultsList.lastChild);
-            }
-        }
-        
-        // Function to copy card to clipboard
-        function copyCard(card) {
-            navigator.clipboard.writeText(card).then(() => {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Card copied to clipboard',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-            }).catch(err => {
-                console.error('Failed to copy card: ', err);
-            });
-        }
-        
-        // Function to view card details
-        function viewDetails(card, status, response) {
-            Swal.fire({
-                title: 'Card Details',
-                html: `
-                    <div style="text-align: left;">
-                        <p><strong>Card:</strong> ${card}</p>
-                        <p><strong>Status:</strong> ${status}</p>
-                        <p><strong>Response:</strong> ${response}</p>
-                    </div>
-                `,
-                confirmButtonText: 'Close',
-                confirmButtonColor: '#3b82f6'
-            });
-        }
-        
-        // Function to filter results
-        function filterResults(filter) {
-            // Update active filter button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Filter results
-            const resultItems = document.querySelectorAll('.result-item');
-            resultItems.forEach(item => {
-                if (filter === 'all') {
-                    item.style.display = 'flex';
-                } else {
-                    const statusClass = item.querySelector('.result-status').className.split(' ')[1];
-                    item.style.display = statusClass === filter ? 'flex' : 'none';
-                }
-            });
-        }
-        
         // Make functions globally accessible
         window.toggleTheme = toggleTheme;
         window.showPage = showPage;
@@ -5110,11 +4587,6 @@ if (empty($userPhotoUrl)) {
         window.saveGatewaySettings = saveGatewaySettings;
         window.logout = logout;
         window.loadUserProfile = loadUserProfile;
-        window.updateCheckingProgress = updateCheckingProgress;
-        window.addResultToResults = addResultToResults;
-        window.copyCard = copyCard;
-        window.viewDetails = viewDetails;
-        window.filterResults = filterResults;
     </script>
 </body>
 </html>
