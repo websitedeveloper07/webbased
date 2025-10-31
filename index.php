@@ -986,6 +986,9 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
         }
         
         body[data-theme="dark"] .online-user-name {
@@ -1159,6 +1162,9 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
         }
         
         body[data-theme="dark"] .top-user-name {
@@ -1602,6 +1608,9 @@ if (empty($userPhotoUrl)) {
             text-overflow: ellipsis;
             color: var(--text-primary);
             max-width: 70px; /* Reduced width */
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
         }
         
         body[data-theme="dark"] .mobile-online-user-name {
@@ -1693,6 +1702,9 @@ if (empty($userPhotoUrl)) {
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
         }
         
         body[data-theme="dark"] .mobile-top-user-name {
@@ -2813,12 +2825,15 @@ if (empty($userPhotoUrl)) {
                 gap: 0.3rem; /* Reduced gap */
             }
             
-            /* Show mobile online users section */
+            /* Show mobile sections instead of right sidebar */
+            .right-sidebar {
+                display: none;
+            }
+            
             .mobile-online-users {
                 display: block !important;
             }
             
-            /* Show mobile top users section */
             .mobile-top-users {
                 display: block !important;
             }
@@ -2913,8 +2928,8 @@ if (empty($userPhotoUrl)) {
             }
             
             .mobile-top-user-avatar {
-                width: 32px; /* Reduced size */
-                height: 32px; /* Reduced size */
+                width: 30px; /* Reduced size */
+                height: 30px; /* Reduced size */
             }
             
             .mobile-top-user-name {
@@ -2928,7 +2943,7 @@ if (empty($userPhotoUrl)) {
             .mobile-top-user-hits {
                 font-size: 0.65rem; /* Reduced font size */
                 padding: 0.2rem 0.4rem; /* Reduced padding */
-                min-width: 40px; /* Reduced min-width */
+                min-width: 40px; /* Reduced width */
             }
         }
         
@@ -3040,23 +3055,7 @@ if (empty($userPhotoUrl)) {
                 font-size: 1rem; /* Further reduced font size */
             }
             
-            /* Mobile Online Users Section for very small screens */
-            .mobile-online-users-header {
-                margin-bottom: 0.6rem; /* Further reduced margin */
-            }
-            
-            .mobile-online-users-title {
-                font-size: 0.9rem; /* Further reduced font size */
-            }
-            
-            .mobile-online-users-count {
-                font-size: 0.6rem; /* Further reduced font size */
-            }
-            
-            .mobile-online-users-list {
-                gap: 0.4rem; /* Further reduced gap */
-            }
-            
+            /* Mobile Online Users for very small screens */
             .mobile-online-user-item {
                 padding: 0.3rem; /* Further reduced padding */
             }
@@ -3071,26 +3070,14 @@ if (empty($userPhotoUrl)) {
                 max-width: 50px; /* Further reduced width */
             }
             
-            /* Mobile Top Users Section for very small screens */
-            .mobile-top-users-header {
-                margin-bottom: 0.6rem; /* Further reduced margin */
-            }
-            
-            .mobile-top-users-title {
-                font-size: 0.9rem; /* Further reduced font size */
-            }
-            
-            .mobile-top-users-list {
-                gap: 0.4rem; /* Further reduced gap */
-            }
-            
+            /* Mobile Top Users for very small screens */
             .mobile-top-user-item {
                 padding: 0.5rem; /* Further reduced padding */
             }
             
             .mobile-top-user-avatar {
-                width: 28px; /* Further reduced size */
-                height: 28px; /* Further reduced size */
+                width: 26px; /* Further reduced size */
+                height: 26px; /* Further reduced size */
             }
             
             .mobile-top-user-name {
@@ -3104,7 +3091,7 @@ if (empty($userPhotoUrl)) {
             .mobile-top-user-hits {
                 font-size: 0.6rem; /* Further reduced font size */
                 padding: 0.2rem 0.3rem; /* Further reduced padding */
-                min-width: 35px; /* Further reduced min-width */
+                min-width: 35px; /* Further reduced width */
             }
         }
         
@@ -3710,7 +3697,7 @@ if (empty($userPhotoUrl)) {
                     </div>
                     
                     <!-- Mobile Online Users Section -->
-                    <div class="mobile-online-users" id="mobileOnlineUsers">
+                    <div class="mobile-online-users" id="mobileOnlineUsers" style="display: none;">
                         <div class="mobile-online-users-header">
                             <div class="mobile-online-users-title">
                                 <i class="fas fa-users"></i> Online Users
@@ -3730,7 +3717,7 @@ if (empty($userPhotoUrl)) {
                     </div>
                     
                     <!-- Mobile Top Users Section -->
-                    <div class="mobile-top-users" id="mobileTopUsers">
+                    <div class="mobile-top-users" id="mobileTopUsers" style="display: none;">
                         <div class="mobile-top-users-header">
                             <div class="mobile-top-users-title">
                                 <i class="fas fa-trophy"></i> Top Users
@@ -4355,6 +4342,7 @@ if (empty($userPhotoUrl)) {
                 .then(data => {
                     if (data.success) {
                         updateTopUsersList(data.users);
+                        document.getElementById('topCount').textContent = data.count;
                     }
                 })
                 .catch(error => {
