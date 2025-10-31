@@ -372,12 +372,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create user item element
             const userItem = document.createElement('div');
             userItem.className = 'mobile-top-user-item';
-            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
             
             // Check if this is the admin user (@K4LNX)
             if (username === '@K4LNX') {
                 userItem.classList.add('admin');
             }
+            
+            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
             
             // Create avatar image
             const avatar = document.createElement('img');
@@ -576,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update statistics values
         updateProfileStat('charged', stats.charged || 0);
-        updateProfileStat('approved', stats.approved || 0);
+        updateProfileStat('updated', stats.approved || 0);
         updateProfileStat('threeds', stats.threeds || 0);
         updateProfileStat('declined', stats.declined || 0);
         updateProfileStat('checked', stats.total || 0);
@@ -1055,8 +1056,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const clearAllBtn = document.getElementById('clearAllBtn');
             if (copyAllBtn) copyAllBtn.style.display = 'flex';
             if (clearAllBtn) clearAllBtn.style.display = 'flex';
-            
-            // Store the cards data
             generatedCardsData = cards;
         }
 
@@ -1547,7 +1546,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sessionStorage.setItem(`threeDSCards-${sessionId}`, JSON.stringify(threeDSCards));
             sessionStorage.setItem(`declinedCards-${sessionId}`, JSON.stringify(declinedCards));
             
-            updateStats(totalCards, 0, 0, 0, 0);
+            updateStats(totalCards, 0, 0, 0, 0, 0);
             
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
@@ -1624,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch (error) {
                     console.error(`Worker ${workerIndex} error:`, error);
                 } finally {
-                    // Mark worker as idle and assign next card
+                    // Mark worker as idle and assign next card to this worker
                     worker.busy = false;
                     worker.currentCard = null;
                     activeRequests--;
@@ -1800,16 +1799,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
-                if (!response.ok) {
-                    // Check for 401 Unauthorized
-                    if (response.status === 401) {
-                        throw new Error('Authentication failed: Invalid or missing API key');
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(response => {
                 if (genLoader) genLoader.style.display = 'none';
                 
                 if (response.cards && Array.isArray(response.cards) && response.cards.length > 0) {
@@ -1888,43 +1877,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     cancelButtonColor: '#d1d5db',
                     confirmButtonText: 'Yes, logout'
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Clear key rotation interval
-                        if (keyRotationInterval) {
-                            clearInterval(keyRotationInterval);
-                        }
-                        
-                        // Clear activity update interval
-                        if (activityUpdateInterval) {
-                            clearInterval(activityUpdateInterval);
-                        }
-                        
-                        // Clear global stats interval
-                        if (globalStatsInterval) {
-                            clearInterval(globalStatsInterval);
-                        }
-                        
-                        // Clear top users interval
-                        if (topUsersInterval) {
-                            clearInterval(topUsersInterval);
-                        }
-                        
-                        // Clear any pending activity request
-                        if (window.activityRequest) {
-                            window.activityRequest.abort();
-                            window.activityRequest = null;
-                        }
-                        
-                        // Clear activity request timeout
-                        if (activityRequestTimeout) {
-                            clearTimeout(activityRequestTimeout);
-                            activityRequestTimeout = null;
-                        }
-                        
-                        sessionStorage.clear();
-                        localStorage.clear(); // Clear user stats on logout
-                        window.location.href = 'login.php';
+                    // Clear key rotation interval
+                    if (keyRotationInterval) {
+                        clearInterval(keyRotationInterval);
                     }
+                    
+                    // Clear activity update interval
+                    if (activityUpdateInterval) {
+                        clearInterval(activityUpdateInterval);
+                    }
+                    
+                    // Clear global stats interval
+                    if (globalStatsInterval) {
+                        clearInterval(globalStatsInterval);
+                    }
+                    
+                    // Clear top users interval
+                    if (topUsersInterval) {
+                        clearInterval(topUsersInterval);
+                    }
+                    
+                    // Clear any pending activity request
+                    if (window.activityRequest) {
+                        window.activityRequest.abort();
+                        window.activityRequest = null;
+                    }
+                    
+                    // Clear activity request timeout
+                    if (activityRequestTimeout) {
+                        clearTimeout(activityRequestTimeout);
+                        activityRequestTimeout = null;
+                    }
+                    
+                    sessionStorage.clear();
+                    localStorage.clear(); // Clear user stats on logout
+                    window.location.href = 'login.php';
                 });
             } else {
                 // Fallback if Swal is not available
@@ -2156,7 +2143,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const username = (user.username && typeof user.username === 'string') ? user.username : '';
                 const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
                     user.photo_url : 
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+                    `https://ui-users.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
                 
                 // Create user item element
                 const userItem = document.createElement('div');
@@ -2405,9 +2392,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.toggleTheme = toggleTheme;
         window.showPage = showPage;
         window.closeSidebar = closeSidebar;
-        window.openGatewaySettings = openGatewaySettings;
-        window.closeGatewaySettings = closeGatewaySettings;
-        window.saveGatewaySettings = saveGatewaySettings;
         window.openGatewayModal = openGatewayModal;
         window.closeGatewayModal = closeGatewayModal;
         window.showProviderSelection = showProviderSelection;
@@ -2422,6 +2406,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.updateUserStatistics = updateUserStatistics;
         window.updateTopUsers = updateTopUsers;
         window.displayTopUsers = displayTopUsers;
+        window.displayMobileTopUsers = displayMobileTopUsers;
 
         // Initialize everything when jQuery is ready
         if (window.$) {
@@ -2444,34 +2429,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (generateBtn) generateBtn.addEventListener('click', generateCards);
                 if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllGeneratedCards);
                 if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllGeneratedCards);
+                if (stopBtn) {
+                    stopBtn.addEventListener('click', function() {
+                        if (!isProcessing || isStopping) return;
 
-                if (stopBtn) stopBtn.addEventListener('click', function() {
-                    if (!isProcessing || isStopping) return;
-
-                    isProcessing = false;
-                    isStopping = true;
-                    cardQueue = [];
-                    abortControllers.forEach(controller => controller.abort());
-                    abortControllers = [];
-                    activeRequests = 0;
-                    updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
-                    
-                    if (startBtn) startBtn.disabled = false;
-                    if (stopBtn) stopBtn.disabled = true;
-                    const loader = document.getElementById('loader');
-                    const statusLog = document.getElementById('statusLog');
-                    if (loader) loader.style.display = 'none';
-                    if (statusLog) statusLog.textContent = 'Processing stopped.';
-                    
-                    if (window.Swal) {
-                        Swal.fire({
-                            title: 'Stopped!',
-                            text: 'Checking has been stopped',
-                            icon: 'warning',
-                            confirmButtonColor: '#ec4899'
-                        });
-                    }
-                });
+                        isProcessing = false;
+                        isStopping = true;
+                        cardQueue = [];
+                        abortControllers.forEach(controller => controller.abort());
+                        abortControllers = [];
+                        activeRequests = 0;
+                        updateStats(totalCards, chargedCards.length, approvedCards.length, threeDSCards.length, declinedCards.length);
+                        
+                        if (startBtn) startBtn.disabled = false;
+                        if (stopBtn) stopBtn.disabled = true;
+                        const loader = document.getElementById('loader');
+                        const statusLog = document.getElementById('statusLog');
+                        if (loader) loader.style.display = 'none';
+                        if (statusLog) statusLog.textContent = 'Processing stopped.';
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'Stopped!',
+                                text: 'Checking has been stopped',
+                                icon: 'warning',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
+                    });
+                }
 
                 if (clearBtn) clearBtn.addEventListener('click', function() {
                     if (cardInput && cardInput.value.trim()) {
@@ -2479,15 +2465,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             Swal.fire({
                                 title: 'Clear Input?', text: 'Remove all entered cards',
                                 icon: 'warning', showCancelButton: true,
-                                confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, clear'
+                                confirmButtonColor: '#ef4444', 
+                                confirmButtonText: 'Yes, clear'
                             }).then((result) => {
                                 if (result.isConfirmed) {
                                     cardInput.value = '';
                                     updateCardCount();
                                     if (window.Swal) {
                                         Swal.fire({
-                                            toast: true, position: 'top-end', icon: 'success',
-                                            title: 'Cleared!', showConfirmButton: false, timer: 1500
+                                            toast: true, 
+                                            position: 'top-end', 
+                                            icon: 'success',
+                                            title: 'Cleared!', 
+                                            showConfirmButton: false, 
+                                            timer: 1500
                                         });
                                     }
                                 }
@@ -2499,36 +2490,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 updateCardCount();
                             }
                         }
-                    }
-                });
-
-                if (clearGenBtn) clearGenBtn.addEventListener('click', function() {
-                    const binInput = document.getElementById('binInput');
-                    const monthSelect = document.getElementById('monthSelect');
-                    const yearInput = document.getElementById('yearInput');
-                    const cvvInput = document.getElementById('cvvInput');
-                    const numCardsInput = document.getElementById('numCardsInput');
-                    const generatedCardsList = document.getElementById('generatedCardsList');
-                    const genStatusLog = document.getElementById('genStatusLog');
-                    
-                    if (binInput) binInput.value = '';
-                    if (monthSelect) monthSelect.value = 'rnd';
-                    if (yearInput) yearInput.value = '';
-                    if (cvvInput) cvvInput.value = '';
-                    if (numCardsInput) numCardsInput.value = '10';
-                    if (generatedCardsList) generatedCardsList.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Cards Generated Yet</h3><p>Generate cards to see them here</p></div>';
-                    if (genStatusLog) genStatusLog.textContent = '';
-                    generatedCardsData = [];
-                    
-                    if (copyAllBtn) copyAllBtn.style.display = 'none';
-                    if (clearAllBtn) clearAllBtn.style.display = 'none';
-                    
-                    if (window.Swal) {
-                        Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success',
-                            title: 'Cleared!', showConfirmButton: false, timer: 1500
-                        });
-                    }
+                    });
                 });
 
                 if (exportBtn) exportBtn.addEventListener('click', function() {
@@ -2562,8 +2524,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (window.Swal) {
                         Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success',
-                            title: 'Exported!', showConfirmButton: false, timer: 1500
+                            toast: true, 
+                            position: 'top-end', 
+                            icon: 'success',
+                            title: 'Exported!', 
+                            showConfirmButton: false, 
+                            timer: 1500
                         });
                     }
                 });
@@ -2659,9 +2625,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         badge.style.backgroundColor = '#ef4444'; // Red color
                         badge.style.color = 'white';
                         badge.style.padding = '2px 6px';
-                        badge.style.borderRadius = '4px';
+                        badge.style.borderRadius = '6px';
                         badge.style.fontSize = '0.7rem';
                         badge.style.fontWeight = 'bold';
+                        badge.textTransform = 'uppercase';
                         parentLabel.appendChild(badge);
                         
                         // Add click event to show popup
@@ -2683,31 +2650,76 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-            });
-        } else {
-            console.error("jQuery not loaded, some functionality may not work");
-        }
-    }
-
-    // Load API key and initialize the app
-    loadApiKey().then(success => {
-        if (!success) {
-            console.warn('Proceeding without valid API key');
-            // Show a warning if API key loading fails
-            if (window.Swal) {
-                Swal.fire({
-                    title: 'API Key Issue',
-                    text: 'Could not load API key. Some features may not work properly.',
-                    icon: 'warning',
-                    confirmButtonColor: '#f59e0b'
-                });
+                
+                // RAZORPAY GATEWAY MAINTENANCE FEATURE
+                const razorpayGateway = document.querySelector('input[name="gateway"][value="gate/razorpay.php"]);
+                if (razorpayGateway) {
+                    // Disable the radio button
+                    razorpayGateway.disabled = true;
+                    
+                    // Find the parent label
+                    const parentLabel = razorpayGateway.closest('label');
+                    if (parentLabel) {
+                        // Add visual styling to show it's disabled
+                        parentLabel.style.opacity = '0.6';
+                        parentLabel.style.cursor = 'not-allowed';
+                        parentLabel.style.position = 'relative';
+                        
+                        // Add a maintenance badge
+                        const badge = document.createElement('span');
+                        badge.textContent = 'Maintenance';
+                        badge.style.position = 'absolute';
+                        badge.style.top = '5px';
+                        badge.style.right = '5px';
+                        badge.style.backgroundColor = '#ef4444'; // Red color
+                        badge.color = 'white';
+                        badge.style.padding = '2px 6px';
+                        badge.style.borderRadius = '6px';
+                        badge.style.fontSize = '0.7rem';
+                        badge.style.fontWeight = 'bold';
+                        badge.textTransform = 'uppercase';
+                        parentLabel.appendChild(badge);
+                        
+                        // Add click event to show popup
+                        parentLabel.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (window.Swal) {
+                                Swal.fire({
+                                    title: 'Gateway Under Maintenance',
+                                    text: 'The Razorpay gateway is currently undergoing maintenance. Please select another gateway.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444', // Red color
+                                    confirmButtonText: 'OK'
+                                });
+                            } else {
+                                alert('Gateway under maintenance. Please select another gateway.');
+                            }
+                        });
+                    }
+                }
             }
-        }
-        
-        // Start key rotation
-        startKeyRotation();
-        
-        // Initialize the app
-        initializeApp();
+            
+            // Load API key and initialize the app
+            loadApiKey().then(success => {
+                if (!success) {
+                    console.warn('Proceeding without valid API key');
+                    // Show a warning if API key loading fails
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'API Key Issue',
+                            text: 'Could not load API key. Some features may not work properly.',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b'
+                        });
+                    }
+                }
+                
+                // Start key rotation
+                startKeyRotation();
+                
+                // Initialize the app
+                initializeApp();
+            });
     });
-});
