@@ -177,6 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Display top users
                 if (data.users) {
                     displayTopUsers(data.users);
+                    // Also update mobile top users
+                    displayMobileTopUsers(data.users);
                 }
             } else {
                 console.error('Failed to update top users:', data.message);
@@ -281,7 +283,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create name element
             const nameElement = document.createElement('div');
             nameElement.className = 'top-user-name';
-            nameElement.textContent = name;
+            
+            // Add admin badge if needed
+            if (username === '@K4LNX') {
+                const adminBadge = document.createElement('span');
+                adminBadge.className = 'admin-badge';
+                adminBadge.textContent = 'ADMIN';
+                nameElement.appendChild(document.createTextNode(name));
+                nameElement.appendChild(adminBadge);
+            } else {
+                nameElement.textContent = name;
+            }
             
             // Create username element only if username exists
             if (username) {
@@ -297,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create hits element
             const hitsElement = document.createElement('div');
             hitsElement.className = 'top-user-hits';
-            hitsElement.textContent = `${hits} hits`;
+            hitsElement.textContent = hits;
             
             // Assemble user item
             userItem.appendChild(avatarContainer);
@@ -313,6 +325,118 @@ document.addEventListener('DOMContentLoaded', function() {
         topUsersList.appendChild(fragment);
         
         console.log("Successfully rendered top users list");
+    }
+    
+    // Function to display top users in mobile view
+    function displayMobileTopUsers(users) {
+        console.log("displayMobileTopUsers called with users:", users);
+        
+        const mobileTopUsersList = document.getElementById('mobileTopUsersList');
+        if (!mobileTopUsersList) {
+            console.error("Element #mobileTopUsersList not found in DOM");
+            return;
+        }
+        
+        console.log("mobileTopUsersList element found:", mobileTopUsersList);
+        
+        // Clear existing content
+        mobileTopUsersList.innerHTML = '';
+        
+        if (!Array.isArray(users) || users.length === 0) {
+            console.log("No users to display or invalid users array");
+            mobileTopUsersList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>No Top Users</h3>
+                    <p>No top users data available</p>
+                </div>`;
+            return;
+        }
+        
+        console.log("Rendering", users.length, "mobile top users");
+        
+        // Create a document fragment to improve performance
+        const fragment = document.createDocumentFragment();
+        
+        users.forEach((user, index) => {
+            console.log(`Processing mobile top user ${index + 1}:`, user);
+            
+            // Safely extract user data with defaults
+            const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+            const username = (user.username && typeof user.username === 'string') ? user.username : '';
+            const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+                user.photo_url : 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`;
+            const hits = (user.total_hits && typeof user.total_hits === 'number') ? user.total_hits : 0;
+            
+            // Create user item element
+            const userItem = document.createElement('div');
+            userItem.className = 'mobile-top-user-item';
+            userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+            
+            // Check if this is the admin user (@K4LNX)
+            if (username === '@K4LNX') {
+                userItem.classList.add('admin');
+            }
+            
+            // Create avatar image
+            const avatar = document.createElement('img');
+            avatar.src = photoUrl;
+            avatar.alt = name;
+            avatar.className = 'mobile-top-user-avatar';
+            avatar.onerror = function() {
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=8b5cf6&color=fff&size=64`;
+            };
+            
+            // Create user info container
+            const userInfo = document.createElement('div');
+            userInfo.className = 'mobile-top-user-info';
+            
+            // Create name element
+            const nameElement = document.createElement('div');
+            nameElement.className = 'mobile-top-user-name';
+            
+            // Add admin badge if needed
+            if (username === '@K4LNX') {
+                const adminBadge = document.createElement('span');
+                adminBadge.className = 'admin-badge';
+                adminBadge.textContent = 'ADMIN';
+                nameElement.appendChild(document.createTextNode(name));
+                nameElement.appendChild(adminBadge);
+            } else {
+                nameElement.textContent = name;
+            }
+            
+            // Create username element only if username exists
+            if (username) {
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'mobile-top-user-username';
+                usernameElement.textContent = username;
+                userInfo.appendChild(nameElement);
+                userInfo.appendChild(usernameElement);
+            } else {
+                userInfo.appendChild(nameElement);
+            }
+            
+            // Create hits element
+            const hitsElement = document.createElement('div');
+            hitsElement.className = 'mobile-top-user-hits';
+            hitsElement.textContent = hits;
+            
+            // Assemble user item
+            userItem.appendChild(avatar);
+            userItem.appendChild(userInfo);
+            userItem.appendChild(hitsElement);
+            
+            // Add to fragment
+            fragment.appendChild(userItem);
+        });
+        
+        // Clear the list and add all users at once
+        mobileTopUsersList.innerHTML = '';
+        mobileTopUsersList.appendChild(fragment);
+        
+        console.log("Successfully rendered mobile top users list");
     }
 
     // Initialize top users updates
@@ -1910,6 +2034,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.error("Element #onlineCount not found");
                     }
                     
+                    // Update mobile online count
+                    const mobileOnlineCountElement = document.getElementById('mobileOnlineCount');
+                    if (mobileOnlineCountElement) {
+                        mobileOnlineCountElement.textContent = data.count;
+                        console.log("Updated mobile online count to:", data.count);
+                    } else {
+                        console.error("Element #mobileOnlineCount not found");
+                    }
+                    
                     // Update current user profile
                     const currentUser = data.users ? data.users.find(u => u.is_currently_online) : null;
                     if (currentUser) {
@@ -1938,6 +2071,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Display online users
                     if (data.users) {
                         displayOnlineUsers(data.users);
+                        // Also update mobile online users
+                        displayMobileOnlineUsers(data.users);
                     }
                     
                 } else {
@@ -2062,7 +2197,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create name element
                 const nameElement = document.createElement('div');
                 nameElement.className = 'online-user-name';
-                nameElement.textContent = name;
+                
+                // Add admin badge if needed
+                if (username === '@K4LNX') {
+                    const adminBadge = document.createElement('span');
+                    adminBadge.className = 'admin-badge';
+                    adminBadge.textContent = 'ADMIN';
+                    nameElement.appendChild(document.createTextNode(name));
+                    nameElement.appendChild(adminBadge);
+                } else {
+                    nameElement.textContent = name;
+                }
                 
                 // Create username element only if username exists
                 if (username) {
@@ -2088,6 +2233,97 @@ document.addEventListener('DOMContentLoaded', function() {
             onlineUsersList.appendChild(fragment);
             
             console.log("Successfully rendered online users list");
+        }
+        
+        // Display mobile online users function
+        function displayMobileOnlineUsers(users) {
+            console.log("displayMobileOnlineUsers called with users:", users);
+            
+            const mobileOnlineUsersList = document.getElementById('mobileOnlineUsersList');
+            if (!mobileOnlineUsersList) {
+                console.error("Element #mobileOnlineUsersList not found in DOM");
+                return;
+            }
+            
+            console.log("mobileOnlineUsersList element found:", mobileOnlineUsersList);
+            
+            // Clear existing content
+            mobileOnlineUsersList.innerHTML = '';
+            
+            if (!Array.isArray(users) || users.length === 0) {
+                console.log("No users to display or invalid users array");
+                mobileOnlineUsersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Users Online</h3>
+                        <p>No users are currently online</p>
+                    </div>`;
+                return;
+            }
+            
+            console.log("Rendering", users.length, "mobile users");
+            
+            // Create a document fragment to improve performance
+            const fragment = document.createDocumentFragment();
+            
+            users.forEach((user, index) => {
+                console.log(`Processing mobile user ${index + 1}:`, user);
+                
+                // Safely extract user data with defaults
+                const name = (user.name && typeof user.name === 'string') ? user.name.trim() : 'Unknown User';
+                const username = (user.username && typeof user.username === 'string') ? user.username : '';
+                const photoUrl = (user.photo_url && typeof user.photo_url === 'string') ? 
+                    user.photo_url : 
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+                
+                // Create user item element
+                const userItem = document.createElement('div');
+                userItem.className = 'mobile-online-user-item';
+                
+                // Check if this is the admin user (@K4LNX)
+                if (username === '@K4LNX') {
+                    userItem.classList.add('admin');
+                }
+                
+                userItem.setAttribute('data-user-id', username || `unknown-${index}`);
+                
+                // Create avatar image
+                const avatar = document.createElement('img');
+                avatar.src = photoUrl;
+                avatar.alt = name;
+                avatar.className = 'mobile-online-user-avatar';
+                avatar.onerror = function() {
+                    this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0) || 'U')}&background=3b82f6&color=fff&size=64`;
+                };
+                
+                // Create name element
+                const nameElement = document.createElement('span');
+                nameElement.className = 'mobile-online-user-name';
+                
+                // Add admin badge if needed
+                if (username === '@K4LNX') {
+                    const adminBadge = document.createElement('span');
+                    adminBadge.className = 'admin-badge';
+                    adminBadge.textContent = 'ADMIN';
+                    nameElement.appendChild(document.createTextNode(name));
+                    nameElement.appendChild(adminBadge);
+                } else {
+                    nameElement.textContent = name;
+                }
+                
+                // Assemble user item
+                userItem.appendChild(avatar);
+                userItem.appendChild(nameElement);
+                
+                // Add to fragment
+                fragment.appendChild(userItem);
+            });
+            
+            // Clear the list and add all users at once
+            mobileOnlineUsersList.innerHTML = '';
+            mobileOnlineUsersList.appendChild(fragment);
+            
+            console.log("Successfully rendered mobile online users list");
         }
 
         // Initialize activity updates when the page loads
