@@ -2908,47 +2908,21 @@ if (empty($userPhotoUrl)) {
             transform: rotate(90deg);
         }
         
-        /* Provider Selection View */
-        .provider-selection {
+        /* Gateway Provider Selection */
+        .gateway-providers-container {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
-        .provider-selection.hidden {
-            display: none;
-        }
-        
-        .provider-group {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .provider-group-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        body[data-theme="dark"] .provider-group-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .provider-group-title i {
-            color: var(--accent-blue);
-        }
-        
-        .provider-options {
+        .gateway-providers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
         }
         
-        .provider-option {
+        .gateway-provider-card {
             padding: 1.5rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
@@ -2960,57 +2934,61 @@ if (empty($userPhotoUrl)) {
             box-shadow: var(--shadow-md);
         }
         
-        body[data-theme="dark"] .provider-option {
+        body[data-theme="dark"] .gateway-provider-card {
             background: var(--dark-accent-bg);
             border-color: var(--dark-border-color);
         }
         
-        .provider-option:hover {
+        .gateway-provider-card:hover {
             border-color: var(--accent-blue);
             transform: translateY(-3px);
             box-shadow: var(--shadow-lg);
         }
         
-        .provider-option-icon {
+        .gateway-provider-card.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+        }
+        
+        .gateway-provider-icon {
             font-size: 2.5rem;
             margin-bottom: 1rem;
             color: var(--accent-blue);
         }
         
-        .provider-option-name {
+        .gateway-provider-name {
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: var(--text-primary);
         }
         
-        body[data-theme="dark"] .provider-option-name {
+        body[data-theme="dark"] .gateway-provider-name {
             color: var(--dark-text-primary);
         }
         
-        /* Gateway Selection View */
-        .gateway-selection {
+        /* Gateway Options */
+        .gateway-options-container {
             display: none;
             flex-direction: column;
             gap: 1.5rem;
         }
         
-        .gateway-selection.active {
+        .gateway-options-container.active {
             display: flex;
         }
         
         .gateway-group {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .gateway-group-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
         }
         
         body[data-theme="dark"] .gateway-group-title {
@@ -3713,66 +3691,47 @@ if (empty($userPhotoUrl)) {
                 </button>
             </div>
 
-            <!-- Provider Selection View -->
-            <div class="provider-selection" id="providerSelection">
-                <div class="provider-group">
-                    <div class="provider-group-title">
-                        <i class="fas fa-bolt"></i> Charge Gateways
+            <!-- Gateway Provider Selection -->
+            <div class="gateway-providers-container" id="gatewayProvidersContainer">
+                <div class="gateway-providers-grid">
+                    <div class="gateway-provider-card" onclick="selectProvider('stripe')">
+                        <div class="gateway-provider-icon">
+                            <i class="fab fa-stripe"></i>
+                        </div>
+                        <div class="gateway-provider-name">Stripe</div>
                     </div>
-                    <div class="provider-options">
-                        <div class="provider-option" onclick="showProviderGateways('stripe')">
-                            <div class="provider-option-icon">
-                                <i class="fab fa-stripe"></i>
-                            </div>
-                            <div class="provider-option-name">Stripe</div>
+                    <div class="gateway-provider-card" onclick="selectProvider('shopify')">
+                        <div class="gateway-provider-icon">
+                            <i class="fab fa-shopify"></i>
                         </div>
-                        <div class="provider-option" onclick="showProviderGateways('shopify')">
-                            <div class="provider-option-icon">
-                                <i class="fab fa-shopify"></i>
-                            </div>
-                            <div class="provider-option-name">Shopify</div>
-                        </div>
-                        <div class="provider-option" onclick="showProviderGateways('paypal')">
-                            <div class="provider-option-icon">
-                                <i class="fab fa-paypal"></i>
-                            </div>
-                            <div class="provider-option-name">PayPal</div>
-                        </div>
-                        <div class="provider-option" onclick="showProviderGateways('razorpay')">
-                            <div class="provider-option-icon">
-                                <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:40px; height:40px; object-fit:contain;">
-                            </div>
-                            <div class="provider-option-name">Razorpay</div>
-                        </div>
-                        <div class="provider-option" onclick="showProviderGateways('authnet')">
-                            <div class="provider-option-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <div class="provider-option-name">Authnet</div>
-                        </div>
+                        <div class="gateway-provider-name">Shopify</div>
                     </div>
-                </div>
-
-                <div class="provider-group">
-                    <div class="provider-group-title">
-                        <i class="fas fa-shield-alt"></i> Auth Gateways
-                    </div>
-                    <div class="provider-options">
-                        <div class="provider-option" onclick="showProviderGateways('stripe-auth')">
-                            <div class="provider-option-icon">
-                                <i class="fab fa-stripe"></i>
-                            </div>
-                            <div class="provider-option-name">Stripe Auth</div>
+                    <div class="gateway-provider-card" onclick="selectProvider('paypal')">
+                        <div class="gateway-provider-icon">
+                            <i class="fab fa-paypal"></i>
                         </div>
+                        <div class="gateway-provider-name">PayPal</div>
+                    </div>
+                    <div class="gateway-provider-card" onclick="selectProvider('razorpay')">
+                        <div class="gateway-provider-icon">
+                            <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                style="width:40px; height:40px; object-fit:contain;">
+                        </div>
+                        <div class="gateway-provider-name">Razorpay</div>
+                    </div>
+                    <div class="gateway-provider-card" onclick="selectProvider('authnet')">
+                        <div class="gateway-provider-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="gateway-provider-name">Authnet</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Gateway Selection View -->
-            <div class="gateway-selection" id="gatewaySelection">
-                <!-- Stripe Gateways -->
-                <div class="gateway-group" id="stripe-gateways" style="display: none;">
+            <!-- Gateway Options -->
+            <div class="gateway-options-container" id="gatewayOptionsContainer">
+                <!-- Stripe Options -->
+                <div class="gateway-group" id="stripe-options" style="display: none;">
                     <div class="gateway-group-title">
                         <i class="fab fa-stripe"></i> Stripe Gateways
                     </div>
@@ -3797,11 +3756,21 @@ if (empty($userPhotoUrl)) {
                                 <div class="gateway-option-desc">Payment processing with $5 charge</div>
                             </div>
                         </label>
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripeauth.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-auth">Auth</span>
+                                </div>
+                                <div class="gateway-option-desc">Authorization only, no charge</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
-                <!-- Shopify Gateways -->
-                <div class="gateway-group" id="shopify-gateways" style="display: none;">
+                <!-- Shopify Options -->
+                <div class="gateway-group" id="shopify-options" style="display: none;">
                     <div class="gateway-group-title">
                         <i class="fab fa-shopify"></i> Shopify Gateways
                     </div>
@@ -3819,8 +3788,8 @@ if (empty($userPhotoUrl)) {
                     </div>
                 </div>
 
-                <!-- PayPal Gateways -->
-                <div class="gateway-group" id="paypal-gateways" style="display: none;">
+                <!-- PayPal Options -->
+                <div class="gateway-group" id="paypal-options" style="display: none;">
                     <div class="gateway-group-title">
                         <i class="fab fa-paypal"></i> PayPal Gateways
                     </div>
@@ -3838,8 +3807,8 @@ if (empty($userPhotoUrl)) {
                     </div>
                 </div>
 
-                <!-- Razorpay Gateways -->
-                <div class="gateway-group" id="razorpay-gateways" style="display: none;">
+                <!-- Razorpay Options -->
+                <div class="gateway-group" id="razorpay-options" style="display: none;">
                     <div class="gateway-group-title">
                         <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
                             style="width:20px; height:20px; object-fit:contain;"> Razorpay Gateways
@@ -3850,7 +3819,7 @@ if (empty($userPhotoUrl)) {
                             <div class="gateway-option-content">
                                 <div class="gateway-option-name">
                                     <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                        style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                        style="width:15px; height:15px; object-fit:contain;"> Razorpay
                                     <span class="gateway-badge badge-charge">0.10$ Charge</span>
                                     <span class="gateway-badge badge-maintenance">Under Maintenance</span>
                                 </div>
@@ -3860,8 +3829,8 @@ if (empty($userPhotoUrl)) {
                     </div>
                 </div>
 
-                <!-- Authnet Gateways -->
-                <div class="gateway-group" id="authnet-gateways" style="display: none;">
+                <!-- Authnet Options -->
+                <div class="gateway-group" id="authnet-options" style="display: none;">
                     <div class="gateway-group-title">
                         <i class="fas fa-credit-card"></i> Authnet Gateways
                     </div>
@@ -3878,35 +3847,16 @@ if (empty($userPhotoUrl)) {
                         </label>
                     </div>
                 </div>
-
-                <!-- Stripe Auth Gateways -->
-                <div class="gateway-group" id="stripe-auth-gateways" style="display: none;">
-                    <div class="gateway-group-title">
-                        <i class="fab fa-stripe"></i> Stripe Auth Gateways
-                    </div>
-                    <div class="gateway-options">
-                        <label class="gateway-option">
-                            <input type="radio" name="gateway" value="gate/stripeauth.php">
-                            <div class="gateway-option-content">
-                                <div class="gateway-option-name">
-                                    <i class="fab fa-stripe"></i> Stripe
-                                    <span class="gateway-badge badge-auth">Auth</span>
-                                </div>
-                                <div class="gateway-option-desc">Authorization only, no charge</div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
             </div>
 
             <div class="gateway-modal-footer">
-                <button class="gateway-btn-back" id="gatewayBtnBack" style="display: none;">
+                <button class="gateway-btn-back" id="gatewayBtnBack" style="display: none;" onclick="backToProviders()">
                     <i class="fas fa-arrow-left"></i> Back
                 </button>
-                <button class="gateway-btn-save" id="gatewayBtnSave">
+                <button class="gateway-btn-save" id="gatewayBtnSave" onclick="saveGatewaySettings()">
                     <i class="fas fa-check"></i> Save & Apply
                 </button>
-                <button class="gateway-btn-cancel" id="gatewayBtnCancel">
+                <button class="gateway-btn-cancel" id="gatewayBtnCancel" onclick="closeGatewayModal()">
                     <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
@@ -3963,23 +3913,6 @@ if (empty($userPhotoUrl)) {
         
         // Gateway settings functions
         function initializeGatewaySettings() {
-            const gatewayBtnBack = document.getElementById('gatewayBtnBack');
-            const gatewayBtnSave = document.getElementById('gatewayBtnSave');
-            const gatewayBtnCancel = document.getElementById('gatewayBtnCancel');
-            
-            // Add click events to buttons
-            gatewayBtnBack.addEventListener('click', function() {
-                showProviderSelection();
-            });
-            
-            gatewayBtnSave.addEventListener('click', function() {
-                saveGatewaySettings();
-            });
-            
-            gatewayBtnCancel.addEventListener('click', function() {
-                closeGatewayModal();
-            });
-            
             // Load saved gateway settings
             loadSavedGatewaySettings();
         }
@@ -3987,11 +3920,73 @@ if (empty($userPhotoUrl)) {
         function loadSavedGatewaySettings() {
             const savedGateway = localStorage.getItem('selectedGateway');
             if (savedGateway) {
-                const radioInput = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
-                if (radioInput) {
-                    radioInput.checked = true;
+                // Check if the saved gateway belongs to a provider
+                const provider = getProviderFromGateway(savedGateway);
+                if (provider) {
+                    // Pre-select the provider and gateway
+                    selectProvider(provider, false);
+                    
+                    // Select the specific gateway
+                    const radioInput = document.querySelector(`input[name="gateway"][value="${savedGateway}"]`);
+                    if (radioInput) {
+                        radioInput.checked = true;
+                    }
                 }
             }
+        }
+        
+        function getProviderFromGateway(gateway) {
+            if (gateway.includes('stripe')) return 'stripe';
+            if (gateway.includes('shopify')) return 'shopify';
+            if (gateway.includes('paypal')) return 'paypal';
+            if (gateway.includes('razorpay')) return 'razorpay';
+            if (gateway.includes('authnet')) return 'authnet';
+            return null;
+        }
+        
+        function selectProvider(provider, showOptions = true) {
+            // Hide all provider options
+            document.querySelectorAll('.gateway-group').forEach(group => {
+                group.style.display = 'none';
+            });
+            
+            // Show selected provider options
+            const optionsElement = document.getElementById(`${provider}-options`);
+            if (optionsElement) {
+                optionsElement.style.display = 'block';
+            }
+            
+            // Update UI
+            document.querySelectorAll('.gateway-provider-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            event.currentTarget.classList.add('active');
+            
+            if (showOptions) {
+                // Show options container and hide providers container
+                document.getElementById('gatewayProvidersContainer').style.display = 'none';
+                document.getElementById('gatewayOptionsContainer').classList.add('active');
+                document.getElementById('gatewayOptionsContainer').style.display = 'flex';
+                
+                // Show back button
+                document.getElementById('gatewayBtnBack').style.display = 'flex';
+            }
+        }
+        
+        function backToProviders() {
+            // Show providers container and hide options container
+            document.getElementById('gatewayProvidersContainer').style.display = 'block';
+            document.getElementById('gatewayOptionsContainer').classList.remove('active');
+            document.getElementById('gatewayOptionsContainer').style.display = 'none';
+            
+            // Hide back button
+            document.getElementById('gatewayBtnBack').style.display = 'none';
+            
+            // Remove active class from all provider cards
+            document.querySelectorAll('.gateway-provider-card').forEach(card => {
+                card.classList.remove('active');
+            });
         }
         
         function saveGatewaySettings() {
@@ -4013,47 +4008,40 @@ if (empty($userPhotoUrl)) {
             // Get gateway name for display
             const gatewayName = selectedGateway.parentElement.querySelector('.gateway-option-name').textContent.trim();
             
-            // Update UI
+            // Close modal
+            closeGatewayModal();
+            
+            // Show success message
             Swal.fire({
                 icon: 'success',
-                title: 'Gateway Settings Updated!',
+                title: 'Gateway Settings Updated',
                 text: `Now using: ${gatewayName}`,
-                confirmButtonColor: '#10b981'
+                confirmButtonColor: '#10b981',
+                timer: 3000,
+                timerProgressBar: true
             });
-            
-            closeGatewayModal();
         }
         
         function openGatewayModal() {
             document.getElementById('gatewayModal').classList.add('active');
-            showProviderSelection();
+            
+            // Reset to provider selection view
+            document.getElementById('gatewayProvidersContainer').style.display = 'block';
+            document.getElementById('gatewayOptionsContainer').classList.remove('active');
+            document.getElementById('gatewayOptionsContainer').style.display = 'none';
+            document.getElementById('gatewayBtnBack').style.display = 'none';
+            
+            // Remove active class from all provider cards
+            document.querySelectorAll('.gateway-provider-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Load saved gateway settings
             loadSavedGatewaySettings();
         }
         
         function closeGatewayModal() {
             document.getElementById('gatewayModal').classList.remove('active');
-        }
-        
-        function showProviderSelection() {
-            document.getElementById('providerSelection').classList.remove('hidden');
-            document.getElementById('gatewaySelection').classList.remove('active');
-            document.getElementById('gatewayBtnBack').style.display = 'none';
-        }
-        
-        function showProviderGateways(provider) {
-            // Hide all gateway groups
-            const gatewayGroups = document.querySelectorAll('.gateway-group');
-            gatewayGroups.forEach(group => {
-                group.style.display = 'none';
-            });
-            
-            // Show the selected provider's gateways
-            document.getElementById(`${provider}-gateways`).style.display = 'block';
-            
-            // Switch views
-            document.getElementById('providerSelection').classList.add('hidden');
-            document.getElementById('gatewaySelection').classList.add('active');
-            document.getElementById('gatewayBtnBack').style.display = 'flex';
         }
         
         // Function to get saved gateway settings
