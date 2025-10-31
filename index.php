@@ -2820,7 +2820,7 @@ if (empty($userPhotoUrl)) {
             }
         }
         
-        /* New Gateway Selection Modal - Simplified */
+        /* New Gateway Selection Modal - Two-Level Structure */
         .gateway-modal {
             position: fixed;
             top: 0;
@@ -2908,18 +2908,109 @@ if (empty($userPhotoUrl)) {
             transform: rotate(90deg);
         }
         
-        .gateway-group {
-            margin-bottom: 1.5rem;
+        /* Provider Selection View */
+        .provider-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
         
-        .gateway-group-title {
+        .provider-selection.hidden {
+            display: none;
+        }
+        
+        .provider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .provider-group-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 1rem;
-            font-weight: 700;
+        }
+        
+        body[data-theme="dark"] .provider-group-title {
+            color: var(--dark-text-primary);
+        }
+        
+        .provider-group-title i {
+            color: var(--accent-blue);
+        }
+        
+        .provider-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .provider-option {
+            padding: 1.5rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+            box-shadow: var(--shadow-md);
+        }
+        
+        body[data-theme="dark"] .provider-option {
+            background: var(--dark-accent-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        .provider-option:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .provider-option-icon {
+            font-size: 2.5rem;
             margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+        
+        .provider-option-name {
+            font-weight: 700;
+            font-size: 1.1rem;
             color: var(--text-primary);
+        }
+        
+        body[data-theme="dark"] .provider-option-name {
+            color: var(--dark-text-primary);
+        }
+        
+        /* Gateway Selection View */
+        .gateway-selection {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .gateway-selection.active {
+            display: flex;
+        }
+        
+        .gateway-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .gateway-group-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         body[data-theme="dark"] .gateway-group-title {
@@ -3610,7 +3701,7 @@ if (empty($userPhotoUrl)) {
         </div>
     </aside>
 
-    <!-- Simplified Gateway Selection Modal -->
+    <!-- Two-Level Gateway Selection Modal -->
     <div class="gateway-modal" id="gatewayModal">
         <div class="gateway-modal-content">
             <div class="gateway-modal-header">
@@ -3622,91 +3713,189 @@ if (empty($userPhotoUrl)) {
                 </button>
             </div>
 
-            <div class="gateway-group">
-                <div class="gateway-group-title">
-                    <i class="fas fa-bolt"></i> Charge Gateways
-                </div>
-                <div class="gateway-options">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripe1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+            <!-- Provider Selection View -->
+            <div class="provider-selection" id="providerSelection">
+                <div class="provider-group">
+                    <div class="provider-group-title">
+                        <i class="fas fa-bolt"></i> Charge Gateways
+                    </div>
+                    <div class="provider-options">
+                        <div class="provider-option" onclick="showProviderGateways('stripe')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-stripe"></i>
                             </div>
-                            <div class="gateway-option-desc">Payment processing with $1 charge</div>
+                            <div class="provider-option-name">Stripe</div>
                         </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripe5$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-charge">5$ Charge</span>
+                        <div class="provider-option" onclick="showProviderGateways('shopify')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-shopify"></i>
                             </div>
-                            <div class="gateway-option-desc">Payment processing with $5 charge</div>
+                            <div class="provider-option-name">Shopify</div>
                         </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/shopify1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-shopify"></i> Shopify
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                        <div class="provider-option" onclick="showProviderGateways('paypal')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-paypal"></i>
                             </div>
-                            <div class="gateway-option-desc">E-commerce payment processing</div>
+                            <div class="provider-option-name">PayPal</div>
                         </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/paypal0.1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-paypal"></i> PayPal
-                                <span class="gateway-badge badge-charge">0.1$ Charge</span>
-                            </div>
-                            <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
-                        </div>
-                    </label>
-                    <label class="gateway-option" id="razorpay-gateway">
-                        <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
+                        <div class="provider-option" onclick="showProviderGateways('razorpay')">
+                            <div class="provider-option-icon">
                                 <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
-                                    style="width:15px; height:15px; object-fit:contain;">Razorpay
-                                <span class="gateway-badge badge-charge">0.10$ Charge</span>
-                                <span class="gateway-badge badge-maintenance">Under Maintenance</span>
+                                    style="width:40px; height:40px; object-fit:contain;">
                             </div>
-                            <div class="gateway-option-desc">Indian payment gateway</div>
+                            <div class="provider-option-name">Razorpay</div>
                         </div>
-                    </label>
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/authnet1$.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fas fa-credit-card"></i> Authnet
-                                <span class="gateway-badge badge-charge">1$ Charge</span>
+                        <div class="provider-option" onclick="showProviderGateways('authnet')">
+                            <div class="provider-option-icon">
+                                <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="gateway-option-desc">Authorize.net payment gateway</div>
+                            <div class="provider-option-name">Authnet</div>
                         </div>
-                    </label>
+                    </div>
+                </div>
+
+                <div class="provider-group">
+                    <div class="provider-group-title">
+                        <i class="fas fa-shield-alt"></i> Auth Gateways
+                    </div>
+                    <div class="provider-options">
+                        <div class="provider-option" onclick="showProviderGateways('stripe-auth')">
+                            <div class="provider-option-icon">
+                                <i class="fab fa-stripe"></i>
+                            </div>
+                            <div class="provider-option-name">Stripe Auth</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="gateway-group">
-                <div class="gateway-group-title">
-                    <i class="fas fa-shield-alt"></i> Auth Gateways
-                </div>
-                <div class="gateway-options">
-                    <label class="gateway-option">
-                        <input type="radio" name="gateway" value="gate/stripeauth.php">
-                        <div class="gateway-option-content">
-                            <div class="gateway-option-name">
-                                <i class="fab fa-stripe"></i> Stripe
-                                <span class="gateway-badge badge-auth">Auth</span>
+            <!-- Gateway Selection View -->
+            <div class="gateway-selection" id="gatewaySelection">
+                <!-- Stripe Gateways -->
+                <div class="gateway-group" id="stripe-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-stripe"></i> Stripe Gateways
+                    </div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripe1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Payment processing with $1 charge</div>
                             </div>
-                            <div class="gateway-option-desc">Authorization only, no charge</div>
-                        </div>
-                    </label>
+                        </label>
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripe5$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-charge">5$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Payment processing with $5 charge</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Shopify Gateways -->
+                <div class="gateway-group" id="shopify-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-shopify"></i> Shopify Gateways
+                    </div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/shopify1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-shopify"></i> Shopify
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">E-commerce payment processing</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- PayPal Gateways -->
+                <div class="gateway-group" id="paypal-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-paypal"></i> PayPal Gateways
+                    </div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/paypal0.1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-paypal"></i> PayPal
+                                    <span class="gateway-badge badge-charge">0.1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Payment processing with $0.1 charge</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Razorpay Gateways -->
+                <div class="gateway-group" id="razorpay-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                            style="width:20px; height:20px; object-fit:contain;"> Razorpay Gateways
+                    </div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/razorpay0.10$.php" disabled>
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <img src="https://cdn.razorpay.com/logo.svg" alt="Razorpay" 
+                                        style="width:15px; height:15px; object-fit:contain;">Razorpay
+                                    <span class="gateway-badge badge-charge">0.10$ Charge</span>
+                                    <span class="gateway-badge badge-maintenance">Under Maintenance</span>
+                                </div>
+                                <div class="gateway-option-desc">Indian payment gateway</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Authnet Gateways -->
+                <div class="gateway-group" id="authnet-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fas fa-credit-card"></i> Authnet Gateways
+                    </div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/authnet1$.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fas fa-credit-card"></i> Authnet
+                                    <span class="gateway-badge badge-charge">1$ Charge</span>
+                                </div>
+                                <div class="gateway-option-desc">Authorize.net payment gateway</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Stripe Auth Gateways -->
+                <div class="gateway-group" id="stripe-auth-gateways" style="display: none;">
+                    <div class="gateway-group-title">
+                        <i class="fab fa-stripe"></i> Stripe Auth Gateways
+                    </div>
+                    <div class="gateway-options">
+                        <label class="gateway-option">
+                            <input type="radio" name="gateway" value="gate/stripeauth.php">
+                            <div class="gateway-option-content">
+                                <div class="gateway-option-name">
+                                    <i class="fab fa-stripe"></i> Stripe
+                                    <span class="gateway-badge badge-auth">Auth</span>
+                                </div>
+                                <div class="gateway-option-desc">Authorization only, no charge</div>
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -3780,7 +3969,7 @@ if (empty($userPhotoUrl)) {
             
             // Add click events to buttons
             gatewayBtnBack.addEventListener('click', function() {
-                // No back functionality needed since we're showing all gateways at once
+                showProviderSelection();
             });
             
             gatewayBtnSave.addEventListener('click', function() {
@@ -3827,7 +4016,7 @@ if (empty($userPhotoUrl)) {
             // Update UI
             Swal.fire({
                 icon: 'success',
-                title: 'Gateway Updated!',
+                title: 'Gateway Settings Updated!',
                 text: `Now using: ${gatewayName}`,
                 confirmButtonColor: '#10b981'
             });
@@ -3837,11 +4026,34 @@ if (empty($userPhotoUrl)) {
         
         function openGatewayModal() {
             document.getElementById('gatewayModal').classList.add('active');
+            showProviderSelection();
             loadSavedGatewaySettings();
         }
         
         function closeGatewayModal() {
             document.getElementById('gatewayModal').classList.remove('active');
+        }
+        
+        function showProviderSelection() {
+            document.getElementById('providerSelection').classList.remove('hidden');
+            document.getElementById('gatewaySelection').classList.remove('active');
+            document.getElementById('gatewayBtnBack').style.display = 'none';
+        }
+        
+        function showProviderGateways(provider) {
+            // Hide all gateway groups
+            const gatewayGroups = document.querySelectorAll('.gateway-group');
+            gatewayGroups.forEach(group => {
+                group.style.display = 'none';
+            });
+            
+            // Show the selected provider's gateways
+            document.getElementById(`${provider}-gateways`).style.display = 'block';
+            
+            // Switch views
+            document.getElementById('providerSelection').classList.add('hidden');
+            document.getElementById('gatewaySelection').classList.add('active');
+            document.getElementById('gatewayBtnBack').style.display = 'flex';
         }
         
         // Function to get saved gateway settings
