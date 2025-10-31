@@ -71,8 +71,8 @@ try {
         // Get the photo URL or fetch from Telegram if not available
         $photoUrl = getTelegramProfilePicture($u['telegram_id'], $u['photo_url'], $u['name']);
         
-        // Format username exactly like in update_activity.php
-        $username = $u['username'] ? '@' . $u['username'] : null;
+        // Get username from database or fetch from Telegram
+        $username = getTelegramUsername($pdo, $u['telegram_id'], $u['username']);
         
         $formatted[] = [
             'id' => $u['id'],
@@ -101,6 +101,49 @@ try {
     echo json_encode(['success' => false, 'message' => 'Server error']);
 }
 
+// Function to get Telegram username
+function getTelegramUsername($pdo, $telegramId, $dbUsername = null) {
+    // If we already have a username in the database, use it
+    if (!empty($dbUsername)) {
+        return '@' . trim($dbUsername, '@');
+    }
+    
+    // Try to get the username from Telegram API
+    $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
+    
+    $apiUrl = "https://api.telegram.org/bot{$botToken}/getChat?chat_id={$telegramId}";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && !empty($response)) {
+        $data = json_decode($response, true);
+        
+        if (isset($data['ok']) && $data['ok'] === true && isset($data['result']['username'])) {
+            $username = $data['result']['username'];
+            
+            // Update the database with the username
+            try {
+                $updateStmt = $pdo->prepare("UPDATE users SET username = ? WHERE telegram_id = ?");
+                $updateStmt->execute([$username, $telegramId]);
+            } catch (PDOException $e) {
+                error_log("Failed to update username in database: " . $e->getMessage());
+            }
+            
+            return '@' . $username;
+        }
+    }
+    
+    // If no username found, return null
+    return null;
+}
+
 // Function to get Telegram profile picture
 function getTelegramProfilePicture($telegramId, $photoUrl = null, $name = 'User') {
     // If we already have a photo URL, use it
@@ -109,7 +152,7 @@ function getTelegramProfilePicture($telegramId, $photoUrl = null, $name = 'User'
     }
     
     // Try to get the profile picture from Telegram API
-    $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Use your bot token
+    $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A';
     
     $apiUrl = "https://api.telegram.org/bot{$botToken}/getUserProfilePhotos?user_id={$telegramId}&limit=1";
     
