@@ -1,25 +1,12 @@
 <?php
-
-// update_activity.php
-// Static API key validation + return users data
-
-// Set timeout and memory limits
-set_time_limit(30); // 30 seconds max execution time
-ini_set('memory_limit', '128M'); // 128MB memory limit
-
+// Set headers to prevent caching
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Api-Key');
-
-// Handle preflight OPTIONS requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 // === STATIC API KEY ===
- $STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu'; // Replace with your static key
+ $STATIC_API_KEY = 'A8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTuA8xk2nX4DqYpZ0b3RjLTm5W9eG7CsVnHfQ1zPRaUy6EwSdBJl0tOMiNgKhIoFcTu';
 
 // === VALIDATE API KEY ===
  $apiKeyHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
@@ -27,20 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 if (empty($apiKeyHeader) || $apiKeyHeader !== $STATIC_API_KEY) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Invalid API key']);
-    exit;
-}
-
-// === KEY IS VALID → CONTINUE ===
-if (!session_start()) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Session start failed']);
-    exit;
-}
-
-// Check Telegram session
-if (!isset($_SESSION['user']) || $_SESSION['user']['auth_provider'] !== 'telegram') {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
@@ -68,84 +41,46 @@ try {
         $pass,
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 15, // Increased timeout
+            PDO::ATTR_TIMEOUT => 15,
             PDO::ATTR_PERSISTENT => false,
             PDO::ATTR_EMULATE_PREPARES => false
         ]
     );
     
-    // === TABLE SETUP ===
-    $tableExists = $pdo->query("SELECT to_regclass('public.online_users')")->fetchColumn();
-
-    if (!$tableExists) {
-        $pdo->exec("
-            CREATE TABLE online_users (
-                id SERIAL PRIMARY KEY,
-                session_id VARCHAR(255) NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                photo_url VARCHAR(255),
-                telegram_id BIGINT,
-                username VARCHAR(255),
-                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(session_id)
-            );
-        ");
-    }
-
-    // === USER DATA ===
-    $sessionId = session_id();
-    $name = $_SESSION['user']['name'] ?? 'Unknown User';
-    $photoUrl = $_SESSION['user']['photo_url'] ?? null;
-    $telegramId = $_SESSION['user']['id'] ?? null;
-    $username = $_SESSION['user']['username'] ?? null;
-
-    // === UPDATE ACTIVITY ===
-    $updateStmt = $pdo->prepare("
-        INSERT INTO online_users (session_id, name, photo_url, telegram_id, username, last_activity)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT (session_id) DO UPDATE SET
-            name = EXCLUDED.name,
-            photo_url = EXCLUDED.photo_url,
-            telegram_id = EXCLUDED.telegram_id,
-            username = EXCLUDED.username,
-            last_activity = CURRENT_TIMESTAMP
-    ");
-    
-    if (!$updateStmt->execute([$sessionId, $name, $photoUrl, $telegramId, $username])) {
-        throw new Exception("Failed to update user activity");
-    }
-
-    // === CLEANUP OLD USERS ===
-    $cleanupStmt = $pdo->prepare("DELETE FROM online_users WHERE last_activity < NOW() - INTERVAL '10 seconds'");
-    if (!$cleanupStmt->execute()) {
-        throw new Exception("Failed to cleanup old users");
-    }
-
-    // === GET ONLINE USERS ===
+    // === GET TOP USERS ===
+    // Query to get top users with most successful cards (CHARGED, APPROVED, LIVE)
     $stmt = $pdo->query("
-        SELECT session_id, name, photo_url, telegram_id, username
-        FROM online_users
-        WHERE last_activity >= NOW() - INTERVAL '10 seconds'
-        ORDER BY last_activity DESC
+        SELECT u.id, u.telegram_id, u.name, u.username, u.photo_url, COUNT(c.id) as total_hits
+        FROM users u
+        JOIN card_checks c ON u.id = c.user_id
+        WHERE c.status IN ('CHARGED', 'APPROVED', 'LIVE')
+        GROUP BY u.id, u.telegram_id, u.name, u.username, u.photo_url
+        ORDER BY total_hits DESC
+        LIMIT 10
     ");
     
     if (!$stmt) {
-        throw new Exception("Failed to fetch online users");
+        throw new Exception("Failed to fetch top users");
     }
     
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    
     // === FORMAT RESPONSE ===
     $formatted = [];
     foreach ($users as $u) {
-        // Generate avatar URL if not available
-        $avatar = $u['photo_url'] ?: generateAvatar($u['name']);
+        // Get the photo URL or fetch from Telegram if not available
+        $photoUrl = getTelegramProfilePicture($u['telegram_id'], $u['photo_url'], $u['name']);
+        
+        // Format username exactly like in update_activity.php
+        $username = $u['username'] ? '@' . $u['username'] : null;
         
         $formatted[] = [
+            'id' => $u['id'],
+            'telegram_id' => $u['telegram_id'],
             'name' => $u['name'],
-            'username' => $u['username'] ? '@' . $u['username'] : null,
-            'photo_url' => $avatar,
-            'is_currently_online' => ($u['session_id'] === $sessionId)
+            'username' => $username,
+            'photo_url' => $photoUrl,
+            'total_hits' => (int)$u['total_hits']
         ];
     }
 
@@ -157,24 +92,86 @@ try {
     ]);
 
 } catch (PDOException $e) {
-    error_log("Database PDO Error in update_activity.php: " . $e->getMessage());
+    error_log("Database PDO Error in topusers.php: " . $e->getMessage());
     http_response_code(503);
-    echo json_encode(['success' => false, 'message' => 'Database connection error', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Database connection error']);
 } catch (Exception $e) {
-    error_log("General Error in update_activity.php: " . $e->getMessage());
+    error_log("General Error in topusers.php: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Server error']);
+}
+
+// Function to get Telegram profile picture
+function getTelegramProfilePicture($telegramId, $photoUrl = null, $name = 'User') {
+    // If we already have a photo URL, use it
+    if (!empty($photoUrl)) {
+        return $photoUrl;
+    }
+    
+    // Try to get the profile picture from Telegram API
+    $botToken = '8421537809:AAEfYzNtCmDviAMZXzxYt6juHbzaZGzZb6A'; // Use your bot token
+    
+    $apiUrl = "https://api.telegram.org/bot{$botToken}/getUserProfilePhotos?user_id={$telegramId}&limit=1";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && !empty($response)) {
+        $data = json_decode($response, true);
+        
+        if (isset($data['ok']) && $data['ok'] === true && 
+            isset($data['result']['photos']) && 
+            !empty($data['result']['photos'])) {
+            
+            $photo = $data['result']['photos'][0][0]; // Get the highest resolution photo
+            $fileId = $photo['file_id'];
+            
+            // Get file path
+            $fileUrl = "https://api.telegram.org/bot{$botToken}/getFile?file_id={$fileId}";
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $fileUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $fileResponse = curl_exec($ch);
+            $fileHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($fileHttpCode === 200 && !empty($fileResponse)) {
+                $fileData = json_decode($fileResponse, true);
+                
+                if (isset($fileData['ok']) && $fileData['ok'] === true && 
+                    isset($fileData['result']['file_path'])) {
+                    
+                    $filePath = $fileData['result']['file_path'];
+                    return "https://api.telegram.org/file/bot{$botToken}/{$filePath}";
+                }
+            }
+        }
+    }
+    
+    // If all else fails, generate an avatar
+    return generateAvatar($name);
 }
 
 // Helper function to generate avatar URL
 function generateAvatar($name) {
-    $initials = '';
-    foreach (explode(' ', trim($name)) as $word) {
-        if ($word) {
-            $initials .= strtoupper(substr($word, 0, 1));
-            if (strlen($initials) >= 2) break;
-        }
+    // Handle non-Latin characters by using the first character of the name
+    $firstChar = mb_substr(trim($name), 0, 1);
+    
+    // If the first character is not a letter, use 'U' as default
+    if (!preg_match('/\p{L}/u', $firstChar)) {
+        $firstChar = 'U';
     }
-    return 'https://ui-avatars.com/api/?name=' . urlencode($initials ?: 'U') . '&background=3b82f6&color=fff&size=64';
+    
+    return 'https://ui-avatars.com/api/?name=' . urlencode($firstChar) . '&background=8b5cf6&color=fff&size=64';
 }
 ?>
