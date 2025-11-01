@@ -38,8 +38,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Cache expiration time in milliseconds (30 seconds)
-    const CACHE_EXPIRATION = 30000;
+    // Cache expiration time in milliseconds
+    const CACHE_EXPIRATION = {
+        globalStats: 60000,  // 1 minute
+        topUsers: 35000,     // 35 seconds
+        onlineUsers: 13000   // 13 seconds
+    };
     
     // Instantly update all data as soon as DOM loads
     updateGlobalStats();
@@ -85,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Check if we have cached data that's still valid
         const now = Date.now();
-        if (apiCache.globalStats && (now - apiCache.lastFetch.globalStats) < CACHE_EXPIRATION) {
+        if (apiCache.globalStats && (now - apiCache.lastFetch.globalStats) < CACHE_EXPIRATION.globalStats) {
             console.log("Using cached global stats");
             updateGlobalStatsUI(apiCache.globalStats);
             return;
@@ -198,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Check if we have cached data that's still valid
         const now = Date.now();
-        if (apiCache.topUsers && (now - apiCache.lastFetch.topUsers) < CACHE_EXPIRATION) {
+        if (apiCache.topUsers && (now - apiCache.lastFetch.topUsers) < CACHE_EXPIRATION.topUsers) {
             console.log("Using cached top users");
             if (apiCache.topUsers.users) {
                 displayTopUsers(apiCache.topUsers.users);
@@ -2035,7 +2039,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         globalStatsInterval = setInterval(() => {
             updateGlobalStats();
-        }, 60000); // Update every 1 minute (60 seconds)
+        }, 60000); // Update every 1 minute
         
         console.log("Global stats updates initialized. Stats will update every 1 minute.");
     }
