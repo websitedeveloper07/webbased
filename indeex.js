@@ -480,9 +480,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         topUsersInterval = setInterval(() => {
             updateTopUsers();
-        }, 30000);
+        }, 35000); // Update every 35 seconds
         
-        console.log("Top users updates initialized. Users will update every 30 seconds.");
+        console.log("Top users updates initialized. Users will update every 35 seconds.");
     }
     
     // Function to escape text for HTML
@@ -1990,12 +1990,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!window.activityRequest) {
                 updateUserActivity();
             }
-        }, 15000);
+        }, 13000); // Update every 13 seconds
         
         if (window.$) {
             $(document).on('click mousemove keypress scroll', function() {
                 const now = new Date().getTime();
-                if (now - lastActivityUpdate >= 15000 && !window.activityRequest) {
+                if (now - lastActivityUpdate >= 13000 && !window.activityRequest) {
                     console.log("User interaction detected, updating activity...");
                     updateUserActivity();
                     lastActivityUpdate = now;
@@ -2035,9 +2035,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         globalStatsInterval = setInterval(() => {
             updateGlobalStats();
-        }, 30000);
+        }, 60000); // Update every 1 minute (60 seconds)
         
-        console.log("Global stats updates initialized. Stats will update every 30 seconds.");
+        console.log("Global stats updates initialized. Stats will update every 1 minute.");
     }
 
     // Make functions globally accessible
