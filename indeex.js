@@ -1773,6 +1773,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 nameElement.textContent = name;
             }
             
+            // Add username element
             if (username) {
                 const usernameElement = document.createElement('div');
                 usernameElement.className = 'online-user-username';
@@ -1856,8 +1857,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 nameElement.textContent = name;
             }
             
-            userItem.appendChild(avatar);
-            userItem.appendChild(nameElement);
+            // Add username element for mobile view
+            if (username) {
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'mobile-online-user-username';
+                usernameElement.textContent = username;
+                
+                const userInfo = document.createElement('div');
+                userInfo.className = 'mobile-online-user-info';
+                userInfo.appendChild(nameElement);
+                userInfo.appendChild(usernameElement);
+                
+                userItem.appendChild(avatar);
+                userItem.appendChild(userInfo);
+            } else {
+                userItem.appendChild(avatar);
+                userItem.appendChild(nameElement);
+            }
             
             fragment.appendChild(userItem);
         });
