@@ -26,6 +26,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 5;
     
+    // Preload data immediately when DOM is loaded, even before login
+    preloadInitialData();
+    
+    // Function to preload initial data
+    function preloadInitialData() {
+        console.log("Preloading initial data...");
+        
+        // Update global stats immediately
+        updateGlobalStats();
+        
+        // Update top users immediately
+        updateTopUsers();
+        
+        // Update online users immediately
+        updateUserActivity();
+        
+        // Initialize intervals for regular updates
+        initializeGlobalStatsUpdates();
+        initializeTopUsersUpdates();
+        initializeActivityUpdates();
+    }
+    
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
         if (selectedGateway === 'gate/stripe1$.php' || selectedGateway === 'gate/stripe5$.php') {
@@ -541,11 +563,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize maxConcurrent based on selected gateway
         updateMaxConcurrent();
         
-        // Initialize all update functions
-        initializeActivityUpdates();
-        initializeGlobalStatsUpdates();
-        initializeTopUsersUpdates();
-        
         console.log("Application initialized successfully");
     }
     
@@ -603,13 +620,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Sidebar functions
+    // Sidebar functions with improved animation
     function closeSidebar() {
         sidebarOpen = false;
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.querySelector('.main-content');
-        if (sidebar) sidebar.classList.remove('open');
-        if (mainContent) mainContent.classList.remove('sidebar-open');
+        
+        // Use requestAnimationFrame for smoother animation
+        requestAnimationFrame(() => {
+            if (sidebar) {
+                sidebar.classList.remove('open');
+                // Force reflow to ensure transition starts
+                void sidebar.offsetWidth;
+            }
+            if (mainContent) {
+                mainContent.classList.remove('sidebar-open');
+                // Force reflow to ensure transition starts
+                void mainContent.offsetWidth;
+            }
+        });
     }
 
     // Gateway modal functions
@@ -2106,8 +2135,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 sidebarOpen = !sidebarOpen;
                 const sidebar = document.getElementById('sidebar');
                 const mainContent = document.querySelector('.main-content');
-                if (sidebar) sidebar.classList.toggle('open', sidebarOpen);
-                if (mainContent) mainContent.classList.toggle('sidebar-open', sidebarOpen);
+                
+                // Use requestAnimationFrame for smoother animation
+                requestAnimationFrame(() => {
+                    if (sidebar) {
+                        sidebar.classList.toggle('open', sidebarOpen);
+                        // Force reflow to ensure transition starts
+                        void sidebar.offsetWidth;
+                    }
+                    if (mainContent) {
+                        mainContent.classList.toggle('sidebar-open', sidebarOpen);
+                        // Force reflow to ensure transition starts
+                        void mainContent.offsetWidth;
+                    }
+                });
             });
             
             const savedTheme = localStorage.getItem('theme') || 'light';
