@@ -145,18 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateGlobalStatsUI(apiCache.globalStats);
             }
             
-            // Only show error toast if we're on the home page
-            const homePage = document.getElementById('page-home');
-            if (homePage && homePage.classList.contains('active') && window.Swal) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: 'Failed to update global statistics',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            }
+            // Don't show error notification to avoid spamming users
         });
     }
     
@@ -273,18 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayMobileTopUsers([]);
             }
             
-            // Only show error toast if we're on the home page
-            const homePage = document.getElementById('page-home');
-            if (homePage && homePage.classList.contains('active') && window.Swal) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: 'Failed to update top users',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            }
+            // Don't show error notification to avoid spamming users
         });
     }
     
@@ -809,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         title: 'Gateway Updated!',
                         text: `Now using: ${nameText}`,
                         confirmButtonColor: '#10b981',
-                        timer: 2000,
+                        timer: 1500, // Reduced from 2000 to 1500
                         showConfirmButton: false
                     });
                 }
@@ -1776,27 +1754,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.error('Activity update error:', error);
             
-            if (error.name !== 'AbortError') {
-                let errorMessage = 'Error fetching online users';
-                
-                if (error.message.includes('Failed to fetch')) {
-                    errorMessage = 'Network error - please check your connection';
-                } else if (error.message.includes('HTTP error')) {
-                    errorMessage = 'Server error - please try again later';
-                }
-                
-                const homePage = document.getElementById('page-home');
-                if (homePage && homePage.classList.contains('active') && window.Swal) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'error',
-                        title: errorMessage,
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                }
-            }
+            // Don't show error notification to avoid spamming users
         });
     }
 
