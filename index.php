@@ -150,26 +150,26 @@ if (empty($userPhotoUrl)) {
             --shadow-beast: 0 20px 40px rgba(0,0,0,0.25);
             
             /* User item colors */
-            --user-item-bg-light: rgba(59, 130, 246, 0.08); /* Light blue filled color */
-            --user-item-border-light: rgba(59, 130, 246, 0.25); /* Darker outline */
-            --user-item-bg-dark: rgba(59, 130, 246, 0.12); /* Darker filled color in dark mode */
-            --user-item-border-dark: rgba(59, 130, 246, 0.35); /* Even darker outline in dark mode */
+            --user-item-bg-light: rgba(59, 130, 246, 0.08);
+            --user-item-border-light: rgba(59, 130, 246, 0.25);
+            --user-item-bg-dark: rgba(59, 130, 246, 0.12);
+            --user-item-border-dark: rgba(59, 130, 246, 0.35);
             
             /* Admin user colors */
-            --admin-item-bg-light: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15)); /* Premium gradient */
-            --admin-item-border-light: rgba(168, 85, 247, 0.4); /* Purple border */
-            --admin-item-bg-dark: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2)); /* Darker gradient */
-            --admin-item-border-dark: rgba(168, 85, 247, 0.5); /* Darker purple border */
+            --admin-item-bg-light: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
+            --admin-item-border-light: rgba(168, 85, 247, 0.4);
+            --admin-item-bg-dark: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+            --admin-item-border-dark: rgba(168, 85, 247, 0.5);
             
             /* Hits colors */
-            --hits-light: #fbbf24; /* Yellow color for light mode */
-            --hits-dark: #fbbf24; /* Yellow color for dark mode */
+            --hits-light: #fbbf24;
+            --hits-dark: #fbbf24;
         }
         
-        /* Smooth transitions for all elements */
+        /* Smooth transitions for all elements - Removed transform from global */
         * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, 
-                        box-shadow 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
+                        box-shadow 0.3s ease, opacity 0.3s ease;
         }
         
         body {
@@ -179,7 +179,7 @@ if (empty($userPhotoUrl)) {
             min-height: 100vh; 
             overflow-x: hidden;
             position: relative;
-            font-size: 14px; /* Reduced base font size */
+            font-size: 14px;
         }
         
         /* Animated background particles */
@@ -215,23 +215,23 @@ if (empty($userPhotoUrl)) {
             top: 0; 
             left: 0; 
             right: 0;
-            background: rgba(15, 23, 42, 0.95); /* Always dark with transparency */
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(20px);
-            padding: 0.5rem 0.8rem; /* Reduced padding */
+            padding: 0.5rem 0.8rem;
             display: flex; 
             justify-content: space-between;
             align-items: center; 
             z-index: 1000; 
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            height: 50px; /* Reduced height */
+            height: 50px;
             box-shadow: var(--shadow-md);
         }
         
         .navbar-brand {
             display: flex; 
             align-items: center; 
-            gap: 0.6rem; /* Reduced gap */
-            font-size: 1.2rem; /* Reduced font size */
+            gap: 0.6rem;
+            font-size: 1.2rem;
             font-weight: 900;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
             -webkit-background-clip: text; 
@@ -246,20 +246,20 @@ if (empty($userPhotoUrl)) {
         }
         
         .navbar-brand i { 
-            font-size: 1.2rem; /* Reduced size */
+            font-size: 1.2rem;
         }
         
         .navbar-actions { 
             display: flex; 
             align-items: center; 
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.6rem;
         }
         
         .theme-toggle {
-            width: 40px; /* Reduced size */
-            height: 20px; /* Reduced size */
+            width: 40px;
+            height: 20px;
             background: var(--dark-accent-bg);
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 10px;
             cursor: pointer; 
             border: 1px solid var(--dark-border-color);
             position: relative; 
@@ -269,8 +269,8 @@ if (empty($userPhotoUrl)) {
         
         .theme-toggle-slider {
             position: absolute; 
-            width: 16px; /* Reduced size */
-            height: 16px; /* Reduced size */
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             left: 2px; 
@@ -280,22 +280,22 @@ if (empty($userPhotoUrl)) {
             align-items: center; 
             justify-content: center; 
             color: white; 
-            font-size: 0.5rem; /* Reduced font size */
+            font-size: 0.5rem;
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
         }
         
         [data-theme="dark"] .theme-toggle-slider { 
-            transform: translateX(18px); /* Adjusted for smaller toggle */
+            transform: translateX(18px);
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
         }
         
         .user-info {
             display: flex; 
             align-items: center; 
-            gap: 0.6rem; /* Reduced gap */
-            padding: 0.3rem 0.6rem; /* Reduced padding */
+            gap: 0.6rem;
+            padding: 0.3rem 0.6rem;
             background: rgba(15, 23, 42, 0.8); 
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
             transition: all 0.3s;
@@ -308,8 +308,8 @@ if (empty($userPhotoUrl)) {
         }
         
         .user-avatar {
-            width: 28px; /* Reduced size */
-            height: 28px; /* Reduced size */
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-blue);
@@ -326,32 +326,33 @@ if (empty($userPhotoUrl)) {
         .user-name {
             font-weight: 700; 
             color: #ffffff; 
-            max-width: 80px; /* Reduced width */
+            max-width: 80px;
             overflow: hidden; 
             text-overflow: ellipsis;
             white-space: nowrap; 
-            font-size: 0.8rem; /* Reduced font size */
+            font-size: 0.8rem;
         }
         
         .user-username {
-            font-size: 0.65rem; /* Reduced font size */
+            font-size: 0.65rem;
             color: rgba(255,255,255,0.7); 
-            max-width: 80px; /* Reduced width */
+            max-width: 80px;
             overflow: hidden; 
             text-overflow: ellipsis;
             white-space: nowrap;
         }
         
+        /* Remove animation from menu toggle */
         .menu-toggle {
             color: #ffffff !important; 
-            font-size: 1.1rem; /* Reduced font size */
-            transition: all 0.3s; 
+            font-size: 1.1rem;
+            transition: color 0.3s; /* Only transition color, not transform */
             display: flex; 
             align-items: center; 
             justify-content: center;
-            width: 36px; /* Reduced size */
-            height: 36px; /* Reduced size */
-            border-radius: 8px; /* Reduced border radius */
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             background: rgba(59, 130, 246, 0.2);
             flex-shrink: 0; 
             cursor: pointer;
@@ -359,30 +360,29 @@ if (empty($userPhotoUrl)) {
         }
         
         .menu-toggle:hover { 
-            transform: scale(1.05); 
             background: var(--accent-blue); 
             color: white !important;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            /* Removed transform and box-shadow to prevent animation */
         }
         
         /* Beast Level Sidebar - Optimized for performance and reduced size */
         .sidebar {
             position: fixed; 
             left: 0; 
-            top: 50px; /* Adjusted for reduced navbar height */
+            top: 50px;
             bottom: 0; 
-            width: 260px; /* Reduced width */
+            width: 260px;
             background: rgba(30, 41, 59, 0.95); 
             border-right: 1px solid var(--dark-border-color);
-            padding: 1rem 0; /* Reduced padding */
+            padding: 1rem 0;
             z-index: 999; 
             overflow-y: auto;
             transform: translateX(-100%); 
-            transition: transform 0.3s ease-out; /* Increased duration for smoother animation */
+            transition: transform 0.3s ease-out;
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(20px);
-            will-change: transform; /* Hardware acceleration hint */
+            will-change: transform;
         }
         
         .sidebar.open {
@@ -394,22 +394,22 @@ if (empty($userPhotoUrl)) {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 0 0.8rem; /* Reduced padding */
+            padding: 0 0.8rem;
         }
         
         .sidebar-item { 
-            margin: 0.3rem 0; /* Reduced margin */
+            margin: 0.3rem 0;
         }
         
         .sidebar-link {
             display: flex; 
             align-items: center; 
-            gap: 0.6rem; /* Reduced gap */
-            padding: 0.6rem 0.8rem; /* Reduced padding */
+            gap: 0.6rem;
+            padding: 0.6rem 0.8rem;
             color: var(--dark-text-secondary);
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 10px;
             cursor: pointer; 
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             font-weight: 500;
             transition: all 0.3s;
             position: relative;
@@ -429,31 +429,31 @@ if (empty($userPhotoUrl)) {
         }
         
         .sidebar-link i { 
-            width: 18px; /* Reduced width */
+            width: 18px;
             text-align: center; 
-            font-size: 0.9rem; /* Reduced font size */
+            font-size: 0.9rem;
         }
         
         .sidebar-divider { 
             height: 1px; 
             background: var(--dark-border-color); 
-            margin: 1rem 0.8rem; /* Reduced margin */
+            margin: 1rem 0.8rem;
         }
         
         /* Beast Level Main Content - Reduced size */
         .main-content {
             margin-left: 0; 
-            margin-top: 50px; /* Adjusted for reduced navbar height */
-            padding: 1rem; /* Reduced padding */
-            min-height: calc(100vh - 50px); /* Adjusted for reduced navbar height */
+            margin-top: 50px;
+            padding: 1rem;
+            min-height: calc(100vh - 50px);
             position: relative; 
             z-index: 1;
-            transition: margin-left 0.3s ease-out; /* Increased duration for smoother animation */
-            margin-right: 420px; /* Increased space for right sidebar */
+            transition: margin-left 0.3s ease-out;
+            margin-right: 420px;
         }
         
         .main-content.sidebar-open { 
-            margin-left: 260px; /* Adjusted for reduced sidebar width */
+            margin-left: 260px;
         }
         
         .page-section { 
@@ -477,9 +477,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .page-title {
-            font-size: 1.6rem; /* Reduced font size */
+            font-size: 1.6rem;
             font-weight: 900; 
-            margin-bottom: 0.6rem; /* Reduced margin */
+            margin-bottom: 0.6rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent;
@@ -488,8 +488,8 @@ if (empty($userPhotoUrl)) {
         
         .page-subtitle { 
             color: var(--text-secondary); 
-            margin-bottom: 1.2rem; /* Reduced margin */
-            font-size: 0.9rem; /* Reduced font size */
+            margin-bottom: 1.2rem;
+            font-size: 0.9rem;
             font-weight: 500;
         }
         
@@ -501,21 +501,21 @@ if (empty($userPhotoUrl)) {
         .dashboard-container {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem; /* Reduced gap */
-            margin-bottom: 1.5rem; /* Reduced margin */
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .welcome-banner {
             background: var(--card-bg);
-            border-radius: 16px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
+            border-radius: 16px;
+            padding: 1.2rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-md);
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 1.2rem; /* Reduced gap */
+            gap: 1.2rem;
             position: relative;
             overflow: hidden;
         }
@@ -532,7 +532,7 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 3px; /* Reduced height */
+            height: 3px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
             animation: gradientShift 3s ease infinite;
         }
@@ -540,27 +540,27 @@ if (empty($userPhotoUrl)) {
         .welcome-content {
             display: flex;
             align-items: center;
-            gap: 1.2rem; /* Reduced gap */
+            gap: 1.2rem;
             position: relative;
             z-index: 1;
         }
         
         .welcome-icon {
-            width: 40px; /* Reduced size */
-            height: 40px; /* Reduced size */
-            border-radius: 12px; /* Reduced border radius */
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2rem; /* Reduced font size */
+            font-size: 1.2rem;
             box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
         }
         
         .welcome-text h2 {
-            font-size: 1.3rem; /* Reduced font size */
-            margin-bottom: 0.2rem; /* Reduced margin */
+            font-size: 1.3rem;
+            margin-bottom: 0.2rem;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -568,7 +568,7 @@ if (empty($userPhotoUrl)) {
         
         .welcome-text p {
             color: var(--text-secondary);
-            font-size: 0.9rem; /* Reduced font size */
+            font-size: 0.9rem;
         }
         
         body[data-theme="dark"] .welcome-text p {
@@ -578,19 +578,19 @@ if (empty($userPhotoUrl)) {
         /* Beast Level Stats Grid - Better Spacing and Reduced Size */
         .stats-grid {
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Reduced min-width */
-            gap: 1.2rem; /* Reduced gap */
-            margin-bottom: 1.5rem; /* Reduced margin */
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
         }
         
         .stat-card {
             background: var(--card-bg); 
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
+            border-radius: 14px;
+            padding: 1.2rem;
             position: relative;
             transition: all 0.3s ease; 
             box-shadow: var(--shadow-md); 
-            min-height: 100px; /* Reduced height */
+            min-height: 100px;
             display: flex; 
             flex-direction: column; 
             justify-content: space-between;
@@ -610,7 +610,7 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 3px; /* Reduced height */
+            height: 3px;
         }
         
         .stat-card.charged::before { background: var(--stat-charged); }
@@ -621,10 +621,10 @@ if (empty($userPhotoUrl)) {
         .stat-card::after {
             content: '';
             position: absolute;
-            bottom: -15px; /* Adjusted for smaller card */
-            right: -15px; /* Adjusted for smaller card */
-            width: 60px; /* Reduced size */
-            height: 60px; /* Reduced size */
+            bottom: -15px;
+            right: -15px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             opacity: 0.1;
             transform: scale(0);
@@ -641,7 +641,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .stat-card:hover { 
-            transform: translateY(-3px); /* Reduced transform */
+            transform: translateY(-3px);
             box-shadow: var(--shadow-lg);
         }
         
@@ -649,19 +649,19 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 0.8rem; /* Reduced margin */
+            margin-bottom: 0.8rem;
             position: relative;
             z-index: 1;
         }
         
         .stat-icon {
-            width: 32px; /* Reduced size */
-            height: 32px; /* Reduced size */
-            border-radius: 8px; /* Reduced border radius */
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             display: flex; 
             align-items: center; 
             justify-content: center;
-            font-size: 1rem; /* Reduced font size */
+            font-size: 1rem;
             color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
@@ -672,9 +672,9 @@ if (empty($userPhotoUrl)) {
         .stat-card.checked .stat-icon { background: var(--stat-checked); }
         
         .stat-value { 
-            font-size: 1.8rem; /* Reduced font size */
+            font-size: 1.8rem;
             font-weight: 900; 
-            margin-bottom: 0.4rem; /* Reduced margin */
+            margin-bottom: 0.4rem;
             line-height: 1;
             position: relative;
             z-index: 1;
@@ -687,7 +687,7 @@ if (empty($userPhotoUrl)) {
         
         .stat-label {
             color: var(--text-secondary); 
-            font-size: 0.7rem; /* Reduced font size */
+            font-size: 0.7rem;
             text-transform: uppercase; 
             font-weight: 700;
             letter-spacing: 1px;
@@ -701,8 +701,8 @@ if (empty($userPhotoUrl)) {
         
         /* Beast Level Global Stats - Better Spacing and Dark Mode Fix */
         .gs-panel{
-            border-radius:14px; /* Reduced border radius */
-            padding:1.5rem; /* Reduced padding */
+            border-radius:14px;
+            padding:1.5rem;
             background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.05));
             border:1px solid var(--border-color);
             box-shadow: var(--shadow-md);
@@ -722,22 +722,22 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 3px; /* Reduced height */
+            height: 3px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
             animation: gradientShift 3s ease infinite;
         }
         
-        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem; /* Reduced margin */}
+        .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;}
         .gs-chip{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
           background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.25)}
-        .gs-title{font-weight:800;color:var(--text-primary);font-size:1.1rem} /* Reduced font size */
-        .gs-sub{font-size:0.8rem;color:var(--text-secondary);margin-top:2px} /* Reduced font size */
-        .gs-grid{display:grid;gap:1.2rem} /* Reduced gap */
+        .gs-title{font-weight:800;color:var(--text-primary);font-size:1.1rem}
+        .gs-sub{font-size:0.8rem;color:var(--text-secondary);margin-top:2px}
+        .gs-grid{display:grid;gap:1.2rem}
         @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
         .gs-card{
-          position:relative;border-radius:10px;padding:1.2rem; /* Reduced padding */
+          position:relative;border-radius:10px;padding:1.2rem;
           border:1px solid var(--border-color);
           box-shadow: var(--shadow-sm);
           color:var(--text-primary);
@@ -745,26 +745,26 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .gs-card {
-            background: rgba(30, 41, 59, 0.7); /* Added background color in dark mode */
+            background: rgba(30, 41, 59, 0.7);
             border-color: var(--dark-border-color);
-            color: var(--dark-text-primary); /* Fixed text color in dark mode */
+            color: var(--dark-text-primary);
         }
         
         .gs-card:hover {
-            transform: translateY(-2px); /* Reduced transform */
+            transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
         
         .gs-card .gs-icon{
           width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-          margin-bottom:0.8rem;border:1px solid var(--border-color) /* Reduced margin */
+          margin-bottom:0.8rem;border:1px solid var(--border-color)
         }
-        .gs-card .gs-icon svg{width:16px;height:16px;display:block;opacity:.95} /* Reduced size */
-        .gs-num{font-weight:800;font-size:1.8rem;line-height:1} /* Reduced font size */
-        .gs-label{font-size:0.8rem;color:var(--text-secondary);margin-top:0.6rem} /* Reduced font size and margin */
+        .gs-card .gs-icon svg{width:16px;height:16px;display:block;opacity:.95}
+        .gs-num{font-weight:800;font-size:1.8rem;line-height:1}
+        .gs-label{font-size:0.8rem;color:var(--text-secondary);margin-top:0.6rem}
         
         body[data-theme="dark"] .gs-label {
-            color: var(--dark-text-secondary); /* Fixed label color in dark mode */
+            color: var(--dark-text-secondary);
         }
         
         .gs-blue   { background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(59,130,246,0.2)); }
@@ -781,15 +781,15 @@ if (empty($userPhotoUrl)) {
         .right-sidebar {
             position: fixed;
             right: 0;
-            top: 50px; /* Adjusted for reduced navbar height */
+            top: 50px;
             bottom: 0;
-            width: 420px; /* Increased width */
-            background: var(--card-bg); /* Changed to use card-bg variable for light mode */
-            border-left: 1px solid var(--border-color); /* Changed to use border-color variable */
-            padding: 1.2rem; /* Reduced padding */
+            width: 420px;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 1.2rem;
             display: flex;
             flex-direction: column;
-            gap: 1.2rem; /* Reduced gap */
+            gap: 1.2rem;
             overflow: hidden;
             z-index: 998;
             backdrop-filter: blur(20px);
@@ -806,10 +806,10 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
             min-height: 0;
-            background: var(--card-bg); /* Changed to use card-bg variable for light mode */
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
-            border: 1px solid var(--border-color); /* Changed to use border-color variable */
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
             box-shadow: var(--shadow-md);
             position: relative;
             overflow: hidden;
@@ -826,7 +826,7 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 3px; /* Reduced height */
+            height: 3px;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
             animation: gradientShift 3s ease infinite;
         }
@@ -835,18 +835,18 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.2rem; /* Reduced margin */
+            margin-bottom: 1.2rem;
             position: relative;
             z-index: 1;
         }
         
         .online-users-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
-            color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 0.4rem; /* Reduced gap */
+            gap: 0.4rem;
         }
         
         body[data-theme="dark"] .online-users-title {
@@ -858,14 +858,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-users-count {
-            font-size: 0.75rem; /* Reduced font size */
-            color: var(--text-secondary); /* Changed to use text-secondary variable for light mode */
+            font-size: 0.75rem;
+            color: var(--text-secondary);
             background: rgba(59, 130, 246, 0.1);
-            padding: 0.4rem 0.6rem; /* Reduced padding */
-            border-radius: 16px; /* Reduced border radius */
+            padding: 0.4rem 0.6rem;
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 0.3rem; /* Reduced gap */
+            gap: 0.3rem;
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
         
@@ -876,24 +876,24 @@ if (empty($userPhotoUrl)) {
         
         .online-users-count i {
             color: var(--success-green);
-            font-size: 0.5rem; /* Reduced font size */
+            font-size: 0.5rem;
         }
         
         .online-users-list {
             flex: 1;
             overflow-y: auto;
-            padding-right: 0.3rem; /* Reduced padding */
+            padding-right: 0.3rem;
             position: relative;
             z-index: 1;
         }
         
         /* Custom scrollbar */
         .online-users-list::-webkit-scrollbar {
-            width: 3px; /* Reduced width */
+            width: 3px;
         }
         
         .online-users-list::-webkit-scrollbar-track {
-            background: var(--secondary-bg); /* Changed to use secondary-bg variable for light mode */
+            background: var(--secondary-bg);
             border-radius: 2px;
         }
         
@@ -909,25 +909,25 @@ if (empty($userPhotoUrl)) {
         .online-user-item {
             display: flex;
             align-items: center;
-            gap: 0.8rem; /* Reduced gap */
-            padding: 0.8rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light blue filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
-            border-radius: 10px; /* Reduced border radius */
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: var(--user-item-bg-light);
+            border: 1px solid var(--user-item-border-light);
+            border-radius: 10px;
             transition: all 0.3s ease;
             position: relative;
-            margin-bottom: 0.8rem; /* Reduced margin */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         body[data-theme="dark"] .online-user-item {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
+            background: var(--user-item-bg-dark);
+            border-color: var(--user-item-border-dark);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
         .online-user-item:hover {
-            transform: translateX(3px); /* Reduced transform */
+            transform: translateX(3px);
             border-color: var(--accent-blue);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
@@ -937,8 +937,8 @@ if (empty($userPhotoUrl)) {
         }
         
         .online-user-avatar {
-            width: 36px; /* Reduced size */
-            height: 36px; /* Reduced size */
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-blue);
@@ -950,12 +950,12 @@ if (empty($userPhotoUrl)) {
             position: absolute;
             bottom: 2px;
             right: 2px;
-            width: 10px; /* Reduced size */
-            height: 10px; /* Reduced size */
-            background-color: var(--success-green); /* Always green */
-            border: 2px solid var(--card-bg); /* Changed to use card-bg variable for light mode */
+            width: 10px;
+            height: 10px;
+            background-color: var(--success-green);
+            border: 2px solid var(--card-bg);
             border-radius: 50%;
-            animation: pulse 2s infinite; /* Added animation */
+            animation: pulse 2s infinite;
         }
         
         body[data-theme="dark"] .online-indicator {
@@ -984,28 +984,28 @@ if (empty($userPhotoUrl)) {
         
         .online-user-name {
             font-weight: 700;
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.3rem;
         }
         
         body[data-theme="dark"] .online-user-name {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         .online-user-username {
-            font-size: 0.7rem; /* Reduced font size */
-            color: var(--text-secondary); /* Changed to use text-secondary variable for light mode */
-            margin-top: 0.2rem; /* Added margin for vertical spacing */
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
         }
         
         body[data-theme="dark"] .online-user-username {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         /* Top Users Section - Beast Level - Light Mode Fix and Reduced Size */
@@ -1014,10 +1014,10 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
             min-height: 0;
-            background: var(--card-bg); /* Changed to use card-bg variable for light mode */
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
-            border: 1px solid var(--border-color); /* Changed to use border-color variable */
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
             box-shadow: var(--shadow-md);
             position: relative;
             overflow: hidden;
@@ -1034,7 +1034,7 @@ if (empty($userPhotoUrl)) {
             top: 0;
             left: 0;
             right: 0;
-            height: 3px; /* Reduced height */
+            height: 3px;
             background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
             animation: gradientShift 3s ease infinite;
         }
@@ -1043,18 +1043,18 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.2rem; /* Reduced margin */
+            margin-bottom: 1.2rem;
             position: relative;
             z-index: 1;
         }
         
         .top-users-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
-            color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 0.4rem; /* Reduced gap */
+            gap: 0.4rem;
         }
         
         body[data-theme="dark"] .top-users-title {
@@ -1068,17 +1068,17 @@ if (empty($userPhotoUrl)) {
         .top-users-list {
             flex: 1;
             overflow-y: auto;
-            padding-right: 0.3rem; /* Reduced padding */
+            padding-right: 0.3rem;
             position: relative;
             z-index: 1;
         }
         
         .top-users-list::-webkit-scrollbar {
-            width: 3px; /* Reduced width */
+            width: 3px;
         }
         
         .top-users-list::-webkit-scrollbar-track {
-            background: var(--secondary-bg); /* Changed to use secondary-bg variable for light mode */
+            background: var(--secondary-bg);
             border-radius: 2px;
         }
         
@@ -1094,25 +1094,25 @@ if (empty($userPhotoUrl)) {
         .top-user-item {
             display: flex;
             align-items: center;
-            gap: 0.8rem; /* Reduced gap */
-            padding: 0.8rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light blue filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
-            border-radius: 10px; /* Reduced border radius */
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: var(--user-item-bg-light);
+            border: 1px solid var(--user-item-border-light);
+            border-radius: 10px;
             transition: all 0.3s ease;
             position: relative;
-            margin-bottom: 0.8rem; /* Reduced margin */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         body[data-theme="dark"] .top-user-item {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
+            background: var(--user-item-bg-dark);
+            border-color: var(--user-item-border-dark);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
         .top-user-item:hover {
-            transform: translateX(3px); /* Reduced transform */
+            transform: translateX(3px);
             border-color: var(--accent-purple);
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
         }
@@ -1122,8 +1122,8 @@ if (empty($userPhotoUrl)) {
         }
         
         .top-user-avatar {
-            width: 36px; /* Reduced size */
-            height: 36px; /* Reduced size */
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-purple);
@@ -1141,363 +1141,93 @@ if (empty($userPhotoUrl)) {
         
         .top-user-name {
             font-weight: 700;
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: var(--text-primary); /* Changed to use text-primary variable for light mode */
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.3rem;
         }
         
         body[data-theme="dark"] .top-user-name {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         .top-user-username {
-            font-size: 0.7rem; /* Reduced font size */
-            color: var(--text-secondary); /* Changed to use text-secondary variable for light mode */
-            margin-bottom: 0.1rem; /* Reduced margin */
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.1rem;
         }
         
         body[data-theme="dark"] .top-user-username {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         .top-user-hits {
-            font-size: 0.75rem; /* Reduced font size */
+            font-size: 0.75rem;
             font-weight: 700;
-            color: var(--hits-light); /* Yellow color for light mode */
-            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in light mode */
-            border: 1px solid rgba(251, 191, 36, 0.3); /* Yellow border in light mode */
-            padding: 0.3rem 0.6rem; /* Increased padding for bigger box */
-            border-radius: 8px; /* Increased border radius */
+            color: var(--hits-light);
+            background-color: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 60px; /* Increased minimum width for "Hits" text */
+            min-width: 60px;
             text-align: center;
         }
         
         body[data-theme="dark"] .top-user-hits {
-            color: var(--hits-dark) !important; /* Yellow color for dark mode */
-            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in dark mode */
-            border-color: rgba(251, 191, 36, 0.3); /* Yellow border in dark mode */
+            color: var(--hits-dark) !important;
+            background-color: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.3);
         }
         
         /* Admin user styling */
         .online-user-item.admin {
-            background: var(--admin-item-bg-light) !important; /* Premium gradient for light mode */
-            border: 1px solid var(--admin-item-border-light) !important; /* Purple border */
+            background: var(--admin-item-bg-light) !important;
+            border: 1px solid var(--admin-item-border-light) !important;
         }
         
         body[data-theme="dark"] .online-user-item.admin {
-            background: var(--admin-item-bg-dark) !important; /* Darker gradient for dark mode */
-            border-color: var(--admin-item-border-dark) !important; /* Darker purple border */
+            background: var(--admin-item-bg-dark) !important;
+            border-color: var(--admin-item-border-dark) !important;
         }
         
         .top-user-item.admin {
-            background: var(--admin-item-bg-light) !important; /* Premium gradient for light mode */
-            border: 1px solid var(--admin-item-border-light) !important; /* Purple border */
+            background: var(--admin-item-bg-light) !important;
+            border: 1px solid var(--admin-item-border-light) !important;
         }
         
         body[data-theme="dark"] .top-user-item.admin {
-            background: var(--admin-item-bg-dark) !important; /* Darker gradient for dark mode */
-            border-color: var(--admin-item-border-dark) !important; /* Darker purple border */
+            background: var(--admin-item-bg-dark) !important;
+            border-color: var(--admin-item-border-dark) !important;
         }
         
         .admin-badge {
-            background: linear-gradient(135deg, #a855f7, #ec4899) !important; /* Premium gradient */
+            background: linear-gradient(135deg, #a855f7, #ec4899) !important;
             color: white !important;
-            padding: 2px 5px; /* Slightly larger padding */
-            border-radius: 4px; /* Slightly larger border radius */
-            font-size: 0.55rem; /* Slightly larger font size */
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.55rem;
             font-weight: 700;
             text-transform: uppercase;
-            margin-left: 5px; /* Slightly larger margin */
-            box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3); /* Added shadow */
+            margin-left: 5px;
+            box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3);
         }
         
-        /* Beast Level Profile Page - Reduced Size */
-        .profile-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem; /* Reduced gap */
-        }
-        
-        .profile-header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            backdrop-filter: blur(20px);
-            border-radius: 16px; /* Reduced border radius */
-            padding: 1.5rem; /* Reduced padding */
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        body[data-theme="dark"] .profile-header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-            border-color: var(--dark-border-color);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .profile-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px; /* Reduced height */
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
-            animation: gradientShift 3s ease infinite;
-        }
-        
-        .profile-info {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem; /* Reduced gap */
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .profile-avatar-container {
-            position: relative;
-        }
-        
-        .profile-avatar {
-            width: 100px; /* Reduced size */
-            height: 100px; /* Reduced size */
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--accent-blue); /* Reduced border width */
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-            transition: transform 0.3s ease;
-        }
-        
-        .profile-avatar:hover {
-            transform: scale(1.05);
-        }
-        
-        .profile-status {
-            position: absolute;
-            bottom: 6px; /* Adjusted for smaller avatar */
-            right: 6px; /* Adjusted for smaller avatar */
-            width: 20px; /* Reduced size */
-            height: 20px; /* Reduced size */
-            background-color: var(--success-green);
-            border: 2px solid var(--card-bg);
-            border-radius: 50%;
-        }
-        
-        body[data-theme="dark"] .profile-status {
-            border-color: var(--dark-card-bg);
-        }
-        
-        .profile-details {
-            flex: 1;
-        }
-        
-        .profile-name {
-            font-size: 2rem; /* Reduced font size */
-            font-weight: 900;
-            margin-bottom: 0.4rem; /* Reduced margin */
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 3s ease infinite;
-        }
-        
-        .profile-username {
-            font-size: 1rem; /* Reduced font size */
-            color: var(--text-secondary);
-            margin-bottom: 0.8rem; /* Reduced margin */
-        }
-        
-        body[data-theme="dark"] .profile-username {
-            color: var(--dark-text-secondary);
-        }
-        
-        .profile-badges {
-            display: flex;
-            gap: 0.5rem; /* Reduced gap */
-            flex-wrap: wrap;
-        }
-        
-        .profile-badge {
-            padding: 0.3rem 0.6rem; /* Reduced padding */
-            border-radius: 16px; /* Reduced border radius */
-            font-size: 0.7rem; /* Reduced font size */
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem; /* Reduced gap */
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-        }
-        
-        .profile-badge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .badge-member {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent-blue);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-        
-        .badge-active {
-            background: rgba(34, 197, 94, 0.2);
-            color: var(--success-green);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        
-        .profile-stats-container {
-            background: var(--card-bg);
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
-        }
-        
-        body[data-theme="dark"] .profile-stats-container {
-            background: var(--dark-card-bg);
-            border-color: var(--dark-border-color);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .profile-stats-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem; /* Reduced margin */
-            position: relative;
-            z-index: 1;
-        }
-        
-        .profile-stats-title {
-            font-size: 1.2rem; /* Reduced font size */
-            font-weight: 800;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem; /* Reduced gap */
-        }
-        
-        body[data-theme="dark"] .profile-stats-title {
-            color: var(--dark-text-primary);
-        }
-        
-        .profile-stats-title i {
-            color: var(--accent-cyan);
-        }
-        
-        .user-stats-column {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem; /* Reduced gap */
-            position: relative;
-            z-index: 1;
-        }
-        
-        .user-stat-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem; /* Reduced padding */
-            background: var(--card-bg);
-            border-radius: 10px; /* Reduced border radius */
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        body[data-theme="dark"] .user-stat-item {
-            background: var(--dark-accent-bg);
-            border-color: var(--dark-border-color);
-        }
-        
-        .user-stat-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 3px; /* Reduced width */
-            border-radius: 3px 0 0 3px;
-        }
-        
-        .user-stat-item.charged::before { background: var(--stat-charged); }
-        .user-stat-item.approved::before { background: var(--stat-approved); }
-        .user-stat-item.declined::before { background: var(--stat-declined); }
-        .user-stat-item.threeds::before { background: var(--stat-threeds); }
-        .user-stat-item.checked::before { background: var(--stat-checked); }
-        
-        .user-stat-item:hover {
-            transform: translateX(3px); /* Reduced transform */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .user-stat-icon {
-            width: 40px; /* Reduced size */
-            height: 40px; /* Reduced size */
-            border-radius: 8px; /* Reduced border radius */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem; /* Reduced font size */
-            color: white;
-            margin-right: 1rem; /* Reduced margin */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .user-stat-item.charged .user-stat-icon { background: var(--stat-charged); }
-        .user-stat-item.approved .user-stat-icon { background: var(--stat-approved); }
-        .user-stat-item.declined .user-stat-icon { background: var(--stat-declined); }
-        .user-stat-item.threeds .user-stat-icon { background: var(--stat-threeds); }
-        .user-stat-item.checked .user-stat-icon { background: var(--stat-checked); }
-        
-        .user-stat-content {
-            flex: 1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .user-stat-label {
-            font-size: 0.8rem; /* Reduced font size */
-            color: var(--text-secondary);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        body[data-theme="dark"] .user-stat-label {
-            color: var(--dark-text-secondary);
-        }
-        
-        .user-stat-value {
-            font-size: 1.4rem; /* Reduced font size */
-            font-weight: 900;
-            line-height: 1;
-        }
-        
-        .user-stat-item.charged .user-stat-value { color: var(--success-green); }
-        .user-stat-item.approved .user-stat-value { color: var(--success-green); }
-        .user-stat-item.declined .user-stat-value { color: var(--declined-red); }
-        .user-stat-item.threeds .user-stat-value { color: var(--accent-cyan); }
-        .user-stat-item.checked .user-stat-value { color: var(--accent-purple); }
-        
-        /* Mobile Online Users Section - Reduced Size */
+        /* Mobile Online Users Section - Fixed to match top users */
         .mobile-online-users {
-            margin-top: 1.5rem; /* Reduced margin */
+            margin-top: 1.5rem;
             background: var(--card-bg);
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
+            border-radius: 14px;
+            padding: 1.2rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-md);
+            display: none;
         }
         
         body[data-theme="dark"] .mobile-online-users {
@@ -1510,16 +1240,16 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
         }
         
         .mobile-online-users-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 0.4rem; /* Reduced gap */
+            gap: 0.4rem;
         }
         
         body[data-theme="dark"] .mobile-online-users-title {
@@ -1531,14 +1261,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .mobile-online-users-count {
-            font-size: 0.75rem; /* Reduced font size */
+            font-size: 0.75rem;
             color: var(--text-secondary);
             background: rgba(59, 130, 246, 0.1);
-            padding: 0.3rem 0.6rem; /* Reduced padding */
-            border-radius: 16px; /* Reduced border radius */
+            padding: 0.3rem 0.6rem;
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 0.2rem; /* Reduced gap */
+            gap: 0.2rem;
         }
         
         body[data-theme="dark"] .mobile-online-users-count {
@@ -1548,38 +1278,45 @@ if (empty($userPhotoUrl)) {
         
         .mobile-online-users-count i {
             color: var(--success-green);
-            font-size: 0.5rem; /* Reduced font size */
+            font-size: 0.5rem;
         }
         
         .mobile-online-users-list {
-            display: flex; /* Changed from flex-wrap to flex */
-            flex-direction: column; /* Added to make items stack vertically */
-            gap: 0.6rem; /* Reduced gap */
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
         }
         
+        /* Fix for mobile online users display - make it match top users */
         .mobile-online-user-item {
             display: flex;
             align-items: center;
-            gap: 0.5rem; /* Reduced gap */
-            padding: 0.5rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light blue filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
-            border-radius: 8px; /* Reduced border radius */
+            gap: 0.8rem; /* Increased gap to match top users */
+            padding: 0.8rem; /* Increased padding to match top users */
+            background: var(--user-item-bg-light);
+            border: 1px solid var(--user-item-border-light);
+            border-radius: 10px;
             transition: all 0.3s;
             position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
-            width: 100%; /* Added to make items take full width */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
         }
         
         body[data-theme="dark"] .mobile-online-user-item {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
+            background: var(--user-item-bg-dark);
+            border-color: var(--user-item-border-dark);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-online-user-item:hover {
+            transform: translateX(3px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
         
         .mobile-online-user-avatar {
-            width: 24px; /* Reduced size */
-            height: 24px; /* Reduced size */
+            width: 36px; /* Increased size to match top users */
+            height: 36px; /* Increased size to match top users */
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-blue);
@@ -1589,44 +1326,45 @@ if (empty($userPhotoUrl)) {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            flex: 1; /* Added to make info take remaining space */
+            flex: 1;
         }
         
         .mobile-online-user-name {
             font-weight: 700;
-            font-size: 0.7rem; /* Reduced font size */
+            font-size: 0.85rem; /* Increased font size to match top users */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-primary);
-            max-width: 100%; /* Changed from 100px to 100% */
+            max-width: 100%;
             display: flex;
             align-items: center;
-            gap: 0.2rem;
+            gap: 0.3rem;
         }
         
         body[data-theme="dark"] .mobile-online-user-name {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         .mobile-online-user-username {
-            font-size: 0.6rem; /* Reduced font size */
+            font-size: 0.7rem; /* Increased font size to match top users */
             color: var(--text-secondary);
             margin-top: 0.2rem;
         }
         
         body[data-theme="dark"] .mobile-online-user-username {
-            color: var(--dark-text-secondary);
+            color: #ffffff;
         }
         
         /* Mobile Top Users Section - Added */
         .mobile-top-users {
-            margin-top: 1.5rem; /* Reduced margin */
+            margin-top: 1.5rem;
             background: var(--card-bg);
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
+            border-radius: 14px;
+            padding: 1.2rem;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-md);
+            display: none;
         }
         
         body[data-theme="dark"] .mobile-top-users {
@@ -1639,16 +1377,16 @@ if (empty($userPhotoUrl)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
         }
         
         .mobile-top-users-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 0.4rem; /* Reduced gap */
+            gap: 0.4rem;
         }
         
         body[data-theme="dark"] .mobile-top-users-title {
@@ -1662,31 +1400,37 @@ if (empty($userPhotoUrl)) {
         .mobile-top-users-list {
             display: flex;
             flex-direction: column;
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.6rem;
         }
         
         .mobile-top-user-item {
             display: flex;
             align-items: center;
-            gap: 0.8rem; /* Reduced gap */
-            padding: 0.8rem; /* Reduced padding */
-            background: var(--user-item-bg-light); /* Light blue filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark outline boundary */
-            border-radius: 10px; /* Reduced border radius */
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: var(--user-item-bg-light);
+            border: 1px solid var(--user-item-border-light);
+            border-radius: 10px;
             transition: all 0.3s;
             position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Added shadow for depth */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         body[data-theme="dark"] .mobile-top-user-item {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker outline in dark mode */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Darker shadow in dark mode */
+            background: var(--user-item-bg-dark);
+            border-color: var(--user-item-border-dark);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-top-user-item:hover {
+            transform: translateX(3px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
         }
         
         .mobile-top-user-avatar {
-            width: 36px; /* Reduced size */
-            height: 36px; /* Reduced size */
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-purple);
@@ -1702,7 +1446,7 @@ if (empty($userPhotoUrl)) {
         
         .mobile-top-user-name {
             font-weight: 700;
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -1713,47 +1457,47 @@ if (empty($userPhotoUrl)) {
         }
         
         body[data-theme="dark"] .mobile-top-user-name {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         .mobile-top-user-username {
-            font-size: 0.7rem; /* Reduced font size */
+            font-size: 0.7rem;
             color: var(--text-secondary);
-            margin-bottom: 0.1rem; /* Reduced margin */
+            margin-bottom: 0.1rem;
         }
         
         body[data-theme="dark"] .mobile-top-user-username {
-            color: #ffffff; /* White text in dark mode */
+            color: #ffffff;
         }
         
         .mobile-top-user-hits {
-            font-size: 0.75rem; /* Reduced font size */
+            font-size: 0.75rem;
             font-weight: 700;
-            color: var(--hits-light); /* Yellow color for light mode */
-            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in light mode */
-            border: 1px solid rgba(251, 191, 36, 0.3); /* Yellow border in light mode */
-            padding: 0.3rem 0.6rem; /* Increased padding for bigger box */
-            border-radius: 8px; /* Increased border radius */
+            color: var(--hits-light);
+            background-color: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 60px; /* Increased minimum width for "Hits" text */
+            min-width: 60px;
             text-align: center;
         }
         
         body[data-theme="dark"] .mobile-top-user-hits {
-            color: var(--hits-dark) !important; /* Yellow color for dark mode */
-            background-color: rgba(251, 191, 36, 0.15); /* Yellow background in dark mode */
-            border-color: rgba(251, 191, 36, 0.3); /* Yellow border in dark mode */
+            color: var(--hits-dark) !important;
+            background-color: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.3);
         }
         
         /* Other sections styling - Reduced Size */
         .checker-section, .generator-section {
             background: var(--card-bg); 
             border: 1px solid var(--border-color);
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
-            margin-bottom: 1.2rem; /* Reduced margin */
+            border-radius: 14px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
             box-shadow: var(--shadow-md);
         }
         
@@ -1768,19 +1512,19 @@ if (empty($userPhotoUrl)) {
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
             flex-wrap: wrap; 
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.6rem;
             position: relative;
             z-index: 1;
         }
         
         .checker-title, .generator-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex; 
             align-items: center; 
-            gap: 0.5rem; /* Reduced gap */
+            gap: 0.5rem;
         }
         
         body[data-theme="dark"] .checker-title, 
@@ -1790,12 +1534,12 @@ if (empty($userPhotoUrl)) {
         
         .checker-title i, .generator-title i { 
             color: var(--accent-cyan); 
-            font-size: 1rem; /* Reduced font size */
+            font-size: 1rem;
         }
         
         .settings-btn {
-            padding: 0.4rem 0.8rem; /* Reduced padding */
-            border-radius: 8px; /* Reduced border radius */
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); 
             color: var(--text-primary);
@@ -1803,8 +1547,8 @@ if (empty($userPhotoUrl)) {
             font-weight: 600; 
             display: flex;
             align-items: center; 
-            gap: 0.3rem; /* Reduced gap */
-            font-size: 0.8rem; /* Reduced font size */
+            gap: 0.3rem;
+            font-size: 0.8rem;
             transition: all 0.3s;
         }
         
@@ -1822,21 +1566,21 @@ if (empty($userPhotoUrl)) {
         }
         
         .input-section { 
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
         }
         
         .input-header {
             display: flex; 
             justify-content: space-between;
             align-items: center; 
-            margin-bottom: 0.6rem; /* Reduced margin */
+            margin-bottom: 0.6rem;
             flex-wrap: wrap; 
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.6rem;
         }
         
         .input-label { 
             font-weight: 700; 
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
         }
         
         body[data-theme="dark"] .input-label {
@@ -1845,15 +1589,15 @@ if (empty($userPhotoUrl)) {
         
         .card-textarea {
             width: 100%; 
-            min-height: 120px; /* Reduced height */
+            min-height: 120px;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color); 
-            border-radius: 10px; /* Reduced border radius */
-            padding: 0.8rem; /* Reduced padding */
+            border-radius: 10px;
+            padding: 0.8rem;
             color: var(--text-primary);
             font-family: 'Courier New', monospace; 
             resize: vertical;
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             transition: all 0.3s;
         }
         
@@ -1870,17 +1614,17 @@ if (empty($userPhotoUrl)) {
         }
         
         .form-group {
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
         }
         
         .form-control {
             width: 100%; 
-            padding: 0.6rem 0.8rem; /* Reduced padding */
+            padding: 0.6rem 0.8rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color); 
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 10px;
             color: var(--text-primary); 
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             transition: all 0.3s;
         }
         
@@ -1898,33 +1642,33 @@ if (empty($userPhotoUrl)) {
         
         .form-row {
             display: flex; 
-            gap: 0.8rem; /* Reduced gap */
+            gap: 0.8rem;
             flex-wrap: wrap;
         }
         
         .form-col {
             flex: 1; 
-            min-width: 100px; /* Reduced min-width */
+            min-width: 100px;
         }
         
         .action-buttons { 
             display: flex; 
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.6rem;
             flex-wrap: wrap; 
             justify-content: center; 
         }
         
         .btn {
-            padding: 0.5rem 1rem; /* Reduced padding */
-            border-radius: 8px; /* Reduced border radius */
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
             border: none;
             font-weight: 700; 
             cursor: pointer; 
             display: flex;
             align-items: center; 
-            gap: 0.4rem; /* Reduced gap */
-            min-width: 100px; /* Reduced min-width */
-            font-size: 0.85rem; /* Reduced font size */
+            gap: 0.4rem;
+            min-width: 100px;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
         }
         
@@ -1959,9 +1703,9 @@ if (empty($userPhotoUrl)) {
         .results-section {
             background: var(--card-bg); 
             border: 1px solid var(--border-color);
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
-            margin-bottom: 1.2rem; /* Reduced margin */
+            border-radius: 14px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
             box-shadow: var(--shadow-md);
         }
         
@@ -1975,19 +1719,19 @@ if (empty($userPhotoUrl)) {
             display: flex; 
             justify-content: space-between;
             align-items: center; 
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
             flex-wrap: wrap; 
-            gap: 0.6rem; /* Reduced gap */
+            gap: 0.6rem;
             position: relative;
             z-index: 1;
         }
         
         .results-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex; 
             align-items: center; 
-            gap: 0.5rem; /* Reduced gap */
+            gap: 0.5rem;
         }
         
         body[data-theme="dark"] .results-title {
@@ -1996,23 +1740,23 @@ if (empty($userPhotoUrl)) {
         
         .results-title i { 
             color: var(--accent-green); 
-            font-size: 1rem; /* Reduced font size */
+            font-size: 1rem;
         }
         
         .results-filters { 
             display: flex; 
-            gap: 0.4rem; /* Reduced gap */
+            gap: 0.4rem;
             flex-wrap: wrap; 
         }
         
         .filter-btn {
-            padding: 0.3rem 0.6rem; /* Reduced padding */
-            border-radius: 6px; /* Reduced border radius */
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); 
             color: var(--text-secondary);
             cursor: pointer; 
-            font-size: 0.7rem; /* Reduced font size */
+            font-size: 0.7rem;
             font-weight: 600;
             transition: all 0.3s;
         }
@@ -2038,7 +1782,7 @@ if (empty($userPhotoUrl)) {
         
         .empty-state {
             text-align: center; 
-            padding: 1.5rem 0.8rem; /* Reduced padding */
+            padding: 1.5rem 0.8rem;
             color: var(--text-secondary);
         }
         
@@ -2047,14 +1791,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .empty-state i { 
-            font-size: 2rem; /* Reduced font size */
-            margin-bottom: 0.6rem; /* Reduced margin */
+            font-size: 2rem;
+            margin-bottom: 0.6rem;
             opacity: 0.3; 
         }
         
         .empty-state h3 { 
-            font-size: 0.9rem; /* Reduced font size */
-            margin-bottom: 0.3rem; /* Reduced margin */
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
             font-weight: 700;
         }
         
@@ -2080,8 +1824,8 @@ if (empty($userPhotoUrl)) {
         .settings-content {
             background: var(--card-bg); 
             border: 1px solid var(--border-color);
-            border-radius: 14px; /* Reduced border radius */
-            padding: 1.2rem; /* Reduced padding */
+            border-radius: 14px;
+            padding: 1.2rem;
             max-width: 90vw; 
             width: 90%;
             max-height: 80vh; 
@@ -2110,8 +1854,8 @@ if (empty($userPhotoUrl)) {
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            margin-bottom: 1rem; /* Reduced margin */
-            padding-bottom: 0.6rem; /* Reduced padding */
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -2120,11 +1864,11 @@ if (empty($userPhotoUrl)) {
         }
         
         .settings-title {
-            font-size: 1.1rem; /* Reduced font size */
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex; 
             align-items: center; 
-            gap: 0.5rem; /* Reduced gap */
+            gap: 0.5rem;
         }
         
         body[data-theme="dark"] .settings-title {
@@ -2132,9 +1876,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .settings-close {
-            width: 28px; /* Reduced size */
-            height: 28px; /* Reduced size */
-            border-radius: 6px; /* Reduced border radius */
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             border: none;
             background: var(--secondary-bg); 
             color: var(--text-secondary);
@@ -2142,7 +1886,7 @@ if (empty($userPhotoUrl)) {
             display: flex; 
             align-items: center;
             justify-content: center; 
-            font-size: 0.9rem; /* Reduced font size */
+            font-size: 0.9rem;
             transition: all 0.3s;
         }
         
@@ -2160,23 +1904,23 @@ if (empty($userPhotoUrl)) {
         /* Gateway Provider Selection - Improved Structure */
         .gateway-providers {
             display: flex;
-            flex-direction: column; /* Changed to column for vertical layout */
-            gap: 1.5rem; /* Increased gap for better spacing */
-            margin-bottom: 1.5rem; /* Increased margin */
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .gateway-provider {
             flex: 1;
-            min-width: 200px; /* Increased min-width */
-            padding: 1.5rem; /* Increased padding for bigger appearance */
+            min-width: 200px;
+            padding: 1.5rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px; /* Increased border radius */
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
             position: relative;
-            box-shadow: var(--shadow-md); /* Added shadow for depth */
+            box-shadow: var(--shadow-md);
         }
         
         body[data-theme="dark"] .gateway-provider {
@@ -2186,7 +1930,7 @@ if (empty($userPhotoUrl)) {
         
         .gateway-provider:hover {
             border-color: var(--accent-blue);
-            transform: translateY(-3px); /* Increased transform for better hover effect */
+            transform: translateY(-3px);
             box-shadow: var(--shadow-lg);
         }
         
@@ -2196,14 +1940,14 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-provider-icon {
-            font-size: 2.5rem; /* Increased font size for bigger appearance */
-            margin-bottom: 1rem; /* Increased margin */
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
             color: var(--accent-blue);
         }
         
         .gateway-provider-name {
             font-weight: 700;
-            font-size: 1.3rem; /* Increased font size for bigger appearance */
+            font-size: 1.3rem;
             color: var(--text-primary);
         }
         
@@ -2215,7 +1959,7 @@ if (empty($userPhotoUrl)) {
         .gateway-options {
             display: none;
             flex-direction: column;
-            gap: 1.5rem; /* Increased gap between gateways for proper spacing */
+            gap: 1.5rem;
         }
         
         .gateway-options.active {
@@ -2225,14 +1969,14 @@ if (empty($userPhotoUrl)) {
         .gateway-option {
             display: flex; 
             align-items: center; 
-            padding: 1.5rem; /* Increased padding for better spacing */
+            padding: 1.5rem;
             background: var(--secondary-bg); 
             border: 1px solid var(--border-color);
-            border-radius: 12px; /* Increased border radius */
+            border-radius: 12px;
             cursor: pointer; 
             transition: all 0.3s;
             position: relative;
-            margin-bottom: 0; /* Removed margin since we're using gap */
+            margin-bottom: 0;
         }
         
         body[data-theme="dark"] .gateway-option {
@@ -2242,14 +1986,14 @@ if (empty($userPhotoUrl)) {
         
         .gateway-option:hover {
             border-color: var(--accent-blue); 
-            transform: translateX(5px); /* Increased transform */
+            transform: translateX(5px);
             box-shadow: var(--shadow-md);
         }
         
         .gateway-option input[type="radio"] {
-            width: 18px; /* Increased size */
-            height: 18px; /* Increased size */
-            margin-right: 1rem; /* Increased margin */
+            width: 18px;
+            height: 18px;
+            margin-right: 1rem;
             cursor: pointer; 
             accent-color: var(--accent-blue);
         }
@@ -2262,9 +2006,9 @@ if (empty($userPhotoUrl)) {
             font-weight: 700; 
             display: flex; 
             align-items: center;
-            gap: 0.5rem; /* Increased gap */
-            margin-bottom: 0.5rem; /* Increased margin */
-            font-size: 1rem; /* Increased font size */
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
         
         body[data-theme="dark"] .gateway-option-name {
@@ -2272,7 +2016,7 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-option-desc { 
-            font-size: 0.8rem; /* Increased font size */
+            font-size: 0.8rem;
             color: var(--text-secondary); 
         }
         
@@ -2281,9 +2025,9 @@ if (empty($userPhotoUrl)) {
         }
         
         .gateway-badge {
-            padding: 0.3rem 0.5rem; /* Increased padding */
-            border-radius: 6px; /* Increased border radius */
-            font-size: 0.7rem; /* Increased font size */
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
             font-weight: 700; 
             text-transform: uppercase;
         }
@@ -2301,19 +2045,19 @@ if (empty($userPhotoUrl)) {
         .badge-maintenance {
             background-color: #ef4444;
             color: white;
-            padding: 0.3rem 0.5rem; /* Increased padding */
-            border-radius: 6px; /* Increased border radius */
-            font-size: 0.7rem; /* Increased font size */
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
-            margin-left: 0.5rem; /* Increased margin */
+            margin-left: 0.5rem;
         }
         
         .settings-footer {
             display: flex; 
-            gap: 0.8rem; /* Increased gap */
-            margin-top: 1.2rem; /* Increased margin */
-            padding-top: 0.8rem; /* Increased padding */
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+            padding-top: 0.8rem;
             border-top: 1px solid var(--border-color);
         }
         
@@ -2323,14 +2067,14 @@ if (empty($userPhotoUrl)) {
         
         .btn-save {
             flex: 1; 
-            padding: 0.6rem; /* Increased padding */
-            border-radius: 8px; /* Reduced border radius */
+            padding: 0.6rem;
+            border-radius: 8px;
             border: none;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white; 
             font-weight: 700; 
             cursor: pointer; 
-            font-size: 0.9rem; /* Increased font size */
+            font-size: 0.9rem;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
         
@@ -2341,18 +2085,18 @@ if (empty($userPhotoUrl)) {
         
         .btn-back {
             flex: 1; 
-            padding: 0.6rem; /* Increased padding */
-            border-radius: 8px; /* Reduced border radius */
+            padding: 0.6rem;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); 
             color: var(--text-primary);
             font-weight: 700; 
             cursor: pointer; 
-            font-size: 0.9rem; /* Increased font size */
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem; /* Increased gap */
+            gap: 0.4rem;
         }
         
         body[data-theme="dark"] .btn-back {
@@ -2369,14 +2113,14 @@ if (empty($userPhotoUrl)) {
         
         .btn-cancel {
             flex: 1; 
-            padding: 0.6rem; /* Increased padding */
-            border-radius: 8px; /* Reduced border radius */
+            padding: 0.6rem;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--secondary-bg); 
             color: var(--text-primary);
             font-weight: 700; 
             cursor: pointer; 
-            font-size: 0.9rem; /* Increased font size */
+            font-size: 0.9rem;
         }
         
         body[data-theme="dark"] .btn-cancel {
@@ -2393,10 +2137,10 @@ if (empty($userPhotoUrl)) {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #ec4899;
             border-radius: 50%;
-            width: 24px; /* Reduced size */
-            height: 24px; /* Reduced size */
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
-            margin: 12px auto; /* Reduced margin */
+            margin: 12px auto;
             display: none;
         }
         
@@ -2406,10 +2150,10 @@ if (empty($userPhotoUrl)) {
         }
         
         #statusLog, #genStatusLog { 
-            margin-top: 0.6rem; /* Reduced margin */
+            margin-top: 0.6rem;
             color: var(--text-secondary); 
             text-align: center; 
-            font-size: 0.8rem; /* Reduced font size */
+            font-size: 0.8rem;
         }
         
         body[data-theme="dark"] #statusLog, 
@@ -2422,7 +2166,7 @@ if (empty($userPhotoUrl)) {
             border: none; 
             cursor: pointer; 
             color: var(--accent-blue); 
-            font-size: 0.7rem; /* Reduced font size */
+            font-size: 0.7rem;
             margin-left: auto; 
         }
         
@@ -2441,7 +2185,7 @@ if (empty($userPhotoUrl)) {
             background: rgba(239, 68, 68, 0.15);
             border: 1px solid var(--error);
             margin-top: auto;
-            margin-bottom: 1.2rem; /* Reduced margin */
+            margin-bottom: 1.2rem;
         }
         
         .sidebar-link.logout:hover {
@@ -2453,16 +2197,16 @@ if (empty($userPhotoUrl)) {
         .generated-cards-container {
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px; /* Reduced border radius */
-            padding: 0.8rem; /* Reduced padding */
-            max-height: 240px; /* Reduced height */
+            border-radius: 10px;
+            padding: 0.8rem;
+            max-height: 240px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.8rem; /* Reduced font size */
+            font-size: 0.8rem;
             white-space: pre-wrap;
             word-break: break-all;
             color: var(--text-primary);
-            margin-bottom: 1rem; /* Reduced margin */
+            margin-bottom: 1rem;
         }
         
         body[data-theme="dark"] .generated-cards-container {
@@ -2480,12 +2224,12 @@ if (empty($userPhotoUrl)) {
         .custom-select select {
             appearance: none;
             width: 100%;
-            padding: 0.6rem 0.8rem; /* Reduced padding */
+            padding: 0.6rem 0.8rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px; /* Reduced border radius */
+            border-radius: 10px;
             color: var(--text-primary);
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -2508,7 +2252,7 @@ if (empty($userPhotoUrl)) {
             font-weight: 900;
             position: absolute;
             top: 50%;
-            right: 0.8rem; /* Reduced padding */
+            right: 0.8rem;
             transform: translateY(-50%);
             pointer-events: none;
             color: var(--text-secondary);
@@ -2525,12 +2269,12 @@ if (empty($userPhotoUrl)) {
         
         .custom-input-group input {
             flex: 1;
-            padding: 0.6rem 0.8rem; /* Reduced padding */
+            padding: 0.6rem 0.8rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px 0 0 10px; /* Reduced border radius */
+            border-radius: 10px 0 0 10px;
             color: var(--text-primary);
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             transition: all 0.3s;
         }
         
@@ -2553,13 +2297,13 @@ if (empty($userPhotoUrl)) {
         .custom-input-group .input-group-text {
             display: flex;
             align-items: center;
-            padding: 0 0.8rem; /* Reduced padding */
+            padding: 0 0.8rem;
             background: var(--secondary-bg);
             border: 1px solid var(--border-color);
             border-left: none;
-            border-radius: 0 10px 10px 0; /* Reduced border radius */
+            border-radius: 0 10px 10px 0;
             color: var(--text-secondary);
-            font-size: 0.85rem; /* Reduced font size */
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -2579,15 +2323,15 @@ if (empty($userPhotoUrl)) {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid var(--accent-blue);
             color: var(--accent-blue);
-            padding: 0.4rem 0.8rem; /* Increased padding */
-            border-radius: 8px; /* Increased border radius */
-            font-size: 0.75rem; /* Increased font size */
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 0.4rem; /* Increased gap */
+            gap: 0.4rem;
         }
         
         .copy-all-btn:hover, .clear-all-btn:hover {
@@ -2604,7 +2348,7 @@ if (empty($userPhotoUrl)) {
         
         .results-actions {
             display: flex;
-            gap: 0.8rem; /* Increased gap */
+            gap: 0.8rem;
             flex-wrap: wrap;
         }
         
@@ -2626,154 +2370,154 @@ if (empty($userPhotoUrl)) {
         
         /* Mobile-specific styles - Beast Level */
         @media (max-width: 768px) {
-            body { font-size: 13px; } /* Reduced base font size */
+            body { font-size: 13px; }
             
             .navbar { 
-                padding: 0.4rem 0.6rem; /* Reduced padding */
-                height: 46px; /* Reduced height */
+                padding: 0.4rem 0.6rem;
+                height: 46px;
             }
             
             .navbar-brand { 
-                font-size: 1rem; /* Reduced font size */
-                margin-left: 0.6rem; /* Reduced margin */
+                font-size: 1rem;
+                margin-left: 0.6rem;
             }
             
-            .navbar-brand i { font-size: 1rem; } /* Reduced font size */
+            .navbar-brand i { font-size: 1rem; }
             
-            .user-avatar { width: 24px; height: 24px; } /* Reduced size */
+            .user-avatar { width: 24px; height: 24px; }
             
             .user-name { 
-                max-width: 60px; /* Reduced width */
-                font-size: 0.7rem; /* Reduced font size */
+                max-width: 60px;
+                font-size: 0.7rem;
             }
             
             .user-username {
-                max-width: 60px; /* Reduced width */
-                font-size: 0.6rem; /* Reduced font size */
+                max-width: 60px;
+                font-size: 0.6rem;
             }
             
             .sidebar { 
-                width: 240px; /* Reduced width */
-                top: 46px; /* Adjusted for reduced navbar height */
+                width: 240px;
+                top: 46px;
             }
             
-            .page-title { font-size: 1.3rem; } /* Reduced font size */
+            .page-title { font-size: 1.3rem; }
             
-            .page-subtitle { font-size: 0.8rem; } /* Reduced font size */
+            .page-subtitle { font-size: 0.8rem; }
             
             .main-content {
-                margin-top: 46px; /* Adjusted for reduced navbar height */
-                padding: 0.8rem; /* Reduced padding */
-                margin-right: 0; /* Hide right sidebar on mobile */
+                margin-top: 46px;
+                padding: 0.8rem;
+                margin-right: 0;
             }
             
             /* Mobile stats grid */
             .stats-grid { 
                 grid-template-columns: repeat(2, 1fr); 
-                gap: 0.8rem; /* Reduced gap */
+                gap: 0.8rem;
             }
             
             .stat-card { 
-                padding: 1rem; /* Reduced padding */
-                min-height: 90px; /* Reduced height */
+                padding: 1rem;
+                min-height: 90px;
             }
             
             .stat-icon { 
-                width: 28px; /* Reduced size */
-                height: 28px; /* Reduced size */
-                font-size: 0.9rem; /* Reduced font size */
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
             }
             
             .stat-value { 
-                font-size: 1.6rem; /* Reduced font size */
+                font-size: 1.6rem;
             }
             
             .stat-label { 
-                font-size: 0.6rem; /* Reduced font size */
+                font-size: 0.6rem;
             }
             
             .welcome-banner { 
-                padding: 1rem; /* Reduced padding */
+                padding: 1rem;
             }
             
             .welcome-icon { 
-                width: 36px; /* Reduced size */
-                height: 36px; /* Reduced size */
-                font-size: 1rem; /* Reduced font size */
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
             }
             
             .welcome-text h2 { 
-                font-size: 1.1rem; /* Reduced font size */
+                font-size: 1.1rem;
             }
             
             .welcome-text p { 
-                font-size: 0.8rem; /* Reduced font size */
+                font-size: 0.8rem;
             }
             
             .checker-section, .generator-section { 
-                padding: 1rem; /* Reduced padding */
+                padding: 1rem;
             }
             
             .checker-title, .generator-title { 
-                font-size: 1rem; /* Reduced font size */
+                font-size: 1rem;
             }
             
             .checker-title i, .generator-title i { 
-                font-size: 0.8rem; /* Reduced font size */
+                font-size: 0.8rem;
             }
             
             .settings-btn { 
-                padding: 0.3rem 0.5rem; /* Reduced padding */
-                font-size: 0.7rem; /* Reduced font size */
+                padding: 0.3rem 0.5rem;
+                font-size: 0.7rem;
             }
             
             .input-label { 
-                font-size: 0.8rem; /* Reduced font size */
+                font-size: 0.8rem;
             }
             
             .card-textarea { 
-                min-height: 100px; /* Reduced height */
-                padding: 0.6rem; /* Reduced padding */
-                font-size: 0.8rem; /* Reduced font size */
+                min-height: 100px;
+                padding: 0.6rem;
+                font-size: 0.8rem;
             }
             
             .btn { 
-                padding: 0.4rem 0.8rem; /* Reduced padding */
-                min-width: 80px; /* Reduced min-width */
-                font-size: 0.8rem; /* Reduced font size */
+                padding: 0.4rem 0.8rem;
+                min-width: 80px;
+                font-size: 0.8rem;
             }
             
             .results-section { 
-                padding: 1rem; /* Reduced padding */
+                padding: 1rem;
             }
             
             .results-title { 
-                font-size: 1rem; /* Reduced font size */
+                font-size: 1rem;
             }
             
             .results-title i { 
-                font-size: 0.8rem; /* Reduced font size */
+                font-size: 0.8rem;
             }
             
             .filter-btn { 
-                padding: 0.2rem 0.5rem; /* Reduced padding */
-                font-size: 0.6rem; /* Reduced font size */
+                padding: 0.2rem 0.5rem;
+                font-size: 0.6rem;
             }
             
             .generated-cards-container { 
-                max-height: 180px; /* Reduced height */
-                font-size: 0.7rem; /* Reduced font size */
-                padding: 0.6rem; /* Reduced padding */
+                max-height: 180px;
+                font-size: 0.7rem;
+                padding: 0.6rem;
             }
             
             .copy-all-btn, .clear-all-btn { 
-                padding: 0.3rem 0.6rem; /* Reduced padding */
-                font-size: 0.7rem; /* Reduced font size */
+                padding: 0.3rem 0.6rem;
+                font-size: 0.7rem;
             }
             
             .form-row { 
                 flex-direction: column; 
-                gap: 0.6rem; /* Reduced gap */
+                gap: 0.6rem;
             }
             
             .form-col { 
@@ -2782,52 +2526,52 @@ if (empty($userPhotoUrl)) {
             
             .settings-content { 
                 max-width: 95vw; 
-                padding: 1rem; /* Reduced padding */
+                padding: 1rem;
             }
             
             .gateway-option { 
-                padding: 0.8rem; /* Increased padding for mobile */
+                padding: 0.8rem;
             }
             
             .gateway-option-name { 
-                font-size: 0.85rem; /* Slightly reduced font size */
+                font-size: 0.85rem;
             }
             
             .gateway-option-desc { 
-                font-size: 0.7rem; /* Slightly reduced font size */
+                font-size: 0.7rem;
             }
             
             .menu-toggle {
                 position: absolute;
-                left: 0.6rem; /* Reduced margin */
+                left: 0.6rem;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 32px; /* Reduced size */
-                height: 32px; /* Reduced size */
+                width: 32px;
+                height: 32px;
             }
             
             .navbar-brand {
-                margin-left: 2rem; /* Reduced margin */
+                margin-left: 2rem;
             }
             
             .theme-toggle {
-                width: 36px; /* Reduced size */
-                height: 18px; /* Reduced size */
+                width: 36px;
+                height: 18px;
             }
             
             .theme-toggle-slider {
-                width: 14px; /* Reduced size */
-                height: 14px; /* Reduced size */
+                width: 14px;
+                height: 14px;
                 left: 2px;
             }
             
             [data-theme="dark"] .theme-toggle-slider { 
-                transform: translateX(16px); /* Adjusted for smaller toggle */
+                transform: translateX(16px);
             }
             
             .user-info {
-                padding: 0.2rem 0.3rem; /* Reduced padding */
-                gap: 0.3rem; /* Reduced gap */
+                padding: 0.2rem 0.3rem;
+                gap: 0.3rem;
             }
             
             /* Show mobile sections instead of right sidebar */
@@ -2845,7 +2589,7 @@ if (empty($userPhotoUrl)) {
             
             /* Profile page mobile adjustments */
             .profile-header {
-                padding: 1rem; /* Reduced padding */
+                padding: 1rem;
             }
             
             .profile-info {
@@ -2854,249 +2598,227 @@ if (empty($userPhotoUrl)) {
             }
             
             .profile-avatar {
-                width: 80px; /* Reduced size */
-                height: 80px; /* Reduced size */
+                width: 80px;
+                height: 80px;
             }
             
             .profile-name {
-                font-size: 1.6rem; /* Reduced font size */
+                font-size: 1.6rem;
             }
             
             .profile-username {
-                font-size: 0.9rem; /* Reduced font size */
+                font-size: 0.9rem;
             }
             
             .user-stats-column {
-                gap: 0.6rem; /* Reduced gap */
+                gap: 0.6rem;
             }
             
             .user-stat-item {
-                padding: 0.8rem; /* Reduced padding */
+                padding: 0.8rem;
             }
             
             .user-stat-icon {
-                width: 36px; /* Reduced size */
-                height: 36px; /* Reduced size */
-                font-size: 1rem; /* Reduced font size */
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
             }
             
             .user-stat-value {
-                font-size: 1.2rem; /* Reduced font size */
+                font-size: 1.2rem;
             }
             
-            /* Mobile Online Users Section */
-            .mobile-online-users-header {
-                margin-bottom: 0.8rem; /* Reduced margin */
-            }
-            
-            .mobile-online-users-title {
-                font-size: 1rem; /* Reduced font size */
-            }
-            
-            .mobile-online-users-count {
-                font-size: 0.7rem; /* Reduced font size */
-            }
-            
-            .mobile-online-users-list {
-                gap: 0.5rem; /* Reduced gap */
-            }
-            
+            /* Mobile Online Users Section - Fixed sizing */
             .mobile-online-user-item {
-                padding: 0.4rem; /* Reduced padding */
+                padding: 0.8rem; /* Consistent with top users */
             }
             
             .mobile-online-user-avatar {
-                width: 20px; /* Reduced size */
-                height: 20px; /* Reduced size */
+                width: 36px; /* Consistent with top users */
+                height: 36px;
             }
             
             .mobile-online-user-name {
-                font-size: 0.65rem; /* Reduced font size */
-                max-width: 80px; /* Reduced width */
+                font-size: 0.85rem; /* Consistent with top users */
+            }
+            
+            .mobile-online-user-username {
+                font-size: 0.7rem; /* Consistent with top users */
             }
             
             /* Mobile Top Users Section */
-            .mobile-top-users-header {
-                margin-bottom: 0.8rem; /* Reduced margin */
-            }
-            
-            .mobile-top-users-title {
-                font-size: 1rem; /* Reduced font size */
-            }
-            
-            .mobile-top-users-list {
-                gap: 0.5rem; /* Reduced gap */
-            }
-            
             .mobile-top-user-item {
-                padding: 0.6rem; /* Reduced padding */
+                padding: 0.6rem;
             }
             
             .mobile-top-user-avatar {
-                width: 30px; /* Reduced size */
-                height: 30px; /* Reduced size */
+                width: 30px;
+                height: 30px;
             }
             
             .mobile-top-user-name {
-                font-size: 0.75rem; /* Reduced font size */
+                font-size: 0.75rem;
             }
             
             .mobile-top-user-username {
-                font-size: 0.6rem; /* Reduced font size */
+                font-size: 0.6rem;
             }
             
             .mobile-top-user-hits {
-                font-size: 0.65rem; /* Reduced font size */
-                padding: 0.2rem 0.4rem; /* Reduced padding */
-                min-width: 50px; /* Reduced width */
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+                min-width: 50px;
             }
         }
         
         /* For very small screens */
         @media (max-width: 480px) {
-            body { font-size: 12px; } /* Further reduced base font size */
+            body { font-size: 12px; }
             
             .navbar { 
-                padding: 0.3rem 0.5rem; /* Further reduced padding */
-                height: 42px; /* Further reduced height */
+                padding: 0.3rem 0.5rem;
+                height: 42px;
             }
             
             .navbar-brand { 
-                font-size: 0.9rem; /* Further reduced font size */
+                font-size: 0.9rem;
             }
             
             .user-avatar { 
-                width: 20px; /* Further reduced size */
-                height: 20px; /* Further reduced size */
+                width: 20px;
+                height: 20px;
             }
             
             .user-name { 
-                max-width: 50px; /* Further reduced width */
-                font-size: 0.65rem; /* Further reduced font size */
+                max-width: 50px;
+                font-size: 0.65rem;
             }
             
             .user-username {
-                max-width: 50px; /* Further reduced width */
-                font-size: 0.55rem; /* Further reduced font size */
+                max-width: 50px;
+                font-size: 0.55rem;
             }
             
             .menu-toggle { 
-                width: 28px; /* Further reduced size */
-                height: 28px; /* Further reduced size */
-                font-size: 0.9rem; /* Further reduced font size */
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
             }
             
             .sidebar { 
-                width: 220px; /* Further reduced width */
-                top: 42px; /* Adjusted for further reduced navbar height */
+                width: 220px;
+                top: 42px;
             }
             
             .main-content {
-                margin-top: 42px; /* Adjusted for further reduced navbar height */
-                padding: 0.6rem; /* Further reduced padding */
+                margin-top: 42px;
+                padding: 0.6rem;
             }
             
             .page-title { 
-                font-size: 1.1rem; /* Further reduced font size */
+                font-size: 1.1rem;
             }
             
             .stats-grid { 
                 grid-template-columns: repeat(2, 1fr); 
-                gap: 0.6rem; /* Further reduced gap */
+                gap: 0.6rem;
             }
             
             .stat-card { 
-                padding: 0.8rem; /* Further reduced padding */
-                min-height: 80px; /* Further reduced height */
+                padding: 0.8rem;
+                min-height: 80px;
             }
             
             .stat-value { 
-                font-size: 1.4rem; /* Further reduced font size */
+                font-size: 1.4rem;
             }
             
             .stat-label { 
-                font-size: 0.55rem; /* Further reduced font size */
+                font-size: 0.55rem;
             }
             
             .btn { 
-                padding: 0.3rem 0.6rem; /* Further reduced padding */
-                min-width: 70px; /* Further reduced min-width */
-                font-size: 0.7rem; /* Further reduced font size */
+                padding: 0.3rem 0.6rem;
+                min-width: 70px;
+                font-size: 0.7rem;
             }
             
             /* Profile page for very small screens */
             .profile-header {
-                padding: 0.8rem; /* Further reduced padding */
+                padding: 0.8rem;
             }
             
             .profile-avatar {
-                width: 70px; /* Further reduced size */
-                height: 70px; /* Further reduced size */
+                width: 70px;
+                height: 70px;
             }
             
             .profile-name {
-                font-size: 1.4rem; /* Further reduced font size */
+                font-size: 1.4rem;
             }
             
             .profile-username {
-                font-size: 0.8rem; /* Further reduced font size */
+                font-size: 0.8rem;
             }
             
             .user-stats-column {
-                gap: 0.5rem; /* Further reduced gap */
+                gap: 0.5rem;
             }
             
             .user-stat-item {
-                padding: 0.6rem; /* Further reduced padding */
+                padding: 0.6rem;
             }
             
             .user-stat-icon {
-                width: 32px; /* Further reduced size */
-                height: 32px; /* Further reduced size */
-                font-size: 0.9rem; /* Further reduced font size */
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
             }
             
             .user-stat-value {
-                font-size: 1rem; /* Further reduced font size */
+                font-size: 1rem;
             }
             
             /* Mobile Online Users for very small screens */
             .mobile-online-user-item {
-                padding: 0.3rem; /* Further reduced padding */
+                padding: 0.6rem; /* Slightly smaller but still readable */
             }
             
             .mobile-online-user-avatar {
-                width: 18px; /* Further reduced size */
-                height: 18px; /* Further reduced size */
+                width: 32px; /* Slightly smaller but still visible */
+                height: 32px;
             }
             
             .mobile-online-user-name {
-                font-size: 0.6rem; /* Further reduced font size */
-                max-width: 60px; /* Further reduced width */
+                font-size: 0.8rem; /* Still readable */
+            }
+            
+            .mobile-online-user-username {
+                font-size: 0.65rem; /* Still readable */
             }
             
             /* Mobile Top Users for very small screens */
             .mobile-top-user-item {
-                padding: 0.5rem; /* Further reduced padding */
+                padding: 0.5rem;
             }
             
             .mobile-top-user-avatar {
-                width: 26px; /* Further reduced size */
-                height: 26px; /* Further reduced size */
+                width: 26px;
+                height: 26px;
             }
             
             .mobile-top-user-name {
-                font-size: 0.7rem; /* Further reduced font size */
+                font-size: 0.7rem;
             }
             
             .mobile-top-user-username {
-                font-size: 0.55rem; /* Further reduced font size */
+                font-size: 0.55rem;
             }
             
             .mobile-top-user-hits {
-                font-size: 0.6rem; /* Further reduced font size */
-                padding: 0.2rem 0.3rem; /* Further reduced padding */
-                min-width: 45px; /* Further reduced width */
+                font-size: 0.6rem;
+                padding: 0.2rem 0.3rem;
+                min-width: 45px;
             }
         }
         
@@ -3242,16 +2964,16 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: var(--user-item-bg-light);
+            border: 1px solid var(--user-item-border-light);
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         body[data-theme="dark"] .provider-option {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+            background: var(--user-item-bg-dark);
+            border-color: var(--user-item-border-dark);
         }
         
         .provider-option:hover {
@@ -3268,12 +2990,12 @@ if (empty($userPhotoUrl)) {
             align-items: center;
             justify-content: center;
             margin-right: 1rem;
-            color: var(--text-primary); /* Black color in light theme */
+            color: var(--text-primary);
             font-size: 1.2rem;
         }
         
         body[data-theme="dark"] .provider-option-icon {
-            color: var(--dark-text-primary); /* White color in dark theme */
+            color: var(--dark-text-primary);
         }
         
         .provider-option-content {
@@ -3346,16 +3068,16 @@ if (empty($userPhotoUrl)) {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: var(--user-item-bg-light); /* Light filled color */
-            border: 1px solid var(--user-item-border-light); /* Dark boundary line */
+            background: var(--user-item-bg-light);
+            border: 1px solid var(--user-item-border-light);
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         body[data-theme="dark"] .gateway-option {
-            background: var(--user-item-bg-dark); /* Darker filled color in dark mode */
-            border-color: var(--user-item-border-dark); /* Darker boundary in dark mode */
+            background: var(--user-item-bg-dark);
+            border-color: var(--user-item-border-dark);
         }
         
         .gateway-option:hover {
@@ -3744,7 +3466,7 @@ if (empty($userPhotoUrl)) {
 
         <section class="page-section" id="page-checking">
             <h1 class="page-title">𝑪𝑨𝑹𝑫 ✘ 𝑪𝑯𝑬𝑬</h1>
-            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥𝐢</p>
+            <p class="page-subtitle">𝐂𝐡𝐞𝐜𝐤 𝐲𝐨𝐮𝐫 𝐜𝐚𝐫𝐝𝐬 𝐨𝐧 𝐦𝐮𝐥</p>
 
             <div class="checker-section">
                 <div class="checker-header">
@@ -4253,7 +3975,8 @@ if (empty($userPhotoUrl)) {
             const menuToggle = document.getElementById('menuToggle');
             let isAnimating = false;
             
-            menuToggle.addEventListener('click', function() {
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent any default behavior
                 if (isAnimating) return;
                 isAnimating = true;
                 
@@ -4450,29 +4173,32 @@ if (empty($userPhotoUrl)) {
         
         // Page navigation function
         function showPage(pageName) {
-            document.querySelectorAll('.page-section').forEach(page => {
-                page.classList.remove('active');
-            });
-            const pageElement = document.getElementById('page-' + pageName);
-            if (pageElement) {
-                pageElement.classList.add('active');
+            // Add a small delay to ensure smooth transition
+            setTimeout(() => {
+                document.querySelectorAll('.page-section').forEach(page => {
+                    page.classList.remove('active');
+                });
+                const pageElement = document.getElementById('page-' + pageName);
+                if (pageElement) {
+                    pageElement.classList.add('active');
+                    
+                    // Load profile data when profile page is shown
+                    if (pageName === 'profile') {
+                        loadUserProfile();
+                    }
+                }
                 
-                // Load profile data when profile page is shown
-                if (pageName === 'profile') {
-                    loadUserProfile();
+                document.querySelectorAll('.sidebar-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                if (event && event.target) {
+                    const eventTarget = event.target.closest('.sidebar-link');
+                    if (eventTarget) {
+                        eventTarget.classList.add('active');
+                    }
                 }
-            }
-            
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            if (event && event.target) {
-                const eventTarget = event.target.closest('.sidebar-link');
-                if (eventTarget) {
-                    eventTarget.classList.add('active');
-                }
-            }
+            }, 50); // Small delay for smoother transition
         }
         
         // Sidebar functions
