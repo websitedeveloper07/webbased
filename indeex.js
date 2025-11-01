@@ -26,6 +26,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 5;
     
+    // Cache for API responses to improve performance
+    const apiCache = {
+        globalStats: null,
+        topUsers: null,
+        onlineUsers: null,
+        lastFetch: {
+            globalStats: 0,
+            topUsers: 0,
+            onlineUsers: 0
+        }
+    };
+    
+    // Cache expiration time in milliseconds (30 seconds)
+    const CACHE_EXPIRATION = 30000;
+    
     // Instantly update all data as soon as DOM loads
     updateGlobalStats();
     updateTopUsers();
@@ -64,18 +79,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return response;
     }
     
-    // Function to update global statistics
+    // Function to update global statistics with caching
     function updateGlobalStats() {
         console.log("Updating global statistics at", new Date().toISOString());
+        
+        // Check if we have cached data that's still valid
+        const now = Date.now();
+        if (apiCache.globalStats && (now - apiCache.lastFetch.globalStats) < CACHE_EXPIRATION) {
+            console.log("Using cached global stats");
+            updateGlobalStatsUI(apiCache.globalStats);
+            return;
+        }
+        
+        // Set a timeout for the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
         
         fetch('/stats.php', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache'
-            }
+            },
+            signal: controller.signal
         })
         .then(response => {
+            clearTimeout(timeoutId);
             console.log("Global stats response status:", response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
@@ -86,47 +115,33 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Global stats response:", data);
             
             if (data.success) {
-                const totalUsersElement = document.getElementById('gTotalUsers');
-                const totalHitsElement = document.getElementById('gTotalHits');
-                const chargeCardsElement = document.getElementById('gChargeCards');
-                const liveCardsElement = document.getElementById('gLiveCards');
+                // Cache the response
+                apiCache.globalStats = data;
+                apiCache.lastFetch.globalStats = now;
                 
-                if (totalUsersElement) {
-                    totalUsersElement.textContent = data.data.totalUsers;
-                    console.log("Updated total users to:", data.data.totalUsers);
-                } else {
-                    console.error("Element #gTotalUsers not found");
-                }
-                
-                if (totalHitsElement) {
-                    totalHitsElement.textContent = data.data.totalChecked;
-                    console.log("Updated total hits to:", data.data.totalChecked);
-                } else {
-                    console.error("Element #gTotalHits not found");
-                }
-                
-                if (chargeCardsElement) {
-                    chargeCardsElement.textContent = data.data.totalCharged;
-                    console.log("Updated charge cards to:", data.data.totalCharged);
-                } else {
-                    console.error("Element #gChargeCards not found");
-                }
-                
-                if (liveCardsElement) {
-                    liveCardsElement.textContent = data.data.totalApproved;
-                    console.log("Updated live cards to:", data.data.totalApproved);
-                } else {
-                    console.error("Element #gLiveCards not found");
-                }
-                
+                updateGlobalStatsUI(data);
                 console.log("Global statistics updated successfully");
             } else {
                 console.error('Failed to update global statistics:', data.message);
+                
+                // Try to use cached data if available
+                if (apiCache.globalStats) {
+                    console.log("Using cached global stats due to error");
+                    updateGlobalStatsUI(apiCache.globalStats);
+                }
             }
         })
         .catch(error => {
+            clearTimeout(timeoutId);
             console.error('Error updating global statistics:', error);
             
+            // Try to use cached data if available
+            if (apiCache.globalStats) {
+                console.log("Using cached global stats due to error");
+                updateGlobalStatsUI(apiCache.globalStats);
+            }
+            
+            // Only show error toast if we're on the home page
             const homePage = document.getElementById('page-home');
             if (homePage && homePage.classList.contains('active') && window.Swal) {
                 Swal.fire({
@@ -141,18 +156,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Function to fetch and display top users
+    // Helper function to update global stats UI
+    function updateGlobalStatsUI(data) {
+        const totalUsersElement = document.getElementById('gTotalUsers');
+        const totalHitsElement = document.getElementById('gTotalHits');
+        const chargeCardsElement = document.getElementById('gChargeCards');
+        const liveCardsElement = document.getElementById('gLiveCards');
+        
+        if (totalUsersElement) {
+            totalUsersElement.textContent = data.data.totalUsers;
+            console.log("Updated total users to:", data.data.totalUsers);
+        } else {
+            console.error("Element #gTotalUsers not found");
+        }
+        
+        if (totalHitsElement) {
+            totalHitsElement.textContent = data.data.totalChecked;
+            console.log("Updated total hits to:", data.data.totalChecked);
+        } else {
+            console.error("Element #gTotalHits not found");
+        }
+        
+        if (chargeCardsElement) {
+            chargeCardsElement.textContent = data.data.totalCharged;
+            console.log("Updated charge cards to:", data.data.totalCharged);
+        } else {
+            console.error("Element #gChargeCards not found");
+        }
+        
+        if (liveCardsElement) {
+            liveCardsElement.textContent = data.data.totalApproved;
+            console.log("Updated live cards to:", data.data.totalApproved);
+        } else {
+            console.error("Element #gLiveCards not found");
+        }
+    }
+    
+    // Function to fetch and display top users with improved error handling
     function updateTopUsers() {
         console.log("Updating top users at", new Date().toISOString());
+        
+        // Check if we have cached data that's still valid
+        const now = Date.now();
+        if (apiCache.topUsers && (now - apiCache.lastFetch.topUsers) < CACHE_EXPIRATION) {
+            console.log("Using cached top users");
+            if (apiCache.topUsers.users) {
+                displayTopUsers(apiCache.topUsers.users);
+                displayMobileTopUsers(apiCache.topUsers.users);
+            }
+            return;
+        }
+        
+        // Set a timeout for the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
         
         fetch('/gate/topusers.php', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache'
-            }
+            },
+            signal: controller.signal
         })
         .then(response => {
+            clearTimeout(timeoutId);
             console.log("Top users response status:", response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
@@ -163,17 +231,45 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Top users response:", data);
             
             if (data.success) {
+                // Cache the response
+                apiCache.topUsers = data;
+                apiCache.lastFetch.topUsers = now;
+                
                 if (data.users) {
                     displayTopUsers(data.users);
                     displayMobileTopUsers(data.users);
                 }
             } else {
                 console.error('Failed to update top users:', data.message);
+                
+                // Try to use cached data if available
+                if (apiCache.topUsers && apiCache.topUsers.users) {
+                    console.log("Using cached top users due to error");
+                    displayTopUsers(apiCache.topUsers.users);
+                    displayMobileTopUsers(apiCache.topUsers.users);
+                } else {
+                    // Show empty state if no cached data
+                    displayTopUsers([]);
+                    displayMobileTopUsers([]);
+                }
             }
         })
         .catch(error => {
+            clearTimeout(timeoutId);
             console.error('Error updating top users:', error);
             
+            // Try to use cached data if available
+            if (apiCache.topUsers && apiCache.topUsers.users) {
+                console.log("Using cached top users due to error");
+                displayTopUsers(apiCache.topUsers.users);
+                displayMobileTopUsers(apiCache.topUsers.users);
+            } else {
+                // Show empty state if no cached data
+                displayTopUsers([]);
+                displayMobileTopUsers([]);
+            }
+            
+            // Only show error toast if we're on the home page
             const homePage = document.getElementById('page-home');
             if (homePage && homePage.classList.contains('active') && window.Swal) {
                 Swal.fire({
