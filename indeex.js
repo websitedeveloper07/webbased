@@ -26,27 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dynamic MAX_CONCURRENT based on selected gateway
     let maxConcurrent = 5;
     
-    // Preload data immediately when DOM is loaded, even before login
-    preloadInitialData();
-    
-    // Function to preload initial data
-    function preloadInitialData() {
-        console.log("Preloading initial data...");
-        
-        // Update global stats immediately
-        updateGlobalStats();
-        
-        // Update top users immediately
-        updateTopUsers();
-        
-        // Update online users immediately
-        updateUserActivity();
-        
-        // Initialize intervals for regular updates
-        initializeGlobalStatsUpdates();
-        initializeTopUsersUpdates();
-        initializeActivityUpdates();
-    }
+    // Instantly update all data as soon as DOM loads
+    updateGlobalStats();
+    updateTopUsers();
+    updateUserActivity();
     
     // Function to update maxConcurrent based on selected gateway
     function updateMaxConcurrent() {
@@ -399,8 +382,6 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(topUsersInterval);
         }
         
-        updateTopUsers();
-        
         topUsersInterval = setInterval(() => {
             updateTopUsers();
         }, 30000);
@@ -562,6 +543,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize maxConcurrent based on selected gateway
         updateMaxConcurrent();
+        
+        // Initialize intervals for regular updates
+        initializeGlobalStatsUpdates();
+        initializeTopUsersUpdates();
+        initializeActivityUpdates();
         
         console.log("Application initialized successfully");
     }
@@ -1888,8 +1874,6 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(activityUpdateInterval);
         }
         
-        updateUserActivity();
-        
         activityUpdateInterval = setInterval(() => {
             if (!window.activityRequest) {
                 updateUserActivity();
@@ -1936,8 +1920,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (globalStatsInterval) {
             clearInterval(globalStatsInterval);
         }
-        
-        updateGlobalStats();
         
         globalStatsInterval = setInterval(() => {
             updateGlobalStats();
